@@ -4,12 +4,12 @@ UNDEFINED = runtime.UNDEFINED
 __M_dict_builtin = dict
 __M_locals_builtin = locals
 _magic_number = 9
-_modified_time = 1394996475.1483395
+_modified_time = 1394998061.0487835
 _enable_loop = True
 _template_filename = '/usr/lib64/python3.3/site-packages/nikola/data/themes/base/templates/tag.tmpl'
 _template_uri = 'tag.tmpl'
 _source_encoding = 'utf-8'
-_exports = ['content', 'extra_head']
+_exports = ['extra_head', 'content']
 
 
 def _mako_get_namespace(context, name):
@@ -27,18 +27,18 @@ def render_body(context,**pageargs):
     __M_caller = context.caller_stack._push_frame()
     try:
         __M_locals = __M_dict_builtin(pageargs=pageargs)
-        def content():
-            return render_content(context._locals(__M_locals))
-        posts = context.get('posts', UNDEFINED)
-        kind = context.get('kind', UNDEFINED)
-        tag = context.get('tag', UNDEFINED)
-        _link = context.get('_link', UNDEFINED)
         title = context.get('title', UNDEFINED)
-        date_format = context.get('date_format', UNDEFINED)
         len = context.get('len', UNDEFINED)
+        kind = context.get('kind', UNDEFINED)
         def extra_head():
             return render_extra_head(context._locals(__M_locals))
+        def content():
+            return render_content(context._locals(__M_locals))
+        date_format = context.get('date_format', UNDEFINED)
+        posts = context.get('posts', UNDEFINED)
         translations = context.get('translations', UNDEFINED)
+        tag = context.get('tag', UNDEFINED)
+        _link = context.get('_link', UNDEFINED)
         __M_writer = context.writer()
         # SOURCE LINE 2
         __M_writer('\n')
@@ -59,19 +59,61 @@ def render_body(context,**pageargs):
         context.caller_stack._pop_frame()
 
 
+def render_extra_head(context,**pageargs):
+    __M_caller = context.caller_stack._push_frame()
+    try:
+        len = context.get('len', UNDEFINED)
+        kind = context.get('kind', UNDEFINED)
+        def extra_head():
+            return render_extra_head(context)
+        translations = context.get('translations', UNDEFINED)
+        tag = context.get('tag', UNDEFINED)
+        _link = context.get('_link', UNDEFINED)
+        __M_writer = context.writer()
+        # SOURCE LINE 3
+        __M_writer('\n')
+        # SOURCE LINE 4
+        if len(translations) > 1:
+            # SOURCE LINE 5
+            for language in translations:
+                # SOURCE LINE 6
+                __M_writer('            <link rel="alternate" type="application/rss+xml" type="application/rss+xml" title="RSS for ')
+                __M_writer(str(kind))
+                __M_writer(' ')
+                __M_writer(str(tag))
+                __M_writer(' (')
+                __M_writer(str(language))
+                __M_writer(')" href="')
+                __M_writer(str(_link(kind + "_rss", tag, language)))
+                __M_writer('">\n')
+            # SOURCE LINE 8
+        else:
+            # SOURCE LINE 9
+            __M_writer('        <link rel="alternate" type="application/rss+xml" type="application/rss+xml" title="RSS for ')
+            __M_writer(str(kind))
+            __M_writer(' ')
+            __M_writer(str(tag))
+            __M_writer('" href="')
+            __M_writer(str(_link(kind + "_rss", tag)))
+            __M_writer('">\n')
+        return ''
+    finally:
+        context.caller_stack._pop_frame()
+
+
 def render_content(context,**pageargs):
     __M_caller = context.caller_stack._push_frame()
     try:
+        title = context.get('title', UNDEFINED)
+        len = context.get('len', UNDEFINED)
+        kind = context.get('kind', UNDEFINED)
         def content():
             return render_content(context)
+        date_format = context.get('date_format', UNDEFINED)
         posts = context.get('posts', UNDEFINED)
-        kind = context.get('kind', UNDEFINED)
+        translations = context.get('translations', UNDEFINED)
         tag = context.get('tag', UNDEFINED)
         _link = context.get('_link', UNDEFINED)
-        title = context.get('title', UNDEFINED)
-        date_format = context.get('date_format', UNDEFINED)
-        len = context.get('len', UNDEFINED)
-        translations = context.get('translations', UNDEFINED)
         __M_writer = context.writer()
         # SOURCE LINE 13
         __M_writer('\n        <!--Body content-->\n        <div class="postbox">\n        <h1>')
@@ -114,48 +156,6 @@ def render_content(context,**pageargs):
             __M_writer('        </ul>\n')
         # SOURCE LINE 32
         __M_writer('        </div>\n        <!--End of body content-->\n')
-        return ''
-    finally:
-        context.caller_stack._pop_frame()
-
-
-def render_extra_head(context,**pageargs):
-    __M_caller = context.caller_stack._push_frame()
-    try:
-        kind = context.get('kind', UNDEFINED)
-        tag = context.get('tag', UNDEFINED)
-        _link = context.get('_link', UNDEFINED)
-        len = context.get('len', UNDEFINED)
-        def extra_head():
-            return render_extra_head(context)
-        translations = context.get('translations', UNDEFINED)
-        __M_writer = context.writer()
-        # SOURCE LINE 3
-        __M_writer('\n')
-        # SOURCE LINE 4
-        if len(translations) > 1:
-            # SOURCE LINE 5
-            for language in translations:
-                # SOURCE LINE 6
-                __M_writer('            <link rel="alternate" type="application/rss+xml" type="application/rss+xml" title="RSS for ')
-                __M_writer(str(kind))
-                __M_writer(' ')
-                __M_writer(str(tag))
-                __M_writer(' (')
-                __M_writer(str(language))
-                __M_writer(')" href="')
-                __M_writer(str(_link(kind + "_rss", tag, language)))
-                __M_writer('">\n')
-            # SOURCE LINE 8
-        else:
-            # SOURCE LINE 9
-            __M_writer('        <link rel="alternate" type="application/rss+xml" type="application/rss+xml" title="RSS for ')
-            __M_writer(str(kind))
-            __M_writer(' ')
-            __M_writer(str(tag))
-            __M_writer('" href="')
-            __M_writer(str(_link(kind + "_rss", tag)))
-            __M_writer('">\n')
         return ''
     finally:
         context.caller_stack._pop_frame()

@@ -4,7 +4,7 @@ UNDEFINED = runtime.UNDEFINED
 __M_dict_builtin = dict
 __M_locals_builtin = locals
 _magic_number = 9
-_modified_time = 1394996475.1282961
+_modified_time = 1394998061.0283017
 _enable_loop = True
 _template_filename = '/usr/lib64/python3.3/site-packages/nikola/data/themes/base/templates/index_helper.tmpl'
 _template_uri = 'index_helper.tmpl'
@@ -45,9 +45,9 @@ def render_mathjax_script(context,posts):
 def render_html_pager(context):
     __M_caller = context.caller_stack._push_frame()
     try:
-        prevlink = context.get('prevlink', UNDEFINED)
         nextlink = context.get('nextlink', UNDEFINED)
         messages = context.get('messages', UNDEFINED)
+        prevlink = context.get('prevlink', UNDEFINED)
         __M_writer = context.writer()
         # SOURCE LINE 2
         __M_writer('\n')
