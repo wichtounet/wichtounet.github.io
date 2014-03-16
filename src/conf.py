@@ -12,7 +12,7 @@ BLOG_AUTHOR = "Baptiste Wicht"
 BLOG_TITLE = "@Blog(\"Baptiste Wicht\")"
 # This is the main URL for your site. It will be used
 # in a prominent link
-SITE_URL = "http://www.baptiste-wicht.com/"
+SITE_URL = "http://wichtounet.github.io/"
 # This is the URL where nikola's output will be deployed.
 # If not set, defaults to SITE_URL
 # BASE_URL = "http://www.baptiste-wicht.com/"
