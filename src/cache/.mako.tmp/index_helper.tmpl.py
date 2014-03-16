@@ -4,12 +4,12 @@ UNDEFINED = runtime.UNDEFINED
 __M_dict_builtin = dict
 __M_locals_builtin = locals
 _magic_number = 9
-_modified_time = 1394991744.0853574
+_modified_time = 1394992175.7474346
 _enable_loop = True
 _template_filename = '/usr/lib64/python3.3/site-packages/nikola/data/themes/base/templates/index_helper.tmpl'
 _template_uri = 'index_helper.tmpl'
 _source_encoding = 'utf-8'
-_exports = ['html_pager', 'mathjax_script']
+_exports = ['mathjax_script', 'html_pager']
 
 
 def render_body(context,**pageargs):
@@ -21,6 +21,22 @@ def render_body(context,**pageargs):
         __M_writer('\n\n')
         # SOURCE LINE 30
         __M_writer('\n')
+        return ''
+    finally:
+        context.caller_stack._pop_frame()
+
+
+def render_mathjax_script(context,posts):
+    __M_caller = context.caller_stack._push_frame()
+    try:
+        any = context.get('any', UNDEFINED)
+        __M_writer = context.writer()
+        # SOURCE LINE 21
+        __M_writer('\n')
+        # SOURCE LINE 22
+        if any(post.is_mathjax for post in posts):
+            # SOURCE LINE 23
+            __M_writer('        <script type="text/x-mathjax-config">\n        MathJax.Hub.Config({\n          tex2jax: {inlineMath: [[\'$latex \',\'$\'], [\'\\\\(\',\'\\\\)\']]}\n        });\n        </script>\n        <script src="/assets/js/mathjax.js"></script>\n')
         return ''
     finally:
         context.caller_stack._pop_frame()
@@ -59,22 +75,6 @@ def render_html_pager(context):
                 __M_writer(' &rarr;</a>\n            </li>\n')
             # SOURCE LINE 16
             __M_writer('        </ul>\n        </div>\n')
-        return ''
-    finally:
-        context.caller_stack._pop_frame()
-
-
-def render_mathjax_script(context,posts):
-    __M_caller = context.caller_stack._push_frame()
-    try:
-        any = context.get('any', UNDEFINED)
-        __M_writer = context.writer()
-        # SOURCE LINE 21
-        __M_writer('\n')
-        # SOURCE LINE 22
-        if any(post.is_mathjax for post in posts):
-            # SOURCE LINE 23
-            __M_writer('        <script type="text/x-mathjax-config">\n        MathJax.Hub.Config({\n          tex2jax: {inlineMath: [[\'$latex \',\'$\'], [\'\\\\(\',\'\\\\)\']]}\n        });\n        </script>\n        <script src="/assets/js/mathjax.js"></script>\n')
         return ''
     finally:
         context.caller_stack._pop_frame()
