@@ -17,7 +17,7 @@ SITE_URL = "http://www.baptiste-wicht.com/"
 # If not set, defaults to SITE_URL
 # BASE_URL = "http://www.baptiste-wicht.com/"
 BLOG_EMAIL = "baptistewicht@gmail.com"
-BLOG_DESCRIPTION = "Website about technologies Java, Spring, OSGi, Hardware,..."
+BLOG_DESCRIPTION = "Website about vtechnologies Java, Spring, OSGi, Hardware,..."
 
 # Nikola is multilingual!
 #
@@ -85,6 +85,11 @@ TRANSLATIONS_PATTERN = "{path}.{ext}.{lang}"
 # You should provide a key-value pair for each used language.
 NAVIGATION_LINKS = {
     DEFAULT_LANG: (
+        ('/stories/about.html', 'About'),
+        ('/stories/publications.html', 'Publications'),
+        ('/stories/donate.html', 'Donate'),
+        ('/stories/faq.html', 'FAQ'),
+        ('/stories/legal.html', 'Legal'),
         ('/archive.html', 'Archives'),
         ('/categories/index.html', 'Tags'),
         ('/rss.xml', 'RSS'),

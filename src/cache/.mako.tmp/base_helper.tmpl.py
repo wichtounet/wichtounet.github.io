@@ -4,12 +4,12 @@ UNDEFINED = runtime.UNDEFINED
 __M_dict_builtin = dict
 __M_locals_builtin = locals
 _magic_number = 9
-_modified_time = 1394986050.800827
+_modified_time = 1394991743.829178
 _enable_loop = True
 _template_filename = '/usr/lib64/python3.3/site-packages/nikola/data/themes/base/templates/base_helper.tmpl'
 _template_uri = 'base_helper.tmpl'
 _source_encoding = 'utf-8'
-_exports = ['html_sidebar_links', 'html_navigation_links', 'html_social', 'html_head', 'late_load_js', 'html_translations']
+_exports = ['html_sidebar_links', 'html_translations', 'html_social', 'html_head', 'late_load_js', 'html_navigation_links']
 
 
 def render_body(context,**pageargs):
@@ -50,64 +50,28 @@ def render_html_sidebar_links(context):
         context.caller_stack._pop_frame()
 
 
-def render_html_navigation_links(context):
+def render_html_translations(context):
     __M_caller = context.caller_stack._push_frame()
     try:
-        navigation_links = context.get('navigation_links', UNDEFINED)
+        _link = context.get('_link', UNDEFINED)
+        translations = context.get('translations', UNDEFINED)
+        messages = context.get('messages', UNDEFINED)
         lang = context.get('lang', UNDEFINED)
-        tuple = context.get('tuple', UNDEFINED)
-        rel_link = context.get('rel_link', UNDEFINED)
-        isinstance = context.get('isinstance', UNDEFINED)
-        permalink = context.get('permalink', UNDEFINED)
         __M_writer = context.writer()
-        # SOURCE LINE 63
+        # SOURCE LINE 87
         __M_writer('\n')
-        # SOURCE LINE 64
-        for url, text in navigation_links[lang]:
-            # SOURCE LINE 65
-            if isinstance(url, tuple):
-                # SOURCE LINE 66
-                __M_writer('            <li> ')
-                __M_writer(str(text))
-                __M_writer('\n            <ul>\n')
-                # SOURCE LINE 68
-                for suburl, text in url:
-                    # SOURCE LINE 69
-                    if rel_link(permalink, suburl) == "#":
-                        # SOURCE LINE 70
-                        __M_writer('                    <li class="active"><a href="')
-                        __M_writer(str(permalink))
-                        __M_writer('">')
-                        __M_writer(str(text))
-                        __M_writer('</a>\n')
-                        # SOURCE LINE 71
-                    else:
-                        # SOURCE LINE 72
-                        __M_writer('                    <li><a href="')
-                        __M_writer(str(suburl))
-                        __M_writer('">')
-                        __M_writer(str(text))
-                        __M_writer('</a>\n')
-                # SOURCE LINE 75
-                __M_writer('            </ul>\n')
-                # SOURCE LINE 76
-            else:
-                # SOURCE LINE 77
-                if rel_link(permalink, url) == "#":
-                    # SOURCE LINE 78
-                    __M_writer('                <li class="active"><a href="')
-                    __M_writer(str(permalink))
-                    __M_writer('">')
-                    __M_writer(str(text))
-                    __M_writer('</a>\n')
-                    # SOURCE LINE 79
-                else:
-                    # SOURCE LINE 80
-                    __M_writer('                <li><a href="')
-                    __M_writer(str(url))
-                    __M_writer('">')
-                    __M_writer(str(text))
-                    __M_writer('</a>\n')
+        # SOURCE LINE 88
+        for langname in translations.keys():
+            # SOURCE LINE 89
+            if langname != lang:
+                # SOURCE LINE 90
+                __M_writer('            <a href="')
+                __M_writer(str(_link("index", None, langname)))
+                __M_writer('" rel="alternate" hreflang="')
+                __M_writer(str(langname))
+                __M_writer('">')
+                __M_writer(str(messages("LANGUAGE", langname)))
+                __M_writer('</a>\n')
         return ''
     finally:
         context.caller_stack._pop_frame()
@@ -131,24 +95,24 @@ def render_html_social(context):
 def render_html_head(context):
     __M_caller = context.caller_stack._push_frame()
     try:
-        use_cdn = context.get('use_cdn', UNDEFINED)
+        mathjax_config = context.get('mathjax_config', UNDEFINED)
+        blog_author = context.get('blog_author', UNDEFINED)
         comment_system = context.get('comment_system', UNDEFINED)
-        blog_title = context.get('blog_title', UNDEFINED)
-        len = context.get('len', UNDEFINED)
-        favicons = context.get('favicons', UNDEFINED)
-        description = context.get('description', UNDEFINED)
-        abs_link = context.get('abs_link', UNDEFINED)
-        title = context.get('title', UNDEFINED)
-        use_bundles = context.get('use_bundles', UNDEFINED)
         comment_system_id = context.get('comment_system_id', UNDEFINED)
         rss_link = context.get('rss_link', UNDEFINED)
-        striphtml = context.get('striphtml', UNDEFINED)
-        translations = context.get('translations', UNDEFINED)
-        _link = context.get('_link', UNDEFINED)
-        mathjax_config = context.get('mathjax_config', UNDEFINED)
-        has_custom_css = context.get('has_custom_css', UNDEFINED)
         permalink = context.get('permalink', UNDEFINED)
-        blog_author = context.get('blog_author', UNDEFINED)
+        abs_link = context.get('abs_link', UNDEFINED)
+        len = context.get('len', UNDEFINED)
+        has_custom_css = context.get('has_custom_css', UNDEFINED)
+        blog_title = context.get('blog_title', UNDEFINED)
+        use_cdn = context.get('use_cdn', UNDEFINED)
+        _link = context.get('_link', UNDEFINED)
+        title = context.get('title', UNDEFINED)
+        use_bundles = context.get('use_bundles', UNDEFINED)
+        description = context.get('description', UNDEFINED)
+        translations = context.get('translations', UNDEFINED)
+        striphtml = context.get('striphtml', UNDEFINED)
+        favicons = context.get('favicons', UNDEFINED)
         __M_writer = context.writer()
         # SOURCE LINE 2
         __M_writer('\n    <meta charset="utf-8">\n')
@@ -254,28 +218,64 @@ def render_late_load_js(context):
         context.caller_stack._pop_frame()
 
 
-def render_html_translations(context):
+def render_html_navigation_links(context):
     __M_caller = context.caller_stack._push_frame()
     try:
+        rel_link = context.get('rel_link', UNDEFINED)
         lang = context.get('lang', UNDEFINED)
-        messages = context.get('messages', UNDEFINED)
-        translations = context.get('translations', UNDEFINED)
-        _link = context.get('_link', UNDEFINED)
+        permalink = context.get('permalink', UNDEFINED)
+        navigation_links = context.get('navigation_links', UNDEFINED)
+        tuple = context.get('tuple', UNDEFINED)
+        isinstance = context.get('isinstance', UNDEFINED)
         __M_writer = context.writer()
-        # SOURCE LINE 87
+        # SOURCE LINE 63
         __M_writer('\n')
-        # SOURCE LINE 88
-        for langname in translations.keys():
-            # SOURCE LINE 89
-            if langname != lang:
-                # SOURCE LINE 90
-                __M_writer('            <a href="')
-                __M_writer(str(_link("index", None, langname)))
-                __M_writer('" rel="alternate" hreflang="')
-                __M_writer(str(langname))
-                __M_writer('">')
-                __M_writer(str(messages("LANGUAGE", langname)))
-                __M_writer('</a>\n')
+        # SOURCE LINE 64
+        for url, text in navigation_links[lang]:
+            # SOURCE LINE 65
+            if isinstance(url, tuple):
+                # SOURCE LINE 66
+                __M_writer('            <li> ')
+                __M_writer(str(text))
+                __M_writer('\n            <ul>\n')
+                # SOURCE LINE 68
+                for suburl, text in url:
+                    # SOURCE LINE 69
+                    if rel_link(permalink, suburl) == "#":
+                        # SOURCE LINE 70
+                        __M_writer('                    <li class="active"><a href="')
+                        __M_writer(str(permalink))
+                        __M_writer('">')
+                        __M_writer(str(text))
+                        __M_writer('</a>\n')
+                        # SOURCE LINE 71
+                    else:
+                        # SOURCE LINE 72
+                        __M_writer('                    <li><a href="')
+                        __M_writer(str(suburl))
+                        __M_writer('">')
+                        __M_writer(str(text))
+                        __M_writer('</a>\n')
+                # SOURCE LINE 75
+                __M_writer('            </ul>\n')
+                # SOURCE LINE 76
+            else:
+                # SOURCE LINE 77
+                if rel_link(permalink, url) == "#":
+                    # SOURCE LINE 78
+                    __M_writer('                <li class="active"><a href="')
+                    __M_writer(str(permalink))
+                    __M_writer('">')
+                    __M_writer(str(text))
+                    __M_writer('</a>\n')
+                    # SOURCE LINE 79
+                else:
+                    # SOURCE LINE 80
+                    __M_writer('                <li><a href="')
+                    __M_writer(str(url))
+                    __M_writer('">')
+                    __M_writer(str(text))
+                    __M_writer('</a>\n')
         return ''
     finally:
         context.caller_stack._pop_frame()
