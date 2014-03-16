@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<rss xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/" version="2.0"><channel><title>@Blog("Baptiste Wicht") (Assembly)</title><link>http://wichtounet.github.io/</link><description></description><atom:link type="application/rss+xml" rel="self" href="http://wichtounet.github.io/categories/assembly.xml"></atom:link><language>en</language><lastBuildDate>Sun, 16 Mar 2014 21:44:31 GMT</lastBuildDate><generator>Nikola &lt;http://getnikola.com/&gt;</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>Thor OS: Boot Process</title><link>http://wichtounet.github.io/posts/2013/12/thor-os-boot-process.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;Some time ago, I started a hobby project: &lt;a title="New hobby project: Thor-OS, 64bit Operating System in C++" href="http://www.baptiste-wicht.com/2013/12/new-hobby-project-thor-os-64bit-operating-system-c/"&gt;writing a new operating system&lt;/a&gt;. I'm not trying to create a concurrent to Linux, I'm just trying to learn some more stuff about operating systems. I'm gonna try to write some posts about this kernel on this blog.&lt;/p&gt;
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>@Blog("Baptiste Wicht") (Assembly)</title><link>http://wichtounet.github.io/</link><description></description><atom:link href="http://wichtounet.github.io/categories/assembly.xml" type="application/rss+xml" rel="self"></atom:link><language>en</language><lastBuildDate>Sun, 16 Mar 2014 21:53:28 GMT</lastBuildDate><generator>Nikola &lt;http://getnikola.com/&gt;</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>Thor OS: Boot Process</title><link>http://wichtounet.github.io/posts/2013/12/thor-os-boot-process.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;Some time ago, I started a hobby project: &lt;a title="New hobby project: Thor-OS, 64bit Operating System in C++" href="http://www.baptiste-wicht.com/2013/12/new-hobby-project-thor-os-64bit-operating-system-c/"&gt;writing a new operating system&lt;/a&gt;. I'm not trying to create a concurrent to Linux, I'm just trying to learn some more stuff about operating systems. I'm gonna try to write some posts about this kernel on this blog.&lt;/p&gt;
 &lt;p&gt;In this post, I'll describe the boot process I've written for this operating system.&lt;/p&gt;
 &lt;p&gt;&lt;/p&gt;&lt;h3&gt;Bootloader Step&lt;/h3&gt;
 &lt;p&gt;The first step is of course the bootloader. The bootloader is in the MBR and is loaded by the system at 0x7C00.&lt;/p&gt;
@@ -350,4 +350,195 @@
 &lt;p&gt;Then you can install insight: &lt;/p&gt;
 &lt;p&gt;[bash]sudo apt-get install insight[/bash]&lt;/p&gt;
 &lt;p&gt;And now you are ready to use Insight as your debugger. &lt;/p&gt;
-&lt;p&gt;If you don't trust this PPA repository, you can also try it to install it from the sources (http://sources.redhat.com/insight/), but doesn't seem to very simple to install it. I wasn't able to build it on my Linux Mint 12. &lt;/p&gt;&lt;/div&gt;</description><category>Assembly</category><category>Assembly</category><category>C++</category><category>gcc</category><category>Linux</category><category>Mint</category><category>Tools</category><category>Ubuntu</category><guid>http://wichtounet.github.io/posts/2012/01/install-insight-debugger-linux-mint-ubuntu.html</guid><pubDate>Thu, 26 Jan 2012 09:28:41 GMT</pubDate></item></channel></rss>
+&lt;p&gt;If you don't trust this PPA repository, you can also try it to install it from the sources (http://sources.redhat.com/insight/), but doesn't seem to very simple to install it. I wasn't able to build it on my Linux Mint 12. &lt;/p&gt;&lt;/div&gt;</description><category>Assembly</category><category>Assembly</category><category>C++</category><category>gcc</category><category>Linux</category><category>Mint</category><category>Tools</category><category>Ubuntu</category><guid>http://wichtounet.github.io/posts/2012/01/install-insight-debugger-linux-mint-ubuntu.html</guid><pubDate>Thu, 26 Jan 2012 09:28:41 GMT</pubDate></item><item><title>Dynamic memory allocation in Intel Assembly on Linux</title><link>http://wichtounet.github.io/posts/2011/11/dynamic-memory-allocation-intel-assembly-linux.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;For the version 0.6.0 of the EDDI Compiler, I have written a simple dynamic memory allocation function in assembly. I did that to avoid using malloc in my assembly code. As this is not an easy subject, this article will explain the main parts of writing this function.&lt;/p&gt;
+&lt;p&gt;As the EDDI Compiler creates program for Linux platform, this article will focus on writing a little memory allocator for Linux in Intel Assembly.&lt;/p&gt;
+&lt;p&gt;In this article I will follow the &lt;em&gt;AT&amp;amp;T notation&lt;/em&gt;.&lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;h4&gt;Specifications&lt;/h4&gt;
+&lt;p&gt;The function works like malloc but is simpler. The specifications are the following ones:&lt;/p&gt;
+&lt;ul&gt;
+    &lt;li&gt;We call the function with one argument: the dynamic memory size we need&lt;/li&gt;
+    &lt;li&gt;The function returns the start address of the allocated memory in the &lt;strong&gt;%eax&lt;/strong&gt; register&lt;/li&gt;
+    &lt;li&gt;There is no need to deallocate the allocated memory&lt;/li&gt;
+    &lt;li&gt;The size that we ask will generally small and always less than 16384 octets&lt;/li&gt;
+    &lt;li&gt;Having some gaps in the memory is not a problem for now&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;So as you can see there are several limitations to this memory allocator. These limitations are the one I had for EDDI, so I'll follow them in this article.&lt;/p&gt;
+&lt;h4&gt;Dynamic memory allocation&lt;/h4&gt;
+
+&lt;p&gt;In Linux, there are two ways for performing dynamic memory allocation:&lt;/p&gt;
+&lt;ul&gt;
+    &lt;li&gt;&lt;strong&gt;brk&lt;/strong&gt;: Increment the size of the data segment after the end of the program. This memory is directly after the program and is always contiguous. It's the easiest way for allocating memory. This technique is not perfect for large blocks of data.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;mmap&lt;/strong&gt;: Creates a new memory mapping in the virtual address space. The kernel gives you memory in virtually every place of the memory.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;In our case, as we need only small blocks, we will use &lt;strong&gt;brk&lt;/strong&gt; to dynamically allocate memory.&lt;/p&gt;
+&lt;p&gt;We can call these procedures using system calls. In assembly, you can use system calls with interruptions (0x80).&lt;/p&gt;
+&lt;h4&gt;Implementation&lt;/h4&gt;
+
+&lt;p&gt;We need two variables for this function. One to keep track of the remaining size and another one to keep track of the current address of the allocated memory.&lt;/p&gt;
+&lt;p&gt;[assembly].data&lt;/p&gt;
+&lt;p&gt;.size VIeddi_remaining, 4&lt;/p&gt;
+&lt;p&gt;VIeddi_remaining:&lt;/p&gt;
+&lt;p&gt;.long 0&lt;/p&gt;
+&lt;p&gt;.size VIeddi_current, 4&lt;/p&gt;
+&lt;p&gt;VIeddi_current:&lt;/p&gt;
+&lt;p&gt;.long 0[/assembly]&lt;/p&gt;
+&lt;p&gt;Both variables are initialized to 0.&lt;/p&gt;
+&lt;p&gt;And here is the function I've developed :&lt;/p&gt;
+&lt;p&gt;[assembly]eddi_alloc:&lt;/p&gt;
+&lt;p&gt;pushl %ebp&lt;/p&gt;
+&lt;p&gt;movl %esp, %ebp&lt;/p&gt;
+&lt;p&gt;movl 8(%ebp), %ecx&lt;/p&gt;
+&lt;p&gt;movl VIeddi_remaining, %ebx&lt;/p&gt;
+&lt;p&gt;cmpl %ebx, %ecx&lt;/p&gt;
+&lt;p&gt;jle alloc_normal&lt;/p&gt;
+&lt;p&gt;movl $45, %eax&lt;/p&gt;
+&lt;p&gt;xorl %ebx, %ebx&lt;/p&gt;
+&lt;p&gt;int  $0x80&lt;/p&gt;
+&lt;p&gt;movl %eax, %esi&lt;/p&gt;
+&lt;p&gt;movl %eax, %ebx&lt;/p&gt;
+&lt;p&gt;addl $16384, %ebx&lt;/p&gt;
+&lt;p&gt;movl $45, %eax&lt;/p&gt;
+&lt;p&gt;int  $0x80&lt;/p&gt;
+&lt;p&gt;movl %esi, %eax&lt;/p&gt;
+&lt;p&gt;movl $16384, VIeddi_remaining&lt;/p&gt;
+&lt;p&gt;movl %esi, VIeddi_current&lt;/p&gt;
+&lt;p&gt;alloc_normal:&lt;/p&gt;
+&lt;p&gt;movl VIeddi_current, %eax&lt;/p&gt;
+&lt;p&gt;movl VIeddi_current, %ebx&lt;/p&gt;
+&lt;p&gt;addl %ecx, %ebx&lt;/p&gt;
+&lt;p&gt;movl %ebx, VIeddi_current&lt;/p&gt;
+&lt;p&gt;movl VIeddi_remaining, %ebx&lt;/p&gt;
+&lt;p&gt;subl %ecx, %ebx&lt;/p&gt;
+&lt;p&gt;movl %ebx, VIeddi_remaining&lt;/p&gt;
+&lt;p&gt;leave&lt;/p&gt;
+&lt;p&gt;ret[/assembly]&lt;/p&gt;
+&lt;p&gt;I will describe now each part of the alloc function.&lt;/p&gt;
+&lt;p&gt;[assembly]movl 8(%ebp), %ecx&lt;/p&gt;
+&lt;p&gt;movl VIeddi_remaining, %ebx&lt;/p&gt;
+&lt;p&gt;cmpl %ebx, %ecx&lt;/p&gt;
+&lt;p&gt;jle alloc_normal[/assembly]&lt;/p&gt;
+&lt;p&gt;In this part we test if there is enough remaining size for the dynamic memory allocation request. It's equivalent to &lt;em&gt;if(remaining &amp;gt;= size)&lt;/em&gt;. If there is enough size, we jump to the normal allocation part :&lt;/p&gt;
+&lt;p&gt;[assembly]alloc_normal:&lt;/p&gt;
+&lt;p&gt;movl VIeddi_current, %eax&lt;/p&gt;
+&lt;p&gt;movl VIeddi_current, %ebx&lt;/p&gt;
+&lt;p&gt;addl %ecx, %ebx&lt;/p&gt;
+&lt;p&gt;movl %ebx, VIeddi_current&lt;/p&gt;
+&lt;p&gt;movl VIeddi_remaining, %ebx&lt;/p&gt;
+&lt;p&gt;subl %ecx, %ebx&lt;/p&gt;
+&lt;p&gt;movl %ebx, VIeddi_remaining[/assembly]&lt;/p&gt;
+&lt;p&gt;First, we move the current address of memory into the &lt;strong&gt;%eax&lt;/strong&gt; register for the return value. Then we add the size of the new allocated block to the current address. Finally we remove the size of the new allocated block from the remaining size. After that, we can leave the function.&lt;/p&gt;
+&lt;p&gt;The most interesting part is what we do when we have to allocate more memory :&lt;/p&gt;
+&lt;p&gt;[assembly]movl $45, %eax&lt;/p&gt;
+&lt;p&gt;xorl %ebx, %ebx&lt;/p&gt;
+&lt;p&gt;int  $0x80&lt;/p&gt;
+&lt;p&gt;movl %eax, %esi&lt;/p&gt;
+&lt;p&gt;movl %eax, %ebx&lt;/p&gt;
+&lt;p&gt;addl $16384, %ebx&lt;/p&gt;
+&lt;p&gt;movl $45, %eax&lt;/p&gt;
+&lt;p&gt;int  $0x80&lt;/p&gt;
+&lt;p&gt;movl $16384, VIeddi_remaining&lt;/p&gt;
+&lt;p&gt;movl %esi, VIeddi_current[/assembly]&lt;/p&gt;
+&lt;p&gt;We start by doing an interruption to execute a system call. The &lt;strong&gt;45&lt;/strong&gt; in the &lt;strong&gt;%eax&lt;/strong&gt; register indicates a &lt;strong&gt;sys_brk&lt;/strong&gt; call. The 0 in the &lt;strong&gt;%ebx&lt;/strong&gt; register, indicates that we want the current position of brk space. We save this current position into the &lt;strong&gt;%esi&lt;/strong&gt; register. Then we add 16384 bits (4K octets) to this address. We call again the &lt;strong&gt;sys_brk&lt;/strong&gt; routine to set the address of the brk space to the calculated address. This is the way to dynamically allocates 4K of memory. Finally, we add 4K to the remaining size in octets and we put the current address (before the add) as the current address.&lt;/p&gt;
+&lt;h4&gt;Possible improvements&lt;/h4&gt;
+
+&lt;p&gt;We should make some optimization if this function has to be invoked frequently. The first interruption (call to sys_brk) has only to be done once. The very first time we need to get the start address. Then, we can use the current address as the base address when we do the new allocation.&lt;/p&gt;
+&lt;p&gt;Another improvement is to avoid having gaps between the used blocks. For that, we can avoid setting the current address directly to the newly allocated address but just add 4K to the remaining size. The blocks will overlap 2 allocated blocks.&lt;/p&gt;
+&lt;p&gt;We could also check that the value returned by the &lt;strong&gt;sys_brk&lt;/strong&gt; is valid. On error, the procedure can return -1.&lt;/p&gt;
+&lt;h4&gt;Conclusion&lt;/h4&gt;
+
+&lt;p&gt;In this post, we developed a basic dynamic memory allocation function in Intel assembly on the Linux platform. I hope that this information can helps some of you.&lt;/p&gt;
+&lt;p&gt;Don't hesitate if you have a question or a comment on my implementation.&lt;/p&gt;&lt;/div&gt;</description><category>Assembly</category><category>Assembly</category><category>EDDI</category><category>Intel</category><category>Linux</category><guid>http://wichtounet.github.io/posts/2011/11/dynamic-memory-allocation-intel-assembly-linux.html</guid><pubDate>Tue, 29 Nov 2011 09:16:26 GMT</pubDate></item><item><title>How to print strings and integers in Intel Assembly on Linux ?</title><link>http://wichtounet.github.io/posts/2011/11/print-strings-integers-intel-assembly.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;In this post, we'll learn how to print strings and integers to the console on Linux using Intel Assembly. In this post, I'll use the AT&amp;amp;T notation, because it's the notation used in EDDI. &lt;/p&gt;
+&lt;p&gt;In EDDI, I have to print strings and numbers to the console, as this is not an easy exercise, I wanted to share my experience here. &lt;/p&gt;
+&lt;p&gt;On Linux, the only way to print something on the console is to use a system call. For that, we have to use the 0x08 interrupt code. &lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;h4&gt;Declare strings&lt;/h4&gt;
+&lt;p&gt;First, we'll see how to declare strings in an Intel Assembly file. You can use the &lt;strong&gt;.string&lt;/strong&gt; instruction to achieve that : &lt;/p&gt;
+&lt;p&gt;[assembly]StringToPrint:&lt;/p&gt;
+&lt;p&gt;.string "Hello"[/assembly]&lt;/p&gt;
+&lt;h4&gt;Print strings&lt;/h4&gt;
+
+&lt;p&gt;Then, to print, we will call the &lt;em&gt;sys_write&lt;/em&gt; system call : &lt;/p&gt;
+&lt;p&gt;[assembly]movl $4, %eax&lt;/p&gt;
+&lt;p&gt;movl $1, %ebx&lt;/p&gt;
+&lt;p&gt;movl $StringToPrint, %ecx&lt;/p&gt;
+&lt;p&gt;movl $5, %edx&lt;/p&gt;
+&lt;p&gt;int $0x80[/assembly]&lt;/p&gt;
+&lt;p&gt;The value in &lt;strong&gt;%eax&lt;/strong&gt; (4) indicates the system call we need (&lt;em&gt;sys_write&lt;/em&gt;). The 1 in &lt;strong&gt;%ebx&lt;/strong&gt; indicates that we want to write in the console. Finally the two last parameters indicates the string to print and the size of the string. In Intel assembly, the &lt;strong&gt;int&lt;/strong&gt; instruction launch an interrupt and the 0x80 in the interrupt table is set to the system call in the Linux Kernel. &lt;/p&gt;
+&lt;p&gt;As you can see, this code does use 4 registers and does not save any of them. Ideally, you will save the registers before and restore them. It depends on when you use this routine. &lt;/p&gt;
+&lt;h4&gt;Print integers&lt;/h4&gt;
+
+&lt;p&gt;Writing an integer is a bit more complicated. If you have the integer in the string, there is no problem, but if you have only a long on your assembly, you'll have to convert the int into a string to print it. We will convert the integer char after char and use the stack as storage for our string. Then every char will be printed to the console using the same system as before. &lt;/p&gt;
+&lt;p&gt;So let's say we have our number in the &lt;strong&gt;%eax&lt;/strong&gt; register : &lt;/p&gt;
+&lt;p&gt;[assembly]movl $9234, %eax[/assembly]&lt;/p&gt;
+&lt;p&gt;So let's take a look at the code : &lt;/p&gt;
+&lt;p&gt;[assembly]xorl %esi, %esi&lt;/p&gt;
+&lt;p&gt;loop:&lt;/p&gt;
+&lt;p&gt;movl $0, %edx&lt;/p&gt;
+&lt;p&gt;movl $10, %ebx&lt;/p&gt;
+&lt;p&gt;divl %ebx&lt;/p&gt;
+&lt;p&gt;addl $48, %edx&lt;/p&gt;
+&lt;p&gt;pushl %edx&lt;/p&gt;
+&lt;p&gt;incl %esi&lt;/p&gt;
+&lt;p&gt;cmpl $0, %eax&lt;/p&gt;
+&lt;p&gt;jz   next&lt;/p&gt;
+&lt;p&gt;jmp loop&lt;/p&gt;
+&lt;p&gt;next:&lt;/p&gt;
+&lt;p&gt;cmpl $0, %esi&lt;/p&gt;
+&lt;p&gt;jz   exit&lt;/p&gt;
+&lt;p&gt;decl %esi&lt;/p&gt;
+&lt;p&gt;movl $4, %eax&lt;/p&gt;
+&lt;p&gt;movl %esp, %ecx&lt;/p&gt;
+&lt;p&gt;movl $1, %ebx&lt;/p&gt;
+&lt;p&gt;movl $1, %edx&lt;/p&gt;
+&lt;p&gt;int  $0x80&lt;/p&gt;
+&lt;p&gt;addl $4, %esp&lt;/p&gt;
+&lt;p&gt;jmp  next&lt;/p&gt;
+&lt;p&gt;exit:[/assembly]&lt;/p&gt;
+&lt;p&gt;The first part of the code consists in dividing the value by 10 until we reach zero. The remainder of the division is pushed onto the stack. For example, for our number, after this part, we'll have 4-3-2-9 on the stack. The order is reversed, which is logic because we stack the remainders from the right. During this phase, we count the number of elements using the &lt;strong&gt;%esi&lt;/strong&gt; register. &lt;/p&gt;
+&lt;p&gt;Once this is done, we print each characters one by one starting with the last that has been pushed. Here we decrement the counter for each char and we use the &lt;strong&gt;sys_write&lt;/strong&gt; call with &lt;strong&gt;%esp&lt;/strong&gt; as the address of the string of one character. After each character, we incremetn the &lt;strong&gt;%esp&lt;/strong&gt; to cancel the push that we used. &lt;/p&gt;
+&lt;p&gt;We have to do this in two phases in order to get the characters in the good order and not in reverse order. &lt;/p&gt;
+&lt;h4&gt;Handle negative numbers&lt;/h4&gt;
+
+&lt;p&gt;As you may have noticed, we do not manage negative numbers in our code. They will be printed, but it will be positive number. Indeed, in Intel Assembly (and in processors in general), negative numbers are handled with two's complement. Handling negative numbers in our code is not a big deal. We can add this code at the beginning : &lt;/p&gt;
+&lt;p&gt;[assembly]cmpl $0, %eax&lt;/p&gt;
+&lt;p&gt;jge loop&lt;/p&gt;
+&lt;p&gt;neg %eax&lt;/p&gt;
+&lt;p&gt;pushl %eax&lt;/p&gt;
+&lt;p&gt;//Print "-" &lt;/p&gt;
+&lt;p&gt;popl %eax[/assembly]&lt;/p&gt;
+&lt;p&gt;First of all, we check if the number is smaller than 0, if it's not the case, we directly jump to the code we used before. If it's smaller, we negate the number and print a - before printing the real number. We have to save the &lt;strong&gt;%eax&lt;/strong&gt; register before printing the - character because &lt;strong&gt;%eax&lt;/strong&gt; is used for printing. &lt;/p&gt;
+&lt;p&gt;You'll now have a complete procedure to print an integer on the console in assembly. &lt;/p&gt;
+&lt;p&gt;I hope that this could be of some help for somebody. &lt;/p&gt;&lt;/div&gt;</description><category>Assembly</category><category>Assembly</category><category>EDDI</category><category>Intel</category><category>Linux</category><guid>http://wichtounet.github.io/posts/2011/11/print-strings-integers-intel-assembly.html</guid><pubDate>Wed, 23 Nov 2011 09:11:59 GMT</pubDate></item><item><title>eddic 0.5.1 : Better assembly generation and faster parsing</title><link>http://wichtounet.github.io/posts/2011/11/eddic-0-5-1-better-assembly-generation-and-faster-parsing.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;I'm very pleased to release the version 0.5.1 of the EDDI Compiler.&lt;/p&gt;
+&lt;p&gt;It makes now a long time since the last version of eddic, but I started again working frequently on it. This version doesn't add any new feature to the language, but there are a lot of improvements in the compiler itself. &lt;/p&gt;
+&lt;p&gt;First of all, the generated assembly has been improved a lot. I use now a intermediate representation of assembly and then the compiler is able to make more optimizations in its choice. This optimization is especially visible for integer computations. Before this, all the computations used stack operations and then we use almost only registers when it's possible. It's still not perfect, but it uses way less instructions. Moreover, this can enable me to write a 64 assembly code instead of 32 and provide both versions in the compiler. &lt;/p&gt;
+&lt;p&gt;Another improvement is the speed of the parser. I now use Boost Spirit to parse the source file and construct an Abstract Syntax Tree. This parsing is very fast now (with some optimizations). Moreover, it will be easier to add new constructs later. &lt;/p&gt;
+&lt;p&gt;I also improved the general performances at some places. I also use Boost Program Options to parse the command line options. &lt;/p&gt;
+&lt;p&gt;In the next version (0.6.0), I will introduce arrays of int and strings and the foreach construct for array. I will also remove the dependency to malloc writing a memory allocation manager in assembly. I will also introduce warnings in the compiler. &lt;/p&gt;
+&lt;p&gt;You can find the compiler sources on the Github repository : &lt;a title="EDDI COmpiler Repository" href="http://github.com/wichtounet/eddic"&gt;https://github.com/wichtounet/eddic&lt;/a&gt;. &lt;/p&gt;
+&lt;p&gt;The compiler now needs Boost 1.47.0 to build. &lt;/p&gt;
+&lt;p&gt;The exact version I refer to is the v0.5.1 available in the github tags or directly as the release branch.&lt;/p&gt;&lt;/div&gt;</description><category>Assembly</category><category>Boost</category><category>C++</category><category>EDDI</category><category>EDDI</category><category>Performances</category><category>Releases</category><category>templates</category><guid>http://wichtounet.github.io/posts/2011/11/eddic-0-5-1-better-assembly-generation-and-faster-parsing.html</guid><pubDate>Thu, 10 Nov 2011 04:33:32 GMT</pubDate></item><item><title>EDDI 0.4.1 : Loops and better assembly generation</title><link>http://wichtounet.github.io/posts/2011/07/eddi-0-4-1-loops-and-better-assembly-generation.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;I just released the 0.4.1 version of the EDDI compiler.&lt;/p&gt;
+&lt;p&gt;This version introduce two kind of loops :&lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;ul&gt;
+    &lt;li&gt;the while loop&lt;/li&gt;
+    &lt;li&gt;the for loop, in its general form with three expressions&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div&gt;Moreover, you can now use parenth in mathematical expressions.&lt;/div&gt;
+
+&lt;div&gt;That's it for the new features, but the compiler has been greatly improved. Now the scope of variables is managed, so you can have twice the same variables as long as they are not visible at the same time.&lt;/div&gt;
+
+&lt;div&gt;For the assembly, there have been many improvements. The variables are not stored in a more efficient way, the concatenation of strings has been improved to take less space and other little changes have been made. The Lexer has been rewritten using a Scanner to manage the source file directly so that the error do now give the line and the column of the error source. The Parser and the Compiler itself have had some refactorings, but nothing really big.&lt;/div&gt;
+
+&lt;div&gt;You can find the compiler on the Github repository : &lt;a href="https://github.com/wichtounet/eddic"&gt;https://github.com/wichtounet/eddic&lt;/a&gt;&lt;/div&gt;
+
+&lt;div&gt;The exact version I refer to is the v0.4.1 available in the github tags.&lt;/div&gt;
+
+&lt;div&gt;The next version will certainly see more loops versions, some assembly refinements and perhaps first kind of function calls. I will also try to escalate the Token information in order to have better reporting when there are semantic errors. I will also some refactorings in the parse node to have a better integration of the Condition and the StringPool.&lt;/div&gt;
+
+&lt;p&gt;&lt;/p&gt;&lt;/div&gt;</description><category>Assembly</category><category>C++</category><category>EDDI</category><category>EDDI</category><category>Releases</category><guid>http://wichtounet.github.io/posts/2011/07/eddi-0-4-1-loops-and-better-assembly-generation.html</guid><pubDate>Thu, 28 Jul 2011 09:06:50 GMT</pubDate></item><item><title>EDDI 0.4 : Native compilation and swap operator</title><link>http://wichtounet.github.io/posts/2011/07/eddi-0-4-native-compilation-swap.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;The version 0.4 of EDDI is released. &lt;/p&gt;
+&lt;p&gt;There is only one new feature, the swap operator () to swap two variables together, but the biggest news is that now EDDI is not anymore an interpreted language, but is a compiled language. &lt;/p&gt;
+&lt;p&gt;In fact, I rewritten the compiler in order to output Linux assembly code. For now the code is only 32 bits, but I plan to support 64 as well. I made that change in order to not having to write a virtual machine and in order to learn assembly as well. The current outputted assembly code is not really optimized and there will certainly be a lot of changes. Indeed, in order to simplify the switch to native compiler, I continued using stack operations, so that the numeric computations have a lot have a lot of stack operations in it. Moreover, I'm far from being a professional in assembly, so that, they can beginner's errors in the generated code. &lt;/p&gt;
+&lt;p&gt;I use as to compile the assembly and then gcc to link. I will try to not depend on gcc, but it seems to be difficult if I want to use malloc (used for the string concatenation). &lt;/p&gt;
+&lt;p&gt;You can download the sources and find some information on the GitHub repository : https://github.com/wichtounet/eddic/ (check the tag v0.4 if you want the exact version I refer in this post). &lt;/p&gt;
+&lt;p&gt;Do not hesitate to send me your comments about the C++ code, the design or the outputted assembly. &lt;/p&gt;
+&lt;p&gt;The first version will see loops integrated, certainly some assembly optimizations and some code refactorings I planned. &lt;/p&gt;&lt;/div&gt;</description><category>Assembly</category><category>C++</category><category>EDDI</category><category>EDDI</category><category>Intel</category><category>Releases</category><guid>http://wichtounet.github.io/posts/2011/07/eddi-0-4-native-compilation-swap.html</guid><pubDate>Wed, 20 Jul 2011 09:27:13 GMT</pubDate></item></channel></rss>

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<rss xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/" version="2.0"><channel><title>@Blog("Baptiste Wicht") (Concurrency)</title><link>http://wichtounet.github.io/</link><description></description><atom:link type="application/rss+xml" rel="self" href="http://wichtounet.github.io/categories/concurrency.xml"></atom:link><language>en</language><lastBuildDate>Sun, 16 Mar 2014 21:44:29 GMT</lastBuildDate><generator>Nikola &lt;http://getnikola.com/&gt;</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>Run your Boost Tests in parallel with CMake</title><link>http://wichtounet.github.io/posts/2012/10/run-boost-test-parallel-cmake.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;I was looking for a Test Library to run eddic tests in parallel to replace Boost Test Library. I posted my question on StackOverflow and an awesome solution has been posted. With CMake and a little CMake additional file, it is possible to run the tests written with Boost Test Library in parallel without changing anything in the tests code !&lt;/p&gt;
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>@Blog("Baptiste Wicht") (Concurrency)</title><link>http://wichtounet.github.io/</link><description></description><atom:link href="http://wichtounet.github.io/categories/concurrency.xml" type="application/rss+xml" rel="self"></atom:link><language>en</language><lastBuildDate>Sun, 16 Mar 2014 21:53:28 GMT</lastBuildDate><generator>Nikola &lt;http://getnikola.com/&gt;</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>Run your Boost Tests in parallel with CMake</title><link>http://wichtounet.github.io/posts/2012/10/run-boost-test-parallel-cmake.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;I was looking for a Test Library to run eddic tests in parallel to replace Boost Test Library. I posted my question on StackOverflow and an awesome solution has been posted. With CMake and a little CMake additional file, it is possible to run the tests written with Boost Test Library in parallel without changing anything in the tests code !&lt;/p&gt;
 &lt;p&gt;CTest is the test runner that is shipped with CMake. This runner can run tests in parallel using the -j X option (X is the numbers of threads). However, it can only run the tests that are declared in the CMakeLists.txt file. In my case, this means only one (the executable with Boost Test Library). If you have T tests, a solution would be create T executable files. Then, they can be run in parallel by ctest. However, this is not very practical. The solution proposed in this article is better. &lt;/p&gt;
 &lt;p&gt;&lt;/p&gt;&lt;h3&gt;Integrate Boost Test Library in CMake&lt;/h3&gt;
 &lt;p&gt;Ryan Pavlik provides a series of CMake modules in its Github repository. One of this module is named BoostTestTargets. It automatically generates the CTest commands to run all the tests that you have. The small drawback is that you to list all the tests. &lt;/p&gt;
@@ -1070,4 +1070,1138 @@ Hello from thread 140276676175616&lt;/blockquote&gt;
 &lt;/ol&gt;
 
 &lt;p&gt;So that's all for this benchmark. I hope you found it interesting.&lt;/p&gt;
-&lt;p&gt;The sources of the benchmark : &lt;a href="http://wichtounet.github.io/wp-content/uploads/2010/08/SynchronizationBenchmark.java"&gt;Synchronization Benchmark Sources&lt;/a&gt;&lt;/p&gt;&lt;/div&gt;</description><category>Benchmarks</category><category>Concurrency</category><category>Java</category><category>Java</category><category>Performances</category><guid>http://wichtounet.github.io/posts/2010/09/java-synchronization-mutual-exclusion-benchmark.html</guid><pubDate>Wed, 01 Sep 2010 07:13:18 GMT</pubDate></item></channel></rss>
+&lt;p&gt;The sources of the benchmark : &lt;a href="http://wichtounet.github.io/wp-content/uploads/2010/08/SynchronizationBenchmark.java"&gt;Synchronization Benchmark Sources&lt;/a&gt;&lt;/p&gt;&lt;/div&gt;</description><category>Benchmarks</category><category>Concurrency</category><category>Java</category><category>Java</category><category>Performances</category><guid>http://wichtounet.github.io/posts/2010/09/java-synchronization-mutual-exclusion-benchmark.html</guid><pubDate>Wed, 01 Sep 2010 07:13:18 GMT</pubDate></item><item><title>Java Concurrency - Part 4 : Semaphores</title><link>http://wichtounet.github.io/posts/2010/08/java-concurrency-part-4-semaphores.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;We continue in Java Concurrency with the semaphores. Semaphores is also a way to synchronize threads.&lt;/p&gt;
+&lt;p&gt;Semaphores are a really simple concept, invented by the famous Dutch computer scientist Edsger Dijkstra. Basically a semaphore is a counter (integer) that allows a thread to get into a critical region if the value of the counter is greater than 0. If it's the case, the counter is decremented by one otherwise, the thread is waiting until it can go. And when the thread go away from the critical region, the counter is incremented by one to allow one more thread to pass the critical region. A semaphore is created with a certain value for its counter. So, you can execute two actions on a semaphore P and V.&lt;/p&gt;
+&lt;p&gt;By example, if you have a critical that cannot be executed concurrently, you can use a semaphore :&lt;/p&gt;
+&lt;p&gt;[java]sem mutex = new sem(1)&lt;/p&gt;
+&lt;p&gt;P(mutex)&lt;/p&gt;
+&lt;p&gt;//Critical region&lt;/p&gt;
+&lt;p&gt;V(mutex)[/java]&lt;/p&gt;
+&lt;p&gt;So you must always call by yourself the P operation before the critical region and V after it. We call a mutex (mutual exclusion) a semaphore with a value of one. So only one thread can enter the region guarded by the semaphore. This is the most used semaphore. The other use of semaphore is to guard a set of resources like database connections or a data pool.&lt;/p&gt;
+&lt;p&gt;In Java, a semaphore is created using the java.util.concurrent.Semaphore class. You can create easily :&lt;/p&gt;
+&lt;p&gt;[java]Semaphore mutex = new Semaphore(1);&lt;/p&gt;
+&lt;p&gt;Semaphore available = new Semaphore(100);[/java]&lt;/p&gt;
+&lt;p&gt;The P and V operations are represented using the acquire and release methods. The method acquire can be interrupted if the thread is interrupted. There is an uninterruptible version with the method acquireUninterruptibly(). There is also a third version with the tryAcquire method. This method acquire a permit only if there is one permit available, otherwise, this method return false directly. All the waiting methods have also an overloaded version with a timeout. You can also acquire several permits at once using the permits argument to the different versions of acquire methods.&lt;/p&gt;
+&lt;p&gt;A little example with a mutex using the same example as the previous post on Java concurrency :&lt;/p&gt;
+&lt;p&gt;[java]public class Example {
+    private int value = 0;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;private&lt;/span&gt; &lt;span class="n"&gt;final&lt;/span&gt; &lt;span class="n"&gt;Semaphore&lt;/span&gt; &lt;span class="n"&gt;mutex&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;new&lt;/span&gt; &lt;span class="n"&gt;Semaphore&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+
+&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;getNextValue&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="n"&gt;throws&lt;/span&gt; &lt;span class="n"&gt;InterruptedException&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="n"&gt;try&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="n"&gt;mutex&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;acquire&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+        &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="n"&gt;finally&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="n"&gt;mutex&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;release&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/java]&lt;/p&gt;
+&lt;p&gt;For more informations about Semaphore in Java, the best is to consult &lt;a href="http://download.oracle.com/javase/6/docs/api/java/util/concurrent/Semaphore.html"&gt;the Javadoc of the Semaphore class&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;To conclude, semaphores are a powerful ways to solve concurrency problems, but this is not adapted to all problems. If you need only mutual exclusion, &lt;a title="Java Concurrency – Part 3 : Synchronization with intrinsic locks" href="http://www.baptiste-wicht.com/2010/08/java-concurrrency-synchronization-locks/" target="_blank"&gt;synchronized blocks&lt;/a&gt; are a better solutions. The problems with semaphores is that you can forget to call the release method and that can cause deadlock sometimes difficult to find.&lt;/p&gt;&lt;/div&gt;</description><category>Concurrency</category><category>Java</category><guid>http://wichtounet.github.io/posts/2010/08/java-concurrency-part-4-semaphores.html</guid><pubDate>Mon, 30 Aug 2010 07:11:55 GMT</pubDate></item><item><title>Java Concurrency – Part 3 : Synchronization with intrinsic locks</title><link>http://wichtounet.github.io/posts/2010/08/java-concurrrency-synchronization-locks.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;After learning how to &lt;a title="Java Concurrency - Part 1 : Threads" href="http://www.baptiste-wicht.com/2010/05/java-concurrency-part-1-threads/" target="_blank"&gt;create threads&lt;/a&gt; and &lt;a title="Java Concurrency - Part 2 : Manipulate threads" href="http://www.baptiste-wicht.com/2010/05/java-concurrency-part-2-manipulate-threads/" target="_blank"&gt;manipulate them&lt;/a&gt;, it's time to go to most important things : synchronization.&lt;/p&gt;
+&lt;p&gt;Synchronization is a way to make some code thread safe. A code that can be accessed by multiple threads must be made thread safe. Thread Safe describe some code that can be called from multiple threads without corrupting the state of the object or simply doing the thing the code must do in right order.&lt;/p&gt;
+&lt;p&gt;For example, we can take this little class :&lt;/p&gt;
+&lt;p&gt;[java]public class Example {
+    private int value = 0;    &lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="nf"&gt;getNextValue&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/java]&lt;/p&gt;
+&lt;p&gt;It's really simple and works well with one thread, but absolutely not with multiple threads. An increment like this is not a simple action, but three actions :&lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;ul&gt;
+    &lt;li&gt;Read the current value of "value"&lt;/li&gt;
+    &lt;li&gt;Add one to the current value&lt;/li&gt;
+    &lt;li&gt;Write that new value to "value"&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Normally, if you have two threads invoking the getNextValue(), you can think that the first will get 1 and the next will get 2, but it is possible that the two threads get the value 1. Imagine this situation :&lt;/p&gt;
+&lt;p&gt;Thread 1 : read the value, get 0, add 1, so value = 1&lt;/p&gt;
+&lt;p&gt;Thread 2 : read the value, get 0, add 1, so value = 1&lt;/p&gt;
+&lt;p&gt;Thread 1 : write 1 to the field value and return 1&lt;/p&gt;
+&lt;p&gt;Thread 2 : write 1 to the field value and return 1&lt;/p&gt;
+&lt;p&gt;These situations come from what we call interleaving. Interleaving describe the possible situations of several threads executing some statements. Only for three operations and two threads, there is a lot of possible interleavings.&lt;/p&gt;
+&lt;p&gt;So we must made the operations atomic to works with multiple threads. In Java, the first way to make that is to use a lock. All Java objects contains an intrinsic locks, we'll use that lock to make methods or statement atomic. When a thread has a lock, no other thread can acquire it and must wait for the first thread to release the lock. To acquire the lock, you have to use the synchronized keyword to automatically acquire and release a lock for a code. You can add the synchronized keyword to a method to acquire the lock before invoking the method and release it after the method execution. You can refactor the getNextValue() method using the synchronized keyword :&lt;/p&gt;
+&lt;p&gt;[java]public class Example {
+    private int value = 0;    &lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="n"&gt;synchronized&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="nf"&gt;getNextValue&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/java]&lt;/p&gt;
+&lt;p&gt;With that, you have the guarantee that only thread can execute the method at the same time. The used lock is the intrinsic lock of the instance. If the method is static, the used lock is the Class object of Example. If you have two methods with the synchronized keyword, only one method of the two will be executed at the same time because the same lock is used for the two methods. You can also write it using a synchronized block :&lt;/p&gt;
+&lt;p&gt;[java]public class Example {
+    private int value = 0;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="nf"&gt;getNextValue&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="n"&gt;synchronized&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;this&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/java]&lt;/p&gt;
+&lt;p&gt;This is exactly the same as using the synchronized keyword on the method signature. Using synchronized blocks, you can choose the lock to block on. By example, if you don't want to use the intrinsic lock of the current object but an other object, you can use an other object just as a lock :&lt;/p&gt;
+&lt;p&gt;[java]public class Example {
+    private int value = 0;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;private&lt;/span&gt; &lt;span class="n"&gt;final&lt;/span&gt; &lt;span class="n"&gt;Object&lt;/span&gt; &lt;span class="n"&gt;lock&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;new&lt;/span&gt; &lt;span class="n"&gt;Object&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+
+&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="nf"&gt;getNextValue&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="n"&gt;synchronized&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;lock&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/java]&lt;/p&gt;
+&lt;p&gt;The result is the same but has one difference, the lock is internal to the object so no other code can use the lock. With complex classes, it not rare to use several locks to provide thread safety on the class.&lt;/p&gt;
+&lt;p&gt;There is an other issue with multiple threads : the visibility of the variables. This seems when a change made by a thread is visible by an other thread. For performance improvements, the Java compiler and virtual machines can made some improvements using registers and cache. By default, you have no guarantee that a change made by a thread is visible to an other thread. To make a change visible to an other thread, you must use synchronized blocks to ensure visibility of the change. You must use synchronized blocks for the read and for the write of the shared values. You must make that for every read/write of a value shared between multiple threads.&lt;/p&gt;
+&lt;p&gt;You can also use the volatile keyword on the field to ensure the visibility of read/write between multiple threads. The volatile keyword ensure only visibility, not atomicity. The synchronized blocks ensure visibility and atomicity. So you can use the volatile keyword on fields that doesn't need atomicity (if you make only read and write to the field without depending on the current value of the field by example).&lt;/p&gt;
+&lt;p&gt;You can also note that this simple example can be solved using AtomicInteger, but that will be covered later in an other part of the posts.&lt;/p&gt;
+&lt;p&gt;Pay attention that trying to solve thread safety on a problem can add new issues of deadlock. By example, if thread A owns the lock 1 and are waiting for the lock 2 and if lock 2 is acquired by thread B who waits on lock 1, there is a deadlock. Your program is dead. So you have to pay great attention to the locks.&lt;/p&gt;
+&lt;p&gt;There is several rules that we must keep in mind when using locks :&lt;/p&gt;
+&lt;ol&gt;
+    &lt;li&gt;Every mutable fields shared between multiple threads must be guarded with a lock or made volatile, if you only need visibility&lt;/li&gt;
+    &lt;li&gt;Synchronize only the operations that must synchronized, this improve the performances. But don't synchronize too few operations. Try to keep the lock only for short operations.&lt;/li&gt;
+    &lt;li&gt;Always know which locks are acquired and when there are acquired and by which thread&lt;/li&gt;
+    &lt;li&gt;An immutable object is always thread safe&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;Here we are, I hope that this post helps you to understand thread safety and how to achieve it using intrinsic locks. In the next posts, we'll see another synchronization methods.&lt;/p&gt;&lt;/div&gt;</description><category>Concurrency</category><category>Java</category><guid>http://wichtounet.github.io/posts/2010/08/java-concurrrency-synchronization-locks.html</guid><pubDate>Fri, 27 Aug 2010 07:15:59 GMT</pubDate></item><item><title>Java Concurrency in Practice - Book Review</title><link>http://wichtounet.github.io/posts/2010/08/java-concurrency-in-practice-book-review.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;Hi,&lt;/p&gt;
+&lt;p&gt;I used my holidays to concentrate myself on the reading of my last book : Java Concurrency in Practice of Brian Goetz (with Tim Peierls, Joshua Bloch, Joseph Bowbeer, David Holmes and Doug Lea).&lt;/p&gt;
+&lt;p&gt;This book is, in my point of view, the reference for the development of concurrency programs in Java.&lt;/p&gt;
+&lt;p&gt;Reading this book, you will learn that concurrency is everywhere when programming in Java (all the examples are in Java, but the theory  is valid for almost all programming languages). You will also learn why the GUI Frameworks are single-threaded. You will also understand that a lot of Java programs aren't correct because of the lack of thread safety.&lt;/p&gt;
+&lt;p&gt;The first chapter, the introduction, explains what's are the threads and why we use parallel processing. It contains also the first interleaving example (really simple) and how to solve it. In the third chapter, the author explains what is Thread Safety and how to achieve it using locks (intrinsic locks with synchronized). In the next chapter, you learn how to share objects between several threads. This include the notions of visibility, immutability, thread confinement and safe publication. With the fourth chapter, you learn how to design a thread safe class, delegate the thread safety to an other class and learn why it's really important to document the synchronization policies. In the last chapter of this first part, we see how to build blocks of statements. We use concurrent collections, blocking queues, synchronizers, blocking and interruptible methods.&lt;/p&gt;
+&lt;p&gt;The second part is about structuring concurrent applications. It contains information about the executor framework, finding parallelism, the cancellation and the shutdown of tasks, the thread pools and the GUI applications.&lt;/p&gt;
+&lt;p&gt;The third part is about liveness hazards, performance and scalability and also about testing concurrent programs.&lt;/p&gt;
+&lt;p&gt;The last part describe advanced topics. It contains explicit locks using ReentrantLock. It explains also how to build custom synchronizers. A chapter is about building concurrent programs using non-blocking algorithms. This algorithms are better performing but a lot more difficult to build. And the last chapter is about the Java Memory Model. This chapter is very technical but really interesting if you are interested to understand deeply the Java language.&lt;/p&gt;
+&lt;p&gt;To conclude, this book is a reference for every person who want to write concurrent applications.&lt;/p&gt;
+&lt;p&gt;Post Scriptum : This is the hundredth post of this blog. I'm proud to see that there is a lot of regular readers and I hope that this blog will live long.&lt;/p&gt;&lt;/div&gt;</description><category>Books</category><category>Concurrency</category><category>Java</category><category>Java</category><guid>http://wichtounet.github.io/posts/2010/08/java-concurrency-in-practice-book-review.html</guid><pubDate>Mon, 23 Aug 2010 07:05:00 GMT</pubDate></item><item><title>JR Virtual machines</title><link>http://wichtounet.github.io/posts/2010/07/jr-virtual-machines.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;Until now, we've always had concurrent program working in one virtual machines, but JR provides ways to declare several virtual machines on several different physical machines. A JR Virtual Machine contains a Java Virtual Machine and a layer for the JR language. Once you created some virtual machines, you can specify where an object will be created with a variant of the new operator. After that, almost all the development is transparent. By example,  a send operation on an operation serviced by an other virtual machine is exactly the same as if there is only one virtual machine. You can do exactly the same thing. We'll see that there is some differences, but it's really easy.&lt;/p&gt;
+&lt;p&gt;An important thing to remember is that all the virtual machines created contains the static part of the application. So all the static part is local to the virtual machines. This can cause really difficult bug to solve if we don't take care.&lt;/p&gt;
+&lt;!--more--&gt;
+
+&lt;p&gt;So, now that we know the basis of the virtual machines, let's create a new virtual machine :&lt;/p&gt;
+&lt;p&gt;[java]vm vm1 = new vm();[/java]&lt;/p&gt;
+&lt;p&gt;That will create a new virtual machine, named vm1, on the same physical machine where the code is executed. You can also choose to create a virtual machine on an other machine :&lt;/p&gt;
+&lt;p&gt;[java]vm vm2 = new wm() on "192.168.1.200"; //IP Adresse of the machine&lt;/p&gt;
+&lt;p&gt;vm vm3 = new wm() on "pc12"; //Name of the machine&lt;/p&gt;
+&lt;p&gt;vm vm4 = new vm() on vm3; //The machine where vm3 is located[/java]&lt;/p&gt;
+&lt;p&gt;To create a virtual machine on an other machine, you need to right to connect to that computer with ssh or csh without any password. For more informations, the best is to read &lt;a href="http://www.cs.ucdavis.edu/~olsson/research/jr/versions/2.00602/install.html"&gt;the official installation guide&lt;/a&gt;. &lt;/p&gt;
+&lt;p&gt;JR provide no way to destroy a virtual machine. Like any other objects, a vm became garbage collected when there is no reference to it and when the virtual machine is idle (all the processes are over or blocked).&lt;/p&gt;
+&lt;p&gt;If you want to place an object on a virtual machine, you must define it with the remote keyword :&lt;/p&gt;
+&lt;p&gt;[java]remote Person person = new remote Person();[/java]&lt;/p&gt;
+&lt;p&gt;By default, the object is created on the same virtual machine where the code is executed, but you can put it in an other virtual machines :&lt;/p&gt;
+&lt;p&gt;[java]remote Person person = new remote Person() on vm1;[/java]&lt;/p&gt;
+&lt;p&gt;You can also combine the creation of virtual machine and remote objects in one line :&lt;/p&gt;
+&lt;p&gt;[java]remote Person person = new remote Person() on new vm() on "localhost";[/java]&lt;/p&gt;
+&lt;p&gt;Note that the class of any remote object must be declared public.&lt;/p&gt;
+&lt;p&gt;When working with remote objects, you have access to two new predefined fields :&lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;ul&gt;
+    &lt;li&gt;&lt;strong&gt;this.remote&lt;/strong&gt; : Return the remote reference of the current object&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;vm.thisvm&lt;/strong&gt; : Return the vm in which the current object has been created&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;When you work with a single virtual machine, the parameter are always passed by value, but when you're working with remote references and several virtual machines, you cannot pass the objects by value, instead, a copy of the object is created and passed to the other virtual machines (JR use RMI and serialization to achieve that). So all the objects you pass to others virtual machines must be declared Serializable to pass through the virtual machines.&lt;/p&gt;
+&lt;p&gt;There is also others aspects that is interesting to know about working with several virtual machines. First of all, the System.out and System.int streams are inherited from the initial virtual machine. So you can see that the order is not always deterministic depending on the fact on the synchronization of the different prints. The first virtual machine begin the execution in the execution directory but the other virtual machines begins the execution in the user home directory.&lt;/p&gt;
+&lt;p&gt;Let's finish with a little example. By example, if we take the problem of consumer/producer we solved with Asynchronous Message Passing and we create the producer and consumer in different virtual machines, that will give us something like this : &lt;/p&gt;
+&lt;p&gt;[java]class ProducerConsumer {
+    private static final int N = 12; //Number of producers and consumers&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;private&lt;/span&gt; &lt;span class="k"&gt;static&lt;/span&gt; &lt;span class="n"&gt;op&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;deposit&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt; &lt;span class="c1"&gt;//The channel&lt;/span&gt;
+
+&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="k"&gt;static&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;main&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="p"&gt;...&lt;/span&gt; &lt;span class="n"&gt;args&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="n"&gt;vm&lt;/span&gt; &lt;span class="n"&gt;vmConsumer&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;new&lt;/span&gt; &lt;span class="n"&gt;vm&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+    &lt;span class="n"&gt;vm&lt;/span&gt; &lt;span class="n"&gt;vmProducer&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;new&lt;/span&gt; &lt;span class="n"&gt;vm&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+
+    &lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;N&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+        &lt;span class="n"&gt;new&lt;/span&gt; &lt;span class="n"&gt;remote&lt;/span&gt; &lt;span class="n"&gt;Consumer&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="n"&gt;on&lt;/span&gt; &lt;span class="n"&gt;vmConsumer&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+        &lt;span class="n"&gt;new&lt;/span&gt; &lt;span class="n"&gt;remote&lt;/span&gt; &lt;span class="n"&gt;Producer&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="n"&gt;on&lt;/span&gt; &lt;span class="n"&gt;vmProducer&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="k"&gt;static&lt;/span&gt; &lt;span class="n"&gt;class&lt;/span&gt; &lt;span class="n"&gt;Consumer&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="n"&gt;private&lt;/span&gt; &lt;span class="k"&gt;static&lt;/span&gt; &lt;span class="n"&gt;process&lt;/span&gt; &lt;span class="n"&gt;Consumer&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="n"&gt;String&lt;/span&gt; &lt;span class="n"&gt;data&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+        &lt;span class="n"&gt;receive&lt;/span&gt; &lt;span class="nf"&gt;deposit&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;data&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+        &lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;out&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Consumer "&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;data&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="k"&gt;static&lt;/span&gt; &lt;span class="n"&gt;class&lt;/span&gt; &lt;span class="n"&gt;Producer&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="n"&gt;private&lt;/span&gt; &lt;span class="k"&gt;static&lt;/span&gt; &lt;span class="n"&gt;process&lt;/span&gt; &lt;span class="n"&gt;Producer&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="n"&gt;send&lt;/span&gt; &lt;span class="n"&gt;deposit&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Producer"&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;[/java]&lt;/p&gt;
+&lt;p&gt;All the consumer are created on a specified virtual machine and the producer in an other virtual machine. Here I create the two virtual machines in the same computer, but you can distribute them along several computers. &lt;/p&gt;
+&lt;p&gt;Here we are !  That post will be the last of the JR set of posts. &lt;/p&gt;&lt;/div&gt;</description><category>Concurrency</category><category>Java</category><category>Java</category><category>JR</category><guid>http://wichtounet.github.io/posts/2010/07/jr-virtual-machines.html</guid><pubDate>Fri, 09 Jul 2010 07:00:12 GMT</pubDate></item><item><title>Rendezvous, concurrency method, in JR</title><link>http://wichtounet.github.io/posts/2010/07/rendezvous-concurrency-jr.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;In this post, we'll see a new feature of JR : the rendezvous.&lt;/p&gt;
+&lt;p&gt;Like asynchronous message passing, this synchronization method involves two processes : a caller and a receiver. But this time, the invocation is synchronous, the caller delays until the operation completes. The rendezvous does not create a new thread to the receiver. The receiver must invoke an input statement (the implementation of rendezvous) and wait for the message. Like asynchronous message passing, this is achieved using operations as message queue.&lt;/p&gt;
+&lt;!--more--&gt;
+
+&lt;p&gt;The rendezvous can simplify this kind of operations :&lt;/p&gt;
+&lt;p&gt;[java]int x;&lt;/p&gt;
+&lt;p&gt;int y;&lt;/p&gt;
+&lt;p&gt;send op_command(2, 3);&lt;/p&gt;
+&lt;p&gt;receive(x, y);[/java]&lt;/p&gt;
+&lt;p&gt;To make a rendezvous, we'use the input statement. I think it's the harder (but also most complete) statement of the JR programming language. Here is the general form :&lt;/p&gt;
+&lt;p&gt;[java]inni op_command {&lt;/p&gt;
+&lt;p&gt;//Code block&lt;/p&gt;
+&lt;p&gt;}&lt;/p&gt;
+&lt;p&gt;[] op_command {&lt;/p&gt;
+&lt;p&gt;//Code block&lt;/p&gt;
+&lt;p&gt;}..[/java]&lt;/p&gt;
+&lt;p&gt;An op_command specifiy an operation to wait for. An op_command is of this form :&lt;/p&gt;
+&lt;p&gt;[java]return_type op_exp(args) st synch by sched[/java]&lt;/p&gt;
+&lt;p&gt;Explanations :&lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;ul&gt;
+    &lt;li&gt;return_type : Indicate the return type of the operation we are waiting for&lt;/li&gt;
+    &lt;li&gt;op_exp : The name of the operation or the capability&lt;/li&gt;
+    &lt;li&gt;args : The arguments of the operation&lt;/li&gt;
+    &lt;li&gt;st synch : Add a condition to the operations. This condition indicates which messages are acceptable&lt;/li&gt;
+    &lt;li&gt;by sched : Dictate the order of servicing the messages. Must be numerical. The message with the lowest value of scheduling expression will be serviced in first.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;If there is no synchronization expression and no scheduling expression, the first serviced invocation is the oldest. If there is a synchronization expression, the first serviced invocation is the oldest selectable expression and if there is a scheduling expression, the first serviced is the first selectable invocation that minimizes the scheduling expression. If there is no selectable message, the input statement delays until there is one.&lt;/p&gt;
+&lt;p&gt;You can also add an else statement to the input statement :&lt;/p&gt;
+&lt;p&gt;[java]inni op_command {&lt;/p&gt;
+&lt;p&gt;//Code block&lt;/p&gt;
+&lt;p&gt;} ...&lt;/p&gt;
+&lt;p&gt;[] else {&lt;/p&gt;
+&lt;p&gt;//Code block&lt;/p&gt;
+&lt;p&gt;}[/java]&lt;/p&gt;
+&lt;p&gt;The else block will be executed if there is no selectable message. So an input statement with an else statement will never delays.&lt;/p&gt;
+&lt;p&gt;Lets imagine a simple example. The server return the sum of 2 numbers after receiving a message. If we write this simple program using asynchronous message, it'll give us something like that :&lt;/p&gt;
+&lt;p&gt;[java]public class Calculator {
+    private static op void request(int x, int y);
+    private static op void response(int sum, int sub);&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="k"&gt;static&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;main&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="p"&gt;...&lt;/span&gt; &lt;span class="n"&gt;args&lt;/span&gt;&lt;span class="p"&gt;){}&lt;/span&gt;
+
+&lt;span class="n"&gt;private&lt;/span&gt; &lt;span class="k"&gt;static&lt;/span&gt; &lt;span class="n"&gt;process&lt;/span&gt; &lt;span class="n"&gt;Client&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="n"&gt;send&lt;/span&gt; &lt;span class="n"&gt;request&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;33&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;22&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+    &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;sum&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;sub&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="n"&gt;receive&lt;/span&gt; &lt;span class="nf"&gt;response&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;sum&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;sub&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+    &lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;out&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;printf&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Sum %d Sub %d"&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;sum&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;sub&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="n"&gt;private&lt;/span&gt; &lt;span class="k"&gt;static&lt;/span&gt; &lt;span class="n"&gt;process&lt;/span&gt; &lt;span class="n"&gt;Server&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;y&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="n"&gt;receive&lt;/span&gt; &lt;span class="nf"&gt;request&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;y&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+    &lt;span class="n"&gt;send&lt;/span&gt; &lt;span class="nf"&gt;response&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;x&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;y&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;x&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="n"&gt;y&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/java]&lt;/p&gt;
+&lt;p&gt;It little bit complicated for a thing as simple, isn't it ? Let's rewrite it with input statement :&lt;/p&gt;
+&lt;p&gt;[java]public class CalculatorInni {
+    private static op int compute(int x, int y);&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="k"&gt;static&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;main&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="p"&gt;...&lt;/span&gt; &lt;span class="n"&gt;args&lt;/span&gt;&lt;span class="p"&gt;){}&lt;/span&gt;
+
+&lt;span class="n"&gt;private&lt;/span&gt; &lt;span class="k"&gt;static&lt;/span&gt; &lt;span class="n"&gt;process&lt;/span&gt; &lt;span class="n"&gt;Client&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;out&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;printf&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Sum %d"&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;compute&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;33&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;22&lt;/span&gt;&lt;span class="p"&gt;));&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="n"&gt;private&lt;/span&gt; &lt;span class="k"&gt;static&lt;/span&gt; &lt;span class="n"&gt;process&lt;/span&gt; &lt;span class="n"&gt;Server&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="n"&gt;inni&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;compute&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;y&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+        &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;x&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;y&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/java]&lt;/p&gt;
+&lt;p&gt;Easier, shorter and clearer, isn't it ?&lt;/p&gt;
+&lt;p&gt;The Client invoke the compute operation and get the return value directly because it's synchronous. If you have an operation with a return value, you doesn't have to use the call statement, it's implicit. If you have a void operation, you can use the call statement (but if you don't, it's the same by default) before the operation :&lt;/p&gt;
+&lt;p&gt;[java]call op_command(args);[/java]&lt;/p&gt;
+&lt;p&gt;And the Server has only to use the input statement to return the sum of the numbers.&lt;/p&gt;
+&lt;p&gt;As you've perhaps seen, the receive is only an abbreviation to the simplest form of input statement. So if you write :&lt;/p&gt;
+&lt;p&gt;[java]int x;&lt;/p&gt;
+&lt;p&gt;int y;&lt;/p&gt;
+&lt;p&gt;receive op_command(x[/java]/pre&amp;gt;&lt;/p&gt;
+&lt;p&gt;It's the same as if you write :&lt;/p&gt;
+&lt;p&gt;[java]inni void op_command(int a, int b){
+      x = a;
+      y = b;
+}[/java]&lt;/p&gt;
+&lt;p&gt;But in this case, it's easier to use the receive statement.&lt;/p&gt;
+&lt;p&gt;The input statement can also be used to service a group of operations in an array :&lt;/p&gt;
+&lt;p&gt;[java]cap void (int) operations = new cap void (int)[12];&lt;/p&gt;
+&lt;p&gt;//Fill the array&lt;/p&gt;
+&lt;p&gt;inni ((int i = 0; i &amp;amp;lt; 12; i++)) operations&lt;a href="http://wichtounet.github.io/posts/2010/07/int%20x"&gt;i&lt;/a&gt; {
+   //Code b
+}[/java]&lt;/p&gt;
+&lt;p&gt;More than return, we could also use two new statements in an input statement :&lt;/p&gt;
+&lt;ul&gt;
+    &lt;li&gt;reply : return a value to the caller but doesn't break the input statement, so you can still make operations in the input statement but you cannot return a value anymore.&lt;/li&gt;
+    &lt;li&gt;forward : delegate the answer to an other operation. So this is the other operation who will answer to the caller, the input statement continues its execution but cannot return a value anymore.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Now that we know how to use input statement, we can simplify the ResourceAllocator of the next post. We can do a lot more easier, with two operations and input statements :&lt;/p&gt;
+&lt;p&gt;[java]import java.util.*;&lt;/p&gt;
+&lt;p&gt;public class ResourceAllocator {
+    private static final int N = 25; //Number of clients
+    private static final int I = 25; //Number of iterations&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="k"&gt;static&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;main&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="p"&gt;...&lt;/span&gt; &lt;span class="n"&gt;args&lt;/span&gt;&lt;span class="p"&gt;){}&lt;/span&gt;
+
+&lt;span class="n"&gt;private&lt;/span&gt; &lt;span class="k"&gt;static&lt;/span&gt; &lt;span class="n"&gt;op&lt;/span&gt; &lt;span class="n"&gt;Resource&lt;/span&gt; &lt;span class="nf"&gt;request&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+&lt;span class="n"&gt;private&lt;/span&gt; &lt;span class="k"&gt;static&lt;/span&gt; &lt;span class="n"&gt;op&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;release&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;Resource&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+&lt;span class="n"&gt;private&lt;/span&gt; &lt;span class="k"&gt;static&lt;/span&gt; &lt;span class="n"&gt;process&lt;/span&gt; &lt;span class="n"&gt;Client&lt;/span&gt;&lt;span class="p"&gt;((&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;amp&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;N&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="p"&gt;)){&lt;/span&gt;
+    &lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;amp&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;I&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+        &lt;span class="n"&gt;Resource&lt;/span&gt; &lt;span class="n"&gt;resource&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;request&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+
+        &lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;out&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;printf&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Client %d use resource %d &lt;/span&gt;&lt;span class="se"&gt;\n&lt;/span&gt;&lt;span class="s"&gt;"&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;resource&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;getId&lt;/span&gt;&lt;span class="p"&gt;());&lt;/span&gt;
+
+        &lt;span class="n"&gt;call&lt;/span&gt; &lt;span class="nf"&gt;release&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;resource&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="n"&gt;private&lt;/span&gt; &lt;span class="k"&gt;static&lt;/span&gt; &lt;span class="n"&gt;process&lt;/span&gt; &lt;span class="n"&gt;Server&lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="n"&gt;Queue&lt;/span&gt; &lt;span class="n"&gt;resources&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;new&lt;/span&gt; &lt;span class="n"&gt;LinkedList&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+
+    &lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;amp&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;5&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+        &lt;span class="n"&gt;resources&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;add&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;new&lt;/span&gt; &lt;span class="n"&gt;Resource&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;));&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+
+    &lt;span class="k"&gt;while&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nb"&gt;true&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+        &lt;span class="n"&gt;inni&lt;/span&gt; &lt;span class="n"&gt;Resource&lt;/span&gt; &lt;span class="n"&gt;request&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="n"&gt;st&lt;/span&gt; &lt;span class="o"&gt;!&lt;/span&gt;&lt;span class="n"&gt;resources&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;isEmpty&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+            &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;resources&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;poll&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+        &lt;span class="p"&gt;}&lt;/span&gt;
+        &lt;span class="p"&gt;[]&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;release&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;Resource&lt;/span&gt; &lt;span class="n"&gt;resource&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+            &lt;span class="n"&gt;resources&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;add&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;resource&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+        &lt;span class="p"&gt;}&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="n"&gt;private&lt;/span&gt; &lt;span class="k"&gt;static&lt;/span&gt; &lt;span class="n"&gt;final&lt;/span&gt; &lt;span class="n"&gt;class&lt;/span&gt; &lt;span class="n"&gt;Resource&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="n"&gt;private&lt;/span&gt; &lt;span class="n"&gt;final&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;id&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+    &lt;span class="n"&gt;private&lt;/span&gt; &lt;span class="nf"&gt;Resource&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;id&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+        &lt;span class="n"&gt;super&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+
+        &lt;span class="n"&gt;this&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;id&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;id&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+
+    &lt;span class="n"&gt;private&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="nf"&gt;getId&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+        &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;id&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/java]&lt;/p&gt;
+&lt;p&gt;Clearer, not ?&lt;/p&gt;
+&lt;p&gt;The last improvement we can do is to use a send instead of a call in the Client. We doesn't need to wait for release in client and the input statement can service send invocations as well as call but the send  invocations cannot return something.&lt;/p&gt;
+&lt;p&gt;So we've now covered the rendezvous synchronization system in the JR system. In the next, and last, post about JR programming language, we'll see how to distribute our processes on several virtual machines.&lt;/p&gt;&lt;/div&gt;</description><category>Concurrency</category><category>Java</category><category>Java</category><category>JR</category><guid>http://wichtounet.github.io/posts/2010/07/rendezvous-concurrency-jr.html</guid><pubDate>Wed, 07 Jul 2010 07:05:20 GMT</pubDate></item><item><title>Asynchronous Message Passing in JR</title><link>http://wichtounet.github.io/posts/2010/07/asynchronous-message-passing-jr.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;We've now covered the basic synchronization systems (&lt;a href="http://www.baptiste-wicht.com/2010/01/jr-introduction/" target="_blank"&gt;semaphore&lt;/a&gt;, &lt;a href="http://www.baptiste-wicht.com/2010/06/monitor-programming-in-jr/" target="_blank"&gt;monitors&lt;/a&gt;) and we know how to &lt;a href="http://www.baptiste-wicht.com/2010/06/jr-operations-and-capabilities/" target="_blank"&gt;declare operations and capabilities&lt;/a&gt; . It's time to go to an other form of synchronization : &lt;strong&gt;Message Passing&lt;/strong&gt;. In this post, we'll focus in &lt;strong&gt;Asynchronous Message Passing&lt;/strong&gt;, we'll cover later, the synchronous message passing system with RendezVous.&lt;/p&gt;
+&lt;p&gt;When we use message passing, the threads doesn't share datas anymore, they share channels. You can see channels like an abstraction of a network between several processes. The processes will send messages to other and the other will wait for receive a message. Normally, with that form of synchronization, the channels are the only objects shared between the threads. So you doesn't need to share memory. That makes possible to distribute the processes across several virtual machines or computers, of course, this also works on a simple computer, like any other program. In message passing, we often see models with several clients and a server that manage the messages. &lt;/p&gt;
+&lt;!--more--&gt;
+
+&lt;p&gt;In Java, you will do that with Socket or RMI but in JR, this system is really easily integrated. We'll use operations as messages queues and send/receive operations in the queue to respectively send a message to the queue and receive a message from the queue. The operations must not be implemented to achieve asynchronous message passing. If the operations is implemented, this will make a remote procedure call, but we'll not cover that system for now. And because, it's asynchronous, the operations cannot have a return type. The operations visibility is the same as the method visibility. So if an operation is static in class A, a send statement on this operation can be serviced by any process who has the visibility to access this operation. &lt;/p&gt;
+&lt;p&gt;So we will need that kind of operations :&lt;/p&gt;
+&lt;p&gt;[java]private static op void channel(int);[/java]&lt;/p&gt;
+&lt;p&gt;To send a message to a channel, you just have to use the send keyword followed by the name of the operations with the arguments :&lt;/p&gt;
+&lt;p&gt;[java]send channel(12);[/java]&lt;/p&gt;
+&lt;p&gt;The send operation does not block, when the same is sended, the send operation is released.&lt;/p&gt;
+&lt;p&gt;To receive a message, you have to use the receive keyword, followed by the variables name in which put the values of the arguments :&lt;/p&gt;
+&lt;p&gt;[java]int x;&lt;/p&gt;
+&lt;p&gt;receive channel(x);[/java]&lt;/p&gt;
+&lt;p&gt;The variables must have been declared before used in the receive statement. It's a little weird when we start, but it's really practical to assign them in one operation even if we have a lot of parameters. When we the process are on the same virtual machines, the parameters are passed like for any method in Java, by value. If we put all that together in processes :&lt;/p&gt;
+&lt;p&gt;[java]public class AMP1 {
+    private static op void channel(int);&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;private&lt;/span&gt; &lt;span class="k"&gt;static&lt;/span&gt; &lt;span class="n"&gt;process&lt;/span&gt; &lt;span class="n"&gt;p1&lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="n"&gt;send&lt;/span&gt; &lt;span class="n"&gt;channel&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;12&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="n"&gt;private&lt;/span&gt; &lt;span class="k"&gt;static&lt;/span&gt; &lt;span class="n"&gt;process&lt;/span&gt; &lt;span class="n"&gt;p2&lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;      
+    &lt;span class="n"&gt;receive&lt;/span&gt; &lt;span class="nf"&gt;channel&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+    &lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;out&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="k"&gt;static&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;main&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="p"&gt;...&lt;/span&gt; &lt;span class="n"&gt;args&lt;/span&gt;&lt;span class="p"&gt;){}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/java]&lt;/p&gt;
+&lt;p&gt;The messages are received in the order they are sent for each sender. But it's possible that a message sent by Thread 1 before an other message sent by Thread 2 will be received after the one of Thread 2. Normally this would never appears when working in a simple computer, but that could appear often when working with several computers. So don't make any assumptions on the order your messages will be received. &lt;/p&gt;
+&lt;p&gt;With all that, we can solve the producer-consumer problem really easily : &lt;/p&gt;
+&lt;p&gt;[java]public class ProducerConsumer {
+    private static final int N = 12; //Number of producers and consumers&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;private&lt;/span&gt; &lt;span class="k"&gt;static&lt;/span&gt; &lt;span class="n"&gt;op&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;deposit&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt; &lt;span class="c1"&gt;//The channel&lt;/span&gt;
+
+&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="k"&gt;static&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;main&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="p"&gt;...&lt;/span&gt; &lt;span class="n"&gt;args&lt;/span&gt;&lt;span class="p"&gt;){}&lt;/span&gt;
+
+&lt;span class="n"&gt;private&lt;/span&gt; &lt;span class="k"&gt;static&lt;/span&gt; &lt;span class="n"&gt;process&lt;/span&gt; &lt;span class="n"&gt;Producer&lt;/span&gt;&lt;span class="p"&gt;((&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;N&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="p"&gt;)){&lt;/span&gt;
+    &lt;span class="n"&gt;send&lt;/span&gt; &lt;span class="n"&gt;deposit&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Producer"&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="n"&gt;private&lt;/span&gt; &lt;span class="k"&gt;static&lt;/span&gt; &lt;span class="n"&gt;process&lt;/span&gt; &lt;span class="n"&gt;Consumer&lt;/span&gt;&lt;span class="p"&gt;((&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;N&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="p"&gt;)){&lt;/span&gt;
+    &lt;span class="n"&gt;String&lt;/span&gt; &lt;span class="n"&gt;data&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="n"&gt;receive&lt;/span&gt; &lt;span class="nf"&gt;deposit&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;data&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+    &lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;out&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Consumer"&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="s"&gt;" : "&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;data&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/java]&lt;/p&gt;
+&lt;p&gt;No need to great explanations. A Producer send a message with the informations it has produced and doesn't wait for the receive. And a Consumer wait for a deposit (a send) with a receive statement and print the result when it has received the message. &lt;/p&gt;
+&lt;p&gt;Like you can invoke operations with capabilities, you can also send messages through a capability. It's very easy to share channels because this is only a variable. We often send the channels in a message for an answer. &lt;/p&gt;
+&lt;p&gt;Let's imagine a simple problem. We have N clients that needs resources shared by all the clients. We need something to manage the resources. So we'll use a kind of server to achieve that. So we can start with something really simple for the clients : &lt;/p&gt;
+&lt;p&gt;[java]op void request();&lt;/p&gt;
+&lt;p&gt;op void resource(Resource);&lt;/p&gt;
+&lt;p&gt;op void release(Resource);&lt;/p&gt;
+&lt;p&gt;send request();&lt;/p&gt;
+&lt;p&gt;receive resource(resource);&lt;/p&gt;
+&lt;p&gt;//Use resources&lt;/p&gt;
+&lt;p&gt;send release(resource);&lt;/p&gt;
+&lt;p&gt;[/java]&lt;/p&gt;
+&lt;p&gt;That seems good, but there are some problems : &lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;ul&gt;
+&lt;li&gt;How can the server distinguish the clients ? If it sends a message to resource any client can take it, we need a way to create a channel between one client and the server (also called private channels). For this we'll use a capability as a channel. &lt;/li&gt;
+
+&lt;li&gt;If the server wait for request messages, it cannot wait for release messages and vice-versa. A solution is to have two process in the servers, but with that, you must synchronize the two process. A better solution is to create an operation that give informations about the type of request. &lt;/li&gt;
+
+&lt;/ul&gt;
+
+&lt;p&gt;So here, is the new version of client : &lt;/p&gt;
+&lt;p&gt;[java]enum Type {REQUEST, RELEASE};&lt;/p&gt;
+&lt;p&gt;op void request(Type, cap void (Resource), Resource);&lt;/p&gt;
+&lt;p&gt;cap void (Resource) channel = new op void (Resource);&lt;/p&gt;
+&lt;p&gt;send request(Type.REQUEST, channel, null);&lt;/p&gt;
+&lt;p&gt;Resource resource;&lt;/p&gt;
+&lt;p&gt;receive channel(resource);&lt;/p&gt;
+&lt;p&gt;send request(Type.RELEASE, noop, resoure); [/java]&lt;/p&gt;
+&lt;p&gt;and now the server : &lt;/p&gt;
+&lt;p&gt;[java]cap void (Resource) client;&lt;/p&gt;
+&lt;p&gt;Type type;&lt;/p&gt;
+&lt;p&gt;Resource resource;&lt;/p&gt;
+&lt;p&gt;Queue&amp;lt;Resource&amp;gt; resources = new LinkedQueue&amp;lt;Resource&amp;gt;();&lt;/p&gt;
+&lt;p&gt;//Fill the queue of resources&lt;/p&gt;
+&lt;p&gt;Queue&amp;lt;cap void (int)&amp;gt; clients = new LinkedQueue&amp;lt;cap void int&amp;gt;();&lt;/p&gt;
+&lt;p&gt;while(true){
+    receive request(type, client, resource);&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="k"&gt;if&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;type&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="n"&gt;Type&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;REQUEST&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="k"&gt;if&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;resources&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;isEmpty&lt;/span&gt;&lt;span class="p"&gt;()){&lt;/span&gt;
+        &lt;span class="n"&gt;clients&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;add&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;client&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="k"&gt;else&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="n"&gt;send&lt;/span&gt; &lt;span class="n"&gt;client&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;resource&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;pop&lt;/span&gt;&lt;span class="p"&gt;());&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="k"&gt;else&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="k"&gt;if&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;clients&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;isEmpty&lt;/span&gt;&lt;span class="p"&gt;()){&lt;/span&gt;
+        &lt;span class="n"&gt;resources&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;put&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;resource&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="k"&gt;else&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="n"&gt;send&lt;/span&gt; &lt;span class="n"&gt;clients&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;pop&lt;/span&gt;&lt;span class="p"&gt;()(&lt;/span&gt;&lt;span class="n"&gt;resource&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;   
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/java]&lt;/p&gt;
+&lt;p&gt;Really easy no ? And that code can be distributed with only minor changes. And it works for any number of process your want. You will find the complete code of this problem joined to this post. &lt;/p&gt;
+&lt;p&gt;We have now covered the complete informations about Asynchronous Message Passing in JR. I hope you found that article interesting. The next post will be about the RendezVous in JR. RendezVous are a very powerful way to achieve synchronization also with message passing, but synchronous. &lt;/p&gt;
+&lt;p&gt;&lt;a href="http://wichtounet.github.io/wp-content/uploads/2010/07/ResourceAllocator.jr_.tar.gz"&gt;The complete source&lt;/a&gt;&lt;/p&gt;&lt;/div&gt;</description><category>Concurrency</category><category>Java</category><category>Java</category><category>JR</category><guid>http://wichtounet.github.io/posts/2010/07/asynchronous-message-passing-jr.html</guid><pubDate>Fri, 02 Jul 2010 07:02:09 GMT</pubDate></item><item><title>Monitor programming in JR</title><link>http://wichtounet.github.io/posts/2010/06/monitor-programming-in-jr.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;Like I promised, I will restart to write articles now that the evaluation period is over. &lt;/p&gt;
+&lt;p&gt;After seeing &lt;a href="http://www.baptiste-wicht.com/2010/01/jr-introduction/"&gt;how to develop using the JR programming language&lt;/a&gt;, we'll see now how to use monitors in JR.&lt;/p&gt;
+&lt;p&gt;Monitors provide a higher-level abstraction than semaphores and produce a better code with several advantages :&lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;ul&gt;
+    &lt;li&gt;All the synchronization code is centralized in one location and the users of this code doesn't need to know how it's implemented.&lt;/li&gt;
+    &lt;li&gt;The code doesn't depends on the number of processes, it works for as much process as you want&lt;/li&gt;
+    &lt;li&gt;You doesn't need to release something like a mutex, so you cannot forget to do it&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;The mutual exclusion is implicit with monitors. Only one process is allowed in the monitor, so all the method are automatically guarded with synchronization code. The synchronization between threads is made using signaling system, with condition variables. A condition variable is a kind of queue of process who are waiting on the same condition. You have several operations available on a condition, the most important is to signal a process waiting to be awaken and to wait on a condition. There are some similitudes between signal/wait operations and P and V of semaphores, but this is a little different. The signal operation does nothing if the queue is empty and the wait operation put always the thread in the waiting queue. The process queue is served in a first come, first served mode. &lt;/p&gt;
+&lt;p&gt;Now we'll see how to use them in JR. &lt;/p&gt;
+&lt;!--more--&gt;
+
+&lt;p&gt;In JR, you doesn't have directly the possibility to create monitors, but there is a preprocessor that transform a file with both JR and monitors operations into a plain JR file. This processor is called &lt;em&gt;m2jr&lt;/em&gt; (monitor to JR) and is directly available in the JR distribution. So you only have to use the m2jr command to translate a .m file (conventional monitor extension file) into several JR files (one for the monitor and one for the condition variables). This file is normal JR with several comments to make the debugs easier (corresponding between lines in m and JR).&lt;/p&gt;
+&lt;p&gt;All the keywords of the m2jr language start with _ (underscore). To declare a monitor, it's as easily as use the _monitor keyword : &lt;/p&gt;
+&lt;p&gt;[java]_monitor MonitorTest {
+    //...
+}[/java]&lt;/p&gt;
+&lt;p&gt;To add methods to the monitor, you just have to create method prefixed with _proc : &lt;/p&gt;
+&lt;p&gt;[java]_monitor MonitorTest {
+    _proc void testA(){
+        //Some code
+    }
+}[/java]&lt;/p&gt;
+&lt;p&gt;Only with that the mutual exclusion is guaranteed. Only one process is allowed into the monitor. If you want methods with a return type, you must use _return instead of return : &lt;/p&gt;
+&lt;p&gt;[java]_monitor MonitorTest {
+    _proc void testA(){
+        //Some code
+    }&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;_proc&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="nf"&gt;testB&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+    &lt;span class="n"&gt;_return&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/java]&lt;/p&gt;
+&lt;p&gt;To declare condition variables, the keyword is _condvar. You don't have to initialize them, just declare them : &lt;/p&gt;
+&lt;p&gt;[java]_monitor MonitorTest {
+    _condvar condVar1;
+    _condvar condVar2;
+}[/java]&lt;/p&gt;
+&lt;p&gt;To use global variables, you must prefix them with _var : &lt;/p&gt;
+&lt;p&gt;[java]_monitor MonitorTest {
+    _var var1;
+    _var var2;
+}[/java]&lt;/p&gt;
+&lt;p&gt;And to make operations on condition variables, you have to use _signal and _wait methods inside a proc method : &lt;/p&gt;
+&lt;p&gt;[java]_monitor MonitorTest {
+    _condvar a;
+    _condvar b;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;_proc&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;test&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+    &lt;span class="n"&gt;_wait&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+    &lt;span class="c1"&gt;//Some computations&lt;/span&gt;
+    &lt;span class="n"&gt;_signal&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;b&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/java]&lt;/p&gt;
+&lt;p&gt;And you compile that to JR using the simple commmand : &lt;/p&gt;
+&lt;p&gt;&lt;code&gt;m2jr MonitorTest.m&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;That will create two files (MonitorTest.jr and c_m_condvar.jr). Of course, you can use this monitor in a normal JR class, you don't have to compile classes who use monitors with m2jr, only with the JR compiler. There is just a single thing to worry about. m2jr generates a constructor that take a String in every monitors class, you when you instantiate the monitor, you have to provide a String representing its name as the first parameter. And if you want to create a new constructor in a monitor, you just have to call super with a String.  We'll see an example later. &lt;/p&gt;
+&lt;p&gt;Before going further, we must have more informations about the signal operations. When writing monitors, you have the choice between several philosophies for the signaling operation : &lt;/p&gt;
+&lt;ul&gt;
+    &lt;li&gt;&lt;strong&gt;Signal &amp;amp; Continue&lt;/strong&gt; (SC) : The process who signal keep the mutual exclusion and the signaled will be awaken but need to acquire the mutual exclusion before going. &lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Signal &amp;amp; Wait&lt;/strong&gt; (SW) : The signaler  is blocked and must wait for mutual exclusion to continue and the signaled thread is directly awaken and can start continue its operations. &lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Signal &amp;amp; Urgent Wait&lt;/strong&gt; (SU) : Like SW but the signaler thread has the guarantee than it would go just after the signaled thread&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Signal &amp;amp; Exit&lt;/strong&gt; (SX) : The signaler exits from the method directly after the signal and the signaled thread can start directly. This philosophy is not often used. &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;By default, m2jr make the compilation with SC, but you can configure it to use other philosophies. Just add the abbreviation of the philosophy (lower case) as an option to the m2jr compiler. By example, to compile using Signal &amp;amp; Exit : &lt;/p&gt;
+&lt;p&gt;&lt;code&gt;m2jr -sx MonitorTest.m&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;The main differences, is that the SC create a &lt;em&gt;signal stealers&lt;/em&gt; problem. You will quickly understand with an example. With what we know now, we can create a monitor to manage a bounded buffer : &lt;/p&gt;
+&lt;p&gt;[java]_monitor BoundedBuffer {
+    private static final int N = 5; //Size of the buffer&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;_var&lt;/span&gt; &lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="p"&gt;[]&lt;/span&gt; &lt;span class="n"&gt;buffer&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;new&lt;/span&gt; &lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;N&lt;/span&gt;&lt;span class="p"&gt;];&lt;/span&gt;
+&lt;span class="n"&gt;_var&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;front&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="n"&gt;_var&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;rear&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="n"&gt;_var&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;count&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+&lt;span class="n"&gt;_condvar&lt;/span&gt; &lt;span class="n"&gt;notFull&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="n"&gt;_condvar&lt;/span&gt; &lt;span class="n"&gt;notEmpty&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+&lt;span class="n"&gt;_proc&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;deposit&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt; &lt;span class="n"&gt;data&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="k"&gt;while&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;count&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="n"&gt;N&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+        &lt;span class="n"&gt;_wait&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;notFull&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+
+    &lt;span class="n"&gt;buffer&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;rear&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;data&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="n"&gt;rear&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;rear&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;%&lt;/span&gt; &lt;span class="n"&gt;N&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="n"&gt;count&lt;/span&gt;&lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+    &lt;span class="n"&gt;_signal&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;notEmpty&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="n"&gt;_proc&lt;/span&gt; &lt;span class="n"&gt;String&lt;/span&gt; &lt;span class="nf"&gt;fetch&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+    &lt;span class="k"&gt;while&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;count&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+        &lt;span class="n"&gt;_wait&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;notEmpty&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+
+    &lt;span class="n"&gt;String&lt;/span&gt; &lt;span class="n"&gt;result&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;buffer&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;front&lt;/span&gt;&lt;span class="p"&gt;];&lt;/span&gt;
+    &lt;span class="n"&gt;front&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;front&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;%&lt;/span&gt; &lt;span class="n"&gt;N&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="n"&gt;count&lt;/span&gt;&lt;span class="o"&gt;--&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+    &lt;span class="n"&gt;_signal&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;notFull&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+    &lt;span class="n"&gt;_return&lt;/span&gt; &lt;span class="n"&gt;result&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+ &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/java]&lt;/p&gt;
+&lt;p&gt;A thing that some of you will certainly find weird is the loop around the wait operation. Is to avoid the signal stealers problem. If there were not while loop, imagine that situation in SC : &lt;/p&gt;
+&lt;ol&gt;
+    &lt;li&gt;The thread 1 try to make a fetch(), there is no data, so it wait for the notEmpty condition variable&lt;/li&gt;
+    &lt;li&gt;The thread 2 make a deposit(), that awake the thread 1, but it needs to acquire again the mutual exclusion. &lt;/li&gt;
+    &lt;li&gt;Before the thread 2 has acquired the mutual exclusion, the thread 3 make a fetch(), there is enough data, so thread 3 make a fetch and get the data. So now, it's empty. &lt;/li&gt;
+    &lt;li&gt;The thread 2 acquire the right to go into the monitor and get a data. But wait a minute, there is no data and it will fetch a null data or perhaps an old data still fetched depending on the current state of the buffer &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;To avoid that situation, you just have to wrap the wait in a while loop instead of a if and that's done ! Or you can also use SW instead of SC. &lt;/p&gt;
+&lt;p&gt;With that monitor, we can easily solve the producer and consumer problem : &lt;/p&gt;
+&lt;p&gt;[java]public class ProducerConsumer {
+    private static final int N = 12; //Number of producers and consumers&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;private&lt;/span&gt; &lt;span class="k"&gt;static&lt;/span&gt; &lt;span class="n"&gt;BoundedBuffer&lt;/span&gt; &lt;span class="n"&gt;bb&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;new&lt;/span&gt; &lt;span class="n"&gt;BoundedBuffer&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Bounded Buffer monitor"&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt; &lt;span class="c1"&gt;//The monitor&lt;/span&gt;
+
+&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="k"&gt;static&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;main&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="p"&gt;...&lt;/span&gt; &lt;span class="n"&gt;args&lt;/span&gt;&lt;span class="p"&gt;){}&lt;/span&gt;
+
+&lt;span class="n"&gt;private&lt;/span&gt; &lt;span class="k"&gt;static&lt;/span&gt; &lt;span class="n"&gt;process&lt;/span&gt; &lt;span class="n"&gt;Producer&lt;/span&gt;&lt;span class="p"&gt;((&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;N&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="p"&gt;)){&lt;/span&gt;
+    &lt;span class="n"&gt;bb&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;deposit&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Producer"&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="n"&gt;private&lt;/span&gt; &lt;span class="k"&gt;static&lt;/span&gt; &lt;span class="n"&gt;process&lt;/span&gt; &lt;span class="n"&gt;Consumer&lt;/span&gt;&lt;span class="p"&gt;((&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;N&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="p"&gt;)){&lt;/span&gt;
+    &lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;out&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Consumer"&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="s"&gt;" : "&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;bb&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;fetch&lt;/span&gt;&lt;span class="p"&gt;());&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/java]&lt;/p&gt;
+&lt;p&gt;That will provide output like that : &lt;/p&gt;
+&lt;p&gt;&lt;code&gt;Consumer10 : Producer0&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;Consumer0 : Producer1&lt;/p&gt;
+&lt;p&gt;Consumer1 : Producer2&lt;/p&gt;
+&lt;p&gt;Consumer2 : Producer4&lt;/p&gt;
+&lt;p&gt;Consumer3 : Producer5&lt;/p&gt;
+&lt;p&gt;Consumer4 : Producer3&lt;/p&gt;
+&lt;p&gt;Consumer8 : Producer7&lt;/p&gt;
+&lt;p&gt;Consumer11 : Producer10&lt;/p&gt;
+&lt;p&gt;Consumer6 : Producer8&lt;/p&gt;
+&lt;p&gt;Consumer5 : Producer6&lt;/p&gt;
+&lt;p&gt;Consumer7 : Producer11&lt;/p&gt;
+&lt;p&gt;Consumer9 : Producer9&lt;/p&gt;
+&lt;p&gt;So it works well. &lt;/p&gt;
+&lt;p&gt;More than signal and wait operations, m2jr provide also others operations on condition variables : &lt;/p&gt;
+&lt;ul&gt;
+    &lt;li&gt;_signal_all : Awake all the process of the waiting queue. This operation is only provided in Signal &amp;amp; Continue mode. &lt;/li&gt;
+    &lt;li&gt;_empty : Test if the condition variable has any process waiting on it&lt;/li&gt;
+    &lt;li&gt;_wait(condvar, int priority) : Enqueue the process with the given priority. If you use that, the queue is now managed as a priority queue. You cannot use both wait without priority and wait with priority on the same condition variable &lt;/li&gt;
+    &lt;li&gt;_minrank : Return the min priority on the given condition variable. If the condition variable has no waiters, the returned given number doesn't seem anything. 
+&lt;/li&gt;&lt;/ul&gt;
+
+&lt;p&gt;With all that stuff, you can create monitors to solve almost all concurrency problems like barber shop, philosopher dinner, kwai cross or a lot of others problem. &lt;/p&gt;
+&lt;p&gt;I hope you found that post interesting. The next post about JR will be about operations and capabilities. &lt;/p&gt;&lt;/div&gt;</description><category>Concurrency</category><category>Java</category><category>Java</category><category>JR</category><guid>http://wichtounet.github.io/posts/2010/06/monitor-programming-in-jr.html</guid><pubDate>Mon, 28 Jun 2010 06:30:35 GMT</pubDate></item><item><title>Java Concurrency : Part 2 - Manipulate Threads</title><link>http://wichtounet.github.io/posts/2010/05/java-concurrency-part-2-manipulate-threads.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;a href="http://www.baptiste-wicht.com/2010/05/java-concurrency-part-1-threads/"&gt;After seeing how to create Threads&lt;/a&gt;, we'll see in this article what we can do to &lt;strong&gt;manipulate Threads&lt;/strong&gt;.
+&lt;p&gt;When we've Threads, we can make several operations on the Threads :&lt;/p&gt;
+&lt;ul&gt;
+    &lt;li&gt;Make the current Thread &lt;strong&gt;sleeping&lt;/strong&gt; during x milliseconds&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Wait&lt;/strong&gt; for an other thread to complete&lt;/li&gt;
+    &lt;li&gt;Manage the &lt;strong&gt;priorities&lt;/strong&gt; of Threads and pause a thread to give an other thread the opportunity to run&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Interrupt&lt;/strong&gt; a thread&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;We'll now see how to do all these things.&lt;/p&gt;
+&lt;!--more--&gt;
+
+&lt;p&gt;First and easier, we can make a thread sleeping for a certain number of milliseconds. To do that, the Thread class has a method sleep(long millis). But this method is static, so you can only make the current Thread sleeping. You cannot choose the thread you want to make sleeping, your only choice is the current Thread so :&lt;/p&gt;
+&lt;p&gt;[java]Thread.sleep(1000);[/java]&lt;/p&gt;
+&lt;p&gt;makes the current Thread sleep during 1000 milliseconds (1 second). But, you have to catch an exception, InterruptedException. This exception occurs if the sleeping thread is interrupted. So you have to do that :&lt;/p&gt;
+&lt;p&gt;[java]try {
+    Thread.sleep(1000);
+} catch (InterruptedException e){
+    e.printStackTrace();
+}[/java]&lt;/p&gt;
+&lt;p&gt;But this not the good way to manage the InterruptedException. We'll see in one moment, how to deal with this exception. &lt;/p&gt;
+&lt;p&gt;If you want more precision, you can use the overloaded version of sleep that takes the number of milliseconds plus a certain number of nanoseconds to sleep. The precision of this sleep depends on the system timers and clocks.&lt;/p&gt;
+&lt;p&gt;For example, if you want to sleep 1000 milliseconds and 1000 nanoseconds (1 microsecond), you can do like that :&lt;/p&gt;
+&lt;p&gt;[java]try {
+    Thread.sleep(1000, 1000);
+} catch (InterruptedException e){
+    e.printStackTrace();
+}[/java]&lt;/p&gt;
+&lt;p&gt;Here is a little example to test that :&lt;/p&gt;
+&lt;p&gt;[java]public class SleepThread {
+    public static void main(String[] args) {
+        System.out.println("Current time millis : " + System.currentTimeMillis());&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;    &lt;span class="n"&gt;try&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="n"&gt;Thread&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;sleep&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;1000&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="n"&gt;catch&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;InterruptedException&lt;/span&gt; &lt;span class="n"&gt;e&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="n"&gt;e&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;printStackTrace&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+
+    &lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;out&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Current time millis : "&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;currentTimeMillis&lt;/span&gt;&lt;span class="p"&gt;());&lt;/span&gt;
+
+    &lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;out&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Nano time : "&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;nanoTime&lt;/span&gt;&lt;span class="p"&gt;());&lt;/span&gt;
+
+    &lt;span class="n"&gt;try&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="n"&gt;Thread&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;sleep&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;2&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;5000&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="n"&gt;catch&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;InterruptedException&lt;/span&gt; &lt;span class="n"&gt;e&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="n"&gt;e&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;printStackTrace&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+
+    &lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;out&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Nano time : "&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;nanoTime&lt;/span&gt;&lt;span class="p"&gt;());&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/java]&lt;/p&gt;
+&lt;p&gt;In my computer, this produce this result :&lt;/p&gt;
+&lt;pre&gt;Current time millis : 1273959308480
+
+Current time millis : 1273959309480
+
+Nano time : 5878165216075
+
+Nano time : 5878166730976&lt;/pre&gt;
+
+&lt;p&gt;You can see that the sleep of milliseconds is very precise, but with nanoseconds the result can vary a lot. And of course, the result depends of your computer, your operating system and your configuration.&lt;/p&gt;
+&lt;p&gt;An other thing, you can do with Threads, is waiting for an other thread to die. For example, you can create five thread to compute sub result and wait for these 5 threads to finish to compute the final results based on the results of the five threads. To do that, you can use the join() method of the Thread class. This method is not static, so you can use it on any thread to wait for it to die. Like sleep() this method throws InterruptedException in the when the thread is interrupted during waiting for an other thread. So to wait on thread2, you just have to do that :&lt;/p&gt;
+&lt;p&gt;[java]try {
+    thread2.join();
+} catch (InterruptedException e){
+    e.printStackTrace();
+}[/java]&lt;/p&gt;
+&lt;p&gt;That will make the current Thread waiting for thread2 to die. You can also add a timeout in millis, or millis + nanos, with the overloaded versions of join(), join(long millis) and join(long millis, int nanos). Here is little example that shows all that stuff :&lt;/p&gt;
+&lt;p&gt;[java]public class JoinThread {
+    public static void main(String[] args) {
+        Thread thread2 = new Thread(new WaitRunnable());
+        Thread thread3 = new Thread(new WaitRunnable());&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;    &lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;out&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Current time millis : "&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;currentTimeMillis&lt;/span&gt;&lt;span class="p"&gt;());&lt;/span&gt;
+
+    &lt;span class="n"&gt;thread2&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;start&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+
+    &lt;span class="n"&gt;try&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="n"&gt;thread2&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;join&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="n"&gt;catch&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;InterruptedException&lt;/span&gt; &lt;span class="n"&gt;e&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="n"&gt;e&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;printStackTrace&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+
+    &lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;out&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Current time millis : "&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;currentTimeMillis&lt;/span&gt;&lt;span class="p"&gt;());&lt;/span&gt;
+
+    &lt;span class="n"&gt;thread3&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;start&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+
+    &lt;span class="n"&gt;try&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="n"&gt;thread3&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;join&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;1000&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="n"&gt;catch&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;InterruptedException&lt;/span&gt; &lt;span class="n"&gt;e&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="n"&gt;e&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;printStackTrace&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+
+    &lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;out&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Current time millis : "&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;currentTimeMillis&lt;/span&gt;&lt;span class="p"&gt;());&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="n"&gt;private&lt;/span&gt; &lt;span class="k"&gt;static&lt;/span&gt; &lt;span class="n"&gt;class&lt;/span&gt; &lt;span class="n"&gt;WaitRunnable&lt;/span&gt; &lt;span class="n"&gt;implements&lt;/span&gt; &lt;span class="n"&gt;Runnable&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="err"&gt;@&lt;/span&gt;&lt;span class="n"&gt;Override&lt;/span&gt;
+    &lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;run&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="n"&gt;try&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+            &lt;span class="n"&gt;Thread&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;sleep&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;5000&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+        &lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="n"&gt;catch&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;InterruptedException&lt;/span&gt; &lt;span class="n"&gt;e&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+            &lt;span class="n"&gt;e&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;printStackTrace&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+        &lt;span class="p"&gt;}&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/java]&lt;/p&gt;
+&lt;p&gt;That produce this result on my computer :&lt;/p&gt;
+&lt;pre&gt;Current time millis : 1274015478535
+
+Current time millis : 1274015483538
+
+Current time millis : 1274015484538&lt;/pre&gt;
+
+&lt;p&gt;You can see that the first join() wait 5 seconds for the other thread and when we set a timeout, we wait only 1 seconds and return from join method.&lt;/p&gt;
+&lt;p&gt;When working with Threads, it's also possible to change the priority of a Thread. In the Java Virtual Machine, the Thread scheduler, use a priority-based scheduling. So if a Thread enter in Runnable state with a higher priority than the running Thread, the new Thread will run and the current running thread will return to Runnable state and waits for its turn. But this behavior is not guaranteed and is completely depending on the virtual machine you are working on. So, do not rely on thread priorities, just use them to improve efficiency of your program.&lt;/p&gt;
+&lt;p&gt;Normally, the priority range of Threads is an integer from 0 to 10, but some virtual machine have lower or higher ranges. To know the range of priority, you can use constants of the Thread class :&lt;/p&gt;
+&lt;p&gt;[java]public class ThreadPriorityRange {
+    public static void main(String[] args) {
+        System.out.println("Minimal priority : " + Thread.MIN_PRIORITY);
+        System.out.println("Maximal priority : " + Thread.MAX_PRIORITY);
+        System.out.println("Norm priority : " + Thread.NORM_PRIORITY);
+         }
+}[/java]&lt;/p&gt;
+&lt;p&gt;On my computer, I've the most current values :&lt;/p&gt;
+&lt;pre&gt;Minimal priority : 1
+
+Maximal priority : 10
+
+Norm priority&lt;/pre&gt;
+
+&lt;p&gt;To set the priority of a Thread, you can use the setPriority(int priority) method of the Thread class. If you enter a value greater than the maximal priority, the maximal value will be used. If you don't specify a priority, the used priority, will be the priority of the current Thread.&lt;/p&gt;
+&lt;p&gt;An other way to works with priority is the yield() method. This method is static, so this works on the current Thread. The purpose of this method is to make the Thread going to Runnable again and to give the opportunity to other threads to get their turn. But in practice, the behavior of this method is not guaranteed. It can be implemented as a no-op on certain systems. It's not easy to test that in practice, because the results can truly depends on your computer, virtual machine and operating system. It's a good things to not use the priorities of Threads in practice.&lt;/p&gt;
+&lt;p&gt;The last thing you can do with a Thread, is to interrupt it. In Java, you have no way to force a Thread to stop, if the Thread is not well-done, it can continue its execution infinitely. But you can interrupt a Thread with the interrupt() method. This method interrupt the thread, if the thread is sleeping or joining an other Thread, an InterruptedException is thrown. You have to know that if the thread was sleeping or joining, the interrupted status of the Thread will be cleared. Namely, the method isInterrupted() will return false. A little example to demonstrate that :&lt;/p&gt;
+&lt;p&gt;[java]public class InterruptThread {
+    public static void main(String[] args) {
+        Thread thread1 = new Thread(new WaitRunnable());&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;    &lt;span class="n"&gt;thread1&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;start&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+
+    &lt;span class="n"&gt;try&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="n"&gt;Thread&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;sleep&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;1000&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="n"&gt;catch&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;InterruptedException&lt;/span&gt; &lt;span class="n"&gt;e&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="n"&gt;e&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;printStackTrace&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+
+    &lt;span class="n"&gt;thread1&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;interrupt&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="n"&gt;private&lt;/span&gt; &lt;span class="k"&gt;static&lt;/span&gt; &lt;span class="n"&gt;class&lt;/span&gt; &lt;span class="n"&gt;WaitRunnable&lt;/span&gt; &lt;span class="n"&gt;implements&lt;/span&gt; &lt;span class="n"&gt;Runnable&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="err"&gt;@&lt;/span&gt;&lt;span class="n"&gt;Override&lt;/span&gt;
+    &lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;run&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;out&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Current time millis : "&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;currentTimeMillis&lt;/span&gt;&lt;span class="p"&gt;());&lt;/span&gt;
+
+        &lt;span class="n"&gt;try&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+            &lt;span class="n"&gt;Thread&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;sleep&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;5000&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+        &lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="n"&gt;catch&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;InterruptedException&lt;/span&gt; &lt;span class="n"&gt;e&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+            &lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;out&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"The thread has been interrupted"&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+            &lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;out&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"The thread is interrupted : "&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;Thread&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;currentThread&lt;/span&gt;&lt;span class="p"&gt;().&lt;/span&gt;&lt;span class="n"&gt;isInterrupted&lt;/span&gt;&lt;span class="p"&gt;());&lt;/span&gt;
+        &lt;span class="p"&gt;}&lt;/span&gt;
+
+        &lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;out&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Current time millis : "&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;currentTimeMillis&lt;/span&gt;&lt;span class="p"&gt;());&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/java]&lt;/p&gt;
+&lt;p&gt;That produce that kind of result :&lt;/p&gt;
+&lt;pre&gt;Current time millis : 1274017633151
+
+The thread has been interrupted
+
+The thread is interrupted : false
+
+Current time millis : 1274017634151&lt;/pre&gt;
+
+&lt;p&gt;You can see that after one second, the second thread is interrupted and that the interrupted status has been set to false. If you are not sleeping, but making a lot of heavy actions, you can test for interrupt like that to make your thread correctly interrupts :&lt;/p&gt;
+&lt;p&gt;[java]public class InterruptableRunnable implements Runnable {
+    @Override
+    public void run() {
+        while(!Thread.currentThread().isInterrupted()){
+            //Heavy operation
+        }
+    }
+}[/java]&lt;/p&gt;
+&lt;p&gt;Now that you know how to interrupt a thread, you can imagine, that simply catch the InterruptedException is not enough to make your thread "interrupt safe". Imagine that your thread something like that : &lt;/p&gt;
+&lt;p&gt;[java]public class UglyRunnable implements Runnable {
+    @Override
+    public void run() {
+        while(!Thread.currentThread().isInterrupted()){
+            //Heavy operation
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            //Other operation
+        }
+    }
+}[/java]&lt;/p&gt;
+&lt;p&gt;And now, an other thread want to interrupt your thread while your thread is sleeping. The sleep will be interrupted, but the interrupted status will be cleared so the loop will continue. A solution to make a better thread is to interrupt again the thread after an InterruptedException : &lt;/p&gt;
+&lt;p&gt;[java]public class BetterRunnable implements Runnable {
+    @Override
+    public void run() {
+        while(!Thread.currentThread().isInterrupted()){
+            //Heavy operation
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            //Other operation
+        }
+    }
+}[/java]&lt;/p&gt;
+&lt;p&gt;With that code, the interrupted status will be restored and the loop will be stopped after interrupt. Depending on your code, you can also add a continue statement after the interrupt() to not make operations after interrupt. In some cases, you'll also needs to make several if statements to test the interrupted status to do or not to do some operations. &lt;/p&gt;
+&lt;p&gt;So, we've now covered the main operations you can do on threads. I hope you found this article interesting.&lt;/p&gt;
+&lt;p&gt;You can download the sources of this article here : &lt;a href="http://wichtounet.github.io/wp-content/uploads/2010/05/Part2.tar.gz"&gt;Java Concurrency Sources - Part 2&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;In the next article about Java Concurrency, we'll see how to synchronize code to make it Thread-safe.&lt;/p&gt;&lt;/div&gt;</description><category>Concurrency</category><category>Java</category><guid>http://wichtounet.github.io/posts/2010/05/java-concurrency-part-2-manipulate-threads.html</guid><pubDate>Mon, 17 May 2010 06:33:07 GMT</pubDate></item><item><title>Java Concurrency - Part 1 : Threads</title><link>http://wichtounet.github.io/posts/2010/05/java-concurrency-part-1-threads.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;This post is the first of set of posts about &lt;strong&gt;Java Concurrency&lt;/strong&gt;.&lt;/p&gt;
+&lt;p&gt;The concurrency is the fact to made several things at the same time using several threads.&lt;/p&gt;
+&lt;p&gt;A thread, also called &lt;strong&gt;Lightweight Process&lt;/strong&gt;, is treatment unity. Threads executes code in &lt;strong&gt;parallel&lt;/strong&gt; of each other threads currently running. When you've only one processor, there is a thread running at the same time of the others, you only have the impression of &lt;strong&gt;concurrency&lt;/strong&gt; (I don't say it's not useful, I say it's different), but when you've &lt;strong&gt;multiple processors&lt;/strong&gt;, you'll see the power of multithreading. In this case, you can have your threads distributed on the processors of the computer.&lt;/p&gt;
+&lt;!--more--&gt;
+
+&lt;p&gt;In Java, a thread is an instance of the class java.lang.Thread. A Thread can be managed in one of these two ways :&lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;ol&gt;
+    &lt;li&gt;Directly mapped to a native thread of the operating system. This is used when the operating system provide a preemptive threading system.&lt;/li&gt;
+    &lt;li&gt;Managed by the virtual machine in a preemptive way.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;A preemptive system, is a system in which the threads are managed by a scheduler and can be interrupted at any time to give processor to an other thread. When you program, you doesn't have to pay attention of which type of threads you use, the result will normally be the same. But you've to know that there can differences between operating systems.&lt;/p&gt;
+&lt;p&gt;There is three very important concepts when doing concurrent programming :&lt;/p&gt;
+&lt;ol&gt;
+    &lt;li&gt;Atomicity : An operation is said atomic when it cannot be interrupted. There is almost no atomic operations in Java, the only we've is the assignation a = 5, but a = b++ is not atomic. In some cases, you'll have to make atomic some actions with synchronization, we'll see later how to do that.&lt;/li&gt;
+    &lt;li&gt;Visibility : This occurs when a thread must watch the actions of an other threads by example the termination of the thread. This also implies some kind of synchronization.&lt;/li&gt;
+    &lt;li&gt;Order of execution : When you have normal program, all you lines of code run in the same order every time you launch the application. This is not the case when you make concurrent programming. You first instruction can followed by an instruction of the thread B or by the first instruction. And that can change every time you launch the application. &lt;strong&gt;The order of execution is not guaranteed !&lt;/strong&gt; I will certainly repeat that sometimes, but that's important to know.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;We'll see these concepts more deeply in the others parts of the set.&lt;/p&gt;
+&lt;p&gt;Lets start introducing the Thread class in Java. You can create threads in two ways :&lt;/p&gt;
+&lt;ol&gt;
+    &lt;li&gt;Extends &lt;strong&gt;Thread&lt;/strong&gt;&lt;/li&gt;
+    &lt;li&gt;Implements &lt;strong&gt;Runnable&lt;/strong&gt; and pass an instance of your news class to the Thread constructor&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;The first solution isn't a good solution because what you're creating is not a new specialized thread, but several instructions to run in a new Thread, namely a Runnable. Implementing Runnable is also better because Runnable is an interface and so, you can also extends a class and implementing Runnable, that's useful in some cases.&lt;/p&gt;
+&lt;p&gt;In my examples, I'll always use the second way. So let's declare our first Runnable :&lt;/p&gt;
+&lt;p&gt;[java]public class MyFirstRunnable implements Runnable{
+    @Override
+    public void run() {
+        System.out.println("In a thread");
+    }
+}[/java]&lt;/p&gt;
+&lt;p&gt;And use it to create a new Thread and start it :&lt;/p&gt;
+&lt;p&gt;[java]Thread thread = new Thread(new MyFirstRunnable());&lt;/p&gt;
+&lt;p&gt;thread.start();[/java]&lt;/p&gt;
+&lt;p&gt;The Thread will stopped when the end of the run() will be reached. You cannot force a thread to stop (there is stop() method, but deprecated), we'll see later how to properly stop a thread.&lt;/p&gt;
+&lt;p&gt;And now, what happens if we add a simple line of code to our program :&lt;/p&gt;
+&lt;p&gt;[java]Thread thread = new Thread(new MyFirstRunnable());&lt;/p&gt;
+&lt;p&gt;thread.start();&lt;/p&gt;
+&lt;p&gt;System.out.println("In the main Thread");[/java]&lt;/p&gt;
+&lt;p&gt;Can you predict the result of this code ? Nobody can't, it's not predictable, you can have :&lt;/p&gt;
+&lt;pre&gt;In a thread
+
+In the main Thread&lt;/pre&gt;
+
+&lt;p&gt;or&lt;/p&gt;
+&lt;pre&gt;In the main Thread
+
+In a thread&lt;/pre&gt;
+
+&lt;p&gt;And we cannot do better than that.&lt;/p&gt;
+&lt;p&gt;You can use the Runnable several times :&lt;/p&gt;
+&lt;p&gt;[java]Runnable runnable = new MyFirstRunnable();&lt;/p&gt;
+&lt;p&gt;for(int i = 0; i &amp;amp;lt; 25; i++){
+    new Thread(runnable).start();
+}[/java]&lt;/p&gt;
+&lt;p&gt;Now, 25 threads are launched.&lt;/p&gt;
+&lt;p&gt;You can also give names to Thread using the setName() method. You can get the name of the current thread using Thread.currentThread().getName(). Let's do a little example :&lt;/p&gt;
+&lt;p&gt;[java]public class MySecondRunnable implements Runnable{
+    @Override
+    public void run() {
+        System.out.printf("I'm running in thread %s \n", Thread.currentThread().getName());
+    }
+}[/java]&lt;/p&gt;
+&lt;p&gt;[java]Runnable runnable = new MySecondRunnable();&lt;/p&gt;
+&lt;p&gt;for(int i = 0; i &amp;amp;lt; 25; i++){
+    Thread thread = new Thread(runnable);
+    thread.setName("Thread " + i);
+    thread.start();
+}[/java]&lt;/p&gt;
+&lt;p&gt;This is the best example to see that the other is unpredictable. Here are two executions on my machine :&lt;/p&gt;
+&lt;p&gt;1.&lt;/p&gt;
+&lt;pre&gt;I'm running in thread Thread 0
+
+I'm running in thread Thread 1
+
+I'm running in thread Thread 2
+
+I'm running in thread Thread 3
+
+I'm running in thread Thread 4
+
+I'm running in thread Thread 5
+
+I'm running in thread Thread 7
+
+I'm running in thread Thread 14
+
+I'm running in thread Thread 13
+
+I'm running in thread Thread 12
+
+I'm running in thread Thread 11
+
+I'm running in thread Thread 10
+
+I'm running in thread Thread 9
+
+I'm running in thread Thread 8
+
+I'm running in thread Thread 6
+
+I'm running in thread Thread 15
+
+I'm running in thread Thread 16
+
+I'm running in thread Thread 17
+
+I'm running in thread Thread 18
+
+I'm running in thread Thread 19
+
+I'm running in thread Thread 20
+
+I'm running in thread Thread 21
+
+I'm running in thread Thread 22
+
+I'm running in thread Thread 23
+
+I'm running in thread Thread 24&lt;/pre&gt;
+
+&lt;p&gt;2.&lt;/p&gt;
+&lt;pre&gt;I'm running in thread Thread 0
+
+I'm running in thread Thread 1
+
+I'm running in thread Thread 2
+
+I'm running in thread Thread 3
+
+I'm running in thread Thread 4
+
+I'm running in thread Thread 5
+
+I'm running in thread Thread 6
+
+I'm running in thread Thread 7
+
+I'm running in thread Thread 8
+
+I'm running in thread Thread 9
+
+I'm running in thread Thread 10
+
+I'm running in thread Thread 11
+
+I'm running in thread Thread 12
+
+I'm running in thread Thread 13
+
+I'm running in thread Thread 14
+
+I'm running in thread Thread 15
+
+I'm running in thread Thread 16
+
+I'm running in thread Thread 17
+
+I'm running in thread Thread 18
+
+I'm running in thread Thread 19
+
+I'm running in thread Thread 20
+
+I'm running in thread Thread 21
+
+I'm running in thread Thread 22
+
+I'm running in thread Thread 23
+
+I'm running in thread Thread 24&lt;/pre&gt;
+
+&lt;p&gt;Like you can see, the order the threads instructions are executed is not guaranteed at all.&lt;/p&gt;
+&lt;p&gt;So here we are with the first part of this suite of articles about Java Concurrency. In the next post, we'll see the operations you can make directly on threads (stopping, joining, sleeping, ...).&lt;/p&gt;
+&lt;p&gt;I hope you found that post interesting.&lt;/p&gt;
+&lt;p&gt;The sources of this post are available here : &lt;a href="http://wichtounet.github.io/wp-content/uploads/2010/05/Part1.tar.gz"&gt;Java Concurrency Sources Part 1&lt;/a&gt;. &lt;/p&gt;&lt;/div&gt;</description><category>Concurrency</category><category>Java</category><guid>http://wichtounet.github.io/posts/2010/05/java-concurrency-part-1-threads.html</guid><pubDate>Fri, 07 May 2010 06:12:33 GMT</pubDate></item><item><title>Java 7 : More concurrency</title><link>http://wichtounet.github.io/posts/2010/04/java-7-more-concurrency.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;With &lt;strong&gt;Java 7&lt;/strong&gt; (Dolphin), we'll have some &lt;strong&gt;concurrency &lt;/strong&gt;and &lt;strong&gt;collections &lt;/strong&gt;updates with the &lt;strong&gt;JSR166y&lt;/strong&gt;, extension of the JSR166 of Doug Lea.&lt;/p&gt;
+&lt;p&gt;In this post, we'll see the most important news :&lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;ul&gt;
+    &lt;li&gt;Fork/Join Framework&lt;/li&gt;
+    &lt;li&gt;TrasnferQueue&amp;lt;E&amp;gt;&lt;/li&gt;
+    &lt;li&gt;ThreadLocalRandom&lt;/li&gt;
+&lt;/ul&gt;
+&lt;!--more--&gt;
+
+&lt;h4&gt;Fork/Join Framework&lt;/h4&gt;
+
+&lt;p&gt;The most important improvement is a new &lt;strong&gt;Fork/Join&lt;/strong&gt; Framework. Fork/Join is basically the parralel version of the divide-and-conquer algorithm resolution. Here is the typical form of that problems (taken from Doug Lea) :&lt;/p&gt;
+&lt;p&gt;[java]Result solve(Problem problem) {
+    if (problem is small)
+        directly solve problem
+    else {
+        split problem into independent parts
+        fork new subtasks to solve each part
+        join all subtasks
+        compose result from subresults
+    }
+}[/java]&lt;/p&gt;
+&lt;p&gt;Java 7 provide a new class &lt;strong&gt;ForkJoinPool &lt;/strong&gt;to run &lt;strong&gt;ForkJoinTask&lt;/strong&gt;. A ForkJoinTask is lighter than a thread. If you have a lot of ForkJoinTask, you can host them with a smallest number of threads. Two implementations of ForkJoinTask are provided :&lt;/p&gt;
+&lt;ul&gt;
+    &lt;li&gt;&lt;strong&gt;RecursiveAction &lt;/strong&gt;: A recursive resultless ForkJoinTask&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;RecursiveTask&lt;/strong&gt;&amp;lt;E&amp;gt; : A recursive ForkJoinTask that return an object of type E&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Of course, you can also directly use the ForkJoinTask class but the recursive actions are enough in almost all the cases.&lt;/p&gt;
+&lt;p&gt;From a ForkJoinTask you can invoke other task (fork them) using &lt;em&gt;invokeAll &lt;/em&gt;methods.&lt;/p&gt;
+&lt;p&gt;So, now that we have covered the main concepts of this framework, we could start with a little example (directly taken from Javadoc &lt;strong&gt;build 87&lt;/strong&gt;). We'll use divide and conquer to increment all the elements of an array. To know if the problem is small enough to solve it directly, we'll use a threshold representing the number of elements that we can increment directly. If we have more elements than the threshold, we will fork in two task otherwise, we'll compute directly the incrementation on the array. So here is our task :&lt;/p&gt;
+&lt;p&gt;[java]public class IncrementTask extends RecursiveAction {
+   private final long[] array;
+   private final int low;
+   private final int high;&lt;/p&gt;
+&lt;p&gt;private static final int THRESHOLD = 5000;&lt;/p&gt;
+&lt;p&gt;public IncrementTask(long[] array, int low, int high) {
+      super();&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;  &lt;span class="n"&gt;this&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;array&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;array&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+  &lt;span class="n"&gt;this&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;low&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;low&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+  &lt;span class="n"&gt;this&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;high&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;high&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}&lt;/p&gt;
+&lt;p&gt;@Override
+   protected void compute() {
+      if (high - low &amp;lt; THRESHOLD) {
+           for (int i = low; i &amp;lt; high; ++i){
+              array[i]++;
+           }
+        } else {
+           int mid = (low + high) &amp;gt;&amp;gt;&amp;gt; 1;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;       &lt;span class="n"&gt;invokeAll&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;new&lt;/span&gt; &lt;span class="n"&gt;IncrementTask&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;array&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;low&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;mid&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt; &lt;span class="n"&gt;new&lt;/span&gt; &lt;span class="n"&gt;IncrementTask&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;array&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;mid&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;high&lt;/span&gt;&lt;span class="p"&gt;));&lt;/span&gt;
+  &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}
+}[/java]&lt;/p&gt;
+&lt;p&gt;And you can launch that on an array using ForkJoinPool :&lt;/p&gt;
+&lt;p&gt;[java]RecursiveAction mainTask = new IncrementTask (anArray, 0, anArray.length);&lt;/p&gt;
+&lt;p&gt;ForkJoinPool mainPool = new ForkJoinPool();&lt;/p&gt;
+&lt;p&gt;mainPool.invoke(mainTask[/java]e&amp;gt;&lt;/p&gt;
+&lt;p&gt;All the elements of the array will be incremented. Depending on the size of the array and of the threshold, the problem will be divided in several sub problems and all these task will be managed by the ForkJoinPool.&lt;/p&gt;
+&lt;p&gt;You can also make action that return something. By example, we can compute the sum of all the elements of an array :&lt;/p&gt;
+&lt;p&gt;[java]public class SumTask extends RecursiveTask {
+   private final long[] array;
+   private final int low;
+   private final int high;&lt;/p&gt;
+&lt;p&gt;private static final int THRESHOLD = 5000;&lt;/p&gt;
+&lt;p&gt;public SumTask(long[] array, int low, int high) {
+      super();&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;  &lt;span class="n"&gt;this&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;array&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;array&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+  &lt;span class="n"&gt;this&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;low&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;low&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+  &lt;span class="n"&gt;this&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;high&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;high&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}&lt;/p&gt;
+&lt;p&gt;@Override
+   protected Long compute() {
+      if (high - low &amp;lt; THRESHOLD) {
+          long sum = 0;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;      &lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;low&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;high&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+          &lt;span class="n"&gt;sum&lt;/span&gt; &lt;span class="o"&gt;+=&lt;/span&gt; &lt;span class="n"&gt;array&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;];&lt;/span&gt;
+       &lt;span class="p"&gt;}&lt;/span&gt;
+
+       &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;sum&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+   &lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="k"&gt;else&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+       &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;mid&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;low&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;high&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+      &lt;span class="n"&gt;RecursiveTask&lt;/span&gt; &lt;span class="n"&gt;left&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;new&lt;/span&gt; &lt;span class="n"&gt;SumTask&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;array&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;low&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;mid&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+      &lt;span class="n"&gt;RecursiveTask&lt;/span&gt; &lt;span class="n"&gt;right&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;new&lt;/span&gt; &lt;span class="n"&gt;SumTask&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;array&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;mid&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;high&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+      &lt;span class="n"&gt;right&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;fork&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+
+      &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;left&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;compute&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;right&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;join&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+  &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}
+}[/java]&lt;/p&gt;
+&lt;p&gt;And you can use it like that :&lt;/p&gt;
+&lt;p&gt;[java]RecursiveTask sumTask = new SumTask(anArray, 0, anArray.length);&lt;/p&gt;
+&lt;p&gt;ForkJoinPool mainPool = new ForkJoinPool();&lt;/p&gt;
+&lt;p&gt;Long sum = mainPool.invoke(sumTask);[/java]&lt;/p&gt;
+&lt;p&gt;I think it's a clean way to solve big problems with divide-and-conquer.&lt;/p&gt;
+&lt;p&gt;You can also imagine others ways to divide the problems. An example is to compute the &lt;em&gt;THRESOLD&lt;/em&gt; left elements in the task and create a new task to compute the right elements. With that, we create less tasks, but it depends on the context and on the problems. In practive, you'll have  normally more complex problems but if you can find a way to divide the problems, you can use that new framework and have a very clean code.&lt;/p&gt;
+&lt;h4&gt;TransferQueue&amp;lt;E&amp;gt;&lt;/h4&gt;
+
+&lt;p&gt;A new interesting collection. This collection is a blocking queue especially made for producers/consumers. With that kind of queue, the producers can await for receipt of by the consumers with a new transfer(E) method or like normal queue without waiting for receipt with the &lt;em&gt;put&lt;/em&gt;(E) method. It's also possible to make a transfer with timeout with the tryTransfer method. There is no change in the consumer part, you always use take() to get an element and waiting for an element. You've also access to the number of waiting consumer with the &lt;em&gt;getWaitingConsumerCount&lt;/em&gt;().&lt;/p&gt;
+&lt;p&gt;The implementation to use is the &lt;strong&gt;LinkedTransferQueue&amp;lt;E&amp;gt;&lt;/strong&gt; based on linked nodes. The elements are ordered with FIFO. Here are some methods you can use with that new collection :&lt;/p&gt;
+&lt;p&gt;[java]TransferQueue&amp;lt;String&amp;gt; transfer = new LinkedTransferQueue&amp;lt;String&amp;gt;();&lt;/p&gt;
+&lt;p&gt;transfer.transfer("Hello"); //Wait for a consumer&lt;/p&gt;
+&lt;p&gt;if(transfer.tryTransfer("World")){//Don't wait for a consumer
+    //The element has been transfered to a consumer
+} else {
+    //There were no waiting consumer. The element has not been enqueued.
+}&lt;/p&gt;
+&lt;p&gt;boolean transfered = transfer.tryTransfer("Goodbye", 5, TimeUnit.SECONDS);&lt;/p&gt;
+&lt;p&gt;while(transfer.hasWaitingConsumer()){
+    //There is at least one consumer waiting for a transfer
+}[/java]&lt;/p&gt;
+&lt;p&gt;It's also an interesting stuff. Useful by example in the case of message passing.&lt;/p&gt;
+&lt;h4&gt;ThreadLocalRandom&lt;/h4&gt;
+
+&lt;p&gt;A really simple but useful enhancement is the add of the &lt;strong&gt;ThreadLocalRandom&lt;/strong&gt; class. This class is a random number generator linked to the current &lt;strong&gt;Thread&lt;/strong&gt;. It seems that if you use this generator from two different thread, you will have two different random generators. The generator is initialized with a generated seed that you cannot modify (&lt;em&gt;setSeed()&lt;/em&gt; throws an &lt;em&gt;UnsupportedOperationException&lt;/em&gt;).&lt;/p&gt;
+&lt;p&gt;You can use that class like that :&lt;/p&gt;
+&lt;p&gt;[java]long l = ThreadLocalRandom.current().nextLong(22L);[/java]&lt;/p&gt;
+&lt;p&gt;If you always use this form, you have the guarantee that the random generator will never be shared between two threads. Moreover, this new class provide  methods to generate a bounded numbers. By example, to generate a pseudo-random number between 10, inclusive and 33, exclusive, you can type :&lt;/p&gt;
+&lt;p&gt;[java]int i = ThreadLocalRandom.current().nextInt(10, 33);[/java]&lt;/p&gt;
+&lt;p&gt;This is a little improvement but really useful, i think.&lt;/p&gt;
+&lt;p&gt;So here we are. I've covered the main features added on Java 7 for concurrency. I hope you find that stuff interesting and that discovering this features will help you to make concurrent programming in Java 7.&lt;/p&gt;&lt;/div&gt;</description><category>Concurrency</category><category>Java</category><category>Java</category><category>Java 7</category><guid>http://wichtounet.github.io/posts/2010/04/java-7-more-concurrency.html</guid><pubDate>Wed, 14 Apr 2010 06:40:29 GMT</pubDate></item></channel></rss>

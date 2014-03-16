@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<rss xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/" version="2.0"><channel><title>@Blog("Baptiste Wicht") (C++)</title><link>http://wichtounet.github.io/</link><description></description><atom:link type="application/rss+xml" rel="self" href="http://wichtounet.github.io/categories/c.xml"></atom:link><language>en</language><lastBuildDate>Sun, 16 Mar 2014 21:44:31 GMT</lastBuildDate><generator>Nikola &lt;http://getnikola.com/&gt;</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>budgetwarrior 0.3.0 - Objective and wish management</title><link>http://wichtounet.github.io/posts/2014/02/budgetwarrior-0-3-0-objective-wish-management.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;Hi,&lt;/p&gt;
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>@Blog("Baptiste Wicht") (C++)</title><link>http://wichtounet.github.io/</link><description></description><atom:link href="http://wichtounet.github.io/categories/c.xml" type="application/rss+xml" rel="self"></atom:link><language>en</language><lastBuildDate>Sun, 16 Mar 2014 21:53:28 GMT</lastBuildDate><generator>Nikola &lt;http://getnikola.com/&gt;</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>budgetwarrior 0.3.0 - Objective and wish management</title><link>http://wichtounet.github.io/posts/2014/02/budgetwarrior-0-3-0-objective-wish-management.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;Hi,&lt;/p&gt;
 &lt;p&gt;I'm pleased to announce the release of another budgetwarrior release, the version 0.3.0.&lt;/p&gt;
 &lt;p&gt;&lt;/p&gt;&lt;h4&gt;Changes&lt;/h4&gt;
 &lt;p&gt;This version contains several important changes.&lt;/p&gt;
@@ -1053,4 +1053,882 @@ endif()[/code]&lt;/p&gt;
 &lt;p&gt;If you have the time, in practice, the best way to decide is always to benchmark each version, or even to try another data structures. Two operations with the same Big O complexity can perform quite differently in practice. &lt;/p&gt;
 &lt;p&gt;I hope that you found this article interesting. If you have any comment or have an idea about an other workload that you would like to test, don't hesitate to post a comment ;) If you have a question on results, don't hesitate as well. &lt;/p&gt;
 &lt;p&gt;The code source of the benchmark is available online: &lt;a href="https://github.com/wichtounet/articles/blob/master/src/vector_list/bench.cpp" title="Source code of the benchmark"&gt;https://github.com/wichtounet/articles/blob/master/src/vector_list/bench.cpp&lt;/a&gt;&lt;/p&gt;
-&lt;p&gt;The older version of the article is still available: &lt;a href="http://www.baptiste-wicht.com/2012/11/cpp-benchmark-vector-vs-list/" title="C++ benchmark – std::vector VS std::list"&gt;C++ benchmark – std::vector VS std::list&lt;/a&gt;&lt;/p&gt;&lt;/div&gt;</description><category>Benchmarks</category><category>C++</category><category>C++</category><category>C++11</category><category>Performances</category><guid>http://wichtounet.github.io/posts/2012/12/cpp-benchmark-vector-list-deque.html</guid><pubDate>Mon, 03 Dec 2012 08:58:29 GMT</pubDate></item></channel></rss>
+&lt;p&gt;The older version of the article is still available: &lt;a href="http://www.baptiste-wicht.com/2012/11/cpp-benchmark-vector-vs-list/" title="C++ benchmark – std::vector VS std::list"&gt;C++ benchmark – std::vector VS std::list&lt;/a&gt;&lt;/p&gt;&lt;/div&gt;</description><category>Benchmarks</category><category>C++</category><category>C++</category><category>C++11</category><category>Performances</category><guid>http://wichtounet.github.io/posts/2012/12/cpp-benchmark-vector-list-deque.html</guid><pubDate>Mon, 03 Dec 2012 08:58:29 GMT</pubDate></item><item><title>C++ benchmark - std::vector VS std::list</title><link>http://wichtounet.github.io/posts/2012/11/cpp-benchmark-vector-vs-list.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;strong&gt;A updated version of this article is available: &lt;a title="C++ benchmark – std::vector VS std::list VS std::deque" href="http://www.baptiste-wicht.com/2012/12/cpp-benchmark-vector-list-deque/"&gt;C++ benchmark – std::vector VS std::list VS std::deque&lt;/a&gt;&lt;/strong&gt;
+&lt;p&gt;In C++, the two most used data structures are the std::vector and the std::list. In this article, we will compare the performance in practice of these two data structures on several different workloads. In this article, when I talk about a list it is the std::list implementation and vector refers to the std::vector implementation.&lt;/p&gt;
+&lt;p&gt;It is generally said that a list should be used when random insert and remove will be performed (performed in O(1) versus O(n) for a vector). If we look only at the complexity, search in both data structures should be roughly equivalent, complexity being in O(n). When random insert/replace operations are performed on a vector, all the subsequent data needs to be moved and so each element will be copied. That is why the size of the data type is an important factor when comparing those two data structures.&lt;/p&gt;
+&lt;p&gt;However, in practice, there is a huge difference, the usage of the memory caches. All the data in a vector is contiguous where the std::list allocates separately memory for each element. How does that change the results in practice ?&lt;/p&gt;
+&lt;p&gt;Keep in mind that all the tests performed are made on vector and list even if other data structures could be better suited to the given workload.&lt;/p&gt;
+&lt;p&gt;In the graphs and in the text, &lt;em&gt;n&lt;/em&gt; is used to refer to the number of elements of the collection.&lt;/p&gt;
+&lt;p&gt;All the tests performed have been performed on an Intel Core i7 Q 820  @ 1.73GHz. The code has been compiled in 64 bits with GCC 4.7.2 with -02 and -march=native. The code has been compiled with C++11 support (-std=c++11).&lt;/p&gt;
+&lt;h3&gt;Fill&lt;/h3&gt;
+
+&lt;p&gt;The first test that is performed is to fill the data structures by adding elements to the back of the container. Two variations of vector are used, vector_pre being a std::vector with the size passed in parameters to the constructor, resulting in only one allocation of memory.&lt;/p&gt;
+&lt;p&gt;[line_chart title="Fill (8 bytes)" v_title="Milliseconds" width="600px" height="400px" scale_button="true"]&lt;/p&gt;
+&lt;p&gt;['x','vector_pre','vector','list'],&lt;/p&gt;
+&lt;p&gt;['1000',0,0,1],&lt;/p&gt;
+&lt;p&gt;['10000',0,1,10],&lt;/p&gt;
+&lt;p&gt;['100000',4,11,100],&lt;/p&gt;
+&lt;p&gt;['1000000',7,234,1023]&lt;/p&gt;
+&lt;p&gt;[/line_chart]&lt;/p&gt;
+&lt;p&gt;[line_chart title="Fill (1024 bytes)" v_title="Milliseconds" width="600px" height="400px" scale_button="true"]&lt;/p&gt;
+&lt;p&gt;['x','vector_pre','vector','list'],&lt;/p&gt;
+&lt;p&gt;['1000',0,9,1],&lt;/p&gt;
+&lt;p&gt;['10000',12,245,18],&lt;/p&gt;
+&lt;p&gt;['100000',949,2635,1153],&lt;/p&gt;
+&lt;p&gt;['1000000',9138,23654,11270]&lt;/p&gt;
+&lt;p&gt;[/line_chart]&lt;/p&gt;
+&lt;p&gt;All data structures are impacted the same way when the data size increases, because there will be more memory to allocate. The vector_pre is clearly the winner of this test, being one order of magnitude faster than a list and about twice faster than a vector without pre-allocation. The result are directly linked to the allocations that have to be performed, allocation being slow. Whatever the data size is, push_back to a vector will always be faster than to a list. This is logical becomes vector allocates more memory than necessary and so does not need to allocate memory for each element.&lt;/p&gt;
+&lt;p&gt;But this test is not very interesting, generally building the data structure is not critical. What is critical is the operations that are performed on the data structure. That will be tested in the next sections.&lt;/p&gt;
+&lt;!--nextpage--&gt;
+
+&lt;h3&gt;Random Find&lt;/h3&gt;
+
+&lt;p&gt;The first operation is that is tested is the search. The container is filled with all the numbers in [0, N] and shuffled. Then, each number in [0,N] is searched in the container with std::find that performs a simple linear search.&lt;/p&gt;
+&lt;p&gt;[line_chart title="Find (8 bytes)" v_title="Microseconds" width="600px" height="400px" scale_button="true"]&lt;/p&gt;
+&lt;p&gt;['x','vector','list'],&lt;/p&gt;
+&lt;p&gt;['100',0,11],&lt;/p&gt;
+&lt;p&gt;['1000',0,1545],&lt;/p&gt;
+&lt;p&gt;['5000',0,35886],&lt;/p&gt;
+&lt;p&gt;['10000',0,150865],&lt;/p&gt;
+&lt;p&gt;['20000',0,614496]&lt;/p&gt;
+&lt;p&gt;[/line_chart]&lt;/p&gt;
+&lt;p&gt;Yes, vector is present in the graph, its line is the same as the x line ! Performing a &lt;strong&gt;linear search in a vector is several orders of magnitude faster than in a list&lt;/strong&gt;.&lt;/p&gt;
+&lt;p&gt;The only reason is the usage of the cache line. When a data is accessed, the data is fetched from the main memory to the cache. Not only the accessed data is accessed, but a whole cacheline is fetched. As the elements in a vector are contiguous, when you access an element, the next element is automatically in the cache. As the main memory is orders of magnitude slower than the cache, this makes a huge difference. In the list case, the processor spends its whole time waiting for data being fetched from memory to the cache.&lt;/p&gt;
+&lt;p&gt;If we augment the size of the data type to 1KB, the results remain the same, but slower:&lt;/p&gt;
+&lt;p&gt;[line_chart title="Find (1024 bytes)" v_title="Microseconds" width="600px" height="400px" scale_button="true"]&lt;/p&gt;
+&lt;p&gt;['x','vector','list'],&lt;/p&gt;
+&lt;p&gt;['100', 0, 11],&lt;/p&gt;
+&lt;p&gt;['1000', 0, 3551],&lt;/p&gt;
+&lt;p&gt;['5000', 0, 195429],&lt;/p&gt;
+&lt;p&gt;['10000', 0, 829631],&lt;/p&gt;
+&lt;p&gt;['20000', 0, 3356432]&lt;/p&gt;
+&lt;p&gt;[/line_chart]&lt;/p&gt;
+&lt;!--nextpage--&gt;
+
+&lt;h3&gt;Random Insert&lt;/h3&gt;
+
+&lt;p&gt;In the case of random insert, in theory, the list should be much faster, its insert operation being in O(1) versus O(n) for a vector.&lt;/p&gt;
+&lt;p&gt;The container is filled with all the numbers in [0, N] and shuffled. Then, 1000 random values are inserted at a random position in the container. The random position is found by linear search. In both cases, the complexity of the search is O(n), the only difference comes from the insert that follow the search.&lt;/p&gt;
+&lt;p&gt;[line_chart title="Insert (8 bytes)" v_title="Milliseconds" width="600px" height="400px" scale_button="true"]&lt;/p&gt;
+&lt;p&gt;['x','vector','list'],&lt;/p&gt;
+&lt;p&gt;['1000', 9, 85],&lt;/p&gt;
+&lt;p&gt;['2000', 9, 85],&lt;/p&gt;
+&lt;p&gt;['4000', 10, 94],&lt;/p&gt;
+&lt;p&gt;['6000', 12, 98],&lt;/p&gt;
+&lt;p&gt;['8000', 13, 106],&lt;/p&gt;
+&lt;p&gt;['10000', 14, 106]&lt;/p&gt;
+&lt;p&gt;[/line_chart]&lt;/p&gt;
+&lt;p&gt;When, the vector should be slower than the list, it is almost an order of magnitude faster. Again, this is because finding the position in a list is much slower than copying a lot of small elements.&lt;/p&gt;
+&lt;p&gt;If we increase the size:&lt;/p&gt;
+&lt;p&gt;[line_chart title="Insert (32 bytes)" v_title="Milliseconds" width="600px" height="400px" scale_button="true"]&lt;/p&gt;
+&lt;p&gt;['x','vector','list'],&lt;/p&gt;
+&lt;p&gt;['1000', 27, 120],&lt;/p&gt;
+&lt;p&gt;['2000', 30, 113],&lt;/p&gt;
+&lt;p&gt;['4000', 34, 122],&lt;/p&gt;
+&lt;p&gt;['6000', 37, 140],&lt;/p&gt;
+&lt;p&gt;['8000', 42, 145],&lt;/p&gt;
+&lt;p&gt;['10000', 47, 155]&lt;/p&gt;
+&lt;p&gt;[/line_chart]&lt;/p&gt;
+&lt;p&gt;The two lines are getting closer, but vector is still faster.&lt;/p&gt;
+&lt;p&gt;Increase it to 1KB:&lt;/p&gt;
+&lt;p&gt;[line_chart title="Insert (1024 bytes)" v_title="Milliseconds" width="600px" height="400px" scale_button="true"]&lt;/p&gt;
+&lt;p&gt;['x','vector','list'],&lt;/p&gt;
+&lt;p&gt;['1000', 1821, 167],&lt;/p&gt;
+&lt;p&gt;['2000', 1941, 163],&lt;/p&gt;
+&lt;p&gt;['4000', 2383, 191],&lt;/p&gt;
+&lt;p&gt;['6000', 2679, 207],&lt;/p&gt;
+&lt;p&gt;['8000', 2960, 214],&lt;/p&gt;
+&lt;p&gt;['10000', 3308, 228]&lt;/p&gt;
+&lt;p&gt;[/line_chart]&lt;/p&gt;
+&lt;p&gt;This time, list outperforms vector by an order of magnitude ! The performance of random insert in a list are not impacted much by the size of the data type, where vector suffers a lot when big sizes are used. We can also see that list doesn't seem to care about the size of the collection. It is because the size of the collection only impact the search and not the insertion and as few search are performed, it does not change the results a lot.&lt;/p&gt;
+&lt;p&gt;If the iterator was already known (no need for linear search), it would be faster to insert into a list than into the vector.&lt;/p&gt;
+&lt;h3&gt;Random Remove&lt;/h3&gt;
+
+&lt;p&gt;In theory, random remove is the same case than random insert. Now that we've seen the results with random insert, we could expect the same behavior for random remove.&lt;/p&gt;
+&lt;p&gt;The container is filled with all the numbers in [0, N] and shuffled. Then, 1000 random values are removed from a random position in the container.&lt;/p&gt;
+&lt;p&gt;[line_chart title="Remove (8 bytes)" v_title="Milliseconds" width="600px" height="400px" scale_button="true"]&lt;/p&gt;
+&lt;p&gt;['x','vector','list'],&lt;/p&gt;
+&lt;p&gt;['1000', 0, 0],&lt;/p&gt;
+&lt;p&gt;['2000', 12, 51],&lt;/p&gt;
+&lt;p&gt;['4000', 55, 167],&lt;/p&gt;
+&lt;p&gt;['6000', 76, 290],&lt;/p&gt;
+&lt;p&gt;['8000', 111, 470],&lt;/p&gt;
+&lt;p&gt;['10000', 131, 725]&lt;/p&gt;
+&lt;p&gt;[/line_chart]&lt;/p&gt;
+&lt;p&gt;Again, vector is several times faster and looks to scale better. Again, this is because it is very cheap to copy small elements.&lt;/p&gt;
+&lt;p&gt;Let's increase it directly to 1KB element.&lt;/p&gt;
+&lt;p&gt;[line_chart title="Remove (1024 bytes)" v_title="Milliseconds" width="600px" height="400px" scale_button="true"]&lt;/p&gt;
+&lt;p&gt;['x','vector','list'],&lt;/p&gt;
+&lt;p&gt;['1000', 428, 26],&lt;/p&gt;
+&lt;p&gt;['2000', 1452, 137],&lt;/p&gt;
+&lt;p&gt;['4000', 3469, 403],&lt;/p&gt;
+&lt;p&gt;['6000', 5592, 774],&lt;/p&gt;
+&lt;p&gt;['8000', 11275, 1107],&lt;/p&gt;
+&lt;p&gt;['10000', 20687, 1473]&lt;/p&gt;
+&lt;p&gt;[/line_chart]&lt;/p&gt;
+&lt;p&gt;The two lines have been reversed !&lt;/p&gt;
+&lt;p&gt;The behavior of random remove is the same as the behavior of random insert, for the same reasons.&lt;/p&gt;
+&lt;!--nextpage--&gt;
+
+&lt;h3&gt;Push Front&lt;/h3&gt;
+
+&lt;p&gt;The next operation that we will compare is inserting elements in front of the collection. This is the worst case for vector, because after each insertion, all the previously inserted will be moved and copied. For a list, it does not make a difference compared to pushing to the back.&lt;/p&gt;
+&lt;p&gt;[line_chart title="Push front (8 bytes)" v_title="Milliseconds" width="600px" height="400px" scale_button="true"]&lt;/p&gt;
+&lt;p&gt;['x','vector','list'],&lt;/p&gt;
+&lt;p&gt;['100', 0, 0],&lt;/p&gt;
+&lt;p&gt;['1000', 0, 0],&lt;/p&gt;
+&lt;p&gt;['10000', 40, 0],&lt;/p&gt;
+&lt;p&gt;['50000', 949, 2],&lt;/p&gt;
+&lt;p&gt;['100000', 3937, 4],&lt;/p&gt;
+&lt;p&gt;['200000', 16003, 9],&lt;/p&gt;
+&lt;p&gt;['300000', 42393, 12]&lt;/p&gt;
+&lt;p&gt;[/line_chart]&lt;/p&gt;
+&lt;p&gt;The results are crystal-clear and as expected. vector is very bad at inserting elements to the front. This does not need further explanations. There is no need to change the data size, it will only make vector much slower.&lt;/p&gt;
+&lt;h3&gt;Sort&lt;/h3&gt;
+
+&lt;p&gt;The next operation that is tested is the performance of sorting a vector or a list. For a vector std::sort is used and for a list the member function sort is used.&lt;/p&gt;
+&lt;p&gt;[line_chart title="Sort (8 bytes)" v_title="Milliseconds" width="600px" height="400px" scale_button="true"]&lt;/p&gt;
+&lt;p&gt;['x','vector','list'],&lt;/p&gt;
+&lt;p&gt;['1000', 0, 0],&lt;/p&gt;
+&lt;p&gt;['10000', 2, 26],&lt;/p&gt;
+&lt;p&gt;['100000', 163, 684],&lt;/p&gt;
+&lt;p&gt;['1000000', 2147, 15950],&lt;/p&gt;
+&lt;p&gt;[/line_chart]&lt;/p&gt;
+&lt;p&gt;We can see that sorting a list is several times slower. It comes from the poor usage of the cache.&lt;/p&gt;
+&lt;p&gt;If we increase the size of the element to 1KB:&lt;/p&gt;
+&lt;p&gt;[line_chart title="Sort (1024 bytes)" v_title="Milliseconds" width="600px" height="400px" scale_button="true"]&lt;/p&gt;
+&lt;p&gt;['x','vector','list'],&lt;/p&gt;
+&lt;p&gt;['1000', 2, 0],&lt;/p&gt;
+&lt;p&gt;['10000', 224, 50],&lt;/p&gt;
+&lt;p&gt;['100000', 4289, 1083],&lt;/p&gt;
+&lt;p&gt;['1000000', 50973, 17975],&lt;/p&gt;
+&lt;p&gt;[/line_chart]&lt;/p&gt;
+&lt;p&gt;This time the list is faster than the vector. It is not very clear on the graph, but the values for the list are almost the same as for the previous results. That is because std::list::sort() does not perform any copy, only pointers to the elements are changed. On the other hand, swapping two elements in a vector involves at least three copies, so the cost of sorting will increase as the cost of copying increases.&lt;/p&gt;
+&lt;!--nextpage--&gt;
+
+&lt;h3&gt;Number Crunching&lt;/h3&gt;
+
+&lt;p&gt;Finally, we can also test a number crunching operation. Here, random elements are inserted into the container that is kept sorted. It means, that the position where the element has to be inserted is first searched by iterating through elements and the inserted. As we talk about number crunching, only 8 bytes elements are tested.&lt;/p&gt;
+&lt;p&gt;[line_chart title="Random Sorted Insert (8 bytes)" v_title="Milliseconds" width="600px" height="400px" scale_button="true"]&lt;/p&gt;
+&lt;p&gt;['x','vector','list'],&lt;/p&gt;
+&lt;p&gt;['1000', 0, 0],&lt;/p&gt;
+&lt;p&gt;['10000', 45, 166],&lt;/p&gt;
+&lt;p&gt;['50000', 928, 10665],&lt;/p&gt;
+&lt;p&gt;['100000', 3753, 50766],&lt;/p&gt;
+&lt;p&gt;['200000', 15185, 231480],&lt;/p&gt;
+&lt;p&gt;['300000', 34293, 715892]&lt;/p&gt;
+&lt;p&gt;[/line_chart]&lt;/p&gt;
+&lt;p&gt;We can clearly see that vector is more than an order of magnitude faster than list and this will only be more as the size of the collection increase. This is because traversing the list is much more expensive than copying the elements of the vector.&lt;/p&gt;
+&lt;h3&gt;Conclusion&lt;/h3&gt;
+
+&lt;p&gt;To conclude, we can get some facts about each data structure:&lt;/p&gt;
+&lt;ul&gt;
+    &lt;li&gt;std::vector is insanely faster than std::list to find an element&lt;/li&gt;
+    &lt;li&gt;std::vector performs always faster than std::list with very small data&lt;/li&gt;
+    &lt;li&gt;std::vector is always faster to push elements at the back than std::list&lt;/li&gt;
+    &lt;li&gt;std::list handles very well large elements, especially for sorting or inserting in the front&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;This draw simple conclusions on usage of each data structure:&lt;/p&gt;
+&lt;ul&gt;
+    &lt;li&gt;Number crunching: use std::vector&lt;/li&gt;
+    &lt;li&gt;Linear search: use std::vector&lt;/li&gt;
+    &lt;li&gt;Random Insert/Remove: use std::list (if data size very small (&amp;lt; 64B on my computer), use std::vector)&lt;/li&gt;
+    &lt;li&gt;Big data size: use std::list (not if intended for searching)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;If you have the time, in practice, the best way to decide is always to benchmark both versions, or even to try another data structures.&lt;/p&gt;
+&lt;p&gt;I hope that you found this article interesting. If you have any comment or have an idea about an other workload that you would like to test, don't hesitate to post a comment ;) If you have a question on results, don't hesitate as well.&lt;/p&gt;
+&lt;p&gt;The code source of the benchmark is available online: &lt;a title="Source code of the benchmark" href="https://github.com/wichtounet/articles/blob/master/src/vector_list/bench.cpp"&gt;https://github.com/wichtounet/articles/blob/master/src/vector_list/bench.cpp&lt;/a&gt;&lt;/p&gt;&lt;/div&gt;</description><category>Benchmarks</category><category>C++</category><category>C++</category><category>C++11</category><category>Performances</category><guid>http://wichtounet.github.io/posts/2012/11/cpp-benchmark-vector-vs-list.html</guid><pubDate>Mon, 26 Nov 2012 08:47:35 GMT</pubDate></item><item><title>EDDI Compiler 1.1.4 – Graph Coloring Register Allocation</title><link>http://wichtounet.github.io/posts/2012/11/eddic-compiler-1-1-4-graph-coloring-register-allocation.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;I'm proud to announce the release of the &lt;strong&gt;version 1.1.4 of the EDDI Compiler (eddic)&lt;/strong&gt;.&lt;/p&gt;
+&lt;p&gt;This version has taken me much more time than I thought but I also added much more features than I thought too. &lt;/p&gt;
+&lt;p&gt;There are few changes of the language itself, the main changes are in the optimization passes or in the compiler. &lt;/p&gt;
+&lt;p&gt;For the language, it is now possible to use dynamically allocated arrays. The &lt;em&gt;this&lt;/em&gt; pointer is now implicit in member functions. &lt;/p&gt;
+&lt;p&gt;The standard library has been improved by the &lt;strong&gt;addition of a Doubly-Linked List&lt;/strong&gt;. This list uses the templates so that it is generic. It is possible to add elements to the front and the back of the list. The list is iterable using iterators (bidirectional). &lt;/p&gt;
+&lt;p&gt;The template engine has been almost entirely rewritten. The previous version was too limited and there was code to handle the templates almost in the whole front-end. Now, the templates are handled recursively at each point where they can appear. For not the template instantiation depth is not limited, but this will be done in the next version of eddic. &lt;/p&gt;
+&lt;p&gt;The major change of this version is the use of a &lt;strong&gt;Graph Coloring Register Allocator&lt;/strong&gt; ! This allocator is based on a Chaitin-style allocator. This greatly improves the quality of the generated assembly. The LTAC compilation is now made in two phase. In the first one, only pseudo registers are used. This first pass includes a first cleanup pass. Then, the register allocator replaces all the pseudo registers by actual registers. Finally, the LTAC IR is optimized like before. In the future, it will be improved further. The coalescing and renumbering passes are a bit limited for now and Chaitin-Briggs optimistic coloring will be used in the future. &lt;/p&gt;
+&lt;p&gt;The data-flow framework has been improved to support &lt;strong&gt;data-flow analysis of LTAC program&lt;/strong&gt;. For now, the only analysis that does that is Live Registers Analysis. This analysis is used by the Register Allocator by the Dead Code Elimination that is run in LTAC code. &lt;/p&gt;
+&lt;p&gt;The MTAC optimization engine has been greatly improved by the use of a powerful pass manager that runs the optimization in the correct order and that gives them the necessary information. The Control Flow Graph is now updated by the different passes and never invalidated. The CFG is computed only once before the optimizations. &lt;/p&gt;
+&lt;p&gt;The MTAC optimization engine has also new optimization passes regarding to loops: &lt;strong&gt;Loop Invariant Code Motion&lt;/strong&gt;, &lt;strong&gt;Loop Strength Reduction&lt;/strong&gt; and &lt;strong&gt;Complete Loop Peeling&lt;/strong&gt;. The loops are discovered by a dominance analysis implemented using the Lengauer-Tarjan's algorithm. &lt;/p&gt;
+&lt;p&gt;The inliner has also beeen greatly improved. The inlining decision is now taken at the call site level. It means that only some calls to a function can be inlined and not the whole function. The inliner now supports functions with string parameters. Moreover, the inliner heuristic takes the number of constant parameters at the call site into account to take its decision. &lt;/p&gt;
+&lt;p&gt;On the side of the Compiler, there are several improvements. &lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;ul&gt;
+    &lt;li&gt;The whole compilation process has been made thread safe.&lt;/li&gt;
+    &lt;li&gt;&lt;a href="http://www.baptiste-wicht.com/2012/10/run-boost-test-parallel-cmake/" title="Run your Boost Tests in parallel with CMake"&gt;The Test Suite can be run in parallel&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;The Middle-End and Back-Ends have been clearly separated (More information on the &lt;a href="https://github.com/wichtounet/eddic/wiki/Architecture" title="Architecture of the EDDI Compiler"&gt;Wiki&lt;/a&gt;). &lt;/li&gt;
+    &lt;li&gt;The LTAC Intermediate Representation now keeps the Basic Blocks of the MTAC representation.&lt;/li&gt;
+    &lt;li&gt;&lt;a href="http://www.baptiste-wicht.com/2012/11/eddic-compiles-with-clang-3-1/" title="eddic compiles with CLang 3.1"&gt;eddic can be compiled with CLang&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4&gt;Future Work&lt;/h4&gt;
+
+&lt;p&gt;The next version of the EDDI compiler (eddic) will be the version 1.2.0. This version will add support for inheritance at least in a basic way. It will also add support for returning a structure by value. The structures can contains arrays of defined size. This version will also focus on removing the limitations that exists on some features (Function Call Left Values for instance). It will also contains several necessary cleanups to the files. &lt;/p&gt;
+&lt;h4&gt;Download&lt;/h4&gt;
+
+&lt;p&gt;You can find the EDDI Compiler sources on the Github repository: &lt;a title="Github repository of eddic" href="https://github.com/wichtounet/eddic"&gt;https://github.com/wichtounet/eddic&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;The version is available in the &lt;em&gt;v1.1.4&lt;/em&gt; tag available in the GitHub or directly in the &lt;em&gt;master&lt;/em&gt; branch.&lt;/p&gt;&lt;/div&gt;</description><category>C++</category><category>Compilers</category><category>EDDI</category><category>EDDI</category><guid>http://wichtounet.github.io/posts/2012/11/eddic-compiler-1-1-4-graph-coloring-register-allocation.html</guid><pubDate>Thu, 08 Nov 2012 08:25:15 GMT</pubDate></item><item><title>Integer Linear Time Sorting Algorithms</title><link>http://wichtounet.github.io/posts/2012/11/integer-linear-time-sorting-algorithms.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;strong&gt;Update&lt;/strong&gt;: The code is now more C++
+&lt;p&gt;Most of the sorting algorithms that are used are generally comparison sort. It means that each element of the collection being sorted will be compared to see which one is the first one. A comparison must have a lower bound of Ω(n log n) comparisons. That is why there are no comparison-based sorting algorithm better than O(n log n).&lt;/p&gt;
+&lt;p&gt;On the other hand, there are also sorting algorithms that are performing better. This is the family of the integer sorting algorithms. These algorithms are using properties of integer to sort them without comparing them. They can be only be used to sort integers. Nevertheless, a hash function can be used to assign a unique integer to any value and so sort any value. All these algorithms are using extra space. There are several of these algorithms. In this article, we will see three of them and I will present an implementation in C++. At the end of the article, I will compare them to &lt;em&gt;std::sort&lt;/em&gt;.&lt;/p&gt;
+&lt;p&gt;In the article, I will use &lt;em&gt;n&lt;/em&gt; as the size of the array to sort and &lt;em&gt;m&lt;/em&gt; as the max number that is permitted in the array.&lt;/p&gt;
+&lt;h3&gt;Bin Sort&lt;/h3&gt;
+
+&lt;p&gt;Bin Sort, or Bucket Sort, is a very simple algorithm that partition all the input numbers into a number of buckets. Then, all the buckets are outputted in order in the array, resulting in a sorting array. I decided to implement the simplest case of Bin Sort where each number goes in its own bucket, so there are &lt;em&gt;m&lt;/em&gt; buckets.&lt;/p&gt;
+&lt;p&gt;The implementation is pretty straightforward:&lt;/p&gt;
+&lt;p&gt;[cpp]void binsort(std::vector&amp;lt;std::size_t&amp;gt;&amp;amp; A){
+    std::vector&amp;lt;std::vector&amp;lt;std::size_t&amp;gt;&amp;gt; B(MAX + 1);&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;SIZE&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="n"&gt;B&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;A&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;]].&lt;/span&gt;&lt;span class="n"&gt;push_back&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;A&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;]);&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;current&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;MAX&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="k"&gt;auto&lt;/span&gt; &lt;span class="n"&gt;item&lt;/span&gt; &lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;B&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;]){&lt;/span&gt;
+        &lt;span class="n"&gt;A&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;current&lt;/span&gt;&lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;item&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/cpp]&lt;/p&gt;
+&lt;p&gt;B is the array of buckets. Each bucket is implemented as a std::vector. The algorithm starts by filling each buckets with the numbers from the input array. Then, it outputs them in order in the array.&lt;/p&gt;
+&lt;p&gt;This algorithm works in &lt;em&gt;O(n + m)&lt;/em&gt; and requires &lt;em&gt;O(m)&lt;/em&gt; extra memory. With these properties, it makes a very limited algorithm, because if you don't know the maximum number and you have to use the maximum number of the array type, you will have to allocate for instance 2^32 buckets. That won't be possible.&lt;/p&gt;
+&lt;h3&gt;Couting Sort&lt;/h3&gt;
+
+&lt;p&gt;An interesting fact about binsort is that each bucket contains only the same numbers. The size of the bucket would be enough. That is exactly what Counting Sort. It counts the number of times an element is present instead of the elements themselves. I will present two versions. The first one is a version using a secondary array and then copying again into the input array and the second one is an in-place sort.&lt;/p&gt;
+&lt;p&gt;[cpp]void counting_sort(std::vector&amp;lt;std::size_t&amp;gt;&amp;amp; A){
+    std::vector&amp;lt;std::size_t&amp;gt; B(SIZE);
+    std::vector&amp;lt;std::size_t&amp;gt; C(MAX);&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;SIZE&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;C&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;A&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;]];&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;MAX&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="n"&gt;C&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;+=&lt;/span&gt; &lt;span class="n"&gt;C&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;];&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;long&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;SIZE&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="o"&gt;--&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="n"&gt;B&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;C&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;A&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;]]&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;A&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;];&lt;/span&gt;
+    &lt;span class="o"&gt;--&lt;/span&gt;&lt;span class="n"&gt;C&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;A&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;]];&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;SIZE&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="n"&gt;A&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;B&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;];&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/cpp]&lt;/p&gt;
+&lt;p&gt;The algorithm is also simple. It starts by counting the number of elements in each bucket. Then, it aggregates the number by summing them to obtain the position of the element in the final sorted array. Then, all the elements are copied in the temporary array. Finally, the temporary array is copied in the final array. This algorithms works in &lt;em&gt;O(m + n)&lt;/em&gt; and requires &lt;em&gt;O(m + n)&lt;/em&gt;. This version is presented only because it is present in the literature. We can do much better by avoiding the temporary array and optimizing it a bit:&lt;/p&gt;
+&lt;p&gt;[cpp]void in_place_counting_sort(std::vector&amp;lt;std::size_t&amp;gt;&amp;amp; A){
+    std::vector&amp;lt;std::size_t&amp;gt; C(MAX + 1);&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;SIZE&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;C&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;A&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;]];&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;current&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;MAX&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;j&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;j&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;C&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;];&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;j&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+        &lt;span class="n"&gt;A&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;current&lt;/span&gt;&lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/cpp]&lt;/p&gt;
+&lt;p&gt;The temporary array is removed and the elements are directly written in the sorted array. The counts are not used directly as position, so there is no need to sum them. This version still works in &lt;em&gt;O(m + n)&lt;/em&gt; but requires only &lt;em&gt;O(m)&lt;/em&gt; extra memory. It is much faster than the previous version.&lt;/p&gt;
+&lt;h3&gt;Radix Sort&lt;/h3&gt;
+
+&lt;p&gt;The last version that I will discuss here is a Radix Sort. This algorithm sorts the number digit after digit in a specific radix. It is a form of bucket sort, where there is a bucket by digit. Like Counting Sort, only the counts are necessary. For example, if you use radix sort in base 10. It will first sort all the numbers by their first digit, then the second, .... It can work in any base and that is its force. With a well chosen base, it can be very powerful. Here, we will focus on radix that are in the form 2^r. These radix have good properties, we can use shifts and mask to perform division and modulo, making the algorithm much faster.&lt;/p&gt;
+&lt;p&gt;The implementation is a bit more complex than the other implementations:&lt;/p&gt;
+&lt;p&gt;[cpp]static const std::size_t digits = 2;        //Digits&lt;/p&gt;
+&lt;p&gt;static const std::size_t r = 16;                 //Bits&lt;/p&gt;
+&lt;p&gt;static const std::size_t radix = 1 &amp;lt;&amp;lt; r;         //Bins&lt;/p&gt;
+&lt;p&gt;static const std::size_t mask = radix - 1;&lt;/p&gt;
+&lt;p&gt;void radix_sort(std::vector&amp;lt;std::size_t&amp;gt;&amp;amp; A){
+    std::vector&amp;lt;std::size_t&amp;gt; B(SIZE);
+    std::vector&amp;lt;std::size_t&amp;gt; cnt(radix);&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;shift&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;digits&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;shift&lt;/span&gt; &lt;span class="o"&gt;+=&lt;/span&gt; &lt;span class="n"&gt;r&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;j&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;j&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;radix&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;j&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+        &lt;span class="n"&gt;cnt&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;j&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+
+    &lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;j&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;j&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;SIZE&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;j&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+        &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;cnt&lt;/span&gt;&lt;span class="p"&gt;[(&lt;/span&gt;&lt;span class="n"&gt;A&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;j&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;shift&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;amp&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;mask&lt;/span&gt;&lt;span class="p"&gt;];&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+
+    &lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;j&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;j&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;radix&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;j&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+        &lt;span class="n"&gt;cnt&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;j&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;+=&lt;/span&gt; &lt;span class="n"&gt;cnt&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;j&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;];&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+
+    &lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;long&lt;/span&gt; &lt;span class="n"&gt;j&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;SIZE&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;j&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="o"&gt;--&lt;/span&gt;&lt;span class="n"&gt;j&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+        &lt;span class="n"&gt;B&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="o"&gt;--&lt;/span&gt;&lt;span class="n"&gt;cnt&lt;/span&gt;&lt;span class="p"&gt;[(&lt;/span&gt;&lt;span class="n"&gt;A&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;j&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;shift&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;amp&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;mask&lt;/span&gt;&lt;span class="p"&gt;]]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;A&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;j&lt;/span&gt;&lt;span class="p"&gt;];&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+
+    &lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;j&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;j&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;SIZE&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;j&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+       &lt;span class="n"&gt;A&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;j&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;B&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;j&lt;/span&gt;&lt;span class="p"&gt;];&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/cpp]&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;r&lt;/em&gt; indicates the power of two used as the radix (2^r). The mask is used to compute modulo faster. The algorithm repeats the steps for each digit. Here &lt;em&gt;digits&lt;/em&gt; equals 2. It means that we support 2^32 values. A 32 bits value is sorted in two pass. The steps are very similar to counting sort. Each value of the digit is counted and then the counts are summed to give the position of the number. Finally, the numbers are put in order in the temporary array and copied into A.&lt;/p&gt;
+&lt;p&gt;This algorithm works in &lt;em&gt;O(digits (m + radix))&lt;/em&gt; and requires &lt;em&gt;O(n + radix)&lt;/em&gt; extra memory. A very good thing is that the algorithm does not require space based on the maximum value, only based on the radix.&lt;/p&gt;
+&lt;h3&gt;Results&lt;/h3&gt;
+
+&lt;p&gt;It's time to compare the different implementations in terms of runtime. For each size, each version is tested 25 times on different random arrays. The arrays are the same for each algorithm. The number is the time necessary to sort the 25 arrays. The benchmark has been compiler with GCC 4.7.&lt;/p&gt;
+&lt;p&gt;The first test is made with very few duplicates (m = 10n).&lt;/p&gt;
+&lt;p&gt;[bar_chart title="m = 10n" width="600px" height="400px" scale_button="true" v_title="ms" h_title="n"]&lt;/p&gt;
+&lt;p&gt;['x', 'std::sort', 'counting_sort', 'in_place_counting_sort', 'bin_sort', 'radix_sort'],&lt;/p&gt;
+&lt;p&gt;['100000', 171, 182, 105, 945, 89],&lt;/p&gt;
+&lt;p&gt;['500000', 993, 2229, 970, 6435, 461],&lt;/p&gt;
+&lt;p&gt;['1000000', 2175, 4812, 2046, 14096, 1068],&lt;/p&gt;
+&lt;p&gt;['5000000', 11791, 27050, 10202, 81255, 6148],&lt;/p&gt;
+&lt;p&gt;[/bar_chart]&lt;/p&gt;
+&lt;p&gt;Radix Sort comes to be the fastest in this case, &lt;strong&gt;twice faster as &lt;em&gt;std::sort&lt;/em&gt;&lt;/strong&gt;. In place counting sort has almost the same performance as &lt;em&gt;std::sort&lt;/em&gt;. The other are performing worse.&lt;/p&gt;
+&lt;p&gt;The second test is made with few duplicates (m ~= n).&lt;/p&gt;
+&lt;p&gt;[bar_chart title="m ~= n" width="600px" height="400px" scale_button="true" v_title="ms" h_title="n"]&lt;/p&gt;
+&lt;p&gt;['x', 'std::sort', 'counting_sort', 'in_place_counting_sort', 'bin_sort', 'radix_sort'],&lt;/p&gt;
+&lt;p&gt;['100000', 186, 73, 37, 309, 90],&lt;/p&gt;
+&lt;p&gt;['500000', 991, 611, 189, 3126, 455],&lt;/p&gt;
+&lt;p&gt;['1000000', 2235, 2171, 547, 7978, 1038],&lt;/p&gt;
+&lt;p&gt;['5000000', 12184, 18470, 4516, 49056, 5791],&lt;/p&gt;
+&lt;p&gt;[/bar_chart]&lt;/p&gt;
+&lt;p&gt;The numbers are impressive. In place &lt;strong&gt;counting sort is between 3-4 times faster than &lt;em&gt;std::sort&lt;/em&gt;&lt;/strong&gt; and &lt;strong&gt;radix sort is twice faster than &lt;em&gt;std::sort&lt;/em&gt;&lt;/strong&gt; ! Bin Sort does not performs very well and counting sort even if generally faster than &lt;em&gt;std::sort&lt;/em&gt; does not scale very well.&lt;/p&gt;
+&lt;p&gt;Let's test with more duplicates (m = n / 2).&lt;/p&gt;
+&lt;p&gt;[bar_chart title="m = n / 2" width="600px" height="400px" scale_button="true" v_title="ms" h_title="n"]&lt;/p&gt;
+&lt;p&gt;['x', 'std::sort', 'counting_sort', 'in_place_counting_sort', 'bin_sort', 'radix_sort'],&lt;/p&gt;
+&lt;p&gt;['100000', 178, 65, 25, 262, 90],&lt;/p&gt;
+&lt;p&gt;['500000', 979, 450, 143, 2332, 461],&lt;/p&gt;
+&lt;p&gt;['1000000', 2171, 1480, 321, 6240, 1041],&lt;/p&gt;
+&lt;p&gt;['5000000', 11978, 16205, 3453, 41709, 5890],&lt;/p&gt;
+&lt;p&gt;[/bar_chart]&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;std::sort&lt;/em&gt; and radix sort performance does not change a lot but the other sort are performing better. In-place counting sort is still the leader with a higher margin.&lt;/p&gt;
+&lt;p&gt;Finally, with a lot of duplicates (m = n / 10).&lt;/p&gt;
+&lt;p&gt;[bar_chart title="m = n / 10n" width="600px" height="400px" scale_button="true" v_title="ms" h_title="n"]&lt;/p&gt;
+&lt;p&gt;['x', 'std::sort', 'counting_sort', 'in_place_counting_sort', 'bin_sort', 'radix_sort'],&lt;/p&gt;
+&lt;p&gt;['100000', 161, 46, 12, 144, 74],&lt;/p&gt;
+&lt;p&gt;['500000', 918, 322, 76, 1023, 449],&lt;/p&gt;
+&lt;p&gt;['1000000', 2062, 824, 167, 2721, 1041],&lt;/p&gt;
+&lt;p&gt;['5000000', 10789, 8534, 1030, 24026, 5686],&lt;/p&gt;
+&lt;p&gt;[/bar_chart]&lt;/p&gt;
+&lt;p&gt;Again, &lt;em&gt;std::sort&lt;/em&gt; and radix sort performance are stable, but in-place counting is now &lt;strong&gt;ten times faster than &lt;em&gt;std::sort&lt;/em&gt;&lt;/strong&gt; !&lt;/p&gt;
+&lt;h3&gt;Conclusion&lt;/h3&gt;
+
+&lt;p&gt;To conclude, we have seen that these algorithms can outperforms &lt;em&gt;std::sort&lt;/em&gt; by a high factor (10 times for In place Counting Sort when there m &amp;lt;&amp;lt; n). If you have to sort integers, you should consider these two cases:&lt;/p&gt;
+&lt;ul&gt;
+    &lt;li&gt;m &amp;gt; n or m is unknown : Use radix sort that is about twice faster than &lt;em&gt;std::sort&lt;/em&gt;.&lt;/li&gt;
+    &lt;li&gt;m &amp;lt;&amp;lt; n : Use in place counting sort that can be much faster than &lt;em&gt;std::sort&lt;/em&gt;.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;I hope you found this article interesting. The implementation can be found on Github: https://github.com/wichtounet/articles/tree/master/src/linear_sorting&lt;/p&gt;&lt;/div&gt;</description><category>Algorithm</category><category>Benchmarks</category><category>C++</category><category>C++</category><category>Performances</category><guid>http://wichtounet.github.io/posts/2012/11/integer-linear-time-sorting-algorithms.html</guid><pubDate>Wed, 07 Nov 2012 09:02:46 GMT</pubDate></item><item><title>Run your Boost Tests in parallel with CMake</title><link>http://wichtounet.github.io/posts/2012/10/run-boost-test-parallel-cmake.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;I was looking for a Test Library to run eddic tests in parallel to replace Boost Test Library. I posted my question on StackOverflow and an awesome solution has been posted. With CMake and a little CMake additional file, it is possible to run the tests written with Boost Test Library in parallel without changing anything in the tests code !&lt;/p&gt;
+&lt;p&gt;CTest is the test runner that is shipped with CMake. This runner can run tests in parallel using the -j X option (X is the numbers of threads). However, it can only run the tests that are declared in the CMakeLists.txt file. In my case, this means only one (the executable with Boost Test Library). If you have T tests, a solution would be create T executable files. Then, they can be run in parallel by ctest. However, this is not very practical. The solution proposed in this article is better. &lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;h3&gt;Integrate Boost Test Library in CMake&lt;/h3&gt;
+&lt;p&gt;Ryan Pavlik provides a series of CMake modules in its Github repository. One of this module is named BoostTestTargets. It automatically generates the CTest commands to run all the tests that you have. The small drawback is that you to list all the tests. &lt;/p&gt;
+&lt;p&gt;To start, you have to download these files: &lt;/p&gt;
+&lt;ul&gt;
+    &lt;li&gt;&lt;a href="https://github.com/rpavlik/cmake-modules/raw/master/BoostTestTargets.cmake" title="BoostTestTargets.cmake"&gt;BoostTestTargets.cmake&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href="https://github.com/rpavlik/cmake-modules/raw/master/GetForceIncludeDefinitions.cmake" title="GetForceIncludeDefinitions.cmake"&gt;GetForceIncludeDefinitions.cmake&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href="https://github.com/rpavlik/cmake-modules/raw/master/CopyResourcesToBuildTree.cmake" title="CopyResourcesToBuildTree.cmake"&gt;CopyResourcesToBuildTree.cmake&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href="https://github.com/rpavlik/cmake-modules/blob/master/BoostTestTargetsStatic.h" title="BoostTestTargetsStatic.h"&gt;BoostTestTargetsStatic.h&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href="https://github.com/rpavlik/cmake-modules/blob/master/BoostTestTargetsDynamic.h" title="BoostTestTargetsDynamic.h"&gt;BoostTestTargetsDynamic.h&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href="https://github.com/rpavlik/cmake-modules/blob/master/BoostTestTargetsIncluded.h" title="BoostTestTargetsIncluded.h"&gt;BoostTestTargetsIncluded.h&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;These files must be placed next to your CMakeLists.txt file. Then, you have to modify your CMakeLists.txt file to enable testing and enable the new module. For example, if you have two test suites and five tests in each:  &lt;/p&gt;
+&lt;p&gt;[code]INCLUDE(CTest)&lt;/p&gt;
+&lt;p&gt;ENABLE_TESTING()&lt;/p&gt;
+&lt;p&gt;file(
+    GLOB_RECURSE
+    test_files
+    test/*
+)&lt;/p&gt;
+&lt;p&gt;include(BoostTestTargets.cmake)&lt;/p&gt;
+&lt;p&gt;add_boost_test(eddic_boost_test
+    SOURCES ${test_files}
+    TESTS 
+    TestSuiteA/test_1
+    TestSuiteA/test_2
+    TestSuiteA/test_3
+    TestSuiteA/test_4
+    TestSuiteA/test_5
+    TestSuiteB/test_1
+    TestSuiteB/test_2
+    TestSuiteB/test_3
+    TestSuiteB/test_4
+    TestSuiteB/test_5
+    )[/code]&lt;/p&gt;
+&lt;p&gt;All the test files are searched in the test directory and used in the SOURCES variable. Then all the tests are declared. &lt;/p&gt;
+&lt;p&gt;The main test file has to include a specific header file:&lt;/p&gt;
+&lt;p&gt;[cpp]#define BOOST_TEST_MODULE eddic_test_suite&lt;/p&gt;
+&lt;h2&gt;include &amp;lt;BoostTestTargetConfig.h&amp;gt;[/cpp]&lt;/h2&gt;
+&lt;p&gt;This file will be automatically detected by BoostTestTargets and configured correctly. And that's it !&lt;/p&gt;
+&lt;p&gt;You can run CMake again in your build directory to use the new test system: &lt;/p&gt;
+&lt;p&gt;[bash]cmake .[/bash]&lt;/p&gt;
+&lt;p&gt;If the configuration has been successful, you will see a message indicating that. For example, I see that: &lt;/p&gt;
+&lt;p&gt;[bash]-- Test 'eddic_boost_test' uses the CMake-configurable form of the boost test framework - congrats! (Including File: /home/wichtounet/dev/eddi/eddic/test/IntegrationTests.cpp)&lt;/p&gt;
+&lt;p&gt;-- Configuring done&lt;/p&gt;
+&lt;p&gt;-- Generating done&lt;/p&gt;
+&lt;p&gt;-- Build files have been written to: /tmp/ramdrive/dev/eddic[/bash]&lt;/p&gt;
+&lt;h3&gt;Run tests in parallel&lt;/h3&gt;
+
+&lt;p&gt;You can then run your tests in parallel with ctest. For instance, with 9 threads: &lt;/p&gt;
+&lt;p&gt;[bash]ctest -j 8[/bash]&lt;/p&gt;
+&lt;p&gt;In my case, my tests are completed 6x faster ! This is very valuable when you often run your tests. &lt;/p&gt;
+&lt;p&gt;For more information on how to integrate your Boost Test Library tests with CMake, you can consult the &lt;a href="https://github.com/rpavlik/cmake-modules/" title="cmake-modules Github repository"&gt;The cmake-modules repository&lt;/a&gt;. &lt;/p&gt;&lt;/div&gt;</description><category>Boost</category><category>C++</category><category>cmake</category><category>Concurrency</category><category>EDDI</category><category>Performances</category><category>Tests</category><guid>http://wichtounet.github.io/posts/2012/10/run-boost-test-parallel-cmake.html</guid><pubDate>Mon, 15 Oct 2012 08:57:43 GMT</pubDate></item><item><title>EDDI Compiler 1.1.3 - Templates</title><link>http://wichtounet.github.io/posts/2012/09/eddi-compiler-1-1-3-templates.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;I finished the &lt;strong&gt;version 1.1.3 of the EDDI Compiler (eddic)&lt;/strong&gt;.&lt;/p&gt;
+&lt;p&gt;The main improvement to the language is the support of templates. The syntax is more or less the same as the syntax of C++ templates, but the features are much more limited. In EDDI, you can declare class templates and function templates. Class templates can also includes member function templates.&lt;/p&gt;
+&lt;p&gt;Here is an example of the use of templates in EDDI:&lt;/p&gt;
+&lt;p&gt;[cpp]template&lt;/p&gt;
+&lt;p&gt;struct node {
+    T value;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;this&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;T&lt;/span&gt; &lt;span class="n"&gt;init&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"C1|"&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+    &lt;span class="n"&gt;this&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;init&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="n"&gt;T&lt;/span&gt; &lt;span class="n"&gt;get_value&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;this&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="n"&gt;template&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;type&lt;/span&gt; &lt;span class="n"&gt;U&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;print_value&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;U&lt;/span&gt; &lt;span class="n"&gt;v&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;v&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+    &lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"|"&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}&lt;/p&gt;
+&lt;p&gt;template&amp;lt;type T&amp;gt;&lt;/p&gt;
+&lt;p&gt;void debug(T t){
+    print(t);
+    print("|");
+}&lt;/p&gt;
+&lt;p&gt;template&amp;lt;type T&amp;gt;&lt;/p&gt;
+&lt;p&gt;void test(node&amp;lt;T&amp;gt;* node){
+    debug&amp;lt;T&amp;gt;(node.value);
+    debug&amp;lt;T&amp;gt;(node.get_value());
+}&lt;/p&gt;
+&lt;p&gt;void main(){
+    node&amp;lt;int&amp;gt; first_node(100);
+    node&amp;lt;float&amp;gt; second_node(13.3);&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;test&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;(&lt;/span&gt;&lt;span class="n"&gt;first_node&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="n"&gt;test&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="kt"&gt;float&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;(&lt;/span&gt;&lt;span class="n"&gt;second_node&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+&lt;span class="n"&gt;first_node&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;print_value&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="kt"&gt;float&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;(&lt;/span&gt;&lt;span class="mf"&gt;1.0&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="n"&gt;second_node&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;print_value&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;(&lt;/span&gt;&lt;span class="mi"&gt;10&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}&lt;/p&gt;
+&lt;p&gt;[/cpp]&lt;/p&gt;
+&lt;p&gt;This new feature adds generic programming capabilities to the language.&lt;/p&gt;
+&lt;p&gt;This version also adds other language improvements. The first one is the support of the ! operator for a bool, to test if a bool is false. This version also includes support for iterating through all the chars of a string with a foreach loop. And finally, the this pointer is now implicit to access member fields of a struct from member functions.&lt;/p&gt;
+&lt;p&gt;The optimization engine has been greatly improved. The pointers are much better handled and some regression due to new features have been fixed. The Constant Propagation optimization can take default values of struct and arrays into account. Finally, the functions with char parameters can now be inlined.&lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;div id="LC3"&gt;Finally, the compiler use a new logging system, that can be completely removed at compile-time for release versions.&lt;/div&gt;
+&lt;div&gt;
+
+&lt;h4&gt;Future Work&lt;/h4&gt;
+
+&lt;div&gt;The next version of the EDDI compiler (eddic) will be the version 1.1.4. This version will add support for some basic pointer manipulation. It will also add support for dynamically allocated arrays. Finally, the version will includes several new optimization techniques regarding to loops: Loop Invariant Code Motion, Loop Strength Reduction and perhaps some basic Loop Unrolling.&lt;/div&gt;
+
+&lt;h4&gt;Download&lt;/h4&gt;
+
+&lt;div&gt;You can find the EDDI Compiler sources on the Github repository: &lt;a title="Github repository of eddic" href="https://github.com/wichtounet/eddic"&gt;https://github.com/wichtounet/eddic&lt;/a&gt;&lt;/div&gt;
+
+&lt;div&gt;The exact version I refer to is the v1.1.3 available in the GitHub tags or directly as the release branch.&lt;/div&gt;
+
+&lt;/div&gt;
+
+&lt;p&gt;&lt;/p&gt;&lt;/div&gt;</description><category>C++</category><category>Compilers</category><category>EDDI</category><category>EDDI</category><guid>http://wichtounet.github.io/posts/2012/09/eddi-compiler-1-1-3-templates.html</guid><pubDate>Wed, 05 Sep 2012 07:25:42 GMT</pubDate></item><item><title>EDDI Compiler 1.1.2 – Read command line</title><link>http://wichtounet.github.io/posts/2012/08/eddi-compiler-1-1-2-read-command-line.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;div id="LC1"&gt;I finished the &lt;strong&gt;eddi compiler (eddic) version 1.1.2&lt;/strong&gt;. It took me a long time because of a lot of other things I had to do this month.&lt;/div&gt;
+&lt;div&gt;&lt;/div&gt;
+&lt;div&gt;This version includes two major changes. First, this version adds a new type for characters (char). A char can be declared using a char literal ('b' for instance) or from an int ( (char) 77). This version introduces the [] operator for string to have access to a specific char.&lt;/div&gt;
+
+&lt;div&gt;&lt;/div&gt;
+
+&lt;div&gt;Another major improvement is the support for reading the command line. For now, only characters can be read, one by one with the read_char function.&lt;/div&gt;
+
+&lt;div&gt;&lt;/div&gt;
+
+&lt;div&gt;The standard library includes a new function to compare two strings (&lt;em&gt;str_equals&lt;/em&gt;):&lt;/div&gt;
+
+&lt;div&gt;&lt;/div&gt;
+
+&lt;p&gt;[cpp]bool str_equals(string a, string b){
+    if(length(a) != length(b)){
+        return false;
+    }&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;length&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="k"&gt;if&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;!=&lt;/span&gt; &lt;span class="n"&gt;b&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;]){&lt;/span&gt;
+        &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="nb"&gt;false&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="nb"&gt;true&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/cpp]&lt;/p&gt;
+&lt;div&gt;The other improvements are not relative to the language. The inlining engine can now inline functions that takes arrays as parameters. The symbol table is now represented by the global context. There is no global symbol table. This new version includes several improvements of the code and a cleanup of the AST to remove redundancy.&lt;/div&gt;
+
+&lt;h4&gt;Future Work&lt;/h4&gt;
+
+&lt;div&gt;The next version of the eddi compiler (eddic) will be the version 1.1.3. This version will introduce support for a very basic version of template engine. It will also add support for foreach on string. This version will also add new features and cleanup in the different optimizations passes.&lt;/div&gt;
+
+&lt;h4&gt;Download&lt;/h4&gt;
+
+&lt;div&gt;You can find the EDDI Compiler sources on the Github repository: https://github.com/wichtounet/eddic&lt;/div&gt;
+
+&lt;div&gt;The exact version I refer to is the v1.1.2 available in the GitHub tags or directly as the release branch.&lt;/div&gt;
+
+&lt;p&gt;&lt;/p&gt;&lt;/div&gt;</description><category>C++</category><category>Compilers</category><category>EDDI</category><category>EDDI</category><guid>http://wichtounet.github.io/posts/2012/08/eddi-compiler-1-1-2-read-command-line.html</guid><pubDate>Sat, 25 Aug 2012 06:47:06 GMT</pubDate></item><item><title>Algorithms books Reviews</title><link>http://wichtounet.github.io/posts/2012/08/algorithms-books-reviews.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;To be sure to be well prepared for an interview, I decided to read several &lt;strong&gt;Algorithms book&lt;/strong&gt;. I also chosen books in order to have information about data structures. I chose these books to read:
+&lt;/p&gt;&lt;ol&gt;
+    &lt;li&gt;Data Structures &amp;amp; Algorithm Analysis in C++, Third Edition, by Clifford A. Shaffer&lt;/li&gt;
+    &lt;li&gt;Algorithms in a Nutshell, by George T. Heineman, Gary Pollice and Stanley Selkow&lt;/li&gt;
+    &lt;li&gt;Algorithms, Fourth Edition, by Robert Sedgewick and Kevin Wayne&lt;/li&gt;
+    &lt;li&gt;Introduction to Algorithms, by Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest and Clifford Stein. I have to say that I have only read most of it, not completely, because some chapters were not interesting for me at the current time, but I will certainly read them later.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;As some of my comments are about the presentation of the books, it has to be noted that I have read the three first books on my Kindle.&lt;/p&gt;
+&lt;p&gt;In this post, you will find my point of view about all these books.&lt;/p&gt;
+&lt;h4&gt;Data Structures &amp;amp; Algorithm Analysis in C++&lt;/h4&gt;
+
+&lt;p&gt;This book is really great. It contains a lot of data structures and algorithms. Each of them is very clearly presented. It is not hard to understand the data structures and the algorithms.&lt;/p&gt;
+&lt;p&gt;Each data structure is first presented as an ADT (Abstract Data Structure) and then several possible implementations are presented. Each implementation is precisely defined and analyzed to find its sweet pots and worst cases.  Other implementations are also presented with enough references to know where to start with them.&lt;/p&gt;
+&lt;p&gt;I have found that some other books about algorithms are writing too much stuff for a single thing. This is not the case with this book. Indeed, each interesting thing is clearly and succinctly explained.&lt;/p&gt;
+&lt;p&gt;About the presentation, the code is well presented and the content of the book is very well written. A good think would have been to add a summary of the most important facts about each algorithm and data structure. If you want to know these facts, you have to read several pages (but the facts are always here).&lt;/p&gt;
+&lt;p&gt;The book contains very good explanation about the complexity analysis of algorihtms. It also contains a very interesting chapter about limits to computation where it treats P, NP, NP-Complete and NP-Hard complexity classes.&lt;/p&gt;
+&lt;p&gt;This book contains a large number of exercises and projects that can be used to improve even more your algorithmic skills. Moreover, there are very good references at the end of each chapters if you want more documentation about a specific subject.&lt;/p&gt;
+&lt;p&gt;I had some difficulty reading it on my Kindle. Indeed, it's impossible to switch chapters directly with the Kindle button. If you want quick access to the next chapter, you have to use the table of contents.&lt;/p&gt;
+&lt;h4&gt;Algorithms in a Nutshell&lt;/h4&gt;
+
+&lt;p&gt;This book is much shorter than the previous one. Even if it could be a good book for beginners, I didn't liked this book a lot. The explanations are a bit messy sometimes and it could contain more data structures (even if I know that this is not the subject of the book). The analysis of the different algorithms are a bit short too. Even if it looks normal for a book that short, it has to be known that this book has no exercise.&lt;/p&gt;
+&lt;p&gt;However, this book has also several good points. Each algorithm is very well presented in a single panel. The complexity of each algorithm is directly given alongside its code. It helps finding quickly an algorithm and its main properties.&lt;/p&gt;
+&lt;p&gt;Another thing that I found good is that the author included empiric benchmarks as well as complexity analysis. The chapters about Path Finding in AI and computational geometry were very interesting, especially because it is not widely dealt with in other books.&lt;/p&gt;
+&lt;p&gt;It also has very good references for each chapter.&lt;/p&gt;
+&lt;p&gt;This book was perfect to read with Kindle, the navigation was very easy.&lt;/p&gt;
+&lt;h4&gt;Algorithms&lt;/h4&gt;
+
+&lt;p&gt;This book is a good book, but suffers from several drawbacks regarding to other books. First, the book covers a lot of data structures and algorithms. Then, it also has very good explanations about complexity classes. It also has a lot of exercises. I also liked a lot the chapter about string algorithms that was lacking in previous books.&lt;/p&gt;
+&lt;p&gt;Most of the time, the explanations are good, but sometimes, I found them quite hard to understand. Moreover, some parts of code are also hard to follow. The author included Java runs of some of programs. In my opinion, this is quite useless, empiric benchmarks could have been useful, but not single runs of the program. Some of the diagrams were also hard to read, but that's perhaps a consequence of the Kindle.&lt;/p&gt;
+&lt;p&gt;A think that disappointed me a bit is that the author doesn't use big Oh notation. Even, if we have enough information to easily get the Big Oh equivalent, I don't understand why a book about algorithms doesn't use this notation.&lt;/p&gt;
+&lt;p&gt;Just like the first book, there is no simple view of a given algorithm that contains all the information about an algorithm. Another think that disturbed me is that the author takes time to describe an API around the algorithms and data structures and about the Java API. Again, in my opinion only, it takes a too large portion of the book.&lt;/p&gt;
+&lt;p&gt;Again, this book was perfect to read with Kindle, the navigation was very easy.&lt;/p&gt;
+&lt;h4&gt;Introduction to Algorithms&lt;/h4&gt;
+
+&lt;p&gt;This book is the most complete I read about algorithms and data structures by a large factor. It has very complete explanations about complexity analysis: big Oh, Big Theta, Small O. For each data structure and algorithm, the complexity analysis is very detailed and very well explained. The pieces of code are written in a very good pseudo code manner.&lt;/p&gt;
+&lt;p&gt;As I said before, the complexity analysis are very complete and sometimes very complex. This can be either an advantage or a disadvantage, depending of what you awaits from the book. For example, the analysis is made using several notations Big Oh, Big Theta or even small Oh. Sometimes, it is a bit hard to follow, but it provides very good basis for complexity analysis in general.&lt;/p&gt;
+&lt;p&gt;The book  was also the one with the best explanations about linear time sorting algorithms. In the other books, I found difficult to understand sorts like counting sort or bucket sort, but in this book, the explanations are very clear. It also includes multithreaded algorithm analysis, number theoretic algorithms, polynomials and a very complete chapter about linear programming.&lt;/p&gt;
+&lt;p&gt;The book contains a huge number of exercises for each chapters and sub chapters.&lt;/p&gt;
+&lt;p&gt;This book will not only help you find the best suited algorithm for a given problem, it will also help you understand how to write your own algorithm for a problem or how to analyze deeply an existing solution.&lt;/p&gt;
+&lt;h4&gt;Algorithms Book Wrap-up&lt;/h4&gt;
+
+&lt;p&gt;As I read all these Algorithms books in order, it's possible that my review is a bit subjective regarding to comparisons to other books.&lt;/p&gt;
+&lt;p&gt;If you plan to work in C++ and need more knowledge in algorithms and C++, I advice you to read &lt;strong&gt;Data Structures &amp;amp; Algorithm Analysis in C++&lt;/strong&gt;, that is really awesome. If you want a very deep knowledge about algorithm analysis and algorithms in general and have good mathematical basis, you should really take a deep look at &lt;strong&gt;Introduction to Algorithms&lt;/strong&gt;. If you want short introduction about algorithms and don't care about the implementation language, you can read &lt;strong&gt;Algorithms in a Nutshell&lt;/strong&gt;. &lt;strong&gt;Algorithms&lt;/strong&gt; is like a master key, it will gives you good starting knowledge about algorithm analysis and a broad range of algorithms and data structures.&lt;/p&gt;&lt;/div&gt;</description><category>Algorithm</category><category>Books</category><category>C++</category><category>Conception</category><category>Java</category><category>Performances</category><category>Programming</category><guid>http://wichtounet.github.io/posts/2012/08/algorithms-books-reviews.html</guid><pubDate>Fri, 24 Aug 2012 08:52:04 GMT</pubDate></item><item><title>EDDI Compiler 1.1.1 – Dynamic Memory Allocation and Constructors/Destructors</title><link>http://wichtounet.github.io/posts/2012/07/eddi-compiler-1-1-1-dynamic-memory-allocation-constructors-destructors.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;As I'm in holiday, the work is going pretty fast. The &lt;strong&gt;version 1.1.1&lt;/strong&gt; of the &lt;strong&gt;EDDI Compiler&lt;/strong&gt; (eddic) is available.&lt;/p&gt;
+&lt;p&gt;This version introduces two major changes. The first is the support of dynamic memory allocation. You can allocate a struct or a standard type in help using the new operator. The memory can be released using the delete operator. Another related improved is the addition of constructors and destructors to the language. The following sample shows what can be done with the new features:&lt;/p&gt;
+&lt;p&gt;[cpp]struct A {
+    int a;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;this&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="n"&gt;this&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+    &lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Constructed"&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="o"&gt;~&lt;/span&gt;&lt;span class="n"&gt;this&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+    &lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Destructed"&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}&lt;/p&gt;
+&lt;p&gt;void main(){
+    A* b = new A(55);
+    delete b;
+}[/cpp]&lt;/p&gt;
+&lt;p&gt;The constructor is called once the memory is allocated. The delete operator calls the destructor and then free the memory. &lt;/p&gt;
+&lt;p&gt;When a structure is allocated on the stack, the constructor is called at the declaration point and the destructor is called when the variable gets out of scope. &lt;/p&gt;
+&lt;p&gt;The memory manager is quite simple for now. Memory is allocated in blocks. Each block has a header indicating the size of the block and its availability. The size of the header is 8 bytes in 32 bits and 16 bytes in 64 bits. The free operation can be done in constant time by just setting the availability flag to false. The disadvantage of this technique is that all the blocks needs to be tested to find a free block. This can be slow in some situations. I will try to make a better version in the future. &lt;/p&gt;
+&lt;p&gt;For that, the memory model has been improved. All the offsets are now increasing and the stack addresses are set at the end of the block. &lt;/p&gt;
+&lt;p&gt;Another interesting improvement of the language is the support of switch. For now, only switch on int is supported. Here is an example of a switch in EDDI:&lt;/p&gt;
+&lt;p&gt;[cpp]switch(a){
+    case 3:
+        print("3");
+    case 4:
+        print("4");
+    case 5:
+        print("5");
+    case 6:
+        print("6");
+    default:
+        print("default");
+}[/cpp]&lt;/p&gt;
+&lt;p&gt;The performances of the optimizer have been improved, by doing live-variable analysis less often. Pointers can now be passed in registers. Some of the variables used as temporary copies are removed &lt;/p&gt;
+&lt;p&gt;The peephole optimizer has been improved to use conditional move when possible. Moreover, the peephole optimizer is now able to perform some local copy propagation. &lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;h4&gt;Future work&lt;/h4&gt;
+&lt;p&gt;The next version of the EDDI Compiler will be the version 1.1.2. This version will add features to read the command-line. Moreover, it will also add support for char type and string comparisons. With that, I think that the language will start to be usable for toy applications. &lt;/p&gt;
+&lt;p&gt;There  will be some improvements to the code that have been left aside for a too long time. &lt;/p&gt;
+&lt;h4&gt;Download&lt;/h4&gt;
+
+&lt;p&gt;You can find the EDDI Compiler sources on the Github repository: https://github.com/wichtounet/eddic&lt;/p&gt;
+&lt;p&gt;The exact version I refer to is the v1.1.1 available in the GitHub tags or directly as the release branch.&lt;/p&gt;&lt;/div&gt;</description><category>C++</category><category>Compilers</category><category>EDDI</category><category>EDDI</category><category>Releases</category><guid>http://wichtounet.github.io/posts/2012/07/eddi-compiler-1-1-1-dynamic-memory-allocation-constructors-destructors.html</guid><pubDate>Mon, 30 Jul 2012 12:18:01 GMT</pubDate></item><item><title>C++11 Synchronization Benchmark</title><link>http://wichtounet.github.io/posts/2012/07/c11-synchronization-benchmark.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;In the previous parts of this serie, we saw some C++11 Synchronization techniques: locks, lock guards and atomic references.&lt;/p&gt;
+&lt;p&gt;In this small post, I will present the results of a little benchmark I did run to compare the different techniques. In this benchmark, the critical section is a single increment to an integer. The critical section is protected using three techniques:&lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;ul&gt;
+    &lt;li&gt;A single std::mutex with calls to lock() and unlock()&lt;/li&gt;
+    &lt;li&gt;A single std::mutex locked with std::lock_guard&lt;/li&gt;
+    &lt;li&gt;An atomic reference on the integer&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;The tests have been made with 1, 2, 4, 8, 16, 32, 64 and 128 threads. Each test is repeated 5 times.&lt;/p&gt;
+&lt;p&gt;The results are presented in the following figure:&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://www.baptiste-wicht.com/2012/07/c11-synchronization-benchmark/synchronization_cpp_benchmarks/" rel="attachment wp-att-2071"&gt;&lt;img class=" wp-image-2071  " title="C++11 Synchronization Benchmark Result" src="http://wichtounet.github.io/wp-content/uploads/2012/07/synchronization_cpp_benchmarks-300x230.png" alt="C++11 Synchronization Benchmark Result" width="300" height="230"&gt;&lt;/a&gt; C++11 Synchronization Benchmark Result&lt;/p&gt;
+&lt;p&gt;As expected, the mutex versions are much slower than the atomic one. An interesting point is that the the atomic version has not a very good scalability. I would have expected that the impact of adding one thread would not be that high.&lt;/p&gt;
+&lt;p&gt;I'm also surprised that the lock guard version has a non-negligible overhead when there are few threads.&lt;/p&gt;
+&lt;p&gt;In conclusion, do not locks when all you need is modifying integral types. For that, std::atomic is much faster. Good Lock-Free algorithms are almost always faster than the algorithms with lock.&lt;/p&gt;
+&lt;p&gt;The sources of the benchmark are available on Github: &lt;a href="https://github.com/wichtounet/articles/tree/master/src/threads/benchmark"&gt;https://github.com/wichtounet/articles/tree/master/src/threads/benchmark&lt;/a&gt;&lt;/p&gt;&lt;/div&gt;</description><category>Benchmarks</category><category>C++</category><category>C++</category><category>C++11</category><category>C++11 Concurrency Tutorial</category><category>Concurrency</category><category>Performances</category><guid>http://wichtounet.github.io/posts/2012/07/c11-synchronization-benchmark.html</guid><pubDate>Thu, 26 Jul 2012 08:47:59 GMT</pubDate></item><item><title>EDDI Compiler 1.1.0 - Member functions</title><link>http://wichtounet.github.io/posts/2012/07/eddi-compiler-1-1-0-member-functions.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;The &lt;strong&gt;version 1.1.0&lt;/strong&gt; of the &lt;strong&gt;EDDI Compiler&lt;/strong&gt; (eddic) is available. It took much less time to implement that version than I thought. &lt;/p&gt;
+&lt;p&gt;The main change to the language is the &lt;strong&gt;support of member functions&lt;/strong&gt;. Each structure can now declare some functions. Functions can be called in each structure object. Here is an example of what can be done with that feature in EDDI:&lt;/p&gt;
+&lt;p&gt;[cpp]struct Counter {
+    int value;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;increment&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+    &lt;span class="n"&gt;this&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;this&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;add&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;number&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="n"&gt;this&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;this&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;number&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;add&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;n1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;n2&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="n"&gt;this&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;this&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;n1&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="n"&gt;this&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;this&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;n2&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}&lt;/p&gt;
+&lt;p&gt;void main(){
+    Counter counter;
+    counter.increment();
+    println(counter.value);&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;counter&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;add&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;99&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;counter&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+&lt;span class="n"&gt;counter&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;add&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;11&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;69&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;counter&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/cpp]&lt;/p&gt;
+&lt;p&gt;The &lt;em&gt;this&lt;/em&gt; pointer is available in each member function. The pointer is passed on the stack just like any other parameter. &lt;/p&gt;
+&lt;p&gt;Another improvement is the support of the &lt;strong&gt;ternary operator&lt;/strong&gt;:&lt;/p&gt;
+&lt;p&gt;[cpp]void main(){
+    int a = 5 &amp;gt; 2 ? 44 : 66;
+    println(a);
+}[/cpp]&lt;/p&gt;
+&lt;p&gt;The inliner has been improved to support inlining member functions and functions with pointer parameters. The parameter allocation in register is only done starting at O1. &lt;/p&gt;
+&lt;p&gt;The peephole optimizer has also been improved. Some stacks operations optimization are performed and some unnecessary copies of parameter register are removed.  &lt;/p&gt;
+&lt;p&gt;Finally, the assembly generation has been improved to not use stack frames starting at O2. When this optimization is enabled, the local variables are addressed using stack pointers instead of the base pointer that is not used anymore. This optimization reduces the overhead of function calls. &lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;h4&gt;Future work&lt;/h4&gt;
+&lt;p&gt;The next version of the EDDI Compiler will be the &lt;strong&gt;version 1.1.1&lt;/strong&gt;.&lt;/p&gt;
+&lt;h4&gt;Download&lt;/h4&gt;
+
+&lt;p&gt;You can find the compiler sources on the Github repository: &lt;a title="eddic on GitHub" href="https://github.com/wichtounet/eddic"&gt;https://github.com/wichtounet/eddic&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;The exact version I refer to is the v1.1 available in the GitHub tags or directly as the release branch.&lt;/p&gt;&lt;/div&gt;</description><category>C++</category><category>Compilers</category><category>EDDI</category><category>EDDI</category><category>Optimization</category><guid>http://wichtounet.github.io/posts/2012/07/eddi-compiler-1-1-0-member-functions.html</guid><pubDate>Sun, 22 Jul 2012 06:18:57 GMT</pubDate></item><item><title>Manage command-line options with Boost Program Options</title><link>http://wichtounet.github.io/posts/2012/07/manage-command-line-boost-program-options.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;In command-line program, we often faces problems with the management of command-line options. When you have a few options, it's not a problem. But when writing complex programs with tens of options (or hundreds), it starts to be too complicated to manage by hand. That's where &lt;strong&gt;Boost Program Options&lt;/strong&gt; enters the game!&lt;/p&gt;
+&lt;p&gt;Boost Program Options is one of the Boost C++ Libraries. It is a very powerful library to handle command-line options. You define all the options of the program and then Boost Program Options takes care of all. It parses the command line, handles errors, gets values and even displays help. It is not a perfect library. But it is very complete that will answer most of the common needs. &lt;/p&gt;
+&lt;p&gt;This library is not header-only. You will need to build the library and link your program with the library. &lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;h4&gt;Getting started&lt;/h4&gt;
+&lt;p&gt;In this article, I will use &lt;em&gt;po&lt;/em&gt; as an abbreviation of boost::program_options and all source will contains this namespace alias:&lt;/p&gt;
+&lt;p&gt;[cpp]namespace po = boost::program_options;[/cpp]&lt;/p&gt;
+&lt;p&gt;First of all, it is necessary to create an instance of po::option_description:&lt;/p&gt;
+&lt;p&gt;[cpp]po::options_description description("MyTool Usage");&lt;/p&gt;
+&lt;p&gt;description.add_options()
+    ("help", "Display this help message")
+    ("version", "Display the version number");[/cpp]&lt;/p&gt;
+&lt;p&gt;The parameter to the constructor is the title of the options. To add options, you use the add_options() function and append all your options, each one surrounded with parenthesis. Here, we declared two options (help and version). They can be set with &lt;em&gt;--help&lt;/em&gt; and &lt;em&gt;--version&lt;/em&gt;. &lt;/p&gt;
+&lt;p&gt;Then, you can parse the command line by declaring a po::variables_map to store the variables and parse the command line into that storage: &lt;/p&gt;
+&lt;p&gt;[cpp]po::variables_map vm;&lt;/p&gt;
+&lt;p&gt;po::store(po::command_line_parser(argc, argv).options(description).run(), vm);&lt;/p&gt;
+&lt;p&gt;po::notify(vm);[/cpp]&lt;/p&gt;
+&lt;p&gt;Then, you can easily verify if an option has been set by using the &lt;em&gt;count(const std::string&amp;amp; name)&lt;/em&gt; function on the &lt;em&gt;vm&lt;/em&gt; object: &lt;/p&gt;
+&lt;p&gt;[cpp]if(vm.count("help")){
+    std::cout &amp;lt;&amp;lt; description;
+}[/cpp]&lt;/p&gt;
+&lt;p&gt;You can use &lt;em&gt;operator on the description to output all the options of program. &lt;/em&gt;&lt;/p&gt;
+&lt;h4&gt;Short options&lt;/h4&gt;
+
+&lt;p&gt;By default, all the options are accessed by using -- in front of them. You can also specify a short version for each option: &lt;/p&gt;
+&lt;p&gt;[cpp]description.add_options()
+    ("help,h", "Display this help message")
+    ("version,v", "Display the version number");[/cpp]&lt;/p&gt;
+&lt;p&gt;With that, you can display with either --help or -h. Even if you select help with -h, you can still verify if help has been set with count("help"). &lt;/p&gt;
+&lt;h4&gt;Option with value&lt;/h4&gt;
+
+&lt;p&gt;Boost Program Options can also handle option that need a specific value. Lets add a &lt;i&gt;compression&lt;/i&gt; option:&lt;/p&gt;
+&lt;p&gt;[cpp]description.add_options()
+    ("help,h", "Display this help message")
+    ("compression,c", po::value&amp;lt;int&amp;gt;(), "Compression level")
+    ("version,v", "Display the version number");[/cpp]&lt;/p&gt;
+&lt;p&gt;You can then get the value of option easily: &lt;/p&gt;
+&lt;p&gt;[cpp]if(vm.count("compression")){
+    std::cout &amp;lt;&amp;lt; "Compression level " &amp;lt;&amp;lt; vm["compression"].as&amp;lt;int&amp;gt;() &amp;lt;&amp;lt; std::endl;
+}[/cpp]&lt;/p&gt;
+&lt;p&gt;For the story, the option value are stored as boost::any. You can get the value of the option by using operator[] on the po::variables_map. You can get the value type with the as function with the type you need. &lt;/p&gt;
+&lt;p&gt;On the command line, the value can be set with --compression 10, -c 10 or -c10. &lt;/p&gt;
+&lt;p&gt;You can also configure a default value for an option:&lt;/p&gt;
+&lt;p&gt;[cpp]description.add_options()
+    ("help,h", "Display this help message")
+    ("compression,c", po::value&amp;lt;int&amp;gt;()-&amp;gt;default_value(5), "Compression level")
+    ("version,v", "Display the version number");[/cpp]&lt;/p&gt;
+&lt;p&gt;With that, if the option is not set on the command line, the option has the specified value. With that, the option is always defined. &lt;/p&gt;
+&lt;p&gt;Finally, you can also set an implicit value. This is the value of the option is the option is set to the command line without a value (--compression or -c): &lt;/p&gt;
+&lt;p&gt;[cpp]description.add_options()
+    ("help,h", "Display this help message")
+    ("compression,c", po::value&amp;lt;int&amp;gt;()-&amp;gt;default_value(5)-&amp;gt;implicit_value(10), "Compression level")
+    ("version,v", "Display the version number");[/cpp]&lt;/p&gt;
+&lt;h4&gt;Positional options&lt;/h4&gt;
+
+&lt;p&gt;It is often convenient to have a list of files on the command line. These options does not have a name. In Boost Program Options, these options are called positional options. You have to declare them in the describe as any other action. For example, for a list of files: &lt;/p&gt;
+&lt;p&gt;[cpp]description.add_options()
+    ("help,h", "Display this help message")
+    ("compression,c", po::value&amp;lt;int&amp;gt;()-&amp;gt;default_value(5)-&amp;gt;implicit_value(10),"Compression level")
+    ("input-files", po::value&amp;lt;std::vector&amp;lt;std::string&amp;gt;&amp;gt;(), "Input files")
+    ("version,v", "Display the version number");[/cpp]&lt;/p&gt;
+&lt;p&gt;Then, you have to declare it as positional and then finally specify it when parsing the command-line: &lt;/p&gt;
+&lt;p&gt;[cpp]po::positional_options_description p;&lt;/p&gt;
+&lt;p&gt;p.add("input-files", -1);&lt;/p&gt;
+&lt;p&gt;po::variables_map vm;&lt;/p&gt;
+&lt;p&gt;po::store(po::command_line_parser(argc, argv).options(description).positional(p).run(), vm);&lt;/p&gt;
+&lt;p&gt;po::notify(vm);[/cpp]&lt;/p&gt;
+&lt;p&gt;The positional options values are retrieved the exact same way as other options: &lt;/p&gt;
+&lt;p&gt;[cpp]if(vm.count("input-files")){
+    std::vector&amp;lt;std::string&amp;gt; files = vm["input-files"].as&amp;lt;std::vector&amp;lt;std::string&amp;gt;&amp;gt;();
+    for(std::string file : files){
+        std::cout &amp;lt;&amp;lt; "Input file " &amp;lt;&amp;lt; file &amp;lt;&amp;lt; std::endl;
+    }
+}[/cpp]&lt;/p&gt;
+&lt;h4&gt;Wrap-Up&lt;/h4&gt;
+
+&lt;p&gt;In this article, we saw the most important aspects of Boost Program Options. With these notions, you can start using this great library. If you need more information about the library, you can read &lt;a href="http://www.boost.org/doc/libs/1_50_0/doc/html/program_options.html" title="Boost Program Options documentation"&gt;the official documentation&lt;/a&gt; that is very well made. &lt;/p&gt;
+&lt;p&gt;You can download the final sources of this article on Github: &lt;a href="https://github.com/wichtounet/articles/blob/master/src/boost_po/v1.cpp" title="Source file for this article"&gt;v1.cpp&lt;/a&gt;&lt;/p&gt;&lt;/div&gt;</description><category>Boost</category><category>C++</category><category>C++</category><guid>http://wichtounet.github.io/posts/2012/07/manage-command-line-boost-program-options.html</guid><pubDate>Thu, 19 Jul 2012 08:19:37 GMT</pubDate></item><item><title>C++11 Concurrency Tutorial - Part 4: Atomic Types</title><link>http://wichtounet.github.io/posts/2012/07/c11-concurrency-tutorial-part-4-atomic-type.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;In the previous article, we saw advanced techniques about mutexes. In this post, we will continue to work on mutexes with more advanced techniques. We will also study another concurrency technique of the C++11 Concurrency Library: Atomic Types&lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;h4&gt;Atomic Types&lt;/h4&gt;
+&lt;p&gt;We will take, the example of a Counter:&lt;/p&gt;
+&lt;p&gt;[cpp]struct Counter {
+    int value;
+    
+    void increment(){
+        ++value;
+    }
+    
+    void decrement(){
+        --value;
+    }
+    
+    int get(){
+        return value
+    }
+};[/cpp]&lt;/p&gt;
+&lt;p&gt;We already saw that this class was not safe at all to use in multithreaded environment. We also saw how to make if safe using mutexes. This time, we will see how to make it safe using atomic types. The main advantage of this technique is its performance. Indeed, in most cases, the std::atomic operations are implemented with lock-free operations that are much faster than locks. &lt;/p&gt;
+&lt;p&gt;The C++11 Concurrency Library introduces Atomic Types as a template class: std::atomic&lt;type&gt;. You can use any Type you want with that template and the operations on that variable will be atomic and so thread-safe. It has to be taken into account that it is up to the library implementation to choose which syncronization mechanism is used to make the operations on that type atomic. On standard platforms for integral types like int, long, float, ... it will be some lock-free technique. If you want to make a big type (let's saw 2MB storage), you can use std::atomic as well, but mutexes will be used. In this case, there will be no performance advantage. &lt;/type&gt;&lt;/p&gt;
+&lt;p&gt;The main functions that std::atomic provide are the store and load functions that atomically set and get the contents of the std::atomic. Another interesting function is exchange, that sets the atomic to a new value and returns the value held previously. Finally, there are also two functions compare_exchange_weak and compare_exchance_strong that performs atomic exchange only if the value is equal to the provided expected value. These two last functions can be used to implement lock-free algorithms. &lt;/p&gt;
+&lt;p&gt;std::atomic is specialized for all integral types to provide member functions specific to integral (like operators ++, --, fetch_add, fetch_sub, ...). &lt;/p&gt;
+&lt;p&gt;It is fairly easy to make  the counter safe with std::atomic: &lt;/p&gt;
+&lt;p&gt;[cpp]#include &amp;lt;atomic&amp;gt;&lt;/p&gt;
+&lt;p&gt;struct AtomicCounter {
+    std::atomic&amp;lt;int&amp;gt; value;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;increment&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+    &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;decrement&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+    &lt;span class="o"&gt;--&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="nf"&gt;get&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;load&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;};[/cpp]&lt;/p&gt;
+&lt;p&gt;If you test this counter, you will see that the value is always the expected one. &lt;/p&gt;
+&lt;h4&gt;Wrap-Up&lt;/h4&gt;
+
+&lt;p&gt;In this article we saw a very elegant technique to perform atomic operations on any type. I advice you to use std::atomic any time you need to make atomic operations on a type, especially integral types. &lt;/p&gt;
+&lt;p&gt;The source code for this article can be found &lt;a href="https://github.com/wichtounet/articles/tree/master/src/threads/part4" title="Source of this article"&gt;on Github&lt;/a&gt;.&lt;/p&gt;
+&lt;h4&gt;Next&lt;/h4&gt;
+
+&lt;p&gt;In the next post of this series, we will see how to use the Futures facility to perform asynchronous task. &lt;/p&gt;&lt;/div&gt;</description><category>C++</category><category>C++</category><category>C++11</category><category>C++11 Concurrency Tutorial</category><category>Concurrency</category><category>Performances</category><guid>http://wichtounet.github.io/posts/2012/07/c11-concurrency-tutorial-part-4-atomic-type.html</guid><pubDate>Mon, 16 Jul 2012 09:22:04 GMT</pubDate></item><item><title>EDDI Compiler 1.0.3 - Inlining and register allocation</title><link>http://wichtounet.github.io/posts/2012/07/eddi-compiler-1-0-3-inlining-register-allocation.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;The &lt;strong&gt;version 1.0.3&lt;/strong&gt; of the &lt;strong&gt;EDDI Compiler&lt;/strong&gt; (eddic) is available.&lt;/p&gt;
+&lt;p&gt;The only improvement to the language is that the size of a global array can now be defined using a constant global variable.&lt;/p&gt;
+&lt;p&gt;The main improvement of this version is the addition of &lt;strong&gt;inlining&lt;/strong&gt; in the optimization engine. This optimization replace a call to a function by the body of the function. For now, the inlining optimizer is quite basic. For now, it doesn't inline only a specific call site but all the call sites of a given function. Moreover, the heuristics used for inlining are quite simple (only the size of the function is taken into account). Only functions that takes int and float parameters can be inlined. This optimization will be improved in the future.&lt;/p&gt;
+&lt;p&gt;The second main change is the arrival of a &lt;strong&gt;basic register allocation&lt;/strong&gt;. In each function, one or more variables can be assigned to registers. Only the most used variables are allocated into registers. Another optimization is that variables that are not used after all optimization techniques have been applied are removed from the function storage. The unused functions are also removed from the program after the optimization passes.&lt;/p&gt;
+&lt;p&gt;Moreover, the performances of optimization engine have been improved by about 20%.&lt;/p&gt;
+&lt;p&gt;The MTAC representation has been improved. The ARRAY operators have been removed because they can be replaced with the DOT operators. The preamble and prologue generations for LTAC has also been refactored. When it is possible, the stack frames are not generated.&lt;/p&gt;
+&lt;p&gt;Finally, the configuration of the compiler has been improved with several new optimization option and the options being separated into several option groups.&lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;h4&gt;Future work&lt;/h4&gt;
+&lt;p&gt;The next version of the EDDI Compiler will be the &lt;strong&gt;version 1.1.0&lt;/strong&gt;.&lt;/p&gt;
+&lt;p&gt;The main change will be member functions inside of structures. For now, there will be no kind of virtual functions and inheritance but that will certainly come in its time.&lt;/p&gt;
+&lt;p&gt;And as ever, I will be more than pleased to hear any idea you could have about this project :)&lt;/p&gt;
+&lt;h4&gt;Download&lt;/h4&gt;
+
+&lt;p&gt;You can find the compiler sources on the Github repository: &lt;a title="eddic on GitHub" href="https://github.com/wichtounet/eddic"&gt;https://github.com/wichtounet/eddic&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;The exact version I refer to is the v1.0.3 available in the GitHub tags or directly as the release branch.&lt;/p&gt;&lt;/div&gt;</description><category>C++</category><category>Compilers</category><category>EDDI</category><category>EDDI</category><category>Optimization</category><category>Releases</category><guid>http://wichtounet.github.io/posts/2012/07/eddi-compiler-1-0-3-inlining-register-allocation.html</guid><pubDate>Sat, 14 Jul 2012 08:46:15 GMT</pubDate></item><item><title>EDDI Compiler 1.0.2 – Better pointer support and Dead-Code Elimination</title><link>http://wichtounet.github.io/posts/2012/07/eddi-compiler-1-0-2-better-pointer-support-new-optimizations.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;The &lt;strong&gt;version 1.0.2&lt;/strong&gt; of the &lt;strong&gt;EDDI Compiler&lt;/strong&gt; (eddic) is available.&lt;/p&gt;
+&lt;p&gt;The language itself does not features something new, but the support of pointers has been greatly improved. You can now declare arrays of pointers and return pointers from functions. Structures can hold pointers as well. Moreover, arrays of structures are now supported. These new features have increased the number of operators of the MTAC Level.&lt;/p&gt;
+&lt;p&gt;The more important part of this new version resides in the Optimization Engine. A new optimization technique has been implemented: Dead-Code Elimination. This technique removes all code that calculates values for variables that are not used anymore after this statement. Another change is that empty functions are removed after optimization (as well as every call to the removed functions). The liveness analyzer has been replaced by a global Live-Variable Analysis routine. This information is used in the optimization engine and in the LTAC Compiler. Finally, the Peephole Optimizer has been improved to support some local optimization techniques like constant propagation and basic dead-code elimination.&lt;/p&gt;
+&lt;p&gt;The code generators have also been improved by outputting only native functions that are called. It means that if the program does not print a float, the _F5printF function will not be generated. Moreover, the native functions have been moved in external assembly files.&lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;h4&gt;Future work&lt;/h4&gt;
+&lt;p&gt;The next version of the EDDI Compiler will be the &lt;strong&gt;version 1.0.3&lt;/strong&gt;.&lt;/p&gt;
+&lt;p&gt;This version will see a first basic version of Inlining optimization and certainly register-allocation of the most used variables. There will certainly be no change of the language itself.&lt;/p&gt;
+&lt;p&gt;A cleanup of the two compilers (MTAC and LTAC) will be performed as well as simplification of the MTAC Language if possible.&lt;/p&gt;
+&lt;p&gt;The other changes will mainly be minor changes to the compiler.&lt;/p&gt;
+&lt;p&gt;And as ever, I will be more than pleased to hear any idea you could have about this project :)&lt;/p&gt;
+&lt;h4&gt;Download&lt;/h4&gt;
+
+&lt;p&gt;You can find the compiler sources on the Github repository: &lt;a title="eddic on GitHub" href="https://github.com/wichtounet/eddic"&gt;https://github.com/wichtounet/eddic&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;The exact version I refer to is the v1.0.2 available in the GitHub tags or directly as the release branch.&lt;/p&gt;&lt;/div&gt;</description><category>C++</category><category>Compilers</category><category>EDDI</category><category>EDDI</category><category>Optimization</category><guid>http://wichtounet.github.io/posts/2012/07/eddi-compiler-1-0-2-better-pointer-support-new-optimizations.html</guid><pubDate>Wed, 04 Jul 2012 08:56:22 GMT</pubDate></item><item><title>EDDI Compiler 1.0.1 - Pointers and better struct support</title><link>http://wichtounet.github.io/posts/2012/06/eddi-compiler-1-0-1-pointers-better-struct-support.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;The &lt;strong&gt;version 1.0.1&lt;/strong&gt; of the &lt;strong&gt;EDDI Compiler&lt;/strong&gt; (eddic) is now available. &lt;/p&gt;
+&lt;p&gt;The language itself has been updated to support &lt;strong&gt;pointers&lt;/strong&gt;. For now, this support is quite basic, but it allows to pass any type of the language by pointer to a function. No arithmetic is permitted on pointers, only dereferencing is allowed. The following sample shows how pointers are used in the language: &lt;/p&gt;
+&lt;p&gt;[cpp]struct A {
+    int a;
+    string b;
+    float c;
+}&lt;/p&gt;
+&lt;p&gt;void main(){
+    A a;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;44&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;b&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s"&gt;"44"&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;c&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mf"&gt;44f&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+&lt;span class="n"&gt;test&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+&lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"|"&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}&lt;/p&gt;
+&lt;p&gt;void test(A&lt;em&gt; a){
+    A&lt;/em&gt; b = a;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;55&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+&lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"|"&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+&lt;span class="n"&gt;b&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;66&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="n"&gt;b&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;b&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s"&gt;"66"&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="n"&gt;b&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;c&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mf"&gt;66f&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+&lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"|"&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;b&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"|"&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/cpp]&lt;/p&gt;
+&lt;p&gt;This sample is not very useful, but it shows the usage of pointers well enough. &lt;/p&gt;
+&lt;p&gt;Another improvement to the language is that it supports now nested struct. It means that a member of a struct can be a struct itself. &lt;/p&gt;
+&lt;p&gt;That's it for the language improvements. On the side of the compiler itself, I've improved the error reporting for structs. For example, the compiler display a clear error when a struct is recursively nested. The peephole optimizer has been improved a bit with new optimization, but it still rather simple. The optimization engine is now able to optimize functions in parallel. The improvement is not quite large, but that can be useful if there are a lot of functions. I've also improved a lot the Abstract Syntax Tree representation of assignments to unify variable, array and struct assignments in one Node with the notion of LeftValue. &lt;/p&gt;
+&lt;p&gt;Finally, the tests have also been improved. New tests have been added and helped me find new bugs. Moreover, the tests are now made on each optimization levels for each test case. There was some issue with smallest optimization level. &lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;h4&gt;Future work&lt;/h4&gt;
+&lt;p&gt;The next version of the EDDI Compiler will be the &lt;strong&gt;version 1.0.2&lt;/strong&gt;. &lt;/p&gt;
+&lt;p&gt;This version will adds support for returning a pointer from a function. Moreover, it will also adds support for pointers inside of struct. The last change to the language will be that you will be able to declare array of pointers and array of structure. &lt;/p&gt;
+&lt;p&gt;The peephole optimizer will perform more powerful optimization. At least, I will add an optimization to remove assignments to registers that are not used and use less registers. That will perhaps imply to add support for basic blocks in the LTAC Language. &lt;/p&gt;
+&lt;p&gt;I will also add a powerful dead-code optimization to the Optimization Engine. This will replace the RemoveAssign and RemoveMultipleAssign pass of the engine, being more powerful. &lt;/p&gt;
+&lt;p&gt;As ever, I'm open to any idea you could have about this project :)&lt;/p&gt;
+&lt;h4&gt;Download&lt;/h4&gt;
+
+&lt;p&gt;You can find the compiler sources on the Github repository: &lt;a title="eddic on GitHub" href="https://github.com/wichtounet/eddic"&gt;https://github.com/wichtounet/eddic&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;The exact version I refer to is the v1.0.1 available in the GitHub tags or directly as the release branch.&lt;/p&gt;&lt;/div&gt;</description><category>C++</category><category>Compilers</category><category>EDDI</category><category>EDDI</category><category>Optimization</category><guid>http://wichtounet.github.io/posts/2012/06/eddi-compiler-1-0-1-pointers-better-struct-support.html</guid><pubDate>Mon, 25 Jun 2012 08:57:17 GMT</pubDate></item></channel></rss>
