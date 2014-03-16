@@ -139,6 +139,7 @@ POSTS = (
         )
 PAGES = (
             ("stories/*.wp", "stories", "story.tmpl"),
+            ("stories/*.md", "stories", "story.tmpl"),
         )
 
 # One or more folders containing files to be copied as-is into the output.

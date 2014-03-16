@@ -4,12 +4,12 @@ UNDEFINED = runtime.UNDEFINED
 __M_dict_builtin = dict
 __M_locals_builtin = locals
 _magic_number = 9
-_modified_time = 1394992175.8740945
+_modified_time = 1394992920.43874
 _enable_loop = True
 _template_filename = '/usr/lib64/python3.3/site-packages/nikola/data/themes/bootstrap3/templates/post.tmpl'
 _template_uri = 'post.tmpl'
 _source_encoding = 'utf-8'
-_exports = ['extra_head', 'sourcelink', 'content']
+_exports = ['content', 'sourcelink', 'extra_head']
 
 
 def _mako_get_namespace(context, name):
@@ -19,13 +19,13 @@ def _mako_get_namespace(context, name):
         _mako_generate_namespaces(context)
         return context.namespaces[(__name__, name)]
 def _mako_generate_namespaces(context):
-    # SOURCE LINE 3
-    ns = runtime.TemplateNamespace('comments', context._clean_inheritance_tokens(), templateuri='comments_helper.tmpl', callables=None,  calling_uri=_template_uri)
-    context.namespaces[(__name__, 'comments')] = ns
-
     # SOURCE LINE 2
     ns = runtime.TemplateNamespace('helper', context._clean_inheritance_tokens(), templateuri='post_helper.tmpl', callables=None,  calling_uri=_template_uri)
     context.namespaces[(__name__, 'helper')] = ns
+
+    # SOURCE LINE 3
+    ns = runtime.TemplateNamespace('comments', context._clean_inheritance_tokens(), templateuri='comments_helper.tmpl', callables=None,  calling_uri=_template_uri)
+    context.namespaces[(__name__, 'comments')] = ns
 
 def _mako_inherit(template, context):
     _mako_generate_namespaces(context)
@@ -34,18 +34,19 @@ def render_body(context,**pageargs):
     __M_caller = context.caller_stack._push_frame()
     try:
         __M_locals = __M_dict_builtin(pageargs=pageargs)
-        def extra_head():
-            return render_extra_head(context._locals(__M_locals))
-        post = context.get('post', UNDEFINED)
-        def content():
-            return render_content(context._locals(__M_locals))
         helper = _mako_get_namespace(context, 'helper')
         date_format = context.get('date_format', UNDEFINED)
-        comments = _mako_get_namespace(context, 'comments')
         messages = context.get('messages', UNDEFINED)
+        comments = _mako_get_namespace(context, 'comments')
+        def content():
+            return render_content(context._locals(__M_locals))
         def sourcelink():
             return render_sourcelink(context._locals(__M_locals))
+        post = context.get('post', UNDEFINED)
+        def extra_head():
+            return render_extra_head(context._locals(__M_locals))
         __M_writer = context.writer()
+        # SOURCE LINE 2
         __M_writer('\n')
         # SOURCE LINE 3
         __M_writer('\n')
@@ -74,57 +75,6 @@ def render_body(context,**pageargs):
         context.caller_stack._pop_frame()
 
 
-def render_extra_head(context,**pageargs):
-    __M_caller = context.caller_stack._push_frame()
-    try:
-        def extra_head():
-            return render_extra_head(context)
-        helper = _mako_get_namespace(context, 'helper')
-        post = context.get('post', UNDEFINED)
-        __M_writer = context.writer()
-        # SOURCE LINE 5
-        __M_writer('\n')
-        # SOURCE LINE 6
-        __M_writer(str(helper.twitter_card_information(post)))
-        __M_writer('\n')
-        # SOURCE LINE 7
-        if post.meta('keywords'):
-            # SOURCE LINE 8
-            __M_writer('    <meta name="keywords" content="')
-            __M_writer(filters.html_escape(str(post.meta('keywords'))))
-            __M_writer('">\n')
-        # SOURCE LINE 10
-        __M_writer(str(helper.meta_translations(post)))
-        __M_writer('\n')
-        return ''
-    finally:
-        context.caller_stack._pop_frame()
-
-
-def render_sourcelink(context,**pageargs):
-    __M_caller = context.caller_stack._push_frame()
-    try:
-        messages = context.get('messages', UNDEFINED)
-        def sourcelink():
-            return render_sourcelink(context)
-        post = context.get('post', UNDEFINED)
-        __M_writer = context.writer()
-        # SOURCE LINE 38
-        __M_writer('\n')
-        # SOURCE LINE 39
-        if not post.meta('password'):
-            # SOURCE LINE 40
-            __M_writer('    <li>\n    <a href="')
-            # SOURCE LINE 41
-            __M_writer(str(post.source_link()))
-            __M_writer('" id="sourcelink">')
-            __M_writer(str(messages("Source")))
-            __M_writer('</a>\n    </li>\n')
-        return ''
-    finally:
-        context.caller_stack._pop_frame()
-
-
 def render_content(context,**pageargs):
     __M_caller = context.caller_stack._push_frame()
     try:
@@ -133,8 +83,8 @@ def render_content(context,**pageargs):
             return render_content(context)
         post = context.get('post', UNDEFINED)
         date_format = context.get('date_format', UNDEFINED)
-        comments = _mako_get_namespace(context, 'comments')
         messages = context.get('messages', UNDEFINED)
+        comments = _mako_get_namespace(context, 'comments')
         __M_writer = context.writer()
         # SOURCE LINE 12
         __M_writer('\n    <article class="postbox post-')
@@ -181,6 +131,57 @@ def render_content(context,**pageargs):
         __M_writer('    ')
         __M_writer(str(helper.mathjax_script(post)))
         __M_writer('\n    </article>\n')
+        return ''
+    finally:
+        context.caller_stack._pop_frame()
+
+
+def render_sourcelink(context,**pageargs):
+    __M_caller = context.caller_stack._push_frame()
+    try:
+        post = context.get('post', UNDEFINED)
+        messages = context.get('messages', UNDEFINED)
+        def sourcelink():
+            return render_sourcelink(context)
+        __M_writer = context.writer()
+        # SOURCE LINE 38
+        __M_writer('\n')
+        # SOURCE LINE 39
+        if not post.meta('password'):
+            # SOURCE LINE 40
+            __M_writer('    <li>\n    <a href="')
+            # SOURCE LINE 41
+            __M_writer(str(post.source_link()))
+            __M_writer('" id="sourcelink">')
+            __M_writer(str(messages("Source")))
+            __M_writer('</a>\n    </li>\n')
+        return ''
+    finally:
+        context.caller_stack._pop_frame()
+
+
+def render_extra_head(context,**pageargs):
+    __M_caller = context.caller_stack._push_frame()
+    try:
+        helper = _mako_get_namespace(context, 'helper')
+        post = context.get('post', UNDEFINED)
+        def extra_head():
+            return render_extra_head(context)
+        __M_writer = context.writer()
+        # SOURCE LINE 5
+        __M_writer('\n')
+        # SOURCE LINE 6
+        __M_writer(str(helper.twitter_card_information(post)))
+        __M_writer('\n')
+        # SOURCE LINE 7
+        if post.meta('keywords'):
+            # SOURCE LINE 8
+            __M_writer('    <meta name="keywords" content="')
+            __M_writer(filters.html_escape(str(post.meta('keywords'))))
+            __M_writer('">\n')
+        # SOURCE LINE 10
+        __M_writer(str(helper.meta_translations(post)))
+        __M_writer('\n')
         return ''
     finally:
         context.caller_stack._pop_frame()
