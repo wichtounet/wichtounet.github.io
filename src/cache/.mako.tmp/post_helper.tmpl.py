@@ -4,12 +4,12 @@ UNDEFINED = runtime.UNDEFINED
 __M_dict_builtin = dict
 __M_locals_builtin = locals
 _magic_number = 9
-_modified_time = 1394998061.173309
+_modified_time = 1394998759.273647
 _enable_loop = True
 _template_filename = '/usr/lib64/python3.3/site-packages/nikola/data/themes/base/templates/post_helper.tmpl'
 _template_uri = 'post_helper.tmpl'
 _source_encoding = 'utf-8'
-_exports = ['mathjax_script', 'meta_translations', 'html_pager', 'html_translations', 'html_title', 'twitter_card_information', 'html_list_tags', 'html_tags']
+_exports = ['meta_translations', 'html_pager', 'mathjax_script', 'html_translations', 'html_list_tags', 'twitter_card_information', 'html_title', 'html_tags']
 
 
 def render_body(context,**pageargs):
@@ -38,27 +38,12 @@ def render_body(context,**pageargs):
         context.caller_stack._pop_frame()
 
 
-def render_mathjax_script(context,post):
-    __M_caller = context.caller_stack._push_frame()
-    try:
-        __M_writer = context.writer()
-        # SOURCE LINE 86
-        __M_writer('\n')
-        # SOURCE LINE 87
-        if post.is_mathjax:
-            # SOURCE LINE 88
-            __M_writer('        <script type="text/x-mathjax-config">\n        MathJax.Hub.Config({\n          tex2jax: {inlineMath: [[\'$latex \',\'$\'], [\'\\\\(\',\'\\\\)\']]}\n        });\n        </script>\n        <script src="/assets/js/mathjax.js"></script>\n')
-        return ''
-    finally:
-        context.caller_stack._pop_frame()
-
-
 def render_meta_translations(context,post):
     __M_caller = context.caller_stack._push_frame()
     try:
         len = context.get('len', UNDEFINED)
-        translations = context.get('translations', UNDEFINED)
         lang = context.get('lang', UNDEFINED)
+        translations = context.get('translations', UNDEFINED)
         __M_writer = context.writer()
         # SOURCE LINE 21
         __M_writer('\n')
@@ -115,13 +100,28 @@ def render_html_pager(context,post):
         context.caller_stack._pop_frame()
 
 
+def render_mathjax_script(context,post):
+    __M_caller = context.caller_stack._push_frame()
+    try:
+        __M_writer = context.writer()
+        # SOURCE LINE 86
+        __M_writer('\n')
+        # SOURCE LINE 87
+        if post.is_mathjax:
+            # SOURCE LINE 88
+            __M_writer('        <script type="text/x-mathjax-config">\n        MathJax.Hub.Config({\n          tex2jax: {inlineMath: [[\'$latex \',\'$\'], [\'\\\\(\',\'\\\\)\']]}\n        });\n        </script>\n        <script src="/assets/js/mathjax.js"></script>\n')
+        return ''
+    finally:
+        context.caller_stack._pop_frame()
+
+
 def render_html_translations(context,post):
     __M_caller = context.caller_stack._push_frame()
     try:
         len = context.get('len', UNDEFINED)
-        translations = context.get('translations', UNDEFINED)
         messages = context.get('messages', UNDEFINED)
         lang = context.get('lang', UNDEFINED)
+        translations = context.get('translations', UNDEFINED)
         __M_writer = context.writer()
         # SOURCE LINE 10
         __M_writer('\n')
@@ -145,29 +145,28 @@ def render_html_translations(context,post):
         context.caller_stack._pop_frame()
 
 
-def render_html_title(context):
+def render_html_list_tags(context,post):
     __M_caller = context.caller_stack._push_frame()
     try:
-        title = context.get('title', UNDEFINED)
-        link = context.get('link', UNDEFINED)
-        messages = context.get('messages', UNDEFINED)
+        context._push_buffer()
+        _link = context.get('_link', UNDEFINED)
         __M_writer = context.writer()
-        # SOURCE LINE 2
-        __M_writer('\n    <h1 class="p-name" itemprop="headline name">')
-        # SOURCE LINE 3
-        __M_writer(filters.html_escape(str(title)))
-        __M_writer('</h1>\n')
-        # SOURCE LINE 4
-        if link:
-            # SOURCE LINE 5
-            __M_writer("            <p><a href='")
-            __M_writer(str(link))
-            __M_writer("'>")
-            __M_writer(str(messages("Original site")))
-            __M_writer('</a></p>\n')
-        return ''
+        # SOURCE LINE 31
+        __M_writer('\n    <span itemprop="keywords">\n')
+        # SOURCE LINE 33
+        for tag in post.tags:
+            # SOURCE LINE 34
+            __M_writer('        <a class="tag p-category" href="')
+            __M_writer(str(_link('tag', tag)))
+            __M_writer('"><span class="badge badge-info">')
+            __M_writer(str(tag))
+            __M_writer('</span></a>\n')
+        # SOURCE LINE 36
+        __M_writer('    </span>\n')
     finally:
+        __M_buf = context._pop_buffer()
         context.caller_stack._pop_frame()
+    return __M_buf.getvalue()
 
 
 def render_twitter_card_information(context,post):
@@ -231,37 +230,38 @@ def render_twitter_card_information(context,post):
         context.caller_stack._pop_frame()
 
 
-def render_html_list_tags(context,post):
+def render_html_title(context):
     __M_caller = context.caller_stack._push_frame()
     try:
-        context._push_buffer()
-        _link = context.get('_link', UNDEFINED)
+        title = context.get('title', UNDEFINED)
+        link = context.get('link', UNDEFINED)
+        messages = context.get('messages', UNDEFINED)
         __M_writer = context.writer()
-        # SOURCE LINE 31
-        __M_writer('\n    <span itemprop="keywords">\n')
-        # SOURCE LINE 33
-        for tag in post.tags:
-            # SOURCE LINE 34
-            __M_writer('        <a class="tag p-category" href="')
-            __M_writer(str(_link('tag', tag)))
-            __M_writer('"><span class="badge badge-info">')
-            __M_writer(str(tag))
-            __M_writer('</span></a>\n')
-        # SOURCE LINE 36
-        __M_writer('    </span>\n')
+        # SOURCE LINE 2
+        __M_writer('\n    <h1 class="p-name" itemprop="headline name">')
+        # SOURCE LINE 3
+        __M_writer(filters.html_escape(str(title)))
+        __M_writer('</h1>\n')
+        # SOURCE LINE 4
+        if link:
+            # SOURCE LINE 5
+            __M_writer("            <p><a href='")
+            __M_writer(str(link))
+            __M_writer("'>")
+            __M_writer(str(messages("Original site")))
+            __M_writer('</a></p>\n')
+        return ''
     finally:
-        __M_buf = context._pop_buffer()
         context.caller_stack._pop_frame()
-    return __M_buf.getvalue()
 
 
 def render_html_tags(context,post):
     __M_caller = context.caller_stack._push_frame()
     try:
+        messages = context.get('messages', UNDEFINED)
         formatmsg = context.get('formatmsg', UNDEFINED)
         def html_list_tags(post):
             return render_html_list_tags(context,post)
-        messages = context.get('messages', UNDEFINED)
         __M_writer = context.writer()
         # SOURCE LINE 39
         __M_writer('\n')

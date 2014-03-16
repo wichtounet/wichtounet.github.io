@@ -4,12 +4,12 @@ UNDEFINED = runtime.UNDEFINED
 __M_dict_builtin = dict
 __M_locals_builtin = locals
 _magic_number = 9
-_modified_time = 1394998060.7733753
+_modified_time = 1394998758.880469
 _enable_loop = True
 _template_filename = '/usr/lib64/python3.3/site-packages/nikola/data/themes/base/templates/base_helper.tmpl'
 _template_uri = 'base_helper.tmpl'
 _source_encoding = 'utf-8'
-_exports = ['late_load_js', 'html_social', 'html_navigation_links', 'html_translations', 'html_sidebar_links', 'html_head']
+_exports = ['html_navigation_links', 'late_load_js', 'html_translations', 'html_social', 'html_head', 'html_sidebar_links']
 
 
 def render_body(context,**pageargs):
@@ -34,41 +34,15 @@ def render_body(context,**pageargs):
         context.caller_stack._pop_frame()
 
 
-def render_late_load_js(context):
-    __M_caller = context.caller_stack._push_frame()
-    try:
-        __M_writer = context.writer()
-        # SOURCE LINE 51
-        __M_writer('\n')
-        return ''
-    finally:
-        context.caller_stack._pop_frame()
-
-
-def render_html_social(context):
-    __M_caller = context.caller_stack._push_frame()
-    try:
-        social_buttons_code = context.get('social_buttons_code', UNDEFINED)
-        __M_writer = context.writer()
-        # SOURCE LINE 54
-        __M_writer('\n    ')
-        # SOURCE LINE 55
-        __M_writer(str(social_buttons_code))
-        __M_writer('\n')
-        return ''
-    finally:
-        context.caller_stack._pop_frame()
-
-
 def render_html_navigation_links(context):
     __M_caller = context.caller_stack._push_frame()
     try:
+        tuple = context.get('tuple', UNDEFINED)
+        rel_link = context.get('rel_link', UNDEFINED)
+        isinstance = context.get('isinstance', UNDEFINED)
+        permalink = context.get('permalink', UNDEFINED)
         navigation_links = context.get('navigation_links', UNDEFINED)
         lang = context.get('lang', UNDEFINED)
-        rel_link = context.get('rel_link', UNDEFINED)
-        tuple = context.get('tuple', UNDEFINED)
-        permalink = context.get('permalink', UNDEFINED)
-        isinstance = context.get('isinstance', UNDEFINED)
         __M_writer = context.writer()
         # SOURCE LINE 63
         __M_writer('\n')
@@ -123,12 +97,23 @@ def render_html_navigation_links(context):
         context.caller_stack._pop_frame()
 
 
+def render_late_load_js(context):
+    __M_caller = context.caller_stack._push_frame()
+    try:
+        __M_writer = context.writer()
+        # SOURCE LINE 51
+        __M_writer('\n')
+        return ''
+    finally:
+        context.caller_stack._pop_frame()
+
+
 def render_html_translations(context):
     __M_caller = context.caller_stack._push_frame()
     try:
+        _link = context.get('_link', UNDEFINED)
         messages = context.get('messages', UNDEFINED)
         translations = context.get('translations', UNDEFINED)
-        _link = context.get('_link', UNDEFINED)
         lang = context.get('lang', UNDEFINED)
         __M_writer = context.writer()
         # SOURCE LINE 87
@@ -150,16 +135,15 @@ def render_html_translations(context):
         context.caller_stack._pop_frame()
 
 
-def render_html_sidebar_links(context):
+def render_html_social(context):
     __M_caller = context.caller_stack._push_frame()
     try:
-        def html_navigation_links():
-            return render_html_navigation_links(context)
+        social_buttons_code = context.get('social_buttons_code', UNDEFINED)
         __M_writer = context.writer()
-        # SOURCE LINE 59
+        # SOURCE LINE 54
         __M_writer('\n    ')
-        # SOURCE LINE 60
-        __M_writer(str(html_navigation_links()))
+        # SOURCE LINE 55
+        __M_writer(str(social_buttons_code))
         __M_writer('\n')
         return ''
     finally:
@@ -169,24 +153,24 @@ def render_html_sidebar_links(context):
 def render_html_head(context):
     __M_caller = context.caller_stack._push_frame()
     try:
-        title = context.get('title', UNDEFINED)
-        len = context.get('len', UNDEFINED)
-        has_custom_css = context.get('has_custom_css', UNDEFINED)
-        favicons = context.get('favicons', UNDEFINED)
-        comment_system_id = context.get('comment_system_id', UNDEFINED)
-        striphtml = context.get('striphtml', UNDEFINED)
-        comment_system = context.get('comment_system', UNDEFINED)
-        permalink = context.get('permalink', UNDEFINED)
-        rss_link = context.get('rss_link', UNDEFINED)
-        use_bundles = context.get('use_bundles', UNDEFINED)
-        use_cdn = context.get('use_cdn', UNDEFINED)
-        abs_link = context.get('abs_link', UNDEFINED)
-        description = context.get('description', UNDEFINED)
         blog_title = context.get('blog_title', UNDEFINED)
-        _link = context.get('_link', UNDEFINED)
+        use_cdn = context.get('use_cdn', UNDEFINED)
         mathjax_config = context.get('mathjax_config', UNDEFINED)
+        permalink = context.get('permalink', UNDEFINED)
+        description = context.get('description', UNDEFINED)
+        has_custom_css = context.get('has_custom_css', UNDEFINED)
+        len = context.get('len', UNDEFINED)
+        rss_link = context.get('rss_link', UNDEFINED)
+        striphtml = context.get('striphtml', UNDEFINED)
+        favicons = context.get('favicons', UNDEFINED)
+        use_bundles = context.get('use_bundles', UNDEFINED)
+        abs_link = context.get('abs_link', UNDEFINED)
         blog_author = context.get('blog_author', UNDEFINED)
+        comment_system_id = context.get('comment_system_id', UNDEFINED)
+        title = context.get('title', UNDEFINED)
+        _link = context.get('_link', UNDEFINED)
         translations = context.get('translations', UNDEFINED)
+        comment_system = context.get('comment_system', UNDEFINED)
         __M_writer = context.writer()
         # SOURCE LINE 2
         __M_writer('\n    <meta charset="utf-8">\n')
@@ -276,6 +260,22 @@ def render_html_head(context):
             __M_writer('        <meta property="fb:app_id" content="')
             __M_writer(str(comment_system_id))
             __M_writer('">\n')
+        return ''
+    finally:
+        context.caller_stack._pop_frame()
+
+
+def render_html_sidebar_links(context):
+    __M_caller = context.caller_stack._push_frame()
+    try:
+        def html_navigation_links():
+            return render_html_navigation_links(context)
+        __M_writer = context.writer()
+        # SOURCE LINE 59
+        __M_writer('\n    ')
+        # SOURCE LINE 60
+        __M_writer(str(html_navigation_links()))
+        __M_writer('\n')
         return ''
     finally:
         context.caller_stack._pop_frame()

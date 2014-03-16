@@ -4,12 +4,12 @@ UNDEFINED = runtime.UNDEFINED
 __M_dict_builtin = dict
 __M_locals_builtin = locals
 _magic_number = 9
-_modified_time = 1394998060.8463714
+_modified_time = 1394998758.9517672
 _enable_loop = True
 _template_filename = '/usr/lib64/python3.3/site-packages/nikola/data/themes/base/templates/livefyre_helper.tmpl'
 _template_uri = 'livefyre_helper.tmpl'
 _source_encoding = 'utf-8'
-_exports = ['comment_link_script', 'comment_form', 'comment_link']
+_exports = ['comment_form', 'comment_link_script', 'comment_link']
 
 
 def render_body(context,**pageargs):
@@ -28,17 +28,6 @@ def render_body(context,**pageargs):
         context.caller_stack._pop_frame()
 
 
-def render_comment_link_script(context):
-    __M_caller = context.caller_stack._push_frame()
-    try:
-        __M_writer = context.writer()
-        # SOURCE LINE 32
-        __M_writer('\n<script\n        type="text/javascript"\n        src="http://zor.livefyre.com/wjs/v1.0/javascripts/CommentCount.js">\n</script>\n')
-        return ''
-    finally:
-        context.caller_stack._pop_frame()
-
-
 def render_comment_form(context,url,title,identifier):
     __M_caller = context.caller_stack._push_frame()
     try:
@@ -52,6 +41,17 @@ def render_comment_form(context,url,title,identifier):
         # SOURCE LINE 11
         __M_writer(str(comment_system_id))
         __M_writer('",\n        articleId: articleId,\n        signed: false,\n        collectionMeta: {\n            articleId: articleId,\n            url: fyre.conv.load.makeCollectionUrl(),\n        }\n    }], function() {});\n}());\n</script>\n')
+        return ''
+    finally:
+        context.caller_stack._pop_frame()
+
+
+def render_comment_link_script(context):
+    __M_caller = context.caller_stack._push_frame()
+    try:
+        __M_writer = context.writer()
+        # SOURCE LINE 32
+        __M_writer('\n<script\n        type="text/javascript"\n        src="http://zor.livefyre.com/wjs/v1.0/javascripts/CommentCount.js">\n</script>\n')
         return ''
     finally:
         context.caller_stack._pop_frame()

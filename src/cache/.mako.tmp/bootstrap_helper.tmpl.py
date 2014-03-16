@@ -4,12 +4,12 @@ UNDEFINED = runtime.UNDEFINED
 __M_dict_builtin = dict
 __M_locals_builtin = locals
 _magic_number = 9
-_modified_time = 1394998060.7921019
+_modified_time = 1394998758.8991387
 _enable_loop = True
 _template_filename = '/usr/lib64/python3.3/site-packages/nikola/data/themes/bootstrap3/templates/bootstrap_helper.tmpl'
 _template_uri = 'bootstrap_helper.tmpl'
 _source_encoding = 'ascii'
-_exports = ['html_translations', 'late_load_js', 'html_navigation_links', 'html_head']
+_exports = ['html_translations', 'html_navigation_links', 'late_load_js', 'html_head']
 
 
 def render_body(context,**pageargs):
@@ -35,9 +35,9 @@ def render_body(context,**pageargs):
 def render_html_translations(context):
     __M_caller = context.caller_stack._push_frame()
     try:
+        _link = context.get('_link', UNDEFINED)
         messages = context.get('messages', UNDEFINED)
         translations = context.get('translations', UNDEFINED)
-        _link = context.get('_link', UNDEFINED)
         lang = context.get('lang', UNDEFINED)
         __M_writer = context.writer()
         # SOURCE LINE 103
@@ -59,50 +59,15 @@ def render_html_translations(context):
         context.caller_stack._pop_frame()
 
 
-def render_late_load_js(context):
-    __M_caller = context.caller_stack._push_frame()
-    try:
-        use_bundles = context.get('use_bundles', UNDEFINED)
-        use_cdn = context.get('use_cdn', UNDEFINED)
-        __M_writer = context.writer()
-        # SOURCE LINE 57
-        __M_writer('\n')
-        # SOURCE LINE 58
-        if use_bundles:
-            # SOURCE LINE 59
-            if use_cdn:
-                # SOURCE LINE 60
-                __M_writer('            <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js" type="text/javascript"></script>\n            <script src="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>\n            <script src="/assets/js/all.js" type="text/javascript"></script>\n')
-                # SOURCE LINE 63
-            else:
-                # SOURCE LINE 64
-                __M_writer('            <script src="/assets/js/all-nocdn.js" type="text/javascript"></script>\n')
-            # SOURCE LINE 66
-        else:
-            # SOURCE LINE 67
-            if use_cdn:
-                # SOURCE LINE 68
-                __M_writer('            <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js" type="text/javascript"></script>\n            <script src="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>\n')
-                # SOURCE LINE 70
-            else:
-                # SOURCE LINE 71
-                __M_writer('            <script src="/assets/js/jquery-1.10.2.min.js" type="text/javascript"></script>\n            <script src="/assets/js/bootstrap.min.js" type="text/javascript"></script>\n')
-            # SOURCE LINE 74
-            __M_writer('        <script src="/assets/js/jquery.colorbox-min.js" type="text/javascript"></script>\n')
-        return ''
-    finally:
-        context.caller_stack._pop_frame()
-
-
 def render_html_navigation_links(context):
     __M_caller = context.caller_stack._push_frame()
     try:
+        tuple = context.get('tuple', UNDEFINED)
+        rel_link = context.get('rel_link', UNDEFINED)
+        isinstance = context.get('isinstance', UNDEFINED)
+        permalink = context.get('permalink', UNDEFINED)
         navigation_links = context.get('navigation_links', UNDEFINED)
         lang = context.get('lang', UNDEFINED)
-        rel_link = context.get('rel_link', UNDEFINED)
-        tuple = context.get('tuple', UNDEFINED)
-        permalink = context.get('permalink', UNDEFINED)
-        isinstance = context.get('isinstance', UNDEFINED)
         __M_writer = context.writer()
         # SOURCE LINE 79
         __M_writer('\n')
@@ -157,25 +122,60 @@ def render_html_navigation_links(context):
         context.caller_stack._pop_frame()
 
 
+def render_late_load_js(context):
+    __M_caller = context.caller_stack._push_frame()
+    try:
+        use_cdn = context.get('use_cdn', UNDEFINED)
+        use_bundles = context.get('use_bundles', UNDEFINED)
+        __M_writer = context.writer()
+        # SOURCE LINE 57
+        __M_writer('\n')
+        # SOURCE LINE 58
+        if use_bundles:
+            # SOURCE LINE 59
+            if use_cdn:
+                # SOURCE LINE 60
+                __M_writer('            <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js" type="text/javascript"></script>\n            <script src="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>\n            <script src="/assets/js/all.js" type="text/javascript"></script>\n')
+                # SOURCE LINE 63
+            else:
+                # SOURCE LINE 64
+                __M_writer('            <script src="/assets/js/all-nocdn.js" type="text/javascript"></script>\n')
+            # SOURCE LINE 66
+        else:
+            # SOURCE LINE 67
+            if use_cdn:
+                # SOURCE LINE 68
+                __M_writer('            <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js" type="text/javascript"></script>\n            <script src="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>\n')
+                # SOURCE LINE 70
+            else:
+                # SOURCE LINE 71
+                __M_writer('            <script src="/assets/js/jquery-1.10.2.min.js" type="text/javascript"></script>\n            <script src="/assets/js/bootstrap.min.js" type="text/javascript"></script>\n')
+            # SOURCE LINE 74
+            __M_writer('        <script src="/assets/js/jquery.colorbox-min.js" type="text/javascript"></script>\n')
+        return ''
+    finally:
+        context.caller_stack._pop_frame()
+
+
 def render_html_head(context):
     __M_caller = context.caller_stack._push_frame()
     try:
-        title = context.get('title', UNDEFINED)
-        len = context.get('len', UNDEFINED)
-        has_custom_css = context.get('has_custom_css', UNDEFINED)
-        favicons = context.get('favicons', UNDEFINED)
-        description = context.get('description', UNDEFINED)
-        striphtml = context.get('striphtml', UNDEFINED)
-        permalink = context.get('permalink', UNDEFINED)
-        rss_link = context.get('rss_link', UNDEFINED)
-        use_bundles = context.get('use_bundles', UNDEFINED)
-        use_cdn = context.get('use_cdn', UNDEFINED)
-        abs_link = context.get('abs_link', UNDEFINED)
         blog_title = context.get('blog_title', UNDEFINED)
-        translations = context.get('translations', UNDEFINED)
+        use_cdn = context.get('use_cdn', UNDEFINED)
         mathjax_config = context.get('mathjax_config', UNDEFINED)
+        permalink = context.get('permalink', UNDEFINED)
+        description = context.get('description', UNDEFINED)
+        has_custom_css = context.get('has_custom_css', UNDEFINED)
+        len = context.get('len', UNDEFINED)
+        rss_link = context.get('rss_link', UNDEFINED)
+        striphtml = context.get('striphtml', UNDEFINED)
+        favicons = context.get('favicons', UNDEFINED)
+        use_bundles = context.get('use_bundles', UNDEFINED)
+        abs_link = context.get('abs_link', UNDEFINED)
         blog_author = context.get('blog_author', UNDEFINED)
+        title = context.get('title', UNDEFINED)
         _link = context.get('_link', UNDEFINED)
+        translations = context.get('translations', UNDEFINED)
         __M_writer = context.writer()
         # SOURCE LINE 3
         __M_writer('\n    <meta charset="utf-8">\n    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n')

@@ -4,7 +4,7 @@ UNDEFINED = runtime.UNDEFINED
 __M_dict_builtin = dict
 __M_locals_builtin = locals
 _magic_number = 9
-_modified_time = 1394998061.1916735
+_modified_time = 1394998759.2914214
 _enable_loop = True
 _template_filename = '/usr/lib64/python3.3/site-packages/nikola/data/themes/base/templates/story.tmpl'
 _template_uri = 'story.tmpl'
@@ -34,13 +34,13 @@ def render_body(context,**pageargs):
     __M_caller = context.caller_stack._push_frame()
     try:
         __M_locals = __M_dict_builtin(pageargs=pageargs)
-        title = context.get('title', UNDEFINED)
-        enable_comments = context.get('enable_comments', UNDEFINED)
-        post = context.get('post', UNDEFINED)
         def extra_head():
             return render_extra_head(context._locals(__M_locals))
         comments = _mako_get_namespace(context, 'comments')
+        enable_comments = context.get('enable_comments', UNDEFINED)
         helper = _mako_get_namespace(context, 'helper')
+        title = context.get('title', UNDEFINED)
+        post = context.get('post', UNDEFINED)
         def content():
             return render_content(context._locals(__M_locals))
         __M_writer = context.writer()
@@ -90,8 +90,8 @@ def render_content(context,**pageargs):
     try:
         title = context.get('title', UNDEFINED)
         post = context.get('post', UNDEFINED)
-        enable_comments = context.get('enable_comments', UNDEFINED)
         comments = _mako_get_namespace(context, 'comments')
+        enable_comments = context.get('enable_comments', UNDEFINED)
         def content():
             return render_content(context)
         __M_writer = context.writer()

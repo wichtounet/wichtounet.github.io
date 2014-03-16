@@ -1,17 +1,14 @@
-<html><body><h3>Terms of use</h3>
-<h4>Contact</h4>
+## Terms of use
 
-Baptiste Wicht
+### Contact
 
-Le village 10
-
-1724 Bonnefontaine
-
-CH-Suisse
-
+Baptiste Wicht   
+Route du Pafuet 114   
+1724 Bonnefontaine   
+CH-Suisse   
 E-Mail: baptiste.wicht@gmail.com
 
-<h4>Terms and Conditions of Use for the baptiste-wicht.com website</h4>
+### Terms and Conditions of Use for the baptiste-wicht.com website
 
 By using this website, you acknowledge that you've read, understand and agree to be bound by these terms and conditions.
 
@@ -25,4 +22,4 @@ The authors reserve the right to investigate complaints or reported violations o
 
 Through the usage of this website you agree to the usage of cookies. This website uses tracking third-party libraries. These libraries may use information about your visits to this and other websites. Through the usage of this website you agree to the usage of your information to serve advertisement.
 
-The sources presented on the articles and blogs are free of rights and you can use them at your convenience. But no reproduction, even partial, can be done of this website and its contents.</body></html>
+The sources presented on the articles and blogs are free of rights and you can use them at your convenience. But no reproduction, even partial, can be done of this website and its contents.

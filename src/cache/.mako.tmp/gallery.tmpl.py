@@ -4,12 +4,12 @@ UNDEFINED = runtime.UNDEFINED
 __M_dict_builtin = dict
 __M_locals_builtin = locals
 _magic_number = 9
-_modified_time = 1394998060.7454226
+_modified_time = 1394998758.8526819
 _enable_loop = True
 _template_filename = '/usr/lib64/python3.3/site-packages/nikola/data/themes/bootstrap3/templates/gallery.tmpl'
 _template_uri = 'gallery.tmpl'
 _source_encoding = 'utf-8'
-_exports = ['extra_head', 'extra_js', 'sourcelink', 'content']
+_exports = ['extra_head', 'sourcelink', 'extra_js', 'content']
 
 
 def _mako_get_namespace(context, name):
@@ -36,25 +36,25 @@ def render_body(context,**pageargs):
         __M_locals = __M_dict_builtin(pageargs=pageargs)
         _import_ns = {}
         _mako_get_namespace(context, 'ui')._populate(_import_ns, ['bar'])
-        title = _import_ns.get('title', context.get('title', UNDEFINED))
-        def extra_js():
-            return render_extra_js(context._locals(__M_locals))
-        comments = _mako_get_namespace(context, 'comments')
+        text = _import_ns.get('text', context.get('text', UNDEFINED))
+        ui = _mako_get_namespace(context, 'ui')
+        photo_array = _import_ns.get('photo_array', context.get('photo_array', UNDEFINED))
+        folders = _import_ns.get('folders', context.get('folders', UNDEFINED))
+        permalink = _import_ns.get('permalink', context.get('permalink', UNDEFINED))
         def sourcelink():
             return render_sourcelink(context._locals(__M_locals))
+        def extra_js():
+            return render_extra_js(context._locals(__M_locals))
         def extra_head():
             return render_extra_head(context._locals(__M_locals))
-        photo_array = _import_ns.get('photo_array', context.get('photo_array', UNDEFINED))
+        thumbnail_size = _import_ns.get('thumbnail_size', context.get('thumbnail_size', UNDEFINED))
+        enable_comments = _import_ns.get('enable_comments', context.get('enable_comments', UNDEFINED))
         crumbs = _import_ns.get('crumbs', context.get('crumbs', UNDEFINED))
-        text = _import_ns.get('text', context.get('text', UNDEFINED))
+        title = _import_ns.get('title', context.get('title', UNDEFINED))
         photo_array_json = _import_ns.get('photo_array_json', context.get('photo_array_json', UNDEFINED))
+        comments = _mako_get_namespace(context, 'comments')
         def content():
             return render_content(context._locals(__M_locals))
-        permalink = _import_ns.get('permalink', context.get('permalink', UNDEFINED))
-        enable_comments = _import_ns.get('enable_comments', context.get('enable_comments', UNDEFINED))
-        thumbnail_size = _import_ns.get('thumbnail_size', context.get('thumbnail_size', UNDEFINED))
-        folders = _import_ns.get('folders', context.get('folders', UNDEFINED))
-        ui = _mako_get_namespace(context, 'ui')
         __M_writer = context.writer()
         # SOURCE LINE 2
         __M_writer('\n')
@@ -106,15 +106,28 @@ def render_extra_head(context,**pageargs):
         context.caller_stack._pop_frame()
 
 
+def render_sourcelink(context,**pageargs):
+    __M_caller = context.caller_stack._push_frame()
+    try:
+        _import_ns = {}
+        _mako_get_namespace(context, 'ui')._populate(_import_ns, ['bar'])
+        def sourcelink():
+            return render_sourcelink(context)
+        __M_writer = context.writer()
+        return ''
+    finally:
+        context.caller_stack._pop_frame()
+
+
 def render_extra_js(context,**pageargs):
     __M_caller = context.caller_stack._push_frame()
     try:
         _import_ns = {}
         _mako_get_namespace(context, 'ui')._populate(_import_ns, ['bar'])
-        def extra_js():
-            return render_extra_js(context)
         photo_array_json = _import_ns.get('photo_array_json', context.get('photo_array_json', UNDEFINED))
         thumbnail_size = _import_ns.get('thumbnail_size', context.get('thumbnail_size', UNDEFINED))
+        def extra_js():
+            return render_extra_js(context)
         __M_writer = context.writer()
         # SOURCE LINE 55
         __M_writer('\n<script src="/assets/js/flowr.plugin.js"></script>\n<script>\njsonContent = ')
@@ -129,35 +142,22 @@ def render_extra_js(context,**pageargs):
         context.caller_stack._pop_frame()
 
 
-def render_sourcelink(context,**pageargs):
-    __M_caller = context.caller_stack._push_frame()
-    try:
-        _import_ns = {}
-        _mako_get_namespace(context, 'ui')._populate(_import_ns, ['bar'])
-        def sourcelink():
-            return render_sourcelink(context)
-        __M_writer = context.writer()
-        return ''
-    finally:
-        context.caller_stack._pop_frame()
-
-
 def render_content(context,**pageargs):
     __M_caller = context.caller_stack._push_frame()
     try:
         _import_ns = {}
         _mako_get_namespace(context, 'ui')._populate(_import_ns, ['bar'])
-        title = _import_ns.get('title', context.get('title', UNDEFINED))
-        comments = _mako_get_namespace(context, 'comments')
-        photo_array = _import_ns.get('photo_array', context.get('photo_array', UNDEFINED))
-        crumbs = _import_ns.get('crumbs', context.get('crumbs', UNDEFINED))
         text = _import_ns.get('text', context.get('text', UNDEFINED))
-        def content():
-            return render_content(context)
+        ui = _mako_get_namespace(context, 'ui')
+        photo_array = _import_ns.get('photo_array', context.get('photo_array', UNDEFINED))
+        folders = _import_ns.get('folders', context.get('folders', UNDEFINED))
         permalink = _import_ns.get('permalink', context.get('permalink', UNDEFINED))
         enable_comments = _import_ns.get('enable_comments', context.get('enable_comments', UNDEFINED))
-        folders = _import_ns.get('folders', context.get('folders', UNDEFINED))
-        ui = _mako_get_namespace(context, 'ui')
+        crumbs = _import_ns.get('crumbs', context.get('crumbs', UNDEFINED))
+        title = _import_ns.get('title', context.get('title', UNDEFINED))
+        comments = _mako_get_namespace(context, 'comments')
+        def content():
+            return render_content(context)
         __M_writer = context.writer()
         # SOURCE LINE 7
         __M_writer('\n    ')
