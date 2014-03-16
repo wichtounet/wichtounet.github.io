@@ -4,7 +4,7 @@ UNDEFINED = runtime.UNDEFINED
 __M_dict_builtin = dict
 __M_locals_builtin = locals
 _magic_number = 9
-_modified_time = 1394998855.7672217
+_modified_time = 1395000028.046307
 _enable_loop = True
 _template_filename = '/usr/lib64/python3.3/site-packages/nikola/data/themes/base/templates/index_helper.tmpl'
 _template_uri = 'index_helper.tmpl'
@@ -29,8 +29,8 @@ def render_body(context,**pageargs):
 def render_html_pager(context):
     __M_caller = context.caller_stack._push_frame()
     try:
-        messages = context.get('messages', UNDEFINED)
         prevlink = context.get('prevlink', UNDEFINED)
+        messages = context.get('messages', UNDEFINED)
         nextlink = context.get('nextlink', UNDEFINED)
         __M_writer = context.writer()
         # SOURCE LINE 2

@@ -4,7 +4,7 @@ UNDEFINED = runtime.UNDEFINED
 __M_dict_builtin = dict
 __M_locals_builtin = locals
 _magic_number = 9
-_modified_time = 1394998855.787806
+_modified_time = 1395000028.0665183
 _enable_loop = True
 _template_filename = '/usr/lib64/python3.3/site-packages/nikola/data/themes/base/templates/tag.tmpl'
 _template_uri = 'tag.tmpl'
@@ -27,17 +27,17 @@ def render_body(context,**pageargs):
     __M_caller = context.caller_stack._push_frame()
     try:
         __M_locals = __M_dict_builtin(pageargs=pageargs)
-        kind = context.get('kind', UNDEFINED)
-        def content():
-            return render_content(context._locals(__M_locals))
         len = context.get('len', UNDEFINED)
         posts = context.get('posts', UNDEFINED)
+        def content():
+            return render_content(context._locals(__M_locals))
         date_format = context.get('date_format', UNDEFINED)
+        title = context.get('title', UNDEFINED)
         translations = context.get('translations', UNDEFINED)
-        tag = context.get('tag', UNDEFINED)
         def extra_head():
             return render_extra_head(context._locals(__M_locals))
-        title = context.get('title', UNDEFINED)
+        tag = context.get('tag', UNDEFINED)
+        kind = context.get('kind', UNDEFINED)
         _link = context.get('_link', UNDEFINED)
         __M_writer = context.writer()
         # SOURCE LINE 2
@@ -62,12 +62,12 @@ def render_body(context,**pageargs):
 def render_extra_head(context,**pageargs):
     __M_caller = context.caller_stack._push_frame()
     try:
-        kind = context.get('kind', UNDEFINED)
         len = context.get('len', UNDEFINED)
         translations = context.get('translations', UNDEFINED)
-        tag = context.get('tag', UNDEFINED)
         def extra_head():
             return render_extra_head(context)
+        tag = context.get('tag', UNDEFINED)
+        kind = context.get('kind', UNDEFINED)
         _link = context.get('_link', UNDEFINED)
         __M_writer = context.writer()
         # SOURCE LINE 3
@@ -104,15 +104,15 @@ def render_extra_head(context,**pageargs):
 def render_content(context,**pageargs):
     __M_caller = context.caller_stack._push_frame()
     try:
-        kind = context.get('kind', UNDEFINED)
-        def content():
-            return render_content(context)
         len = context.get('len', UNDEFINED)
         posts = context.get('posts', UNDEFINED)
+        def content():
+            return render_content(context)
         date_format = context.get('date_format', UNDEFINED)
+        title = context.get('title', UNDEFINED)
         translations = context.get('translations', UNDEFINED)
         tag = context.get('tag', UNDEFINED)
-        title = context.get('title', UNDEFINED)
+        kind = context.get('kind', UNDEFINED)
         _link = context.get('_link', UNDEFINED)
         __M_writer = context.writer()
         # SOURCE LINE 13

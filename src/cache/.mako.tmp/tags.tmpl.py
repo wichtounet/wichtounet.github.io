@@ -4,7 +4,7 @@ UNDEFINED = runtime.UNDEFINED
 __M_dict_builtin = dict
 __M_locals_builtin = locals
 _magic_number = 9
-_modified_time = 1394998855.7798438
+_modified_time = 1395000028.0586061
 _enable_loop = True
 _template_filename = '/usr/lib64/python3.3/site-packages/nikola/data/themes/bootstrap3/templates/tags.tmpl'
 _template_uri = 'tags.tmpl'
@@ -27,9 +27,9 @@ def render_body(context,**pageargs):
     __M_caller = context.caller_stack._push_frame()
     try:
         __M_locals = __M_dict_builtin(pageargs=pageargs)
-        cat_items = context.get('cat_items', UNDEFINED)
-        messages = context.get('messages', UNDEFINED)
         title = context.get('title', UNDEFINED)
+        messages = context.get('messages', UNDEFINED)
+        cat_items = context.get('cat_items', UNDEFINED)
         def content():
             return render_content(context._locals(__M_locals))
         items = context.get('items', UNDEFINED)
@@ -50,9 +50,9 @@ def render_body(context,**pageargs):
 def render_content(context,**pageargs):
     __M_caller = context.caller_stack._push_frame()
     try:
-        cat_items = context.get('cat_items', UNDEFINED)
-        messages = context.get('messages', UNDEFINED)
         title = context.get('title', UNDEFINED)
+        messages = context.get('messages', UNDEFINED)
+        cat_items = context.get('cat_items', UNDEFINED)
         def content():
             return render_content(context)
         items = context.get('items', UNDEFINED)
