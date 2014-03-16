@@ -6,21 +6,19 @@ EDDI was first an interpreted language, but I decided to switch to a compiled la
 
 At this time, the EDDI language supports:
 
-<ul>
-	<li>several types: int, char, bool, strings and structures</li>
-	<li>templates</li>
-	<li>variables</li>
-	<li>Mathematical expressions with +-*/% operators</li>
-	<li>string concatenations</li>
-	<li>conditional branches if, else, else if</li>
-	<li>boolean expressions for branches and loops</li>
-	<li>loops: for, foreach and while</li>
-	<li>arrays, both global and local</li>
-	<li>function calls</li>
-	<li>function overloading</li>
-	<li>arrays</li>
-	<li>...</li>
-</ul>
+* several types: int, char, bool, strings and structures
+* templates
+* variables
+* Mathematical expressions with +-\*/% operators
+* string concatenations
+* conditional branches if, else, else if
+* boolean expressions for branches and loops
+* loops: for, foreach and while
+* arrays, both global and local
+* function calls
+* function overloading
+* arrays
+* ...
 
 For now, the generated code is 32 bits or 64 bits.
 
@@ -54,12 +52,12 @@ That will create a "a.out" file in the current folder. You can then run this fil
 
 ## Compilation model
 
-The compilation of EDDI Source file to assembly code is made in several phases. You can have a <a title="eddic Phases" href="https://github.com/wichtounet/eddic/wiki/Architecture">description of the architecture</a> on the wiki.
+The compilation of EDDI Source file to assembly code is made in several phases. You can have a [description of the architecture](https://github.com/wichtounet/eddic/wiki/Architecture) on the wiki.
 
 ## More information about the EDDI compiler
 
-The EDDI compiler is available on GitHub under the Boost Software License 1.0: <a href="https://github.com/wichtounet/eddic">eddic</a>
+The EDDI compiler is available on GitHub under the Boost Software License 1.0: [eddic](https://github.com/wichtounet/eddic).
 
-The ChangeLog of each version of eddic is available <a title="eddic changelog" href="https://github.com/wichtounet/eddic/blob/develop/ChangeLog">on Github</a>.
+The ChangeLog of each version of eddic is available [on Github](https://github.com/wichtounet/eddic/blob/develop/ChangeLog).
 
-<a href="http://www.baptiste-wicht.com/tag/eddi/">All the posts about the EDDI compiler</a></body></html>
+[All the posts about the EDDI compiler](http://www.baptiste-wicht.com/tag/eddi/)
