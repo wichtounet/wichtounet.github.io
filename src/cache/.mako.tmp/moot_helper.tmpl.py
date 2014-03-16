@@ -4,12 +4,12 @@ UNDEFINED = runtime.UNDEFINED
 __M_dict_builtin = dict
 __M_locals_builtin = locals
 _magic_number = 9
-_modified_time = 1394998758.9598258
+_modified_time = 1394998855.595409
 _enable_loop = True
 _template_filename = '/usr/lib64/python3.3/site-packages/nikola/data/themes/base/templates/moot_helper.tmpl'
 _template_uri = 'moot_helper.tmpl'
 _source_encoding = 'utf-8'
-_exports = ['comment_form', 'comment_link_script', 'comment_link']
+_exports = ['comment_form', 'comment_link', 'comment_link_script']
 
 
 def render_body(context,**pageargs):
@@ -49,23 +49,23 @@ def render_comment_form(context,url,title,identifier):
         context.caller_stack._pop_frame()
 
 
-def render_comment_link_script(context):
-    __M_caller = context.caller_stack._push_frame()
-    try:
-        __M_writer = context.writer()
-        # SOURCE LINE 11
-        __M_writer('\n<script src="https://cdn.moot.it/1/moot.min.js"></script>\n')
-        return ''
-    finally:
-        context.caller_stack._pop_frame()
-
-
 def render_comment_link(context,link,identifier):
     __M_caller = context.caller_stack._push_frame()
     try:
         __M_writer = context.writer()
         # SOURCE LINE 7
         __M_writer('\n')
+        return ''
+    finally:
+        context.caller_stack._pop_frame()
+
+
+def render_comment_link_script(context):
+    __M_caller = context.caller_stack._push_frame()
+    try:
+        __M_writer = context.writer()
+        # SOURCE LINE 11
+        __M_writer('\n<script src="https://cdn.moot.it/1/moot.min.js"></script>\n')
         return ''
     finally:
         context.caller_stack._pop_frame()

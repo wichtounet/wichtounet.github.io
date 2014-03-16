@@ -4,7 +4,7 @@ UNDEFINED = runtime.UNDEFINED
 __M_dict_builtin = dict
 __M_locals_builtin = locals
 _magic_number = 9
-_modified_time = 1394998759.252126
+_modified_time = 1394998855.88349
 _enable_loop = True
 _template_filename = '/usr/lib64/python3.3/site-packages/nikola/data/themes/bootstrap3/templates/list.tmpl'
 _template_uri = 'list.tmpl'
@@ -27,11 +27,11 @@ def render_body(context,**pageargs):
     __M_caller = context.caller_stack._push_frame()
     try:
         __M_locals = __M_dict_builtin(pageargs=pageargs)
-        title = context.get('title', UNDEFINED)
         messages = context.get('messages', UNDEFINED)
-        items = context.get('items', UNDEFINED)
+        title = context.get('title', UNDEFINED)
         def content():
             return render_content(context._locals(__M_locals))
+        items = context.get('items', UNDEFINED)
         __M_writer = context.writer()
         # SOURCE LINE 2
         __M_writer('\n')
@@ -49,11 +49,11 @@ def render_body(context,**pageargs):
 def render_content(context,**pageargs):
     __M_caller = context.caller_stack._push_frame()
     try:
-        title = context.get('title', UNDEFINED)
         messages = context.get('messages', UNDEFINED)
-        items = context.get('items', UNDEFINED)
+        title = context.get('title', UNDEFINED)
         def content():
             return render_content(context)
+        items = context.get('items', UNDEFINED)
         __M_writer = context.writer()
         # SOURCE LINE 3
         __M_writer('\n        <!--Body content-->\n        <div class="postbox">\n        <h1>')
