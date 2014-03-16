@@ -1,0 +1,415 @@
+<p><html><body><p>Last week, I wrote a benchmark comparing the performance of std::vector and std::list on different workloads. This previous article received a lot of comments and several suggestions to improve it. The present article is an improvement over the previous article. </p>
+<p>In this article, I will compare the performance of std::vector, std::list and std::deque on several different workloads and with different data types. In this article, when I talk about a list refers to std::list, a vector refers to std::vector and deque to std::deque.</p>
+<p>It is generally said that a list should be used when random insert and remove will be performed (performed in O(1) versus O(n) for a vector or a deque). If we look only at the complexity, the scale of linear search in both data structures should be equivalent, complexity being in O(n). When random insert/replace operations are performed on a vector or a deque, all the subsequent data needs to be moved and so each element will be copied. That is why the size of the data type is an important factor when comparing those two data structures. Because the size of the data type will play an important role on the cost of copying an element. </p>
+<p>However, in practice, there is a huge difference: the usage of the memory caches. All the data in a vector is contiguous where the std::list allocates separately memory for each element. How does that change the results in practice ? The deque is a data structure aiming at having the advantages of both data structures without their drawbacks, we will see how it perform in practice. Complexity analysis does not take the memory hierarchy into level. I believe that in practice, memory hierarchy usage is as important as complexity analysis. </p>
+<p>Keep in mind that all the tests performed are made on vector, list and deque even if other data structures could be better suited to the given workload. </p>
+<p>In the graphs and in the text, <em>n</em> is used to refer to the number of elements of the collection. </p>
+<p>All the tests performed have been performed on an Intel Core i7 Q 820  @ 1.73GHz. The code has been compiled in 64 bits with GCC 4.7.2 with -02 and -march=native. The code has been compiled with C++11 support (-std=c++11). </p>
+<p>For each graph, the vertical axis represent the amount of time necessary to perform the operations, so the lower values are the better. The horizontal axis is always the number of elements of the collection. For some graph, the logarithmic scale could be clearer, a button is available after each graph to change the vertical scale to a logarithmic scale. </p>
+<p>The data types are varying in size, they hold an array of longs and the size of the array varies to change the size of the data type. The non-trivial data type is made of two longs and has very stupid assignment operator and copy constructor that just does some maths (totally meaningless but costly). One may argue that is not a common copy constructor neither a common assignment operator and one will be right, however, the important point here is that it is costly operators which is enough for this benchmark. </p>
+<p></p><h2>Fill</h2></p>
+<p>The first test that is performed is to fill the data structures by adding elements to the back of the container (using <em>push_back</em>). Two variations of vector are used, <em>vector_pre</em> being a std::vector using vector::reserve at the beginning, resulting in only one allocation of memory.</p>
+<p>Lets see the results with a very small data type: </p>
+<p>[line_chart title="fill_back - 8 bytes" h_title="Number of elements" v_title="us" scale_button="true" width="600px" height="400px"]</p>
+<p>['x', 'list', 'vector', 'deque', 'vector_pre'],</p>
+<p>['100000', 2545, 271, 2012, 317],</p>
+<p>['200000', 4927, 552, 998, 334],</p>
+<p>['300000', 7310, 944, 1707, 595],</p>
+<p>['400000', 9463, 936, 2056, 1099],</p>
+<p>['500000', 12591, 1140, 2642, 1058],</p>
+<p>['600000', 14351, 1894, 3125, 1237],</p>
+<p>['700000', 16561, 1995, 3686, 1208],</p>
+<p>['800000', 18820, 2648, 4291, 1365],</p>
+<p>['900000', 20832, 2777, 4962, 2268],</p>
+<p>['1000000', 23430, 3015, 5396, 2585],</p>
+<p>[/line_chart]</p>
+<p>The pre-allocated vector is the fastest by a small margin and the list is 3 times slower than a vector. deque and vector. </p>
+<p>If we consider higher data type: </p>
+<p>[line_chart title="fill_back - 4096 bytes" h_title="Number of elements" v_title="us" scale_button="true" width="600px" height="400px"]</p>
+<p>['x', 'list', 'vector', 'deque', 'vector_pre'],</p>
+<p>['100000', 104867, 55545, 66852, 21738],</p>
+<p>['200000', 226215, 108289, 136035, 42532],</p>
+<p>['300000', 340910, 198343, 153446, 60317],</p>
+<p>['400000', 445035, 217325, 269316, 80616],</p>
+<p>['500000', 559619, 236576, 189613, 101371],</p>
+<p>['600000', 688422, 391354, 303729, 122447],</p>
+<p>['700000', 799902, 405771, 426373, 138868],</p>
+<p>['800000', 921441, 415707, 537057, 160637],</p>
+<p>['900000', 1006331, 439635, 263650, 177052],</p>
+<p>['1000000', 1113690, 464416, 372000, 199434],</p>
+<p>[/line_chart]</p>
+<p>This time vector and list are performing at about the same speed. The deque is a bit faster than list and vector. The pre-allocated vector is clearly the winner here. The variations in the results of deque and vector are probably coming from my system that doesn't like allocating so much memory back and forth at this speed. </p>
+<p>Finally, if we use a non-trivial data type: </p>
+<p>[line_chart title="fill_back - 16 bytes" h_title="Number of elements" v_title="us" scale_button="true" width="600px" height="400px"]</p>
+<p>['x', 'list', 'vector', 'deque', 'vector_pre'],</p>
+<p>['100000', 8093, 8123, 10251, 8095],</p>
+<p>['200000', 15433, 15305, 16061, 13897],</p>
+<p>['300000', 25964, 24643, 24450, 19954],</p>
+<p>['400000', 33414, 30322, 32148, 27171],</p>
+<p>['500000', 40416, 37817, 40752, 35058],</p>
+<p>['600000', 48991, 48594, 48785, 41049],</p>
+<p>['700000', 55059, 55124, 55092, 47609],</p>
+<p>['800000', 63688, 61360, 64505, 55659],</p>
+<p>['900000', 70550, 67636, 72329, 60952],</p>
+<p>['1000000', 79271, 73533, 79522, 67787],</p>
+<p>[/line_chart]</p>
+<p>All data structures are performing more or less the same, with vector_pre being the fastest. </p>
+<p>For push_back operations, pre-allocated vectors is a very good choice if the size is known in advance. The others performs more of less the same.</p>
+<p>I would have expected a better result for pre-allocated vector. If someone find an explanation for such a small margin, I'm interested. </p>
+<h2>Linear Search</h2>
+
+<p>The first operation is that is tested is the search. The container is filled with all the numbers in [0, N] and shuffled. Then, each number in [0,N] is searched in the container with std::find that performs a simple linear search. In theory, all the data structures should perform the same if we consider their complexity. </p>
+<p>[line_chart title="linear_search - 8 bytes" h_title="Number of elements" v_title="us" scale_button="true" width="600px" height="400px"]</p>
+<p>['x', 'deque', 'list', 'vector'],</p>
+<p>['1000', 593, 1098, 318],</p>
+<p>['2000', 2927, 5307, 1271],</p>
+<p>['3000', 5891, 12228, 3020],</p>
+<p>['4000', 8663, 24415, 5081],</p>
+<p>['5000', 12859, 36316, 8066],</p>
+<p>['6000', 18493, 55057, 11463],</p>
+<p>['7000', 25057, 74344, 16022],</p>
+<p>['8000', 38980, 99990, 21051],</p>
+<p>['9000', 44951, 127575, 26650],</p>
+<p>['10000', 52281, 158216, 32557],</p>
+<p>[/line_chart]</p>
+<p>It is clear from the graph that the list has very poor performance for searching. The growth is much worse for a list than for a vector or a deque.</p>
+<p>The only reason is the usage of the cache line. When a data is accessed, the data is fetched from the main memory to the cache. Not only the accessed data is accessed, but a whole cacheline is fetched. As the elements in a vector are contiguous, when you access an element, the next element is automatically in the cache. As the main memory is orders of magnitude slower than the cache, this makes a huge difference. In the list case, the processor spends its whole time waiting for data being fetched from memory to the cache, at each fetch, the processor fetches a lot of unnecessary data that are almost always useless. </p>
+<p>The deque is a bit slower than the vector, that is logical because here there are more cache misses due to the segmented parts. </p>
+<p>If we take a bigger data type: </p>
+<p>[line_chart title="linear_search - 128 bytes" h_title="Number of elements" v_title="us" scale_button="true" width="600px" height="400px"]</p>
+<p>['x', 'deque', 'list', 'vector'],</p>
+<p>['1000', 1116, 2683, 776],</p>
+<p>['2000', 4983, 16675, 3537],</p>
+<p>['3000', 12255, 44379, 10874],</p>
+<p>['4000', 23212, 83026, 20189],</p>
+<p>['5000', 37392, 133353, 33609],</p>
+<p>['6000', 55295, 193428, 47636],</p>
+<p>['7000', 74877, 261314, 63911],</p>
+<p>['8000', 100903, 340157, 84647],</p>
+<p>['9000', 126299, 435816, 107922],</p>
+<p>['10000', 156386, 545160, 135680],</p>
+<p>[/line_chart]</p>
+<p>The list is still much slower than the others, but what is interesting is that gap between the deque and the array is decreasing. Let's try with a 4KB data type: </p>
+<p>[line_chart title="linear_search - 4096 bytes" h_title="Number of elements" v_title="us" scale_button="true" width="600px" height="400px"]</p>
+<p>['x', 'deque', 'list', 'vector'],</p>
+<p>['1000', 4258, 7190, 4445],</p>
+<p>['2000', 20584, 38411, 19825],</p>
+<p>['3000', 48236, 113189, 55341],</p>
+<p>['4000', 87475, 223174, 118453],</p>
+<p>['5000', 136945, 362421, 191967],</p>
+<p>['6000', 197856, 530943, 281252],</p>
+<p>['7000', 273359, 726323, 387940],</p>
+<p>['8000', 351223, 954463, 511276],</p>
+<p>['9000', 447525, 1211581, 652269],</p>
+<p>['10000', 551556, 1497916, 807161],</p>
+<p>[/line_chart]</p>
+<p>The performance of the list are still poor but the gap is decreasing. The interesting point is that deque is now faster than vector. I'm not really sure of the reason of this result. It is possible that it comes only from this special size. One thing is sure, the bigger the data size, the more cache misses the processor will get because elements don't fit in cache lines. </p>
+<p>For search, list is clearly slow where deque and vector have about the same performance. It seems that deque is faster than a vector for very large data sizes. </p>
+<h2>Random Insert (+Linear Search)</h2>
+
+<p>In the case of random insert, in theory, the list should be much faster, its insert operation being in O(1) versus O(n) for a vector or a deque. </p>
+<p>The container is filled with all the numbers in [0, N] and shuffled. Then, 1000 random values are inserted at a random position in the container. The random position is found by linear search. In both cases, the complexity of the search is O(n), the only difference comes from the insert that follow the search. We saw before that the performance of the list were poor for searching, so we'll see if the fast insertion can compensate the slow search. </p>
+<p>[line_chart title="random_insert - 8 bytes" h_title="Number of elements" v_title="ms" scale_button="true" width="600px" height="400px"]</p>
+<p>['x', 'deque', 'list', 'vector'],</p>
+<p>['10000', 8, 27, 8],</p>
+<p>['20000', 15, 45, 14],</p>
+<p>['30000', 22, 63, 21],</p>
+<p>['40000', 29, 74, 27],</p>
+<p>['50000', 37, 87, 38],</p>
+<p>['60000', 43, 105, 44],</p>
+<p>['70000', 50, 114, 48],</p>
+<p>['80000', 61, 130, 55],</p>
+<p>['90000', 66, 139, 61],</p>
+<p>['100000', 70, 155, 68],</p>
+<p>[/line_chart]</p>
+<p>List is clearly slower than the other two data structures that exhibit the same performance. This comes from the very slow linear search. Even if the two other data structures have to move a lot of data, the copy is cheap for small data types. </p>
+<p>Let's increase the size a bit: </p>
+<p>[line_chart title="random_insert - 32 bytes" h_title="Number of elements" v_title="ms" scale_button="true" width="600px" height="400px"]</p>
+<p>['x', 'deque', 'list', 'vector'],</p>
+<p>['10000', 21, 53, 25],</p>
+<p>['20000', 39, 80, 48],</p>
+<p>['30000', 57, 103, 68],</p>
+<p>['40000', 71, 122, 90],</p>
+<p>['50000', 88, 146, 112],</p>
+<p>['60000', 102, 165, 130],</p>
+<p>['70000', 124, 190, 152],</p>
+<p>['80000', 140, 214, 175],</p>
+<p>['90000', 157, 238, 195],</p>
+<p>['100000', 174, 268, 213],</p>
+<p>[/line_chart]</p>
+<p>The result are interesting. The list is still the slowest but with a smaller margin. This time deque is faster than the vector by a small margin. </p>
+<p>Again, increasing the data size: </p>
+<p>[line_chart title="random_insert - 128 bytes" h_title="Number of elements" v_title="ms" scale_button="true" width="600px" height="400px"]</p>
+<p>['x', 'deque', 'list', 'vector'],</p>
+<p>['10000', 64, 80, 89],</p>
+<p>['20000', 108, 128, 154],</p>
+<p>['30000', 158, 182, 248],</p>
+<p>['40000', 212, 248, 347],</p>
+<p>['50000', 281, 348, 469],</p>
+<p>['60000', 402, 443, 735],</p>
+<p>['70000', 569, 643, 1034],</p>
+<p>['80000', 767, 775, 1347],</p>
+<p>['90000', 978, 1002, 1614],</p>
+<p>['100000', 1190, 1202, 1962],</p>
+<p>[/line_chart]</p>
+<p>This time, the vector is clearly the looser and deque and list have the same performance. We can say that with a size of 128 bytes, the time to move a lot of the elements is more expensive than searching in the list. </p>
+<p>A huge data type gives us clearer results: </p>
+<p>[line_chart title="random_insert - 4096 bytes" h_title="Number of elements" v_title="ms" scale_button="true" width="600px" height="400px"]</p>
+<p>['x', 'deque', 'list', 'vector'],</p>
+<p>['10000', 4430, 178, 8074],</p>
+<p>['20000', 7918, 311, 14121],</p>
+<p>['30000', 11043, 444, 20014],</p>
+<p>['40000', 13806, 555, 26783],</p>
+<p>['50000', 17421, 694, 33519],</p>
+<p>['60000', 20663, 904, 39175],</p>
+<p>['70000', 23599, 1147, 45111],</p>
+<p>['80000', 26736, 1470, 50887],</p>
+<p>['90000', 29524, 1940, 60139],</p>
+<p>['100000', 32005, 2534, 65098],</p>
+<p>[/line_chart]</p>
+<p>The list is more than 20 times faster than the vector and an order of magnitude faster than the deque ! The deque is also twice faster than the vector. </p>
+<p>The fact than the deque is faster than vector is quite simple. When an insertion is made in a deque, the elements can either moved to the end or the beginning. The closer point will be chosen. An insert in the middle is the most costly operation with O(n/2) complexity. It is always more efficient to insert elements in a deque than in vector because at least twice less elements will be moved. </p>
+<p>If we look at the non-trivial data type: </p>
+<p>[line_chart title="random_insert - 16 bytes" h_title="Number of elements" v_title="ms" scale_button="true" width="600px" height="400px"]</p>
+<p>['x', 'deque', 'list', 'vector'],</p>
+<p>['10000', 230, 41, 425],</p>
+<p>['20000', 376, 65, 705],</p>
+<p>['30000', 552, 84, 1054],</p>
+<p>['40000', 692, 101, 1345],</p>
+<p>['50000', 862, 119, 1661],</p>
+<p>['60000', 1003, 141, 1984],</p>
+<p>['70000', 1186, 155, 2277],</p>
+<p>['80000', 1358, 172, 2681],</p>
+<p>['90000', 1540, 186, 2965],</p>
+<p>['100000', 1658, 203, 3236],</p>
+<p>[/line_chart]</p>
+<p>The results are about the same as for the previous graph, but the data type is only 16B. The cost of the copy constructors and assignment operators is very important for vector and deque. The list doesn't care because no copy neither assignment of the existing elements is made during insertions (only the inserted element is copied). </p>
+<h2>Random Remove</h2>
+
+<p>In theory, random remove is the same case than random insert. Now that we've seen the results with random insert, we could expect the same behavior for random remove. </p>
+<p>The container is filled with all the numbers in [0, N] and shuffled. Then, 1000 random values are removed from a random position in the container. </p>
+<p>If we take the same data sizes as the random insert case: </p>
+<p>[line_chart title="random_remove - 8 bytes" h_title="Number of elements" v_title="ms" scale_button="true" width="600px" height="400px"]</p>
+<p>['x', 'deque', 'list', 'vector'],</p>
+<p>['10000', 6, 19, 5],</p>
+<p>['20000', 12, 41, 11],</p>
+<p>['30000', 20, 55, 18],</p>
+<p>['40000', 27, 68, 25],</p>
+<p>['50000', 34, 81, 33],</p>
+<p>['60000', 43, 101, 40],</p>
+<p>['70000', 49, 113, 45],</p>
+<p>['80000', 59, 126, 52],</p>
+<p>['90000', 67, 138, 61],</p>
+<p>['100000', 72, 157, 65],</p>
+<p>[/line_chart]</p>
+<p>[line_chart title="random_remove - 128 bytes" h_title="Number of elements" v_title="ms" scale_button="true" width="600px" height="400px"]</p>
+<p>['x', 'deque', 'list', 'vector'],</p>
+<p>['10000', 40, 40, 63],</p>
+<p>['20000', 85, 83, 134],</p>
+<p>['30000', 127, 132, 198],</p>
+<p>['40000', 181, 189, 282],</p>
+<p>['50000', 245, 263, 473],</p>
+<p>['60000', 363, 376, 664],</p>
+<p>['70000', 524, 502, 960],</p>
+<p>['80000', 743, 688, 1343],</p>
+<p>['90000', 977, 812, 1639],</p>
+<p>['100000', 1228, 1017, 2004],</p>
+<p>[/line_chart]</p>
+<p>[line_chart title="random_remove - 4096 bytes" h_title="Number of elements" v_title="ms" scale_button="true" width="600px" height="400px"]</p>
+<p>['x', 'deque', 'list', 'vector'],</p>
+<p>['10000', 2906, 109, 5649],</p>
+<p>['20000', 6190, 233, 11760],</p>
+<p>['30000', 9379, 359, 18218],</p>
+<p>['40000', 12840, 490, 23634],</p>
+<p>['50000', 16027, 585, 30046],</p>
+<p>['60000', 18918, 773, 36100],</p>
+<p>['70000', 22213, 999, 42453],</p>
+<p>['80000', 25788, 1317, 48793],</p>
+<p>['90000', 28975, 1762, 55043],</p>
+<p>['100000', 30860, 2128, 59791],</p>
+<p>[/line_chart]</p>
+<p>[line_chart title="random_remove - 16 bytes" h_title="Number of elements" v_title="ms" scale_button="true" width="600px" height="400px"]</p>
+<p>['x', 'deque', 'list', 'vector'],</p>
+<p>['10000', 149, 27, 294],</p>
+<p>['20000', 319, 50, 608],</p>
+<p>['30000', 481, 68, 934],</p>
+<p>['40000', 638, 89, 1236],</p>
+<p>['50000', 794, 108, 1547],</p>
+<p>['60000', 954, 120, 1894],</p>
+<p>['70000', 1101, 144, 2185],</p>
+<p>['80000', 1253, 160, 2513],</p>
+<p>['90000', 1399, 177, 2812],</p>
+<p>['100000', 1595, 194, 3108],</p>
+<p>[/line_chart]</p>
+<p>The behavior of random remove is the same as the behavior of random insert, for the same reasons. The results are not very interesting, so, let's get to the next workload. </p>
+<h2>Push Front</h2>
+
+<p>The next operation that we will compare is inserting elements in front of the collection. This is the worst case for vector, because after each insertion, all the previously inserted will be moved and copied. For a list or a deque, it does not make a difference compared to pushing to the back. </p>
+<p>So let's see the results: </p>
+<p>[line_chart title="fill_front - 8 bytes" h_title="Number of elements" v_title="ms" scale_button="true" width="600px" height="400px"]</p>
+<p>['x', 'deque', 'list', 'vector'],</p>
+<p>['10000', 0, 0, 33],</p>
+<p>['20000', 0, 0, 135],</p>
+<p>['30000', 0, 0, 313],</p>
+<p>['40000', 0, 0, 585],</p>
+<p>['50000', 0, 1, 913],</p>
+<p>['60000', 0, 1, 1327],</p>
+<p>['70000', 0, 1, 1823],</p>
+<p>['80000', 0, 1, 2405],</p>
+<p>['90000', 0, 2, 3107],</p>
+<p>['100000', 0, 2, 4017],</p>
+<p>[/line_chart]</p>
+<p>The results are crystal-clear and as expected, vector is very bad at inserting elements to the front. The list and the deque results are almost invisible in the graph because it is a free operation for the two data structures. This does not need further explanations. There is no need to change the data size, it will only make vector much slower and my processor hotter. </p>
+<h2>Sort</h2>
+
+<p>The next operation that is tested is the time necessary to sort the data structures. For the vector and the deque std::sort is used and for a list the member function sort is used. </p>
+<p>[line_chart title="sort - 8 bytes" h_title="Number of elements" v_title="ms" scale_button="true" width="600px" height="400px"]</p>
+<p>['x', 'deque', 'list', 'vector'],</p>
+<p>['100000', 9, 25, 6],</p>
+<p>['200000', 19, 61, 14],</p>
+<p>['300000', 29, 115, 22],</p>
+<p>['400000', 40, 175, 30],</p>
+<p>['500000', 50, 233, 39],</p>
+<p>['600000', 60, 321, 48],</p>
+<p>['700000', 71, 378, 57],</p>
+<p>['800000', 85, 457, 66],</p>
+<p>['900000', 95, 517, 74],</p>
+<p>['1000000', 108, 593, 83],</p>
+<p>[/line_chart]</p>
+<p>For a small data type, the list is several times slower than the other two data structures. This is again due to the very poor spatial locality of the list during the search. vector is slightly faster than a deque, but the difference is not very significant. </p>
+<p>If we increase the size: </p>
+<p>[line_chart title="sort - 128 bytes" h_title="Number of elements" v_title="ms" scale_button="true" width="600px" height="400px"]</p>
+<p>['x', 'deque', 'list', 'vector'],</p>
+<p>['100000', 25, 32, 20],</p>
+<p>['200000', 65, 80, 48],</p>
+<p>['300000', 103, 143, 80],</p>
+<p>['400000', 136, 197, 113],</p>
+<p>['500000', 180, 246, 149],</p>
+<p>['600000', 223, 340, 181],</p>
+<p>['700000', 274, 396, 222],</p>
+<p>['800000', 302, 469, 266],</p>
+<p>['900000', 358, 514, 303],</p>
+<p>['1000000', 395, 579, 337],</p>
+<p>[/line_chart]</p>
+<p>The order remains the same but the difference between the list and the other is decreasing. </p>
+<p>With a 1KB data type: </p>
+<p>[line_chart title="sort - 1024 bytes" h_title="Number of elements" v_title="ms" scale_button="true" width="600px" height="400px"]</p>
+<p>['x', 'deque', 'list', 'vector'],</p>
+<p>['100000', 176, 39, 168],</p>
+<p>['200000', 389, 94, 376],</p>
+<p>['300000', 620, 168, 595],</p>
+<p>['400000', 859, 228, 823],</p>
+<p>['500000', 1100, 285, 1059],</p>
+<p>['600000', 1355, 392, 1301],</p>
+<p>['700000', 1609, 452, 1555],</p>
+<p>['800000', 1844, 539, 1797],</p>
+<p>['900000', 2111, 597, 2054],</p>
+<p>['1000000', 2397, 670, 2278],</p>
+<p>[/line_chart]</p>
+<p>The list is almost five times faster than the vector and the deque which are both performing the same (with a very slight advantage for vector). </p>
+<p>If we use the non-trivial data type:</p>
+<p>[line_chart title="sort - 16 bytes" h_title="Number of elements" v_title="ms" scale_button="true" width="600px" height="400px"]</p>
+<p>['x', 'deque', 'list', 'vector'],</p>
+<p>['100000', 92, 26, 89],</p>
+<p>['200000', 195, 70, 188],</p>
+<p>['300000', 301, 135, 296],</p>
+<p>['400000', 410, 195, 399],</p>
+<p>['500000', 519, 255, 510],</p>
+<p>['600000', 638, 350, 623],</p>
+<p>['700000', 763, 410, 729],</p>
+<p>['800000', 858, 492, 846],</p>
+<p>['900000', 971, 552, 954],</p>
+<p>['1000000', 1090, 628, 1072],</p>
+<p>[/line_chart] </p>
+<p>Again, the cost of the operators of this type have a strong impact on the vector and deque. </p>
+<h2>Destruction</h2>
+
+<p>The next test is to calculate the time necessary to the destruction of a container. The containers are dynamically allocated, are filled with n numbers and then their destruction time (via delete) is computed. </p>
+<p>[line_chart title="destruction - 8 bytes" h_title="Number of elements" v_title="ms" scale_button="true" width="600px" height="400px"]</p>
+<p>['x', 'deque', 'list', 'vector'],</p>
+<p>['100000', 34, 1489, 0],</p>
+<p>['200000', 70, 2838, 0],</p>
+<p>['300000', 102, 4677, 0],</p>
+<p>['400000', 142, 6072, 0],</p>
+<p>['500000', 173, 7737, 0],</p>
+<p>['600000', 215, 8828, 0],</p>
+<p>['700000', 353, 10599, 1],</p>
+<p>['800000', 321, 12115, 0],</p>
+<p>['900000', 355, 13932, 1],</p>
+<p>['1000000', 410, 15345, 0],</p>
+<p>[/line_chart] </p>
+<p>The results are already interesting. The vector is almost free to destroy, which is logical because that incurs only freeing one array and the vector itself. The deque is slower due to the freeing of each segments. But the list is much more costly than the other two, more than an order of magnitude slower. This is expected because the list have to free the dynamic memory of each node and also has to iterate through all the elements which we saw was slow. </p>
+<p>If we increase the data type: </p>
+<p>[line_chart title="destruction - 128 bytes" h_title="Number of elements" v_title="ms" scale_button="true" width="600px" height="400px"]</p>
+<p>['x', 'deque', 'list', 'vector'],</p>
+<p>['100000', 898, 4403, 1],</p>
+<p>['200000', 2488, 8499, 1],</p>
+<p>['300000', 4091, 12499, 1430],</p>
+<p>['400000', 5461, 16379, 1909],</p>
+<p>['500000', 6729, 21128, 2459],</p>
+<p>['600000', 8164, 25719, 2729],</p>
+<p>['700000', 9517, 31046, 3227],</p>
+<p>['800000', 10871, 34550, 3756],</p>
+<p>['900000', 12392, 37176, 4163],</p>
+<p>['1000000', 13762, 40119, 4523],</p>
+<p>[/line_chart]</p>
+<p>This time we can see that the deque is three times slower than a vector and that the list is still an order of magnitude slower than a vector ! However, the is less difference than before. </p>
+<p>With our biggest data type, now: </p>
+<p>[line_chart title="destruction - 4096 bytes" h_title="Number of elements" v_title="ms" scale_button="true" width="600px" height="400px"]</p>
+<p>['x', 'deque', 'list', 'vector'],</p>
+<p>['100000', 20575, 22434, 15499],</p>
+<p>['200000', 44234, 47254, 29848],</p>
+<p>['300000', 67196, 69374, 39818],</p>
+<p>['400000', 89253, 91128, 54229],</p>
+<p>['500000', 108689, 112557, 68090],</p>
+<p>['600000', 131751, 135764, 75063],</p>
+<p>['700000', 150801, 155610, 90761],</p>
+<p>['800000', 172365, 176957, 102830],</p>
+<p>['900000', 192575, 193897, 112728],</p>
+<p>['1000000', 211507, 215274, 126348],</p>
+<p>[/line_chart] </p>
+<p>There is no more difference between list and deque. The vector is still twice faster than them. </p>
+<p>Even if the vector is always faster than the list and deque, keep in mind that the graphs for destruction are in microseconds and so the operations are not very costly. It could make a difference is very time-sensitive application but unlikely in most applications. Moreover, destruction is made only once per data structure, generally, it is not a very important operation. </p>
+<h2>Number Crunching</h2>
+
+<p>Finally, we can also test a number crunching operation. Here, random elements are inserted into the container that is kept sorted. It means, that the position where the element has to be inserted is first searched by iterating through elements and the inserted. As we talk about number crunching, only 8 bytes elements are tested. </p>
+<p>[line_chart title="number_crunching" h_title="Number of elements" v_title="ms" scale_button="true" width="600px" height="400px"]</p>
+<p>['x', 'deque', 'list', 'vector'],</p>
+<p>['10000', 39, 187, 33],</p>
+<p>['20000', 150, 1247, 134],</p>
+<p>['30000', 339, 3380, 310],</p>
+<p>['40000', 623, 6513, 547],</p>
+<p>['50000', 958, 10757, 864],</p>
+<p>['60000', 1394, 16098, 1257],</p>
+<p>['70000', 1894, 22623, 1713],</p>
+<p>['80000', 2479, 30656, 2249],</p>
+<p>['90000', 3162, 39451, 2858],</p>
+<p>['100000', 3932, 49906, 3576],</p>
+<p>[/line_chart]</p>
+<p>Even if there is only 100'000 elements, the list is already an order of magnitude slower than the other two data structures. If we look a the curves of the results, it is easy to see that this will be only worse with higher collection sizes. The list is absolutely not adapted for number crunching operations due to its poor spatial locality. </p>
+<h2>Conclusion</h2>
+
+<p>To conclude, we can get some facts about each data structure:</p>
+<ul>
+   <li>std::list is very very slow to iterate through the collection due to its very poor spatial locality.</li>
+   <li>std::vector and std::deque perform always faster than std::list with very small data</li>
+   <li>std::list handles very well large elements</li>
+   <li>std::deque performs better than a std::vector for inserting at random positions (especially at the front, which is constant time)</li>
+   <li>std::deque and std::vector do not support very well data types with high cost of copy/assignment</li>
+</ul>
+
+<p>This draw simple conclusions on usage of each data structure: </p>
+<ul>
+   <li>Number crunching: use std::vector or std::deque</li>
+   <li>Linear search: use std::vector or std::deque</li>
+   <li>Random Insert/Remove: use std::list (if data size very small (
+   </li><li>Big data size: use std::list (not if intended for searching)</li>
+   <li>Non-trivial data type: use std::list unless you need the container especially for searching. But for multiple modifications of the container, it will be very slow. </li>
+   <li>Push to front: use std::deque or std::list</li>
+</ul>
+
+<p>I have to say that before writing this new version of the benchmark I did not know std::deque a lot. This is a very good data structure that is very good at inserting at both ends and even in the middle while exposing a very good spatial locality. Even if sometimes slower than a vector, when the operations involves both searching and inserting in the middle, I would say that this structure should be preferred over vectors, especially for data types of medium sizes. </p>
+<p>If you have the time, in practice, the best way to decide is always to benchmark each version, or even to try another data structures. Two operations with the same Big O complexity can perform quite differently in practice. </p>
+<p>I hope that you found this article interesting. If you have any comment or have an idea about an other workload that you would like to test, don't hesitate to post a comment ;) If you have a question on results, don't hesitate as well. </p>
+<p>The code source of the benchmark is available online: <a href="https://github.com/wichtounet/articles/blob/master/src/vector_list/bench.cpp" title="Source code of the benchmark">https://github.com/wichtounet/articles/blob/master/src/vector_list/bench.cpp</a></p>
+<p>The older version of the article is still available: <a href="http://www.baptiste-wicht.com/2012/11/cpp-benchmark-vector-vs-list/" title="C++ benchmark – std::vector VS std::list">C++ benchmark – std::vector VS std::list</a></body></html></p>

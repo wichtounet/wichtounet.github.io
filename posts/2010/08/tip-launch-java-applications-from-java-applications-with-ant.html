@@ -1,0 +1,237 @@
+<!DOCTYPE html><html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Baptiste Wicht">
+    <title>Quick Tip : Launch Java Applications From Java applications with Ant | @Blog("Baptiste Wicht")</title>
+    
+            <link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
+      <link rel="canonical" href="http://www.baptiste-wicht.com/posts/2010/08/tip-launch-java-applications-from-java-applications-with-ant.html">
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js" type="text/javascript"></script>
+    <![endif]-->
+            <link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
+
+    
+
+
+
+
+
+    
+</head>
+<body>
+<!-- Menubar -->
+
+<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    <div class="container-fluid"><!-- This keeps the margins nice -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="http://www.baptiste-wicht.com/">@Blog("Baptiste Wicht")</a>
+        </div><!-- /.navbar-header -->
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+            <ul class="nav navbar-nav">
+                
+                <li><a href="../../../archive.html">Archives</a>
+                </li><li><a href="../../../categories/index.html">Tags</a>
+                </li><li><a href="../../../rss.xml">RSS</a>
+
+            </li></ul>
+
+            <ul class="nav navbar-nav navbar-right">
+                
+                
+                    
+    <li>
+    <a href="tip-launch-java-applications-from-java-applications-with-ant.wp" id="sourcelink">Source</a>
+    </li>
+
+            </ul>
+        </div><!-- /.navbar-collapse -->
+    </div><!-- /.container-fluid -->
+</nav>
+
+<!-- End of Menubar -->
+
+<div class="container">
+    <div class="body-content">
+        <!--Body content-->
+        <div class="row">
+            
+    <article class="postbox post-text">
+    <div class="h-entry" itemscope="itemscope" itemtype="http://schema.org/Article">
+    
+    <h1 class="p-name" itemprop="headline name">Quick Tip : Launch Java Applications From Java applications with Ant</h1>
+
+    <hr>
+    <small>
+        Posted: <time class="published dt-published" datetime="2010-08-09T07:22:42+00:00" itemprop="datePublished">2010-08-09 07:22</time>
+        
+
+        
+          |  
+        More posts about 
+    <span itemprop="keywords">
+        <a class="tag p-category" href="../../../categories/apache.html"><span class="badge badge-info">Apache</span></a>
+        <a class="tag p-category" href="../../../categories/java.html"><span class="badge badge-info">Java</span></a>
+        <a class="tag p-category" href="../../../categories/java.html"><span class="badge badge-info">Java</span></a>
+        <a class="tag p-category" href="../../../categories/libraries.html"><span class="badge badge-info">Libraries</span></a>
+        <a class="tag p-category" href="../../../categories/tips.html"><span class="badge badge-info">Tips</span></a>
+    </span>
+
+
+    </small>
+    <hr>
+    <div class="e-content" itemprop="articleBody text">
+    <div><p></p><p>One week ago, I searched a way <strong>to launch a Java application</strong> from an other Java application without loosing portability. And I found a post on StackOverflow explaining how achieve that goal using <strong>Apache Ant</strong>.</p>
+<p>It's really easy. It use the Ant classes and simulate a project launching and a build task. In this post, we'll see a simple method to launch an application from Java.</p>
+<!--more-->
+
+<p>Here is a simple method that launch an application using Ant :</p>
+<p>[java]package org.jtheque.osgi;</p>
+<p>import org.apache.tools.ant.BuildException;</p>
+<p>import org.apache.tools.ant.BuildLogger;</p>
+<p>import org.apache.tools.ant.DefaultLogger;</p>
+<p>import org.apache.tools.ant.DemuxOutputStream;</p>
+<p>import org.apache.tools.ant.Project;</p>
+<p>import org.apache.tools.ant.taskdefs.Java;</p>
+<p>import java.io.PrintStream;</p>
+<p>public class Launcher {
+    private static int launchApplication(Class mainClass, String args) {
+        int returnCode;</p>
+<div class="code"><pre>    <span class="n">Project</span> <span class="n">project</span> <span class="o">=</span> <span class="n">new</span> <span class="n">Project</span><span class="p">();</span>
+
+    <span class="n">project</span><span class="p">.</span><span class="n">setBasedir</span><span class="p">(</span><span class="n">System</span><span class="p">.</span><span class="n">getProperty</span><span class="p">(</span><span class="s">"user.dir"</span><span class="p">));</span>
+    <span class="n">project</span><span class="p">.</span><span class="n">init</span><span class="p">();</span>
+
+    <span class="n">PrintStream</span> <span class="n">out</span> <span class="o">=</span> <span class="n">System</span><span class="p">.</span><span class="n">out</span><span class="p">;</span>
+    <span class="n">PrintStream</span> <span class="n">err</span> <span class="o">=</span> <span class="n">System</span><span class="p">.</span><span class="n">err</span><span class="p">;</span>
+
+    <span class="n">BuildLogger</span> <span class="n">logger</span> <span class="o">=</span> <span class="n">new</span> <span class="n">DefaultLogger</span><span class="p">();</span>
+    <span class="n">logger</span><span class="p">.</span><span class="n">setOutputPrintStream</span><span class="p">(</span><span class="n">out</span><span class="p">);</span>
+    <span class="n">logger</span><span class="p">.</span><span class="n">setErrorPrintStream</span><span class="p">(</span><span class="n">err</span><span class="p">);</span>
+    <span class="n">logger</span><span class="p">.</span><span class="n">setMessageOutputLevel</span><span class="p">(</span><span class="n">Project</span><span class="p">.</span><span class="n">MSG_INFO</span><span class="p">);</span>
+
+    <span class="n">project</span><span class="p">.</span><span class="n">addBuildListener</span><span class="p">(</span><span class="n">logger</span><span class="p">);</span>
+
+    <span class="n">System</span><span class="p">.</span><span class="n">setOut</span><span class="p">(</span><span class="n">new</span> <span class="n">PrintStream</span><span class="p">(</span><span class="n">new</span> <span class="n">DemuxOutputStream</span><span class="p">(</span><span class="n">project</span><span class="p">,</span> <span class="nb">false</span><span class="p">)));</span>
+    <span class="n">System</span><span class="p">.</span><span class="n">setErr</span><span class="p">(</span><span class="n">new</span> <span class="n">PrintStream</span><span class="p">(</span><span class="n">new</span> <span class="n">DemuxOutputStream</span><span class="p">(</span><span class="n">project</span><span class="p">,</span> <span class="nb">true</span><span class="p">)));</span>
+
+    <span class="n">project</span><span class="p">.</span><span class="n">fireBuildStarted</span><span class="p">();</span>
+
+    <span class="n">Throwable</span> <span class="n">caught</span> <span class="o">=</span> <span class="n">null</span><span class="p">;</span>
+    <span class="n">try</span> <span class="p">{</span>
+        <span class="n">project</span><span class="p">.</span><span class="n">log</span><span class="p">(</span><span class="s">"Launch Application"</span><span class="p">);</span>
+
+        <span class="n">Java</span> <span class="n">javaTask</span> <span class="o">=</span> <span class="n">new</span> <span class="n">Java</span><span class="p">();</span>
+        <span class="n">javaTask</span><span class="p">.</span><span class="n">setTaskName</span><span class="p">(</span><span class="s">"Application Launcher"</span><span class="p">);</span>
+        <span class="n">javaTask</span><span class="p">.</span><span class="n">setProject</span><span class="p">(</span><span class="n">project</span><span class="p">);</span>
+        <span class="n">javaTask</span><span class="p">.</span><span class="n">setFork</span><span class="p">(</span><span class="nb">true</span><span class="p">);</span>
+        <span class="n">javaTask</span><span class="p">.</span><span class="n">setFailonerror</span><span class="p">(</span><span class="nb">true</span><span class="p">);</span>
+        <span class="n">javaTask</span><span class="p">.</span><span class="n">setCloneVm</span><span class="p">(</span><span class="nb">true</span><span class="p">);</span>
+        <span class="n">javaTask</span><span class="p">.</span><span class="n">setClassname</span><span class="p">(</span><span class="n">mainClass</span><span class="p">.</span><span class="n">getName</span><span class="p">());</span>
+        <span class="n">javaTask</span><span class="p">.</span><span class="n">setArgs</span><span class="p">(</span><span class="n">args</span><span class="p">);</span>
+        <span class="n">javaTask</span><span class="p">.</span><span class="n">init</span><span class="p">();</span>
+
+        <span class="n">returnCode</span> <span class="o">=</span> <span class="n">javaTask</span><span class="p">.</span><span class="n">executeJava</span><span class="p">();</span>
+    <span class="p">}</span> <span class="n">catch</span> <span class="p">(</span><span class="n">BuildException</span> <span class="n">e</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">caught</span> <span class="o">=</span> <span class="n">e</span><span class="p">;</span>
+
+        <span class="n">returnCode</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="n">project</span><span class="p">.</span><span class="n">fireBuildFinished</span><span class="p">(</span><span class="n">caught</span><span class="p">);</span>
+
+    <span class="n">System</span><span class="p">.</span><span class="n">setOut</span><span class="p">(</span><span class="n">out</span><span class="p">);</span>
+    <span class="n">System</span><span class="p">.</span><span class="n">setErr</span><span class="p">(</span><span class="n">err</span><span class="p">);</span>
+
+    <span class="k">return</span> <span class="n">returnCode</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>}[/java]</p>
+<p>Here are some explanations :</p>
+<p></p><ul>
+    <li>First, we create a new Project using the user directory as base directory and init it.</li>
+    <li>Then, we create a simple logger using the System.out and System.err streams and replace then with demux streams</li>
+    <li>After that, we create the Java task. By using setCloneVm(true), the new virtual machine will clone the properties of the current virtual machine. We must use a fork virtual machine to get the return code of the application. We set also the name of the class and the args of the launch. Finally we init and execute the task</li>
+    <li>Once the application is finished, we get the return code and restore the old System.out and System.err streams</li>
+</ul>
+<p>It's extremely simple and portable and the code is, I think, very clean.</p></div>
+    </div>
+    </div>
+    
+        <ul class="pager">
+            <li class="previous">
+                <a href="presentation-usage-h2-database-engine.html" rel="prev">← Previous post</a>
+            </li>
+            <li class="next">
+                <a href="generate-graphs-benchmarks-easily.html" rel="next">Next post →</a>
+            </li>
+        </ul>
+
+        
+        
+        <div id="disqus_thread"></div>
+        <script>
+        var disqus_shortname ="nikolademo",
+            disqus_url="http://www.baptiste-wicht.com/posts/2010/08/tip-launch-java-applications-from-java-applications-with-ant.html",
+        disqus_title="Quick Tip : Launch Java Applications From Java applications with Ant",
+        disqus_identifier="cache/posts/2010/08/tip-launch-java-applications-from-java-applications-with-ant.html",
+        disqus_config = function () {
+            this.language = "en";
+        };
+        (function() {
+            var dsq = document.createElement('script'); dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink" rel="nofollow">Comments powered by <span class="logo-disqus">Disqus</span></a>
+
+
+    
+
+    </article>
+
+        </div>
+        <!--End of body content-->
+
+        <footer>
+            Contents © 2014         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         
+        </footer>
+    </div>
+</div>
+
+
+            <script src="../../../assets/js/all-nocdn.js" type="text/javascript"></script>
+
+
+    
+<!-- Social buttons -->
+<div id="addthisbox" class="addthis_toolbox addthis_peekaboo_style addthis_default_style addthis_label_style addthis_32x32_style">
+<a class="addthis_button_more">Share</a>
+<ul><li><a class="addthis_button_facebook"></a>
+</li><li><a class="addthis_button_google_plusone_share"></a>
+</li><li><a class="addthis_button_linkedin"></a>
+</li><li><a class="addthis_button_twitter"></a>
+</li></ul>
+</div>
+<script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-4f7088a56bb93798"></script>
+<!-- End of social buttons -->
+
+
+    <script type="text/javascript">jQuery("a.image-reference").colorbox({rel:"gal",maxWidth:"100%",maxHeight:"100%",scalePhotos:true});</script>
+    
+
+</body>
+</html>

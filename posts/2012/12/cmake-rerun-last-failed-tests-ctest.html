@@ -1,0 +1,182 @@
+<!DOCTYPE html><html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Baptiste Wicht">
+    <title>CMake Testing - Rerun the last failed tests with CTest | @Blog("Baptiste Wicht")</title>
+    
+            <link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
+      <link rel="canonical" href="http://www.baptiste-wicht.com/posts/2012/12/cmake-rerun-last-failed-tests-ctest.html">
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js" type="text/javascript"></script>
+    <![endif]-->
+            <link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
+
+    
+
+
+
+
+
+    
+</head>
+<body>
+<!-- Menubar -->
+
+<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    <div class="container-fluid"><!-- This keeps the margins nice -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="http://www.baptiste-wicht.com/">@Blog("Baptiste Wicht")</a>
+        </div><!-- /.navbar-header -->
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+            <ul class="nav navbar-nav">
+                
+                <li><a href="../../../archive.html">Archives</a>
+                </li><li><a href="../../../categories/index.html">Tags</a>
+                </li><li><a href="../../../rss.xml">RSS</a>
+
+            </li></ul>
+
+            <ul class="nav navbar-nav navbar-right">
+                
+                
+                    
+    <li>
+    <a href="cmake-rerun-last-failed-tests-ctest.wp" id="sourcelink">Source</a>
+    </li>
+
+            </ul>
+        </div><!-- /.navbar-collapse -->
+    </div><!-- /.container-fluid -->
+</nav>
+
+<!-- End of Menubar -->
+
+<div class="container">
+    <div class="body-content">
+        <!--Body content-->
+        <div class="row">
+            
+    <article class="postbox post-text">
+    <div class="h-entry" itemscope="itemscope" itemtype="http://schema.org/Article">
+    
+    <h1 class="p-name" itemprop="headline name">CMake Testing - Rerun the last failed tests with CTest</h1>
+
+    <hr>
+    <small>
+        Posted: <time class="published dt-published" datetime="2012-12-06T08:47:12+00:00" itemprop="datePublished">2012-12-06 08:47</time>
+        
+
+        
+          |  
+        More posts about 
+    <span itemprop="keywords">
+        <a class="tag p-category" href="../../../categories/c.html"><span class="badge badge-info">C++</span></a>
+        <a class="tag p-category" href="../../../categories/cmake.html"><span class="badge badge-info">cmake</span></a>
+        <a class="tag p-category" href="../../../categories/tests.html"><span class="badge badge-info">Tests</span></a>
+        <a class="tag p-category" href="../../../categories/tools.html"><span class="badge badge-info">Tools</span></a>
+    </span>
+
+
+    </small>
+    <hr>
+    <div class="e-content" itemprop="articleBody text">
+    <div><p></p><p>Some time ago, we saw <a href="http://www.baptiste-wicht.com/2012/10/run-boost-test-parallel-cmake/" title="Run your Boost Tests in parallel with CMake">how to use CMake to run Boost Tests in paralel</a>, now it is time for another tip. </p>
+<p>A feature that I think is lacking in CMake/CTest is a way to launch only the last failed tests. As it is not possible to do that directly, I posted <a href="http://stackoverflow.com/q/13547175/802362" title="How to rerun the failed tests with ctest?">the question on StackOverflow</a> and got a great answer from <a href="http://stackoverflow.com/users/424459/fraser" title="Fraser">Fraser</a>. I wanted to share its answer. </p>
+<p>CTest has -I option to select a list of tests to run. The idea here is to convert the log of CTest in format readable by CTest. What I think is great in its answer is that the solution is a CMake script: </p>
+<p>[code]set(FailedFileName FailedTests.log)</p>
+<p>if(EXISTS "Testing/Temporary/LastTestsFailed.log")
+  file(STRINGS "Testing/Temporary/LastTestsFailed.log" FailedTests)
+  string(REGEX REPLACE "([0-9]+):[^;]*" "\1" FailedTests "${FailedTests}")
+  list(SORT FailedTests)
+  list(GET FailedTests 0 FirstTest)
+  set(FailedTests "${FirstTest};${FirstTest};;${FailedTests};")
+  string(REPLACE ";" "," FailedTests "${FailedTests}")
+  file(WRITE ${FailedFileName} ${FailedTests})
+else()
+  file(WRITE ${FailedFileName} "")
+endif()[/code]</p>
+<p>This test just transforms one file into another. </p>
+<p>You can then run the last failing tests using: </p>
+<p>[bash]cmake -P &lt;the script&gt;</p>
+<p>ctest -I FailedTests.log[/bash]</p>
+<p>Very easy, isn't it ? </p>
+<p>There is a limitation to this solution. It won't work when CTest is running in dashboard mode, but it wouldn't take too long to adapt it for that. </p>
+<p>Hope you found that tip useful. </p></div>
+    </div>
+    </div>
+    
+        <ul class="pager">
+            <li class="previous">
+                <a href="cpp-benchmark-vector-list-deque.html" rel="prev">← Previous post</a>
+            </li>
+            <li class="next">
+                <a href="wordpress-plugin-google-visualization-charts.html" rel="next">Next post →</a>
+            </li>
+        </ul>
+
+        
+        
+        <div id="disqus_thread"></div>
+        <script>
+        var disqus_shortname ="nikolademo",
+            disqus_url="http://www.baptiste-wicht.com/posts/2012/12/cmake-rerun-last-failed-tests-ctest.html",
+        disqus_title="CMake Testing - Rerun the last failed tests with CTest",
+        disqus_identifier="cache/posts/2012/12/cmake-rerun-last-failed-tests-ctest.html",
+        disqus_config = function () {
+            this.language = "en";
+        };
+        (function() {
+            var dsq = document.createElement('script'); dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink" rel="nofollow">Comments powered by <span class="logo-disqus">Disqus</span></a>
+
+
+    
+
+    </article>
+
+        </div>
+        <!--End of body content-->
+
+        <footer>
+            Contents © 2014         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         
+        </footer>
+    </div>
+</div>
+
+
+            <script src="../../../assets/js/all-nocdn.js" type="text/javascript"></script>
+
+
+    
+<!-- Social buttons -->
+<div id="addthisbox" class="addthis_toolbox addthis_peekaboo_style addthis_default_style addthis_label_style addthis_32x32_style">
+<a class="addthis_button_more">Share</a>
+<ul><li><a class="addthis_button_facebook"></a>
+</li><li><a class="addthis_button_google_plusone_share"></a>
+</li><li><a class="addthis_button_linkedin"></a>
+</li><li><a class="addthis_button_twitter"></a>
+</li></ul>
+</div>
+<script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-4f7088a56bb93798"></script>
+<!-- End of social buttons -->
+
+
+    <script type="text/javascript">jQuery("a.image-reference").colorbox({rel:"gal",maxWidth:"100%",maxHeight:"100%",scalePhotos:true});</script>
+    
+
+</body>
+</html>

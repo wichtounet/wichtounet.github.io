@@ -1,0 +1,195 @@
+<!DOCTYPE html><html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Baptiste Wicht">
+    <title>Java 7 : Add "public defender methods" to Java interfaces | @Blog("Baptiste Wicht")</title>
+    
+            <link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
+      <link rel="canonical" href="http://www.baptiste-wicht.com/posts/2010/05/java-7-add-public-defender-methods-to-java-interfaces.html">
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js" type="text/javascript"></script>
+    <![endif]-->
+            <link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
+
+    
+
+
+
+
+
+    
+</head>
+<body>
+<!-- Menubar -->
+
+<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    <div class="container-fluid"><!-- This keeps the margins nice -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="http://www.baptiste-wicht.com/">@Blog("Baptiste Wicht")</a>
+        </div><!-- /.navbar-header -->
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+            <ul class="nav navbar-nav">
+                
+                <li><a href="../../../archive.html">Archives</a>
+                </li><li><a href="../../../categories/index.html">Tags</a>
+                </li><li><a href="../../../rss.xml">RSS</a>
+
+            </li></ul>
+
+            <ul class="nav navbar-nav navbar-right">
+                
+                
+                    
+    <li>
+    <a href="java-7-add-public-defender-methods-to-java-interfaces.wp" id="sourcelink">Source</a>
+    </li>
+
+            </ul>
+        </div><!-- /.navbar-collapse -->
+    </div><!-- /.container-fluid -->
+</nav>
+
+<!-- End of Menubar -->
+
+<div class="container">
+    <div class="body-content">
+        <!--Body content-->
+        <div class="row">
+            
+    <article class="postbox post-text">
+    <div class="h-entry" itemscope="itemscope" itemtype="http://schema.org/Article">
+    
+    <h1 class="p-name" itemprop="headline name">Java 7 : Add "public defender methods" to Java interfaces</h1>
+
+    <hr>
+    <small>
+        Posted: <time class="published dt-published" datetime="2010-05-31T06:29:54+00:00" itemprop="datePublished">2010-05-31 06:29</time>
+        
+
+        
+          |  
+        More posts about 
+    <span itemprop="keywords">
+        <a class="tag p-category" href="../../../categories/closures.html"><span class="badge badge-info">Closures</span></a>
+        <a class="tag p-category" href="../../../categories/java.html"><span class="badge badge-info">Java</span></a>
+        <a class="tag p-category" href="../../../categories/java.html"><span class="badge badge-info">Java</span></a>
+        <a class="tag p-category" href="../../../categories/java-7.html"><span class="badge badge-info">Java 7</span></a>
+    </span>
+
+
+    </small>
+    <hr>
+    <div class="e-content" itemprop="articleBody text">
+    <div><p></p><p>At this time, we aren't sure that the closures will be included in the Java 7 release. But these doubts have generated a new project : <a href="http://cr.openjdk.java.net/~darcy/DefenderMethods.pdf" target="_blank">The "public defender methods" proposal</a>.</p>
+<p>This new proposal for Java 7 wants to improve the interfaces allowing to add new methods to existing interfaces. The classes implementing the interfaces doesn't need implements these methods. The implementation of these methods are provided using static methods. This could be called virtual extension method.</p>
+<!--more-->
+
+<p>To illustrate the problem the proposal want to solve, let's take the example of reversing a List. When you have a List and you want to reverse it, you have to use the Collections.reverse() method :</p>
+<p>[java]List strings = new ArrayList();</p>
+<p>//...</p>
+<p>Collections.reverse(strings);[/java]</p>
+<p>But there is some problems with that code. Because it's a static method, there is no way to override it. We could imagine data structures where the reverse must be made using special algorithms to be efficient. An other problem is that the reverse() method is not in the List interface, so must learn two classes to make a simple thing as reversing a list.</p>
+<p>The "public defender methods" give an other way to do that extending the List interface :</p>
+<p>[java]public interface List extends Collection {
+  ...</p>
+<p>extension void reverse() default Collections.reverse;
+}[/java]</p>
+<p>This add a new method to the List with a default implement that use the Collections.reverse(List list) static method. The list will be passed as the first argument of the static method. So, now that you have a method reverse on the List, you can do that :</p>
+<p>[java]List strings = new ArrayList();</p>
+<p>//...</p>
+<p>strings.reverse();</p>
+<p>[/java]</p>
+<p>This code is a lot better than the other, isn't it ?</p>
+<p>You can now override the reverse method providing an implementation specific to your class. But the implementation is now optional. That solve all the problems we see earlier.</p>
+<p>To solve multiple inheritance issue a class implementing two interfaces providing a default implementation for the same method name and signature must provide an implementation of the method.</p>
+<p>An other objective of this proposal is to "closur-ize" the Java 7 librairies. By example, we could think of a filter() method to the List interface :</p>
+<p>[java]public interface List extends Collection {
+  ...</p>
+<p>extension void filter(Predicate predicate) default Collections.filter;
+}[/java]</p>
+<p>And a predicate like that :</p>
+<p>[java]public interface Predicate {
+   boolean accept(E object);
+}[/java]</p>
+<p>That type of method can take advantage of closures. We can also imagine reduce, forEach, expand, ....</p>
+<p>At this time, this is only a proposal, so we aren't sure it'll be included in Java 7 and the syntax is not definitive.</p>
+<p>Personally, i think this is a great improvement and that will make the closures (if we have them a day) more interesting for the Java language.</p>
+<p>If you want more information on the implementation, you could <a href="http://cr.openjdk.java.net/~darcy/DefenderMethods.pdf" target="_blank">read the proposal in PDF</a>.</p></div>
+    </div>
+    </div>
+    
+        <ul class="pager">
+            <li class="previous">
+                <a href="oracle-pushes-a-first-version-of-closures.html" rel="prev">← Previous post</a>
+            </li>
+            <li class="next">
+                <a href="../06/java-7-translucency-shaped-windows.html" rel="next">Next post →</a>
+            </li>
+        </ul>
+
+        
+        
+        <div id="disqus_thread"></div>
+        <script>
+        var disqus_shortname ="nikolademo",
+            disqus_url="http://www.baptiste-wicht.com/posts/2010/05/java-7-add-public-defender-methods-to-java-interfaces.html",
+        disqus_title="Java 7 : Add \"public defender methods\" to Java interfaces",
+        disqus_identifier="cache/posts/2010/05/java-7-add-public-defender-methods-to-java-interfaces.html",
+        disqus_config = function () {
+            this.language = "en";
+        };
+        (function() {
+            var dsq = document.createElement('script'); dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink" rel="nofollow">Comments powered by <span class="logo-disqus">Disqus</span></a>
+
+
+    
+
+    </article>
+
+        </div>
+        <!--End of body content-->
+
+        <footer>
+            Contents © 2014         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         
+        </footer>
+    </div>
+</div>
+
+
+            <script src="../../../assets/js/all-nocdn.js" type="text/javascript"></script>
+
+
+    
+<!-- Social buttons -->
+<div id="addthisbox" class="addthis_toolbox addthis_peekaboo_style addthis_default_style addthis_label_style addthis_32x32_style">
+<a class="addthis_button_more">Share</a>
+<ul><li><a class="addthis_button_facebook"></a>
+</li><li><a class="addthis_button_google_plusone_share"></a>
+</li><li><a class="addthis_button_linkedin"></a>
+</li><li><a class="addthis_button_twitter"></a>
+</li></ul>
+</div>
+<script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-4f7088a56bb93798"></script>
+<!-- End of social buttons -->
+
+
+    <script type="text/javascript">jQuery("a.image-reference").colorbox({rel:"gal",maxWidth:"100%",maxHeight:"100%",scalePhotos:true});</script>
+    
+
+</body>
+</html>

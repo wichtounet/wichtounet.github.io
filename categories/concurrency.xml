@@ -1,0 +1,1073 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>@Blog("Baptiste Wicht") (Concurrency)</title><link>http://www.baptiste-wicht.com/</link><description></description><atom:link href="http://www.baptiste-wicht.com/categories/concurrency.xml" type="application/rss+xml" rel="self"></atom:link><language>en</language><lastBuildDate>Sun, 16 Mar 2014 17:07:38 GMT</lastBuildDate><generator>Nikola &lt;http://getnikola.com/&gt;</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>Run your Boost Tests in parallel with CMake</title><link>http://www.baptiste-wicht.com/posts/2012/10/run-boost-test-parallel-cmake.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;I was looking for a Test Library to run eddic tests in parallel to replace Boost Test Library. I posted my question on StackOverflow and an awesome solution has been posted. With CMake and a little CMake additional file, it is possible to run the tests written with Boost Test Library in parallel without changing anything in the tests code !&lt;/p&gt;
+&lt;p&gt;CTest is the test runner that is shipped with CMake. This runner can run tests in parallel using the -j X option (X is the numbers of threads). However, it can only run the tests that are declared in the CMakeLists.txt file. In my case, this means only one (the executable with Boost Test Library). If you have T tests, a solution would be create T executable files. Then, they can be run in parallel by ctest. However, this is not very practical. The solution proposed in this article is better. &lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;h3&gt;Integrate Boost Test Library in CMake&lt;/h3&gt;
+&lt;p&gt;Ryan Pavlik provides a series of CMake modules in its Github repository. One of this module is named BoostTestTargets. It automatically generates the CTest commands to run all the tests that you have. The small drawback is that you to list all the tests. &lt;/p&gt;
+&lt;p&gt;To start, you have to download these files: &lt;/p&gt;
+&lt;ul&gt;
+    &lt;li&gt;&lt;a href="https://github.com/rpavlik/cmake-modules/raw/master/BoostTestTargets.cmake" title="BoostTestTargets.cmake"&gt;BoostTestTargets.cmake&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href="https://github.com/rpavlik/cmake-modules/raw/master/GetForceIncludeDefinitions.cmake" title="GetForceIncludeDefinitions.cmake"&gt;GetForceIncludeDefinitions.cmake&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href="https://github.com/rpavlik/cmake-modules/raw/master/CopyResourcesToBuildTree.cmake" title="CopyResourcesToBuildTree.cmake"&gt;CopyResourcesToBuildTree.cmake&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href="https://github.com/rpavlik/cmake-modules/blob/master/BoostTestTargetsStatic.h" title="BoostTestTargetsStatic.h"&gt;BoostTestTargetsStatic.h&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href="https://github.com/rpavlik/cmake-modules/blob/master/BoostTestTargetsDynamic.h" title="BoostTestTargetsDynamic.h"&gt;BoostTestTargetsDynamic.h&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href="https://github.com/rpavlik/cmake-modules/blob/master/BoostTestTargetsIncluded.h" title="BoostTestTargetsIncluded.h"&gt;BoostTestTargetsIncluded.h&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;These files must be placed next to your CMakeLists.txt file. Then, you have to modify your CMakeLists.txt file to enable testing and enable the new module. For example, if you have two test suites and five tests in each:  &lt;/p&gt;
+&lt;p&gt;[code]INCLUDE(CTest)&lt;/p&gt;
+&lt;p&gt;ENABLE_TESTING()&lt;/p&gt;
+&lt;p&gt;file(
+    GLOB_RECURSE
+    test_files
+    test/*
+)&lt;/p&gt;
+&lt;p&gt;include(BoostTestTargets.cmake)&lt;/p&gt;
+&lt;p&gt;add_boost_test(eddic_boost_test
+    SOURCES ${test_files}
+    TESTS 
+    TestSuiteA/test_1
+    TestSuiteA/test_2
+    TestSuiteA/test_3
+    TestSuiteA/test_4
+    TestSuiteA/test_5
+    TestSuiteB/test_1
+    TestSuiteB/test_2
+    TestSuiteB/test_3
+    TestSuiteB/test_4
+    TestSuiteB/test_5
+    )[/code]&lt;/p&gt;
+&lt;p&gt;All the test files are searched in the test directory and used in the SOURCES variable. Then all the tests are declared. &lt;/p&gt;
+&lt;p&gt;The main test file has to include a specific header file:&lt;/p&gt;
+&lt;p&gt;[cpp]#define BOOST_TEST_MODULE eddic_test_suite&lt;/p&gt;
+&lt;h2&gt;include &amp;lt;BoostTestTargetConfig.h&amp;gt;[/cpp]&lt;/h2&gt;
+&lt;p&gt;This file will be automatically detected by BoostTestTargets and configured correctly. And that's it !&lt;/p&gt;
+&lt;p&gt;You can run CMake again in your build directory to use the new test system: &lt;/p&gt;
+&lt;p&gt;[bash]cmake .[/bash]&lt;/p&gt;
+&lt;p&gt;If the configuration has been successful, you will see a message indicating that. For example, I see that: &lt;/p&gt;
+&lt;p&gt;[bash]-- Test 'eddic_boost_test' uses the CMake-configurable form of the boost test framework - congrats! (Including File: /home/wichtounet/dev/eddi/eddic/test/IntegrationTests.cpp)&lt;/p&gt;
+&lt;p&gt;-- Configuring done&lt;/p&gt;
+&lt;p&gt;-- Generating done&lt;/p&gt;
+&lt;p&gt;-- Build files have been written to: /tmp/ramdrive/dev/eddic[/bash]&lt;/p&gt;
+&lt;h3&gt;Run tests in parallel&lt;/h3&gt;
+
+&lt;p&gt;You can then run your tests in parallel with ctest. For instance, with 9 threads: &lt;/p&gt;
+&lt;p&gt;[bash]ctest -j 8[/bash]&lt;/p&gt;
+&lt;p&gt;In my case, my tests are completed 6x faster ! This is very valuable when you often run your tests. &lt;/p&gt;
+&lt;p&gt;For more information on how to integrate your Boost Test Library tests with CMake, you can consult the &lt;a href="https://github.com/rpavlik/cmake-modules/" title="cmake-modules Github repository"&gt;The cmake-modules repository&lt;/a&gt;. &lt;/p&gt;&lt;/div&gt;</description><category>Boost</category><category>C++</category><category>cmake</category><category>Concurrency</category><category>EDDI</category><category>Performances</category><category>Tests</category><guid>http://www.baptiste-wicht.com/posts/2012/10/run-boost-test-parallel-cmake.html</guid><pubDate>Mon, 15 Oct 2012 08:57:43 GMT</pubDate></item><item><title>C++11 Synchronization Benchmark</title><link>http://www.baptiste-wicht.com/posts/2012/07/c11-synchronization-benchmark.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;In the previous parts of this serie, we saw some C++11 Synchronization techniques: locks, lock guards and atomic references.&lt;/p&gt;
+&lt;p&gt;In this small post, I will present the results of a little benchmark I did run to compare the different techniques. In this benchmark, the critical section is a single increment to an integer. The critical section is protected using three techniques:&lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;ul&gt;
+    &lt;li&gt;A single std::mutex with calls to lock() and unlock()&lt;/li&gt;
+    &lt;li&gt;A single std::mutex locked with std::lock_guard&lt;/li&gt;
+    &lt;li&gt;An atomic reference on the integer&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;The tests have been made with 1, 2, 4, 8, 16, 32, 64 and 128 threads. Each test is repeated 5 times.&lt;/p&gt;
+&lt;p&gt;The results are presented in the following figure:&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://www.baptiste-wicht.com/2012/07/c11-synchronization-benchmark/synchronization_cpp_benchmarks/" rel="attachment wp-att-2071"&gt;&lt;img class=" wp-image-2071  " title="C++11 Synchronization Benchmark Result" src="http://www.baptiste-wicht.com/wp-content/uploads/2012/07/synchronization_cpp_benchmarks-300x230.png" alt="C++11 Synchronization Benchmark Result" width="300" height="230"&gt;&lt;/a&gt; C++11 Synchronization Benchmark Result&lt;/p&gt;
+&lt;p&gt;As expected, the mutex versions are much slower than the atomic one. An interesting point is that the the atomic version has not a very good scalability. I would have expected that the impact of adding one thread would not be that high.&lt;/p&gt;
+&lt;p&gt;I'm also surprised that the lock guard version has a non-negligible overhead when there are few threads.&lt;/p&gt;
+&lt;p&gt;In conclusion, do not locks when all you need is modifying integral types. For that, std::atomic is much faster. Good Lock-Free algorithms are almost always faster than the algorithms with lock.&lt;/p&gt;
+&lt;p&gt;The sources of the benchmark are available on Github: &lt;a href="https://github.com/wichtounet/articles/tree/master/src/threads/benchmark"&gt;https://github.com/wichtounet/articles/tree/master/src/threads/benchmark&lt;/a&gt;&lt;/p&gt;&lt;/div&gt;</description><category>Benchmarks</category><category>C++</category><category>C++</category><category>C++11</category><category>C++11 Concurrency Tutorial</category><category>Concurrency</category><category>Performances</category><guid>http://www.baptiste-wicht.com/posts/2012/07/c11-synchronization-benchmark.html</guid><pubDate>Thu, 26 Jul 2012 08:47:59 GMT</pubDate></item><item><title>C++11 Concurrency Tutorial - Part 4: Atomic Types</title><link>http://www.baptiste-wicht.com/posts/2012/07/c11-concurrency-tutorial-part-4-atomic-type.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;In the previous article, we saw advanced techniques about mutexes. In this post, we will continue to work on mutexes with more advanced techniques. We will also study another concurrency technique of the C++11 Concurrency Library: Atomic Types&lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;h4&gt;Atomic Types&lt;/h4&gt;
+&lt;p&gt;We will take, the example of a Counter:&lt;/p&gt;
+&lt;p&gt;[cpp]struct Counter {
+    int value;
+    
+    void increment(){
+        ++value;
+    }
+    
+    void decrement(){
+        --value;
+    }
+    
+    int get(){
+        return value
+    }
+};[/cpp]&lt;/p&gt;
+&lt;p&gt;We already saw that this class was not safe at all to use in multithreaded environment. We also saw how to make if safe using mutexes. This time, we will see how to make it safe using atomic types. The main advantage of this technique is its performance. Indeed, in most cases, the std::atomic operations are implemented with lock-free operations that are much faster than locks. &lt;/p&gt;
+&lt;p&gt;The C++11 Concurrency Library introduces Atomic Types as a template class: std::atomic&lt;type&gt;. You can use any Type you want with that template and the operations on that variable will be atomic and so thread-safe. It has to be taken into account that it is up to the library implementation to choose which syncronization mechanism is used to make the operations on that type atomic. On standard platforms for integral types like int, long, float, ... it will be some lock-free technique. If you want to make a big type (let's saw 2MB storage), you can use std::atomic as well, but mutexes will be used. In this case, there will be no performance advantage. &lt;/type&gt;&lt;/p&gt;
+&lt;p&gt;The main functions that std::atomic provide are the store and load functions that atomically set and get the contents of the std::atomic. Another interesting function is exchange, that sets the atomic to a new value and returns the value held previously. Finally, there are also two functions compare_exchange_weak and compare_exchance_strong that performs atomic exchange only if the value is equal to the provided expected value. These two last functions can be used to implement lock-free algorithms. &lt;/p&gt;
+&lt;p&gt;std::atomic is specialized for all integral types to provide member functions specific to integral (like operators ++, --, fetch_add, fetch_sub, ...). &lt;/p&gt;
+&lt;p&gt;It is fairly easy to make  the counter safe with std::atomic: &lt;/p&gt;
+&lt;p&gt;[cpp]#include &amp;lt;atomic&amp;gt;&lt;/p&gt;
+&lt;p&gt;struct AtomicCounter {
+    std::atomic&amp;lt;int&amp;gt; value;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;increment&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+    &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;decrement&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+    &lt;span class="o"&gt;--&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="nf"&gt;get&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;load&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;};[/cpp]&lt;/p&gt;
+&lt;p&gt;If you test this counter, you will see that the value is always the expected one. &lt;/p&gt;
+&lt;h4&gt;Wrap-Up&lt;/h4&gt;
+
+&lt;p&gt;In this article we saw a very elegant technique to perform atomic operations on any type. I advice you to use std::atomic any time you need to make atomic operations on a type, especially integral types. &lt;/p&gt;
+&lt;p&gt;The source code for this article can be found &lt;a href="https://github.com/wichtounet/articles/tree/master/src/threads/part4" title="Source of this article"&gt;on Github&lt;/a&gt;.&lt;/p&gt;
+&lt;h4&gt;Next&lt;/h4&gt;
+
+&lt;p&gt;In the next post of this series, we will see how to use the Futures facility to perform asynchronous task. &lt;/p&gt;&lt;/div&gt;</description><category>C++</category><category>C++</category><category>C++11</category><category>C++11 Concurrency Tutorial</category><category>Concurrency</category><category>Performances</category><guid>http://www.baptiste-wicht.com/posts/2012/07/c11-concurrency-tutorial-part-4-atomic-type.html</guid><pubDate>Mon, 16 Jul 2012 09:22:04 GMT</pubDate></item><item><title>C++11 Concurrency Tutorial - Part 3: Advanced locking and condition variables</title><link>http://www.baptiste-wicht.com/posts/2012/04/c11-concurrency-tutorial-advanced-locking-and-condition-variables.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;In the previous article, we saw how to use mutexes to fix concurrency problems. In this post, we will continue to work on mutexes with more advanced techniques. We will also study another concurrency technique of the C++11 Concurrency Library: condition variables.
+&lt;/p&gt;&lt;h4&gt;Recursive locking&lt;/h4&gt;
+&lt;p&gt;Let's imagine that you have a simple class like this one:&lt;/p&gt;
+&lt;p&gt;[cpp]struct Complex {
+    std::mutex mutex;
+    int i;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;Complex&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{}&lt;/span&gt;
+
+&lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;mul&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;lock_guard&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;mutex&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;lock&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;mutex&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+    &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;*=&lt;/span&gt; &lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;div&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;lock_guard&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;mutex&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;lock&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;mutex&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+    &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;/=&lt;/span&gt; &lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;};[/cpp]&lt;/p&gt;
+&lt;p&gt;And you want to add an operation doing both operations with no problems, so you add a new function:&lt;/p&gt;
+&lt;p&gt;[cpp]void both(int x, int y){
+    std::lock_guard&amp;lt;std::mutex&amp;gt; lock(mutex);
+    mul(x);
+    div(y);
+}[/cpp]&lt;/p&gt;
+&lt;p&gt;Now, it's time to test this function:&lt;/p&gt;
+&lt;p&gt;[cpp]int main(){
+    Complex complex;
+    complex.both(32, 23);&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/cpp]&lt;/p&gt;
+&lt;p&gt;If you launch this application, you'll see that the program will never terminates. The problem is very simple. In the &lt;em&gt;both()&lt;/em&gt; function, the thread acquires the lock and then calls the &lt;em&gt;mul()&lt;/em&gt; function. In this function, the threads tries to acquire the lock again, but the lock is already locked. This is a case of deadlock. By default, a thread cannot acquire the same mutex twice.&lt;/p&gt;
+&lt;p&gt;There is a simple solution to this problem: &lt;strong&gt;std::recursive_mutex&lt;/strong&gt;. This mutex can be acquired several times by the same thread. Here is the correct version of the Complex struct:&lt;/p&gt;
+&lt;p&gt;[cpp]struct Complex {
+    std::recursive_mutex mutex;
+    int i;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;Complex&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{}&lt;/span&gt;
+
+&lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;mul&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;lock_guard&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;recursive_mutex&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;lock&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;mutex&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+    &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;*=&lt;/span&gt; &lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;div&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;lock_guard&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;recursive_mutex&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;lock&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;mutex&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+    &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;/=&lt;/span&gt; &lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;both&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;y&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;lock_guard&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;recursive_mutex&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;lock&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;mutex&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+    &lt;span class="n"&gt;mul&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+    &lt;span class="n"&gt;div&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;y&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;};[/cpp]&lt;/p&gt;
+&lt;p&gt;This time, the application works correctly.&lt;/p&gt;
+&lt;h4&gt;Timed locking&lt;/h4&gt;
+
+&lt;p&gt;Sometimes, you doesn't want a thread to wait ad infinitum for a mutex. For example, if your thread can do something else when waiting for the thread. For this purpose, the standard library has a solution: &lt;strong&gt;std::timed_mutex&lt;/strong&gt; and &lt;strong&gt;std::recursive_timed_mutex&lt;/strong&gt; (if you need the recursivity properties of the mutex). You have access to the same functions as a &lt;strong&gt;std::mutex&lt;/strong&gt;: &lt;em&gt;lock()&lt;/em&gt; and &lt;em&gt;unlock()&lt;/em&gt;, but you have also two new functions: &lt;em&gt;try_lock_for()&lt;/em&gt; and &lt;em&gt;try_lock_until()&lt;/em&gt;.&lt;/p&gt;
+&lt;p&gt;The first one is also the most useful. It allows you to set a timeout after when the function automatically returns even if the lock was not acquired. The function returns true if the lock has been acquired, false otherwise. Let's try it with a simple example:&lt;/p&gt;
+&lt;p&gt;[cpp]std::timed_mutex mutex;&lt;/p&gt;
+&lt;p&gt;void work(){
+    std::chrono::milliseconds timeout(100);&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="k"&gt;while&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nb"&gt;true&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="k"&gt;if&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;mutex&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;try_lock_for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;timeout&lt;/span&gt;&lt;span class="p"&gt;)){&lt;/span&gt;
+        &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;cout&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;this_thread&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;get_id&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="s"&gt;": do work with the mutex"&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;endl&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+        &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;chrono&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;milliseconds&lt;/span&gt; &lt;span class="n"&gt;sleepDuration&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;250&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+        &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;this_thread&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;sleep_for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;sleepDuration&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+        &lt;span class="n"&gt;mutex&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;unlock&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+
+        &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;this_thread&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;sleep_for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;sleepDuration&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="k"&gt;else&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;cout&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;this_thread&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;get_id&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="s"&gt;": do work without mutex"&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;endl&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+        &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;chrono&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;milliseconds&lt;/span&gt; &lt;span class="n"&gt;sleepDuration&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;100&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+        &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;this_thread&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;sleep_for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;sleepDuration&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}&lt;/p&gt;
+&lt;p&gt;int main(){
+    std::thread t1(work);
+    std::thread t2(work);&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;t1&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;join&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+&lt;span class="n"&gt;t2&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;join&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+
+&lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/cpp]&lt;/p&gt;
+&lt;p&gt;(The example is completely useless in practice)&lt;/p&gt;
+&lt;p&gt;The first interesting thing in this example is the declaration of the duration with &lt;strong&gt;std::chrono::milliseconds&lt;/strong&gt;. This is also a new feature of the C++11 standard. You have access to several time unit: nanoseconds, microseconds, milliseconds, seconds, minutes and hours. We use a variable of this kind to set the timeout of the try_lock_for function. We also use this to make a thread sleeps with &lt;strong&gt;std::this_thread::sleep_for(duration)&lt;/strong&gt;. The rest of the example has nothing exciting in it, just some prints to see the results visually. Note that the program never stops, you have to kill it.&lt;/p&gt;
+&lt;h4&gt;Call once&lt;/h4&gt;
+
+&lt;p&gt;Sometimes you want a function to be called only once no matter the number of threads that are used. Imagine a function that has two parts. The first part has to be called only once and the second has to be executed every time the function gets called. We can use the std::call_once function to fix this problem very easily. Here is an example using this mechanism:&lt;/p&gt;
+&lt;p&gt;[cpp]std::once_flag flag;&lt;/p&gt;
+&lt;p&gt;void do_something(){
+    std::call_once(flag, &lt;a href="http://www.baptiste-wicht.com/posts/2012/04/c11-concurrency-tutorial-advanced-locking-and-condition-variables.html"&gt;&lt;/a&gt;{std::cout &amp;lt;&amp;lt; "Called once" &amp;lt;&amp;lt; std::endl;});&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;cout&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="s"&gt;"Called each time"&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;endl&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}&lt;/p&gt;
+&lt;p&gt;int main(){
+    std::thread t1(do_something);
+    std::thread t2(do_something);
+    std::thread t3(do_something);
+    std::thread t4(do_something);&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;t1&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;join&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+&lt;span class="n"&gt;t2&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;join&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+&lt;span class="n"&gt;t3&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;join&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+&lt;span class="n"&gt;t4&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;join&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+
+&lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/cpp]&lt;/p&gt;
+&lt;p&gt;Each &lt;strong&gt;std::call_once&lt;/strong&gt; is matched to a &lt;strong&gt;std::once_flag&lt;/strong&gt; variable. Here I put a closure to be executed only once, but a function pointer or a std::function will make the trick.&lt;/p&gt;
+&lt;h4&gt;Condition variables&lt;/h4&gt;
+
+&lt;p&gt;A condition variable manages a list of threads waiting until another thread notify them. Each thread that wants to wait on the condition variable has to acquire a lock first. The lock is then released when the thread starts to wait on the condition and the lock is acquired again when the thread is awakened.&lt;/p&gt;
+&lt;p&gt;A very good example is a concurrent Bounded Buffer. It’s a cyclic buffer with a certain capacity with a start and an end. Here is our implementation of a Bounded Buffer using condition variables:&lt;/p&gt;
+&lt;p&gt;[cpp]struct BoundedBuffer {
+    int* buffer;
+    int capacity;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;front&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;rear&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;count&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;mutex&lt;/span&gt; &lt;span class="n"&gt;lock&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;condition_variable&lt;/span&gt; &lt;span class="n"&gt;not_full&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;condition_variable&lt;/span&gt; &lt;span class="n"&gt;not_empty&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+&lt;span class="n"&gt;BoundedBuffer&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;capacity&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;capacity&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;capacity&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt; &lt;span class="n"&gt;front&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt; &lt;span class="n"&gt;rear&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt; &lt;span class="n"&gt;count&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="n"&gt;buffer&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;new&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;capacity&lt;/span&gt;&lt;span class="p"&gt;];&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="o"&gt;~&lt;/span&gt;&lt;span class="n"&gt;BoundedBuffer&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+    &lt;span class="n"&gt;delete&lt;/span&gt;&lt;span class="p"&gt;[]&lt;/span&gt; &lt;span class="n"&gt;buffer&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;deposit&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;data&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;unique_lock&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;mutex&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;l&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;lock&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+    &lt;span class="n"&gt;not_full&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;wait&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;l&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;this&lt;/span&gt;&lt;span class="p"&gt;](){&lt;/span&gt;&lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;count&lt;/span&gt; &lt;span class="o"&gt;!=&lt;/span&gt; &lt;span class="n"&gt;capacity&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="p"&gt;});&lt;/span&gt;
+
+    &lt;span class="n"&gt;buffer&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;rear&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;data&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="n"&gt;rear&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;rear&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;%&lt;/span&gt; &lt;span class="n"&gt;capacity&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;count&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+    &lt;span class="n"&gt;not_empty&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;notify_one&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;fetch&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+    &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;unique_lock&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;mutex&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;l&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;lock&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+    &lt;span class="n"&gt;not_empty&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;wait&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;l&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;this&lt;/span&gt;&lt;span class="p"&gt;](){&lt;/span&gt;&lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;count&lt;/span&gt; &lt;span class="o"&gt;!=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="p"&gt;});&lt;/span&gt;
+
+    &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;result&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;buffer&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;front&lt;/span&gt;&lt;span class="p"&gt;];&lt;/span&gt;
+    &lt;span class="n"&gt;front&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;front&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;%&lt;/span&gt; &lt;span class="n"&gt;capacity&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="o"&gt;--&lt;/span&gt;&lt;span class="n"&gt;count&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+    &lt;span class="n"&gt;not_full&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;notify_one&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+
+    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;result&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;};&lt;/p&gt;
+&lt;p&gt;[/cpp]&lt;/p&gt;
+&lt;p&gt;The mutexes are managed by a &lt;strong&gt;std::unique_lock&lt;/strong&gt;. It is a wrapper to manage a lock. This is necessary to be used with the condition variables. To wake up a thread that is waiting on a condition variable, the &lt;em&gt;notify_one()&lt;/em&gt; function is used. The wait function is a bit special. It takes as the first argument the unique lock and a the second one a predicate. The predicate must return false when the waiting must be continued (it is equivalent to while(!pred()){cv.wait(l);}). The rest of the example has nothing special.&lt;/p&gt;
+&lt;p&gt;We can use this structure to fix multiple consumers / multiple producers problem. This problem is very common in concurrent programming. Several threads (consumers) are waiting from data produced by another several threads (producers). Here is an example with several threads using the structure:&lt;/p&gt;
+&lt;p&gt;[cpp]void consumer(int id, BoundedBuffer&amp;amp; buffer){
+    for(int i = 0; i &amp;lt; 50; ++i){
+        int value = buffer.fetch();
+        std::cout &amp;lt;&amp;lt; "Consumer " &amp;lt;&amp;lt; id &amp;lt;&amp;lt; " fetched " &amp;lt;&amp;lt; value &amp;lt;&amp;lt; std::endl;
+        std::this_thread::sleep_for(std::chrono::milliseconds(250));
+    }
+}&lt;/p&gt;
+&lt;p&gt;void producer(int id, BoundedBuffer&amp;amp; buffer){
+    for(int i = 0; i &amp;lt; 75; ++i){
+        buffer.deposit(i);
+        std::cout &amp;lt;&amp;lt; "Produced " &amp;lt;&amp;lt; id &amp;lt;&amp;lt; " produced " &amp;lt;&amp;lt; i &amp;lt;&amp;lt; std::endl;
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+}&lt;/p&gt;
+&lt;p&gt;int main(){
+    BoundedBuffer buffer(200);&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kr"&gt;thread&lt;/span&gt; &lt;span class="n"&gt;c1&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;consumer&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;ref&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;buffer&lt;/span&gt;&lt;span class="p"&gt;));&lt;/span&gt;
+&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kr"&gt;thread&lt;/span&gt; &lt;span class="n"&gt;c2&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;consumer&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;ref&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;buffer&lt;/span&gt;&lt;span class="p"&gt;));&lt;/span&gt;
+&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kr"&gt;thread&lt;/span&gt; &lt;span class="n"&gt;c3&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;consumer&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;2&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;ref&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;buffer&lt;/span&gt;&lt;span class="p"&gt;));&lt;/span&gt;
+&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kr"&gt;thread&lt;/span&gt; &lt;span class="n"&gt;p1&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;producer&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;ref&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;buffer&lt;/span&gt;&lt;span class="p"&gt;));&lt;/span&gt;
+&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kr"&gt;thread&lt;/span&gt; &lt;span class="n"&gt;p2&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;producer&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;ref&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;buffer&lt;/span&gt;&lt;span class="p"&gt;));&lt;/span&gt;
+
+&lt;span class="n"&gt;c1&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;join&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+&lt;span class="n"&gt;c2&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;join&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+&lt;span class="n"&gt;c3&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;join&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+&lt;span class="n"&gt;p1&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;join&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+&lt;span class="n"&gt;p2&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;join&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+
+&lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/cpp]&lt;/p&gt;
+&lt;p&gt;Three consumer threads and two producer threads are created and query the structure constantly. An interesting thing about this example is the use of std::ref to pass the buffer by reference, it is necessary to avoid a copy of the buffer.&lt;/p&gt;
+&lt;h4&gt;Wrap-Up&lt;/h4&gt;
+
+&lt;p&gt;In this article we saw several things. First, we saw how to use a recursive_mutex to allow a thread to acquire a thread more than once. Then, we saw how to acquire a mutex with a timeout. After that, a method to call a function only once has been studied. And finally, condition variables were used to solve the multiple consumers / multiple producers problem.&lt;/p&gt;
+&lt;p&gt;The source code for this article can be found on &lt;a title="Source code of this article" href="https://github.com/wichtounet/articles/tree/master/src/threads/part3/"&gt;Github&lt;/a&gt;.&lt;/p&gt;
+&lt;h4&gt;Next&lt;/h4&gt;
+
+&lt;p&gt;In the next post of this series, we will another technique of this new C++11 Concurrency Library, the Atomics.&lt;/p&gt;&lt;/div&gt;</description><category>C++</category><category>C++</category><category>C++11</category><category>C++11 Concurrency Tutorial</category><category>Concurrency</category><guid>http://www.baptiste-wicht.com/posts/2012/04/c11-concurrency-tutorial-advanced-locking-and-condition-variables.html</guid><pubDate>Tue, 10 Apr 2012 08:37:37 GMT</pubDate></item><item><title>C++11 Concurrency Tutorial - Part 2 : Protect shared data</title><link>http://www.baptiste-wicht.com/posts/2012/03/cp11-concurrency-tutorial-part-2-protect-shared-data.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;In the previous article, we saw how to start threads to execute some code in parallel. All the code executed in the threads were independant. In the general case, you often use shared objects between the threads. And when you do it, you will face another problem: synchronization. &lt;/p&gt;
+&lt;p&gt;We will see what is this problem in a simple code. &lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;h4&gt;Synchronization issues&lt;/h4&gt;
+&lt;p&gt;As an example, we will take a simple Counter structure. This structure has a value and methods to increment or decrement the value. Here is the structure:&lt;/p&gt;
+&lt;p&gt;[cpp]struct Counter {
+    int value;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;increment&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+    &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;};[/cpp]&lt;/p&gt;
+&lt;p&gt;There is nothing new here. Now, let's start some threads and make some increments: &lt;/p&gt;
+&lt;p&gt;[cpp]int main(){
+    Counter counter;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;vector&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kr"&gt;thread&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;threads&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="mi"&gt;5&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="n"&gt;threads&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;push_back&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kr"&gt;thread&lt;/span&gt;&lt;span class="p"&gt;([&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;amp&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;counter&lt;/span&gt;&lt;span class="p"&gt;](){&lt;/span&gt;
+        &lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="mi"&gt;100&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+            &lt;span class="n"&gt;counter&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;increment&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+        &lt;span class="p"&gt;}&lt;/span&gt;
+    &lt;span class="p"&gt;}));&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="k"&gt;auto&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;amp&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="kr"&gt;thread&lt;/span&gt; &lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;threads&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="kr"&gt;thread&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;join&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;cout&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;counter&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;endl&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+&lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/cpp]&lt;/p&gt;
+&lt;p&gt;Again, nothing new there. We launch 5 threads and each one increment the counter hundred times. After all thread have finished their work, we print the value of the counter. &lt;/p&gt;
+&lt;p&gt;If we launch this program, we should expect that it will print 500. But this is not the case. No one can say what this program will print. Here are some results I obtained on my computer: &lt;/p&gt;
+&lt;blockquote&gt;442
+
+500
+
+477
+
+400
+
+422
+
+487&lt;/blockquote&gt;
+
+&lt;p&gt;The problem is that the incrementation is not an atomic operation. As a matter of fact, an incrementation is made of three operations: &lt;/p&gt;
+&lt;ul&gt;
+    &lt;li&gt;Read the current value of &lt;em&gt;value&lt;/em&gt;&lt;/li&gt;
+    &lt;li&gt;Add one to the current value&lt;/li&gt;
+    &lt;li&gt;Write that new value to &lt;em&gt;value&lt;/em&gt;&lt;/li&gt;
+&lt;ul&gt;
+
+When you run that code using a single thread, there are no problems. It will execute each part of the  operation one after another. But when you have several threads, you can start having troubles. Imagine this situation:
+
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;/p&gt;&lt;/ul&gt;&lt;ol&gt;
+    &lt;li&gt;Thread 1 : read the value, get 0, add 1, so value = 1&lt;/li&gt;
+    &lt;li&gt;Thread 2 : read the value, get 0, add 1, so value = 1&lt;/li&gt;
+    &lt;li&gt;Thread 1 : write 1 to the field value and return 1&lt;/li&gt;
+    &lt;li&gt;Thread 2 : write 1 to the field value and return 1&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;These situations come from what we call interleaving. Interleaving describe the possible situations of several threads executing some statements. Even for three operations and two threads, there is a lot of possible interleavings. When you have more threads and more operations, it is almost impossible to enumerate the possibles interleavings. The problem can also occurs when a thread gets preempted between instructions of the operation. &lt;/p&gt;
+&lt;p&gt;There are several solutions to fix this problem: &lt;/p&gt;
+&lt;ul&gt;
+    &lt;li&gt;Semaphores&lt;/li&gt;
+    &lt;li&gt;Atomic references&lt;/li&gt;
+    &lt;li&gt;Monitors&lt;/li&gt;
+    &lt;li&gt;Condition codes&lt;/li&gt;
+    &lt;li&gt;Compare and swap&lt;/li&gt;
+    &lt;li&gt;etc.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;In this blog post we will learn how to use semaphores to fix this problem. As a matter of fact, we will a special kind of semaphores called mutexes. A mutex is a very object. Only one thread can obtain the lock on a mutex at the same time. This simple (and powerful) property of a mutex allow us to use it to fix synchronization problems. &lt;/p&gt;
+&lt;h4&gt;Use a mutex to make our Counter thread-safe&lt;/h4&gt;
+
+&lt;p&gt;In the C++11 threading library, the mutexes are in the mutex header and the class representing a mutex is the std::mutex class. There are two important methods on a mutex: lock() and unlock(). As their names indicate, the first one enable a thread to obtain the lock and the second releases the lock. The lock() method is blocking. The thread will only return from the lock() method when the lock has been obtained. &lt;/p&gt;
+&lt;p&gt;To make our Counter struct thread-safe, we have to add a set::mutex member to it and then to lock()/unlock() the mutex in every function of the object: &lt;/p&gt;
+&lt;p&gt;[cpp]struct Counter {
+    std::mutex mutex;
+    int value;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;Counter&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{}&lt;/span&gt;
+
+&lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;increment&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+    &lt;span class="n"&gt;mutex&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;lock&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+    &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="n"&gt;mutex&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;unlock&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;};[/cpp]&lt;/p&gt;
+&lt;p&gt;If we test now this implementation with the same code as before for starting the threads, the program will always displays 500. &lt;/p&gt;
+&lt;h4&gt;Exceptions and locks&lt;/h4&gt;
+
+&lt;p&gt;Now, let's see what happens in another case. Imagine that the Counter has a decrement operation that throws an exception if the value is 0: &lt;/p&gt;
+&lt;p&gt;[cpp]struct Counter {
+    int value;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;Counter&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{}&lt;/span&gt;
+
+&lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;increment&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+    &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;decrement&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+    &lt;span class="k"&gt;if&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+        &lt;span class="n"&gt;throw&lt;/span&gt; &lt;span class="s"&gt;"Value cannot be less than 0"&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+
+    &lt;span class="o"&gt;--&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;};[/cpp]&lt;/p&gt;
+&lt;p&gt;You want to access this structure concurrently without modifying the class. So you create a wrapper with locks for this class: &lt;/p&gt;
+&lt;p&gt;[cpp]struct ConcurrentCounter {
+    std::mutex mutex;
+    Counter counter;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;increment&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+    &lt;span class="n"&gt;mutex&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;lock&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+    &lt;span class="n"&gt;counter&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;increment&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+    &lt;span class="n"&gt;mutex&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;unlock&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;decrement&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+    &lt;span class="n"&gt;mutex&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;lock&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+    &lt;span class="n"&gt;counter&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;decrement&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;        
+    &lt;span class="n"&gt;mutex&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;unlock&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;};[/cpp]&lt;/p&gt;
+&lt;p&gt;This wrapper works well in most of the cases, but when an exception occurs in the decrement method, you have a big problem. Indeed, if an exception occurs, the unlock() function is not called and so the lock is not released. As a consequence, you program is completely blocked. To fix this problem, you have to use a try/catch structure to unlock the lock before throwing again the exception:&lt;/p&gt;
+&lt;p&gt;[cpp]void decrement(){
+    mutex.lock();
+    try {
+        counter.decrement();
+    } catch (std::string e){
+        mutex.unlock();
+        throw e;
+    } 
+    mutex.unlock();
+}[/cpp]&lt;/p&gt;
+&lt;p&gt;The code is not difficult but starts looking ugly. Now imagine you are in a function with 10 different exit points. You will have to call unlock() from each of these points and the probability that you will forget one is big. Even bigger is the risk that you won't add a call to unlock when you add a new exit point to a function. &lt;/p&gt;
+&lt;p&gt;The next section gives a very nice solution to this problem.&lt;/p&gt;
+&lt;h4&gt;Automatic management of locks&lt;/h4&gt;
+
+&lt;p&gt;When you want to protect a whole block of code (a function in our case, but can be inside a loop or another control structure), it exists a good solution to avoid forgetting to release the lock: std::lock_guard. &lt;/p&gt;
+&lt;p&gt;This class is a simple smart manager for a lock. When the std::lock_guard is created, it automatically calls lock() on the mutex. When the guard gets destructed, it also releases the lock. You can use it like this: &lt;/p&gt;
+&lt;p&gt;[cpp]struct ConcurrentSafeCounter {
+    std::mutex mutex;
+    Counter counter;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;increment&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+    &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;lock_guard&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;mutex&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;guard&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;mutex&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+    &lt;span class="n"&gt;counter&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;increment&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;decrement&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+    &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;lock_guard&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;mutex&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;guard&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;mutex&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+    &lt;span class="n"&gt;counter&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;decrement&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;};[/cpp]&lt;/p&gt;
+&lt;p&gt;Much nicer, isn't it :)&lt;/p&gt;
+&lt;p&gt;With that solution, you do not have to handle all the cases of exit of the function, they are all handled by the destructor of the std::lock_guard instance. &lt;/p&gt;
+&lt;h4&gt;Conclusion&lt;/h4&gt;
+
+&lt;p&gt;We are now done with semaphores. In this article, you learned how to protect shared data using mutexes from the C++ Threads Library. &lt;/p&gt;
+&lt;p&gt;Keep in mind that locks are slow. Indeed, when you use locks you make sections of the code sequential. If you want an highly parallel application, there are other solutions than locks that are performing much better but this is out of the scope of this article. &lt;/p&gt;
+&lt;h4&gt;Next&lt;/h4&gt;
+
+&lt;p&gt;In the next blog post of this serie, I will talk about advanced concepts for mutexes and how to use condition variables to fix little concurrent programming problem. &lt;/p&gt;
+&lt;p&gt;The source code for each sample is available &lt;a title="Source code for this blog post" href="https://github.com/wichtounet/articles/tree/master/src/threads/part2/"&gt;on Github&lt;/a&gt;.&lt;/p&gt;&lt;/div&gt;</description><category>C++</category><category>C++</category><category>C++11</category><category>C++11 Concurrency Tutorial</category><category>Concurrency</category><category>Performances</category><guid>http://www.baptiste-wicht.com/posts/2012/03/cp11-concurrency-tutorial-part-2-protect-shared-data.html</guid><pubDate>Mon, 26 Mar 2012 09:04:28 GMT</pubDate></item><item><title>C++11 Concurrency - Part 1 : Start Threads</title><link>http://www.baptiste-wicht.com/posts/2012/03/cpp11-concurrency-part1-start-threads.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;C++11 introduced a new thread library. This library includes utilities for starting and managing threads. It also contains utilities for synchronization like mutexes and other locks, atomic variables and other utilities. In this serie of posts, I will try to explain most of the features provided by this new library.&lt;/p&gt;
+&lt;p&gt;To compile the samples of this article, you will need a compiler with C++11 support. In my case, I used GCC 4.6.1 (you need to pass the "-std=c++0x" or "-std=c++11" option to get the C++11 support activated).&lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;h4&gt;Starting threads&lt;/h4&gt;
+&lt;p&gt;Starting a new thread is very easy. When you create an instance of a &lt;strong&gt;std::thread&lt;/strong&gt;, it will automatically be started. When you create a thread you have to give it the code it will execute. The first choice for that, is to pass it a function pointer. Let's start with the very common Hello World:&lt;/p&gt;
+&lt;p&gt;[cpp]#include &amp;lt;thread&amp;gt;&lt;/p&gt;
+&lt;h2&gt;include &amp;lt;iostream&amp;gt;&lt;/h2&gt;
+&lt;p&gt;void hello(){
+    std::cout &amp;lt;&amp;lt; "Hello from thread " &amp;lt;&amp;lt; std::endl;
+}&lt;/p&gt;
+&lt;p&gt;int main(){
+    std::thread t1(hello);
+    t1.join();&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/cpp]&lt;/p&gt;
+&lt;p&gt;All the threads utilities are located in the &lt;strong&gt;thread&lt;/strong&gt; header. An interesting thing in this first example is the call to the &lt;strong&gt;join()&lt;/strong&gt; function. Calling this function forces the current thread to wait for the other one (in this case, the main thread has to wait for the thread t1 to finish). If you omit this call, the result is undefined. The program can print &lt;em&gt;Hello from thread&lt;/em&gt; and a new line, can print just &lt;em&gt;Hello from thread&lt;/em&gt; without new line or can print nothing. That's because the main thread can return from the main function before the t1 thread finishes its execution.&lt;/p&gt;
+&lt;h4&gt;Distinguishing threads&lt;/h4&gt;
+
+&lt;p&gt;Each thread has a single id allowing us to distinguish each of them. The std::thread class has a &lt;strong&gt;get_id()&lt;/strong&gt; function returning an unique id for this thread. You can get a reference to the current thread with the &lt;strong&gt;std::this_thread&lt;/strong&gt; variable. The next example starts with threads and each of them prints its id:&lt;/p&gt;
+&lt;p&gt;[cpp]#include &amp;lt;thread&amp;gt;&lt;/p&gt;
+&lt;h2&gt;include &amp;lt;iostream&amp;gt;&lt;/h2&gt;
+&lt;h2&gt;include &amp;lt;vector&amp;gt;&lt;/h2&gt;
+&lt;p&gt;void hello(){
+    std::cout &amp;lt;&amp;lt; "Hello from thread " &amp;lt;&amp;lt; std::this_thread::get_id() &amp;lt;&amp;lt; std::endl;
+}&lt;/p&gt;
+&lt;p&gt;int main(){
+    std::vector&amp;lt;std::thread&amp;gt; threads;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="mi"&gt;5&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="n"&gt;threads&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;push_back&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kr"&gt;thread&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;hello&lt;/span&gt;&lt;span class="p"&gt;));&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="k"&gt;auto&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;amp&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="kr"&gt;thread&lt;/span&gt; &lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;threads&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="kr"&gt;thread&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;join&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/cpp]&lt;/p&gt;
+&lt;p&gt;Starting each thread one after one and then storing them into a vector is a common way to handle several threads. With that, you can easily change the number of threads. Even with a very little sample like this one, the results is not predictable. The theoretic case:&lt;/p&gt;
+&lt;blockquote&gt;Hello from thread 140276650997504
+
+Hello from thread 140276667782912
+
+Hello from thread 140276659390208
+
+Hello from thread 140276642604800
+
+Hello from thread 140276676175616&lt;/blockquote&gt;
+
+&lt;p&gt;Is, in my case, also the less common. You can also get results like this one:&lt;/p&gt;
+&lt;blockquote&gt;Hello from thread Hello from thread Hello from thread 139810974787328Hello from thread 139810983180032Hello from thread
+
+139810966394624
+
+139810991572736
+
+139810958001920&lt;/blockquote&gt;
+
+&lt;p&gt;Or a lot of another results. This is because of interleaving. You have no way to control the order of execution of threads. A thread can be preempted at any moment and the appends to the out stream are made one after one (first the append of the string, then append the id and finally the new line), so a thread can print its first part and then be interrupted to print its second part after all the others threads.&lt;/p&gt;
+&lt;h4&gt;Start a thread with a lambda&lt;/h4&gt;
+
+&lt;p&gt;When the code that has to be executed by each thread is very small, you don't necessary want to create a function for that. In that case, you can use a lambda to define the executed by a thread. We can rewrite the code of the last sample using lambda easily:&lt;/p&gt;
+&lt;p&gt;[cpp]#include &amp;lt;thread&amp;gt;&lt;/p&gt;
+&lt;h2&gt;include &amp;lt;iostream&amp;gt;&lt;/h2&gt;
+&lt;h2&gt;include &amp;lt;vector&amp;gt;&lt;/h2&gt;
+&lt;p&gt;int main(){
+    std::vector&amp;lt;std::thread&amp;gt; threads;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="mi"&gt;5&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="n"&gt;threads&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;push_back&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kr"&gt;thread&lt;/span&gt;&lt;span class="p"&gt;([](){&lt;/span&gt;
+        &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;cout&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="s"&gt;"Hello from thread "&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;this_thread&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;get_id&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;endl&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="p"&gt;}));&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="k"&gt;auto&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;amp&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="kr"&gt;thread&lt;/span&gt; &lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;threads&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="kr"&gt;thread&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;join&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/cpp]&lt;/p&gt;
+&lt;p&gt;Here we just used a lambda expression instead of the function pointer. Of course, this produces the exact same result as the previous sample.&lt;/p&gt;
+&lt;h4&gt;Next&lt;/h4&gt;
+
+&lt;p&gt;In the next post of this series, we will see how to protect code using locks.&lt;/p&gt;
+&lt;p&gt;The source code for each sample is available &lt;a title="Source code for this blog post" href="https://github.com/wichtounet/articles/tree/master/src/threads/part1"&gt;on Github&lt;/a&gt;.&lt;/p&gt;&lt;/div&gt;</description><category>C++</category><category>C++</category><category>C++11</category><category>C++11 Concurrency Tutorial</category><category>Concurrency</category><guid>http://www.baptiste-wicht.com/posts/2012/03/cpp11-concurrency-part1-start-threads.html</guid><pubDate>Wed, 21 Mar 2012 09:16:18 GMT</pubDate></item><item><title>Java Concurrency - Part 7 : Executors and thread pools</title><link>http://www.baptiste-wicht.com/posts/2010/09/java-concurrency-part-7-executors-and-thread-pools.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;Let's start with a new post in the Java concurrency series.&lt;/p&gt;
+&lt;p&gt;This time we'll learn how to start cleanly new threads and to manage thread pools. In Java, if you have a Runnable like this :&lt;/p&gt;
+&lt;p&gt;[java]Runnable runnable = new Runnable(){
+   public void run(){
+      System.out.println("Run");
+   }
+}[/java]&lt;/p&gt;
+&lt;p&gt;You can easily run it in a new thread :&lt;/p&gt;
+&lt;p&gt;[java]new Thread(runnable).start();[/java]&lt;/p&gt;
+&lt;p&gt;This is very simple and clean, but what if you've several long running tasks that you want to load in parralel and then wait for the completion of all the tasks, it's a little bit harder to code and if you want to get the return value of all the tasks it becomes really difficult to keep a good code. But like for almost any problems, Java has a solution for you, the Executors. This simple class allows you to create thread pools and thread factories.&lt;/p&gt;
+&lt;!--more--&gt;
+
+&lt;p&gt;A thread pool is represented by an instance of the class ExecutorService. With an ExecutorService, you can submit task that will be completed in the future. Here are the type of thread pools you can create with the Executors class :&lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;ul&gt;
+    &lt;li&gt;&lt;strong&gt;Single Thread Executor&lt;/strong&gt; : A thread pool with only one thread. So all the submitted task will be executed sequentially. Method : &lt;em&gt;Executors.newSingleThreadExecutor()&lt;/em&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Cached Thread Pool&lt;/strong&gt; : A thread pool that create as many threads it needs to execute the task in parralel. The old available threads will be reused for the new tasks. If a thread is not used during 60 seconds, it will be terminated and removed from the pool. Method : &lt;em&gt;Executors.newCachedThreadPool()&lt;/em&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Fixed Thread Pool&lt;/strong&gt; : A thread pool with a fixed number of threads. If a thread is not available for the task, the task is put in queue waiting for an other task to ends. Method : &lt;em&gt;Executors.newFixedThreadPool()&lt;/em&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Scheduled Thread Pool&lt;/strong&gt; : A thread pool made to schedule future task. Method : &lt;em&gt;Executors.newScheduledThreadPool()&lt;/em&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Single Thread Scheduled Pool&lt;/strong&gt; : A thread pool with only one thread to schedule future task. Method : &lt;em&gt;Executors.newSingleThreadScheduledExecutor()&lt;/em&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Once you have a thread pool, you can submit task to it using the different submit methods. You can submit a Runnable or a Callableto the thread pool. The method return a Future representing the future state of the task. If you submitted a Runnable, the Future object return null once the task finished.&lt;/p&gt;
+&lt;p&gt;By example, if you have this Callable :&lt;/p&gt;
+&lt;p&gt;[java]private final class StringTask implements Callable&amp;lt;String&amp;gt; {
+   public String call(){
+      //Long operations&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;  &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="s"&gt;"Run"&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}
+}[/java]&lt;/p&gt;
+&lt;p&gt;If you want to execute that task 10 times using 4 threads, you can use that code :&lt;/p&gt;
+&lt;p&gt;[java]ExecutorService pool = Executors.newFixedThreadPool(4);&lt;/p&gt;
+&lt;p&gt;for(int i = 0; i &amp;lt; 10; i++){
+   pool.submit(new StringTask());
+}[/java]&lt;/p&gt;
+&lt;p&gt;But you must shutdown the thread pool in order to terminate all the threads of the pool :&lt;/p&gt;
+&lt;p&gt;[java]pool.shutdown();[/java]&lt;/p&gt;
+&lt;p&gt;If you don't do that, the JVM risk to not shutdown because there is still threads not terminated. You can also force the shutdown of the pool using shutdownNow, with that the currently running tasks will be interrupted and the tasks not started will not be started at all.&lt;/p&gt;
+&lt;p&gt;But with that example, you cannot get the result of the task. So let's get the Future objects of the tasks :&lt;/p&gt;
+&lt;p&gt;[java]ExecutorService pool = Executors.newFixedThreadPool(4);&lt;/p&gt;
+&lt;p&gt;List&amp;lt;Future&amp;lt;String&amp;gt;&amp;gt; futures = new ArrayList&amp;lt;Future&amp;lt;String&amp;gt;&amp;gt;(10);&lt;/p&gt;
+&lt;p&gt;for(int i = 0; i &amp;lt; 10; i++){
+   futures.add(pool.submit(new StringTask()));
+}&lt;/p&gt;
+&lt;p&gt;for(Future&amp;lt;String&amp;gt; future : futures){
+   String result = future.get();&lt;/p&gt;
+&lt;p&gt;//Compute the result
+}&lt;/p&gt;
+&lt;p&gt;pool.shutdown();[/java]&lt;/p&gt;
+&lt;p&gt;But this code is a bit complicated. And there is a disadvantage. If the first task takes a long time to compute and all the other tasks ends before the first, the current thread cannot compute the result before the first task ends. Once again, Java has the solution for you, CompletionService.&lt;/p&gt;
+&lt;p&gt;A CompletionService is a service that make easier to wait for result of submitted task to an executor. The implementation is ExecutorCompletionService who's based on an ExecutorService to work. So let's try :&lt;/p&gt;
+&lt;p&gt;[java]ExecutorService threadPool = Executors.newFixedThreadPool(4);&lt;/p&gt;
+&lt;p&gt;CompletionService&amp;lt;String&amp;gt; pool = new ExecutorCompletionService&amp;lt;String&amp;gt;(threadPool);&lt;/p&gt;
+&lt;p&gt;for(int i = 0; i &amp;lt; 10; i++){
+   pool.submit(new StringTask());
+}&lt;/p&gt;
+&lt;p&gt;for(int i = 0; i &amp;lt; 10; i++){
+   String result = pool.take().get();&lt;/p&gt;
+&lt;p&gt;//Compute the result
+}&lt;/p&gt;
+&lt;p&gt;threadPool.shutdown();[/java]&lt;/p&gt;
+&lt;p&gt;With that, you have the result in the order they are completed and you don't have to keep a collection of Future.&lt;/p&gt;
+&lt;p&gt;Here we are, you have the tools in hand to launch tasks in parralel using performing thread pools. Using Executors, ExecutorService and CompletionService you can create complex algorithm using several taks. With that tools, it's really easy to change the number of threads performing in parralel or adding more tasks without changing a lot of code.&lt;/p&gt;
+&lt;p&gt;I hope that this post will help you to write better concurrent code.&lt;/p&gt;&lt;/div&gt;</description><category>Concurrency</category><category>Java</category><category>Java</category><category>Java Concurrency Tutorial</category><guid>http://www.baptiste-wicht.com/posts/2010/09/java-concurrency-part-7-executors-and-thread-pools.html</guid><pubDate>Wed, 15 Sep 2010 07:17:27 GMT</pubDate></item><item><title>Java Concurrency - Part 6 : Atomic Variables</title><link>http://www.baptiste-wicht.com/posts/2010/09/java-concurrency-atomic-variables.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;When a data (typically a variable) can be accessed by several threads, you must synchronize the access to the data to ensure visibility and correctness. &lt;/p&gt;
+&lt;p&gt;By example, if you have a simple counter (yes, once again) : &lt;/p&gt;
+&lt;p&gt;[java]public class Counter {
+    private int value;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="nf"&gt;getValue&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="nf"&gt;getNextValue&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="nf"&gt;getPreviousValue&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="o"&gt;--&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/java]&lt;/p&gt;
+&lt;p&gt;This class works really well in single-threaded environment, but don't work at all when several threads access the same Counter instance. If you don't know why, read &lt;a target="_blank" href="http://www.baptiste-wicht.com/2010/08/java-concurrrency-synchronization-locks/"&gt;this post about synchronization&lt;/a&gt;. You can solve the problem using synchronized at method level : &lt;/p&gt;
+&lt;p&gt;[java]public class SynchronizedCounter {
+    private int value;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="n"&gt;synchronized&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="nf"&gt;getValue&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="n"&gt;synchronized&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="nf"&gt;getNextValue&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="n"&gt;synchronized&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="nf"&gt;getPreviousValue&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="o"&gt;--&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/java]&lt;/p&gt;
+&lt;p&gt;This class now works well. But locking is not a lightweight mechanism and have several disadvantages. When several threads try to acquire the same lock, one or more threads will be suspended and they will be resumed later. When the critical section is little, the overhead is really heavy especially when the lock is often acquired and there is a lot of contention. Another disadvantage is that the other threads waiting of the lock cannot do something else during waiting and if the thread who has the lock is delayed (due to a page fault or the end of the time quanta by example), the others threads cannot take their turn. &lt;/p&gt;
+&lt;p&gt;So how to do to avoid this disadvantages ? We must use non-blocking algorithms. This algorithms don't use blocking mechanisms and by that fact are more scalable and performing. These algorithms use low-level machine instructions which are atomic to ensure the atomicity of higher-level operations. While locking is a pessimistic approach, we can also use optimistic technique to develop algorithms. This time, we'll detect collisions between threads in which case, the operation fails and we do something else (often retrying the same operation).&lt;/p&gt;
+&lt;p&gt;The actual processors provide several instructions that simplify greatly the implementation of these non-blocking algorithms, the most-used operation today is the compare-and-swap operation (CAS). This operation takes three parameters, the memory address, the expected current value and the new value. It atomically update the value at the given memory address if the current value is the expected, otherwise it do nothing. In both cases, the operation return the value at the address after the operation execution. So when several threads try to execute the CAS operation, one thread wins and the others do nothing. So the caller can choose to retry or to do something else. We often use this operation to implement another operation, the compare-and-set. This method makes exactly the same things as CAS but return a boolean indicating if the operation succeeded or not. &lt;/p&gt;
+&lt;p&gt;Before Java 5.0, this operation was not available directly to developer, but in Java 5.0 several atomic variables (for int, long, boolean and reference values) were added. The int and long versions also supports numeric operations. The JVM compiles these classes with the better operations provided by the hardware machine, CAS or a Java implementation of the operation using a lock. Here are the classes : &lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;ul&gt;
+&lt;li&gt;AtomicInteger&lt;/li&gt;
+
+&lt;li&gt;AtomicLong&lt;/li&gt;
+
+&lt;li&gt;AtomicBoolean&lt;/li&gt;
+
+&lt;li&gt;AtomicReference&lt;/li&gt;
+
+&lt;/ul&gt;
+
+&lt;p&gt;All these classes supports compare-and-set (via the compareAndSet() method) and other operations (get(), set() and getAndSet()). The setters operations are implemented using compareAndSet. These classes supports multi-threaded access and have a better scalability than synchronizing all the operations. &lt;/p&gt;
+&lt;p&gt;Here is how we can rewrite our counter using an AtomicInteger : &lt;/p&gt;
+&lt;p&gt;[java]public class AtomicCounter {
+    private final AtomicInteger value = new AtomicInteger(0);&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="nf"&gt;getValue&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="nf"&gt;getNextValue&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;incrementAndGet&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="nf"&gt;getPreviousValue&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;decrementAndGet&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/java]&lt;/p&gt;
+&lt;p&gt;The incrementAndGet() and decrementAndGet() methods are two of the numeric operations provided by the AtomicLong and AtomicInteger classes. You also have getAndDecrement(), getAndIncrement(), getAndAdd(int i) and addAndGet(). &lt;/p&gt;
+&lt;p&gt;This version is faster than the synchronized one and is also thread safe. &lt;/p&gt;
+&lt;p&gt;If you only have the compareAndSet(), here is how we can implement increment() method using it : &lt;/p&gt;
+&lt;p&gt;[java]public void increment(AtomicInteger integer){
+    while(true){
+        int current = integer.get();
+        int next = current + 1;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;    &lt;span class="k"&gt;if&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;integer&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;compareAndSet&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;current&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;next&lt;/span&gt;&lt;span class="p"&gt;)){&lt;/span&gt;
+        &lt;span class="k"&gt;return&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/java]&lt;/p&gt;
+&lt;p&gt;This seems to be complicated, but this is the cost of non-blocking algorithms. When we detect collision, we retry until the operation succeeded. This is the common schema for non-blocking algorithms. &lt;/p&gt;
+&lt;p&gt;Here is a thread-safe Stack implemented using AtomicReference : &lt;/p&gt;
+&lt;p&gt;[java]public class Stack {
+    private final AtomicReference&amp;lt;Element&amp;gt; head = new AtomicReference&amp;lt;Element&amp;gt;(null);&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;push&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt; &lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="n"&gt;Element&lt;/span&gt; &lt;span class="n"&gt;newElement&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;new&lt;/span&gt; &lt;span class="n"&gt;Element&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+    &lt;span class="k"&gt;while&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nb"&gt;true&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+        &lt;span class="n"&gt;Element&lt;/span&gt; &lt;span class="n"&gt;oldHead&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;head&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+        &lt;span class="n"&gt;newElement&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;next&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;oldHead&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+        &lt;span class="c1"&gt;//Trying to set the new element as the head&lt;/span&gt;
+        &lt;span class="k"&gt;if&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;head&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;compareAndSet&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;oldHead&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;newElement&lt;/span&gt;&lt;span class="p"&gt;)){&lt;/span&gt;
+            &lt;span class="k"&gt;return&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+        &lt;span class="p"&gt;}&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="n"&gt;String&lt;/span&gt; &lt;span class="nf"&gt;pop&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+    &lt;span class="k"&gt;while&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nb"&gt;true&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+        &lt;span class="n"&gt;Element&lt;/span&gt; &lt;span class="n"&gt;oldHead&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;head&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+
+        &lt;span class="c1"&gt;//The stack is empty&lt;/span&gt;
+        &lt;span class="k"&gt;if&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;oldHead&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="n"&gt;null&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+            &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;null&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+        &lt;span class="p"&gt;}&lt;/span&gt;
+
+        &lt;span class="n"&gt;Element&lt;/span&gt; &lt;span class="n"&gt;newHead&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;oldHead&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;next&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+        &lt;span class="c1"&gt;//Trying to set the new element as the head&lt;/span&gt;
+        &lt;span class="k"&gt;if&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;head&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;compareAndSet&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;oldHead&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;newHead&lt;/span&gt;&lt;span class="p"&gt;)){&lt;/span&gt;
+            &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;oldHead&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+        &lt;span class="p"&gt;}&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="n"&gt;private&lt;/span&gt; &lt;span class="k"&gt;static&lt;/span&gt; &lt;span class="n"&gt;final&lt;/span&gt; &lt;span class="n"&gt;class&lt;/span&gt; &lt;span class="n"&gt;Element&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="n"&gt;private&lt;/span&gt; &lt;span class="n"&gt;final&lt;/span&gt; &lt;span class="n"&gt;String&lt;/span&gt; &lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="n"&gt;private&lt;/span&gt; &lt;span class="n"&gt;Element&lt;/span&gt; &lt;span class="n"&gt;next&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+    &lt;span class="n"&gt;private&lt;/span&gt; &lt;span class="nf"&gt;Element&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt; &lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="n"&gt;this&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/java]&lt;/p&gt;
+&lt;p&gt;It's really more complicated than using synchronized on the two methods but also more performing if there is contention (and often even if there is no contention). &lt;/p&gt;
+&lt;p&gt;So this ends this post. To conclude, atomic variables classes are a really good way to implement non-blocking algorithms and moreover are also a very good alternative to volatile variables, because they can provide atomicity and visibility. &lt;/p&gt;&lt;/div&gt;</description><category>Concurrency</category><category>Java</category><category>Java</category><category>Java Concurrency Tutorial</category><guid>http://www.baptiste-wicht.com/posts/2010/09/java-concurrency-atomic-variables.html</guid><pubDate>Wed, 08 Sep 2010 07:14:18 GMT</pubDate></item><item><title>Java Concurrency - Part 5 : Monitors (Locks and Conditions)</title><link>http://www.baptiste-wicht.com/posts/2010/09/java-concurrency-part-5-monitors-locks-and-conditions.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;After seeing &lt;a title="Java Concurrency – Part 4 : Semaphores" href="http://www.baptiste-wicht.com/2010/08/java-concurrency-part-4-semaphores/" target="_blank"&gt;how to synchronize code using semaphores&lt;/a&gt;, we'll see how to do that using &lt;strong&gt;monitors&lt;/strong&gt;.&lt;/p&gt;
+&lt;p&gt;Monitors are an other mechanism of concurrent programming. It's a higher level mechanism than semaphores and also more powerful. A monitor is an instance of a class that can be used safely by several threads. All the methods of a monitor are executed with mutual exclusion. So at most one thread can execute a method of the monitor at the same time. This mutual exclusion policy makes easier to work with monitor and to develop the method content of the monitor.&lt;/p&gt;
+&lt;p&gt;Monitors have an other feature, the possibility to make a thread waiting for a condition. During the wait time, the thread temporarily gives up its exclusive access and must reacquire it after the condition has been met. You can also signal one or more threads that a condition has been met.&lt;/p&gt;
+&lt;p&gt;There is several advantages on using monitors instead of a lower-level mechanisms :&lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;ul&gt;
+    &lt;li&gt;All the synchronization code is centralized in one location and the users of this code don’t need to know how it’s implemented.&lt;/li&gt;
+    &lt;li&gt;The code doesn't depend on the number of processes, it works for as many processes as you want&lt;/li&gt;
+    &lt;li&gt;You don’t need to release something like a mutex, so you cannot forget to do it&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;When we must describe a monitor, we simple use the &lt;strong&gt;monitor&lt;/strong&gt; keyword and describe the methods as common methods :&lt;/p&gt;
+&lt;p&gt;[java]monitor SimpleMonitor {
+    public method void testA(){
+        //Some code
+    }&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="n"&gt;method&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="nf"&gt;testB&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/java]&lt;/p&gt;
+&lt;p&gt;To describe a condition variable, we use the &lt;strong&gt;cond&lt;/strong&gt; keyword. A condition variable is a kind of queue of process who are waiting on the same condition. You have several operations available on a condition, the most important is to signal a process waiting to be awaken and to wait on a condition. There are some similarities between signal/wait operations and P and V of semaphores, but this is a little different. The signal operation does nothing if the queue is empty and the wait operation put always the thread in the waiting queue. The process queue is served in a first come, first served mode.   When a thread wakes up after waiting on a condition, it must reacquire the lock before continuing in the code.&lt;/p&gt;
+&lt;p&gt;Before going further, we must have more information about the signal operations. When writing monitors, you normally have the choice between several philosophies for the signaling operation :&lt;/p&gt;
+&lt;ol&gt;
+    &lt;li&gt;Signal &amp;amp; Continue (SC) : The process who signal keep the mutual exclusion and the signaled will be awaken but need to acquire the mutual exclusion before going.&lt;/li&gt;
+    &lt;li&gt;Signal &amp;amp; Wait (SW) : The signaler is blocked and must wait for mutual exclusion to continue and the signaled thread is directly awaken and can start continue its operations.&lt;/li&gt;
+    &lt;li&gt;Signal &amp;amp; Urgent Wait (SU) : Like SW but the signaler thread has the guarantee than it would go just after the signaled thread&lt;/li&gt;
+    &lt;li&gt;Signal &amp;amp; Exit (SX) : The signaler exits from the method directly after the signal and the signaled thread can start directly. This philosophy is not often used.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;The available policies depends on the programming language, in Java, there is only one policy available, the SC one.&lt;/p&gt;
+&lt;p&gt;In Java there is no keyword to directly create a monitor. To implement a monitor, you must create a new class and use &lt;strong&gt;Lock&lt;/strong&gt; and &lt;strong&gt;Condition&lt;/strong&gt; classes. Lock is the interface is &lt;strong&gt;ReentrantLock&lt;/strong&gt; is the main used implementation, this is the one that we'll learn to use in the current post. To create a ReentrantLock, you have two constructors, a default constructor and a constructor with a boolean argument indicating if the lock is fair or not. A fair lock indicates that the threads will acquire the locks in the order they ask for. Fairness is a little heavier than default locking strategies, so use it only if you need it. To acquire the lock, you just have to use the method &lt;em&gt;lock&lt;/em&gt; and &lt;em&gt;unlock&lt;/em&gt; to release it.&lt;/p&gt;
+&lt;p&gt;The explicit locks have the same memory semantics than the synchronized blocks. So the visibility of the changes is guarantee when you use lock()/unlock() blocks.&lt;/p&gt;
+&lt;p&gt;So to implement, the monitor example we've seen before, we just need to create a class and use the lock to make the mutual exclusion :&lt;/p&gt;
+&lt;p&gt;[java]public class SimpleMonitor {
+    private final Lock lock = new ReentrantLock();&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;testA&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="n"&gt;lock&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;lock&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+
+    &lt;span class="n"&gt;try&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="c1"&gt;//Some code&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="n"&gt;finally&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="n"&gt;lock&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;unlock&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="nf"&gt;testB&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="n"&gt;lock&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;lock&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+
+    &lt;span class="n"&gt;try&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="n"&gt;finally&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="n"&gt;lock&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;unlock&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/java]&lt;/p&gt;
+&lt;p&gt;The person who've already read the other parts of this post set will say that it will be easier to use the synchronized keyword on the two methods. But with synchronized, we will not have the condition variables. If you don't need condition variables but only locking, it will be easier to use the synchronized blocks instead of Locks.&lt;/p&gt;
+&lt;p&gt;You can create conditions using the &lt;em&gt;newCondition&lt;/em&gt; method on the lock. A condition is a variable of type &lt;strong&gt;Condition&lt;/strong&gt;. You can make the current thread wait on the condition using the &lt;em&gt;await&lt;/em&gt; method (and its variant with timeout) and you can signal threads using &lt;em&gt;signal&lt;/em&gt; and &lt;em&gt;signalAll&lt;/em&gt; methods. The signalAll methods wakes up all the threads waiting on the condition variable.&lt;/p&gt;
+&lt;p&gt;Let's try with a simple common example : A bounded buffer. It's a cyclic buffer with a certain capacity with a start and an end.&lt;/p&gt;
+&lt;p&gt;[java]import java.util.concurrent.locks.Condition;&lt;/p&gt;
+&lt;p&gt;import java.util.concurrent.locks.Lock;&lt;/p&gt;
+&lt;p&gt;import java.util.concurrent.locks.ReentrantLock;&lt;/p&gt;
+&lt;p&gt;public class BoundedBuffer {
+    private final String[] buffer;
+    private final int capacity;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;private&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;front&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="n"&gt;private&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;rear&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="n"&gt;private&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;count&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+&lt;span class="n"&gt;private&lt;/span&gt; &lt;span class="n"&gt;final&lt;/span&gt; &lt;span class="n"&gt;Lock&lt;/span&gt; &lt;span class="n"&gt;lock&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;new&lt;/span&gt; &lt;span class="n"&gt;ReentrantLock&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+
+&lt;span class="n"&gt;private&lt;/span&gt; &lt;span class="n"&gt;final&lt;/span&gt; &lt;span class="n"&gt;Condition&lt;/span&gt; &lt;span class="n"&gt;notFull&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;lock&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;newCondition&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+&lt;span class="n"&gt;private&lt;/span&gt; &lt;span class="n"&gt;final&lt;/span&gt; &lt;span class="n"&gt;Condition&lt;/span&gt; &lt;span class="n"&gt;notEmpty&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;lock&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;newCondition&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+
+&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="nf"&gt;BoundedBuffer&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;capacity&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="n"&gt;super&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+
+    &lt;span class="n"&gt;this&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;capacity&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;capacity&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+    &lt;span class="n"&gt;buffer&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;new&lt;/span&gt; &lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;capacity&lt;/span&gt;&lt;span class="p"&gt;];&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;deposit&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt; &lt;span class="n"&gt;data&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="n"&gt;throws&lt;/span&gt; &lt;span class="n"&gt;InterruptedException&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="n"&gt;lock&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;lock&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+
+    &lt;span class="n"&gt;try&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="k"&gt;while&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;count&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="n"&gt;capacity&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+            &lt;span class="n"&gt;notFull&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;await&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+        &lt;span class="p"&gt;}&lt;/span&gt;
+
+        &lt;span class="n"&gt;buffer&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;rear&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;data&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+        &lt;span class="n"&gt;rear&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;rear&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;%&lt;/span&gt; &lt;span class="n"&gt;capacity&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+        &lt;span class="n"&gt;count&lt;/span&gt;&lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+        &lt;span class="n"&gt;notEmpty&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;signal&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="n"&gt;finally&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="n"&gt;lock&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;unlock&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="n"&gt;String&lt;/span&gt; &lt;span class="n"&gt;fetch&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="n"&gt;throws&lt;/span&gt; &lt;span class="n"&gt;InterruptedException&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="n"&gt;lock&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;lock&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+
+    &lt;span class="n"&gt;try&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="k"&gt;while&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;count&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+            &lt;span class="n"&gt;notEmpty&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;await&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+        &lt;span class="p"&gt;}&lt;/span&gt;
+
+        &lt;span class="n"&gt;String&lt;/span&gt; &lt;span class="n"&gt;result&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;buffer&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;front&lt;/span&gt;&lt;span class="p"&gt;];&lt;/span&gt;
+        &lt;span class="n"&gt;front&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;front&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;%&lt;/span&gt; &lt;span class="n"&gt;capacity&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+        &lt;span class="n"&gt;count&lt;/span&gt;&lt;span class="o"&gt;--&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+        &lt;span class="n"&gt;notFull&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;signal&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+
+        &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;result&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="n"&gt;finally&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="n"&gt;lock&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;unlock&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/java]&lt;/p&gt;
+&lt;p&gt;So some explications :&lt;/p&gt;
+&lt;ol&gt;
+    &lt;li&gt;The two methods are protected with the lock to ensure mutual exclusion&lt;/li&gt;
+    &lt;li&gt;Then we use two conditions variables. One to wait for the buffer to be not empty and an other one to wait for the buffer to be not full.&lt;/li&gt;
+    &lt;li&gt;You can see that I have wrapped the await operation on a while loop. This is to avoid signal stealers problem that can occurs when using Signal &amp;amp; Continue&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;And that BoundedBuffer can be easily used with several threads with no problems.&lt;/p&gt;
+&lt;p&gt;As you can see, you can use monitors to solve a lot of concurrent programming problems and this mechanism is really powerful and performing.&lt;/p&gt;
+&lt;p&gt;I hope you found that article interesting and that this set of posts about Java concurrency brings you some stuff about Java.&lt;/p&gt;&lt;/div&gt;</description><category>Concurrency</category><category>Java</category><category>Java</category><category>Java Concurrency Tutorial</category><guid>http://www.baptiste-wicht.com/posts/2010/09/java-concurrency-part-5-monitors-locks-and-conditions.html</guid><pubDate>Mon, 06 Sep 2010 07:13:27 GMT</pubDate></item><item><title>Java Synchronization (Mutual Exclusion) Benchmark</title><link>http://www.baptiste-wicht.com/posts/2010/09/java-synchronization-mutual-exclusion-benchmark.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;I've created another benchmark. This time, I've benchmarked the different ways of synchronizing a little code using &lt;strong&gt;mutual exclusion&lt;/strong&gt; on this code.&lt;/p&gt;
+&lt;p&gt;The code to protect will be very simple. It's a simple counter :&lt;/p&gt;
+&lt;p&gt;[java]//Init&lt;/p&gt;
+&lt;p&gt;int counter = 0; &lt;/p&gt;
+&lt;p&gt;//Critical section&lt;/p&gt;
+&lt;p&gt;counter++;[/java]&lt;/p&gt;
+&lt;p&gt;The critical section, if not protected with synchronization system, will not function properly due to possible &lt;strong&gt;interleavings&lt;/strong&gt; (read &lt;a href="http://www.baptiste-wicht.com/2010/08/java-concurrrency-synchronization-locks/" target="_blank"&gt;the article on synchronization&lt;/a&gt; if you don't know what is &lt;strong&gt;interleaving&lt;/strong&gt;).&lt;/p&gt;
+&lt;!--more--&gt;
+
+&lt;p&gt;I've used 3 different synchronizers to synchronize this increment :&lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;ol&gt;
+    &lt;li&gt;synchronized block&lt;/li&gt;
+    &lt;li&gt;Semaphores (fair and unfair)&lt;/li&gt;
+    &lt;li&gt;Explicit locks (fair and unfair)&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;I've also used a third way to solve the problem with AtomicInteger. This is not the same as the other ways because it does not provide mutual exclusion but this is a good way to synchronize simple values, like integers or boolean, but also references. The atomicity of the operations of the AtomicInteger is made using the compare-and-swap operation of the operating system. So there is no waiting operations. So there is less context switches and result in more performing code normally.&lt;/p&gt;
+&lt;p&gt;Here is the code of these 4 ways to solve the problems :&lt;/p&gt;
+&lt;p&gt;[java]private class SynchronizedRunnable implements Runnable {
+    private int counter = 0;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="err"&gt;@&lt;/span&gt;&lt;span class="n"&gt;Override&lt;/span&gt;
+&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="n"&gt;synchronized&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;run&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="n"&gt;counter&lt;/span&gt;&lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}&lt;/p&gt;
+&lt;p&gt;private class ReentrantLockRunnable implements Runnable {
+    private int counter = 0;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;private&lt;/span&gt; &lt;span class="n"&gt;Lock&lt;/span&gt; &lt;span class="n"&gt;lock&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+&lt;span class="n"&gt;private&lt;/span&gt; &lt;span class="nf"&gt;ReentrantLockRunnable&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;boolean&lt;/span&gt; &lt;span class="n"&gt;fair&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="n"&gt;super&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+
+    &lt;span class="n"&gt;lock&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;new&lt;/span&gt; &lt;span class="n"&gt;ReentrantLock&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;fair&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="err"&gt;@&lt;/span&gt;&lt;span class="n"&gt;Override&lt;/span&gt;
+&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;run&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="n"&gt;lock&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;lock&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+
+    &lt;span class="n"&gt;try&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="n"&gt;counter&lt;/span&gt;&lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="n"&gt;finally&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="n"&gt;lock&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;unlock&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}&lt;/p&gt;
+&lt;p&gt;private class SemaphoreRunnable implements Runnable {
+    private int counter = 0;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;private&lt;/span&gt; &lt;span class="n"&gt;final&lt;/span&gt; &lt;span class="n"&gt;Semaphore&lt;/span&gt; &lt;span class="n"&gt;semaphore&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+&lt;span class="n"&gt;private&lt;/span&gt; &lt;span class="nf"&gt;SemaphoreRunnable&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;boolean&lt;/span&gt; &lt;span class="n"&gt;fair&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="n"&gt;super&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+
+    &lt;span class="n"&gt;semaphore&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;new&lt;/span&gt; &lt;span class="n"&gt;Semaphore&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;fair&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="err"&gt;@&lt;/span&gt;&lt;span class="n"&gt;Override&lt;/span&gt;
+&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;run&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="n"&gt;try&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="n"&gt;semaphore&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;acquire&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="n"&gt;catch&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;InterruptedException&lt;/span&gt; &lt;span class="n"&gt;e&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="n"&gt;throw&lt;/span&gt; &lt;span class="n"&gt;new&lt;/span&gt; &lt;span class="n"&gt;RuntimeException&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;e&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+
+    &lt;span class="n"&gt;try&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="n"&gt;counter&lt;/span&gt;&lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="n"&gt;finally&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="n"&gt;semaphore&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;release&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}&lt;/p&gt;
+&lt;p&gt;private class AtomicIntegerRunnable implements Runnable {
+    private AtomicInteger counter = new AtomicInteger(0);&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="err"&gt;@&lt;/span&gt;&lt;span class="n"&gt;Override&lt;/span&gt;
+&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;run&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="n"&gt;counter&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;incrementAndGet&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/java]&lt;/p&gt;
+&lt;p&gt;I used Runnable to facilitate the testing and timing of the different mechanisms.&lt;/p&gt;
+&lt;p&gt;The test is made in two phases :&lt;/p&gt;
+&lt;ol&gt;
+    &lt;li&gt;Test with only one thread with a sophisticated benchmark framework. This act also as warmup for the different code.&lt;/li&gt;
+    &lt;li&gt;Test with several threads (several test with increasing number of threads). The test is made using a little code I wrote for the occasion. Each method is executed 2²³ times (8388608 times exactly).&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;The source code is available at the end of the post.&lt;/p&gt;
+&lt;p&gt;The test has been launched on a Ubuntu 10.04 with a Java 6 virtual machine. The computer has a 64 bit Core 2 Duo 3.16 Ghz processor and 6Go of DDR2.&lt;/p&gt;
+&lt;p&gt;So let's see the results. First with one thread :&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/Synchronization-benchmark.png"&gt;&lt;img class="size-full wp-image-999" title="Synchronization Benchmark - One Thread" src="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/Synchronization-benchmark.png" alt="Synchronization Benchmark - One Thread" width="500" height="400"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;The first thing we see is that the AtomicInteger is the fastest version. This is because AtomicInteger do not use waiting operation, so this result in less context switches and more performances. But this is not exactly the case of the benchmark, so let's concentrate on the 5 others methods. We see that the synchronized method is the fastest and that fair methods are a little slower than unfair, but not a lot.&lt;/p&gt;
+&lt;p&gt;Now, we'll test the scalability of all these methods using several threads.&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/Synchronization-2-threads.png"&gt;&lt;img class="size-full wp-image-1000" title="Synchronization - 2 threads" src="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/Synchronization-2-threads.png" alt="Synchronization - 2 threads" width="500" height="400"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;This method we can see that the fair methods are awfully slow compared to the the unfair versions. Indeed adding fairness to a synchronizer is really heavy. When fair, the threads acquire the locks in the order they ask for. With nonfair locks, barging is allowed. So when a thread try to acquire the lock and its available, it can acquire it even if there is threads waiing for the lock. It's heavier to provide fairness because there is a lot more context switches. The problem was not here with only one thread because it's always fair.&lt;/p&gt;
+&lt;p&gt;The results for the other versions are the same as with one thread.&lt;/p&gt;
+&lt;p&gt;Let's add two more threads :&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/Synchronization-4-threads.png"&gt;&lt;img class="size-full wp-image-1001" title="Synchronization - 4 threads" src="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/Synchronization-4-threads.png" alt="Synchronization - 4 threads" width="500" height="400"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;The fair versions are more and more slows when we add threads. The scalability of these methods is really bad. Let's see the graph without the fair versions :&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/Synchronization-4-threads-sub.png"&gt;&lt;img class="size-full wp-image-1002" title="Synchronization - 4 threads" src="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/Synchronization-4-threads-sub.png" alt="Synchronization - 4 threads" width="500" height="400"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;This time we can see some differences. The synchronized method is the slower this time and semaphore has a little advantage. Let's see with 8 threads :&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/Synchronization-8-threads.png"&gt;&lt;img class="size-full wp-image-1003" title="Synchronization - 8 threads" src="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/Synchronization-8-threads.png" alt="Synchronization - 8 threads" width="500" height="400"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Here the synchronized method is really slower than the other methods. It appears that the algorithm of the synchronized block is less scalable than the explicit locks and semaphore versions. Let's watch what happens with other number of threads :&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/Synchronization-32-threads.png"&gt;&lt;img class="size-full wp-image-1004" title="Synchronization - 32 threads" src="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/Synchronization-32-threads.png" alt="Synchronization - 32 threads" width="500" height="400"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/Synchronization-128-threads.png"&gt;&lt;img class="size-full wp-image-1005" title="Synchronization - 128 threads" src="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/Synchronization-128-threads.png" alt="Synchronization - 128 threads" width="500" height="400"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;I've also made the test with other number of threads (16, 64 and 256), but the results are the same as the other.&lt;/p&gt;
+&lt;p&gt;We can made several conclusions based on the results :&lt;/p&gt;
+&lt;ol&gt;
+    &lt;li&gt;Fair versions are slow. If you don't absolutely need fairness, don't use fair locks or semaphores&lt;/li&gt;
+    &lt;li&gt;Semaphores and explicit locks have the same performances. This is because the 2 classes (Semaphore and ReentrantLock) are based on the same class AbstractQueueSynchronizer that is used by almost all synchronization mechanisms of Java&lt;/li&gt;
+    &lt;li&gt;Explicit locks and semaphores are more scalable than synchronized blocks. But that depend on the virtual machine, I've seen other results indicating that the difference is a lot smaller&lt;/li&gt;
+    &lt;li&gt;The AtomicInteger is the most performing method. This class doesn't provide mutual exclusion, but provide thread safe methods to works on simple values (there is version for Long, Double, Boolean and even Reference)&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;So that's all for this benchmark. I hope you found it interesting.&lt;/p&gt;
+&lt;p&gt;The sources of the benchmark : &lt;a href="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/SynchronizationBenchmark.java"&gt;Synchronization Benchmark Sources&lt;/a&gt;&lt;/p&gt;&lt;/div&gt;</description><category>Benchmarks</category><category>Concurrency</category><category>Java</category><category>Java</category><category>Performances</category><guid>http://www.baptiste-wicht.com/posts/2010/09/java-synchronization-mutual-exclusion-benchmark.html</guid><pubDate>Wed, 01 Sep 2010 07:13:18 GMT</pubDate></item></channel></rss>

@@ -1,0 +1,226 @@
+<!DOCTYPE html><html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Baptiste Wicht">
+    <title>How to profile your applications using the Linux perf tools | @Blog("Baptiste Wicht")</title>
+    
+            <link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
+      <link rel="canonical" href="http://www.baptiste-wicht.com/posts/2011/07/profile-applications-linux-perf-tools.html">
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js" type="text/javascript"></script>
+    <![endif]-->
+            <link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
+
+    
+
+
+
+
+
+    
+</head>
+<body>
+<!-- Menubar -->
+
+<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    <div class="container-fluid"><!-- This keeps the margins nice -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="http://www.baptiste-wicht.com/">@Blog("Baptiste Wicht")</a>
+        </div><!-- /.navbar-header -->
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+            <ul class="nav navbar-nav">
+                
+                <li><a href="../../../archive.html">Archives</a>
+                </li><li><a href="../../../categories/index.html">Tags</a>
+                </li><li><a href="../../../rss.xml">RSS</a>
+
+            </li></ul>
+
+            <ul class="nav navbar-nav navbar-right">
+                
+                
+                    
+    <li>
+    <a href="profile-applications-linux-perf-tools.wp" id="sourcelink">Source</a>
+    </li>
+
+            </ul>
+        </div><!-- /.navbar-collapse -->
+    </div><!-- /.container-fluid -->
+</nav>
+
+<!-- End of Menubar -->
+
+<div class="container">
+    <div class="body-content">
+        <!--Body content-->
+        <div class="row">
+            
+    <article class="postbox post-text">
+    <div class="h-entry" itemscope="itemscope" itemtype="http://schema.org/Article">
+    
+    <h1 class="p-name" itemprop="headline name">How to profile your applications using the Linux perf tools</h1>
+
+    <hr>
+    <small>
+        Posted: <time class="published dt-published" datetime="2011-07-18T09:30:45+00:00" itemprop="datePublished">2011-07-18 09:30</time>
+        
+
+        
+          |  
+        More posts about 
+    <span itemprop="keywords">
+        <a class="tag p-category" href="../../../categories/c.html"><span class="badge badge-info">C++</span></a>
+        <a class="tag p-category" href="../../../categories/c.html"><span class="badge badge-info">C++</span></a>
+        <a class="tag p-category" href="../../../categories/linux.html"><span class="badge badge-info">Linux</span></a>
+        <a class="tag p-category" href="../../../categories/performances.html"><span class="badge badge-info">Performances</span></a>
+        <a class="tag p-category" href="../../../categories/tools.html"><span class="badge badge-info">Tools</span></a>
+    </span>
+
+
+    </small>
+    <hr>
+    <div class="e-content" itemprop="articleBody text">
+    <div><p></p><p>When an application encounters some performance issues, we have to find the code that causes the problem to optimize only what really matters. </p>
+<p>To find the code we have to optimize, the profilers are really useful. In this post, we'll use the Linux perf tools to profile a simple C++ application. </p>
+<p>The perf tools are integrated in the Linux kernel since the 2.6 version. The perf tools are based on the perf events subsystem. The perf profiler uses hardware counters to profile the application. The result of this profiler are really precise and because it is not doing instrumentation  of the code, it is really fast. </p>
+<!--more-->
+
+<p></p><h4>Installation</h4>
+<p>First of all, if it is not already done, you have to install the perf tools on your computer. On Ubuntu, you can just use apt-get to install it : </p>
+<pre>sudo apt-get install linux-tools</pre>
+
+<p>On the other systems, just use your favorite package manager to install the perf tools. </p>
+<h4>Usage</h4>
+
+<p>To profile an application, you have to record information about an executation, for that, you just have to use perf record : </p>
+<pre>perf record program [program_options]</pre>
+
+<p>For example : </p>
+<pre>perf record eddic assembly.eddi</pre>
+
+<p>Once the execution is over, perf will gives you some information about the record, like: </p>
+<pre>[ perf record: Woken up 44 times to write data ]
+
+[ perf record: Captured and wrote 11.483 MB perf.data (~501721 samples) ]</pre>
+
+<p>If you see that the size of the perf.data is really small, generally for small execution time, you can configure the event period in order to have more information with the --count=period option using a small period. I usually uses 1000, but it can be useful to use a smaller number when the application has a short execution time. </p>
+<p>Then, to see the list of the most costly functions, you just have to use perf report : </p>
+<pre>perf report</pre>
+
+<p>It will display a list of the most costly functions ordered by cost. Here is an example taken from one of my C++ applications (the length of the function names is reduced to fit the screen) here : </p>
+<pre># Events: 374K cycles
+
+#
+
+# Overhead         Command             Shared Object                                                                                                                               
+
+# ........  ..............  ........................  ...............................................................
+
+#
+    87.58%        inlining  [vesafb]                  [k] 0xffffffff81100700
+    83.27%         readelf  [vesafb]                  [k] 0xffffffff815c3930
+    41.40%              sh  [vesafb]                  [k] 0xffffffff815c3930
+    37.74%        inlining  libstdc++.so.6.0.14       [.] 0x653e0         
+    12.49%         readelf  libc-2.13.so              [.] vfprintf
+     5.37%        inlining  inlining                  [.] parseFunction(std::string, std::string, std::map
+     5.20%         readelf  libc-2.13.so              [.] _IO_new_file_xsputn
+     4.50%         readelf  readelf                   [.] 0x150e          
+     4.10%        inlining  libc-2.13.so              [.] _int_malloc
+     4.01%        inlining  libc-2.13.so              [.] memcpy
+     3.80%         readelf  libc-2.13.so              [.] ___printf_chk
+     2.58%        inlining  libc-2.13.so              [.] __malloc
+     1.86%        inlining  libc-2.13.so              [.] _IO_fgets
+     1.84%        inlining  inlining                  [.] parseExecutable(std::string, std::set
+     1.83%         readelf  libc-2.13.so              [.] __strchrnul
+     1.83%        inlining  libc-2.13.so              [.] _int_free
+     1.77%        inlining  libc-2.13.so              [.] __strlen_sse42
+     1.50%        inlining  libc-2.13.so              [.] cfree
+     1.48%        inlining  libc-2.13.so              [.] __memchr
+     1.23%        inlining  inlining                  [.] parseLibrary(std::string, std::se
+     1.19%        inlining  libboost_graph.so.1.46.1  [.] char* std::string::_S_construct<char const>(char const*)
+     1.17%         readelf  libc-2.13.so              [.] __dcigettext
+     1.15%        inlining  libc-2.13.so              [.] _IO_getline_info_internal</char></pre>
+
+<p>For every functions, you have the information about the cost of the function, the command used to launch it and the shared object in which the function is located. You can navigate through the list like in more utility. </p>
+<p>This tool can be really useful to see which functions is interesting to optimize in order to increase the overall performance of the application. </p>
+<p>For more information about the perf tools, you can read the <a href="https://perf.wiki.kernel.org/index.php/Main_Page" title="perf tools Wiki">perf wiki</a></p>
+<p>In a future article, I will talk about another profiler, Callgrind. </p></div>
+    </div>
+    </div>
+    
+        <ul class="pager">
+            <li class="previous">
+                <a href="eddi-0-3-branches-conditions.html" rel="prev">← Previous post</a>
+            </li>
+            <li class="next">
+                <a href="eddi-0-4-native-compilation-swap.html" rel="next">Next post →</a>
+            </li>
+        </ul>
+
+        
+        
+        <div id="disqus_thread"></div>
+        <script>
+        var disqus_shortname ="nikolademo",
+            disqus_url="http://www.baptiste-wicht.com/posts/2011/07/profile-applications-linux-perf-tools.html",
+        disqus_title="How to profile your applications using the Linux perf tools",
+        disqus_identifier="cache/posts/2011/07/profile-applications-linux-perf-tools.html",
+        disqus_config = function () {
+            this.language = "en";
+        };
+        (function() {
+            var dsq = document.createElement('script'); dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink" rel="nofollow">Comments powered by <span class="logo-disqus">Disqus</span></a>
+
+
+    
+
+    </article>
+
+        </div>
+        <!--End of body content-->
+
+        <footer>
+            Contents © 2014         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         
+        </footer>
+    </div>
+</div>
+
+
+            <script src="../../../assets/js/all-nocdn.js" type="text/javascript"></script>
+
+
+    
+<!-- Social buttons -->
+<div id="addthisbox" class="addthis_toolbox addthis_peekaboo_style addthis_default_style addthis_label_style addthis_32x32_style">
+<a class="addthis_button_more">Share</a>
+<ul><li><a class="addthis_button_facebook"></a>
+</li><li><a class="addthis_button_google_plusone_share"></a>
+</li><li><a class="addthis_button_linkedin"></a>
+</li><li><a class="addthis_button_twitter"></a>
+</li></ul>
+</div>
+<script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-4f7088a56bb93798"></script>
+<!-- End of social buttons -->
+
+
+    <script type="text/javascript">jQuery("a.image-reference").colorbox({rel:"gal",maxWidth:"100%",maxHeight:"100%",scalePhotos:true});</script>
+    
+
+</body>
+</html>

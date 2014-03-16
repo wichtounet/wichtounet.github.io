@@ -1,0 +1,37 @@
+<p><html><body><p>To write the EDDI compiler, I had to write and read binary files. Writing text files is really easy in C++, directly using the &lt;&lt; operator on the stream, but writing binary is a little harder and, I must say, a lot less elegant.</p>
+<p>First, to write to a binary file, we have to use the binary flag when we create the file :</p>
+<p>[cpp]std::ofstream stream("yourFile", std::ios::binary);[/cpp]</p>
+<p>and then, we have to use the write method to write to the file. But this function is really basic and takes only a char<em> and the size of the data we wan't to write, so we have to convert our data to char</em>. A good way to do that is using the reinterpret_cast function and the sizeof operator. For example, to write an int, you can make that :</p>
+<p>[cpp]int test = 22;</p>
+<p>outStream.write(reinterpret_cast&lt;const char*&gt;(&amp;test), sizeof(int));[/cpp]</p>
+<p>But your code is quickly polluted if you have of write operations to do.</p>
+<!--more-->
+
+<p>We can simplify that, using a function template like this one :</p>
+<p>[cpp]template</p>
+<p>std::ostream&amp; binary_write(std::ostream&amp; stream, const T&amp; value){
+    return stream.write(reinterpret_cast&lt;const char*&gt;(&amp;value), sizeof(T));
+}[/cpp]</p>
+<p>And you use it directly like that :</p>
+<p>[cpp]int test = 22;</p>
+<p>binary_write(stream, test);[/cpp]</p>
+<p>A little less verbose, isn't it ? You can also pass a class or struct instance directly tot his method. If you have complex objects, it's perhaps not the more proper way to do it, in that case, consider using some serialization API. If you have object with variable length, it will not work because the size cannot be computed with the sizeof operator. For example, this function doesn't work with a std::string because the sizeof operator doesn't represent the real size of the string. We can make another function to write string :</p>
+<p>[cpp]template&lt;&gt;</p>
+<p>std::ostream&amp; binary_write_string(std::ofstream&amp; stream, const std::string&amp; value){
+    return stream-&gt;write(value.c_str(), value.length());
+}[/cpp]</p>
+<p>Then, to read a binary, you have also to open it with the binary tag :</p>
+<p>[cpp]std::ifstream inStream("yourFile", std::ios::binary);[/cpp]</p>
+<p>And then, you have to use the read method to read your values :</p>
+<p>[cpp]int test;</p>
+<p>inStream.read(reinterpret_cast&lt;char*&gt;(&amp;test), sizeof(int));[/cpp]</p>
+<p>Once again, we can create a function template to have a little better code :</p>
+<p>[cpp]template</p>
+<p>std::istream &amp; binary_read(std::istream&amp; stream, T&amp; value){
+    return stream.read(reinterpret_cast&lt;char*&gt;(&amp;value), sizeof(T));
+}[/cpp]</p>
+<p>and you can use it the same way :</p>
+<p>[cpp]int test;</p>
+<p>binary_read(stream, test);[/cpp]</p>
+<p>Once again, this function will not work with the class or struct with variable size. Even with strings, there is no way to read them easily. If you want to read them, you'll have to write the size of the string directly in the file and then read the size before and you can read a char<em> using the read method passing the size of the string and create a new string using the char</em>.</p>
+<p>With that, you are able to read and write to and from binary files.</p></body></html></p>

@@ -1,0 +1,265 @@
+<!DOCTYPE html><html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Baptiste Wicht">
+    <title>Bundle non-OSGi dependencies with Maven | @Blog("Baptiste Wicht")</title>
+    
+            <link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
+      <link rel="canonical" href="http://www.baptiste-wicht.com/posts/2010/03/bundle-non-osgi-dependencies-maven.html">
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js" type="text/javascript"></script>
+    <![endif]-->
+            <link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
+
+    
+
+
+
+
+
+    
+</head>
+<body>
+<!-- Menubar -->
+
+<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    <div class="container-fluid"><!-- This keeps the margins nice -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="http://www.baptiste-wicht.com/">@Blog("Baptiste Wicht")</a>
+        </div><!-- /.navbar-header -->
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+            <ul class="nav navbar-nav">
+                
+                <li><a href="../../../archive.html">Archives</a>
+                </li><li><a href="../../../categories/index.html">Tags</a>
+                </li><li><a href="../../../rss.xml">RSS</a>
+
+            </li></ul>
+
+            <ul class="nav navbar-nav navbar-right">
+                
+                
+                    
+    <li>
+    <a href="bundle-non-osgi-dependencies-maven.wp" id="sourcelink">Source</a>
+    </li>
+
+            </ul>
+        </div><!-- /.navbar-collapse -->
+    </div><!-- /.container-fluid -->
+</nav>
+
+<!-- End of Menubar -->
+
+<div class="container">
+    <div class="body-content">
+        <!--Body content-->
+        <div class="row">
+            
+    <article class="postbox post-text">
+    <div class="h-entry" itemscope="itemscope" itemtype="http://schema.org/Article">
+    
+    <h1 class="p-name" itemprop="headline name">Bundle non-OSGi dependencies with Maven</h1>
+
+    <hr>
+    <small>
+        Posted: <time class="published dt-published" datetime="2010-03-19T15:41:29+00:00" itemprop="datePublished">2010-03-19 15:41</time>
+        
+
+        
+          |  
+        More posts about 
+    <span itemprop="keywords">
+        <a class="tag p-category" href="../../../categories/apache.html"><span class="badge badge-info">Apache</span></a>
+        <a class="tag p-category" href="../../../categories/java.html"><span class="badge badge-info">Java</span></a>
+        <a class="tag p-category" href="../../../categories/maven.html"><span class="badge badge-info">Maven</span></a>
+        <a class="tag p-category" href="../../../categories/osgi.html"><span class="badge badge-info">OSGi</span></a>
+    </span>
+
+
+    </small>
+    <hr>
+    <div class="e-content" itemprop="articleBody text">
+    <div><p></p><p>When we work with OSGi, a problem we always have is how to work with dependencies non OSGi Ready.</p>
+<p>This is not a really great problem because there we can work with. There is essentially two solutions :</p>
+<p></p><ul>
+    <li>Embed the JAR files within the bundle. That is to say putting the JAR file into the bundle JAR and reference it in the Manifest</li>
+    <li>Wrap the JAR files with an OSGi Manifest. Namely, transform the JAR into an OSGi bundle.</li>
+</ul>
+<p>Personnaly, i doesn't like the first solution, because for me, having a jar into a jar sounds really weird and bad and i prefer to have real OSGi Bundle. With wrapping, if i need this library in an other bundle, i doesn't have to do anything.</p>
+<!--more-->
+
+<p>But, yes there is a but, wrapping a jar is much complicated than embedding. Because, we much transform the JAR into a real OSGi Bundle. That is to say that we much create a new JAR with a Manifest, importing all the needed packages, exporting all the necessary packages, computing the names and version, ...</p>
+<p>If we must do that by hand, that could be really long and hard to do.</p>
+<p>We can do that in a simple way using Maven 2 and the maven-bundle-plugin that can generate an OSGi jar embedding the other using the BND tools. With some configurations, we can simply create a totally valid OSGi Bundle. To make several bundles  easily, i created a simple parent pom (i take the first sources from Spring Blog) and all the modules of this parent project will be simple project to wrap a dependency.</p>
+<p>Here is the parent pom i use :</p>
+<p>[xml]&lt;?xml version="1.0" encoding="UTF-8"?&gt;</p>
+<p>&lt;project
+        xmlns="http://maven.apache.org/POM/4.0.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd"&gt;</p>
+<div class="code"><pre><span class="ni">&amp;lt;</span>modelVersion<span class="ni">&amp;gt;</span>4.0.0<span class="ni">&amp;lt;</span>/modelVersion<span class="ni">&amp;gt;</span>
+<span class="ni">&amp;lt;</span>groupId<span class="ni">&amp;gt;</span>org.jtheque<span class="ni">&amp;lt;</span>/groupId<span class="ni">&amp;gt;</span>
+<span class="ni">&amp;lt;</span>artifactId<span class="ni">&amp;gt;</span>jtheque-osgi-wrap<span class="ni">&amp;lt;</span>/artifactId<span class="ni">&amp;gt;</span>
+<span class="ni">&amp;lt;</span>name<span class="ni">&amp;gt;</span>jtheque-osgi-wrap<span class="ni">&amp;lt;</span>/name<span class="ni">&amp;gt;</span>
+<span class="ni">&amp;lt;</span>packaging<span class="ni">&amp;gt;</span>pom<span class="ni">&amp;lt;</span>/packaging<span class="ni">&amp;gt;</span>
+<span class="ni">&amp;lt;</span>version<span class="ni">&amp;gt;</span>1.0<span class="ni">&amp;lt;</span>/version<span class="ni">&amp;gt;</span>
+
+<span class="ni">&amp;lt;</span>modules<span class="ni">&amp;gt;</span>
+    <span class="ni">&amp;lt;</span>!-- Modules --<span class="ni">&amp;gt;</span>
+<span class="ni">&amp;lt;</span>/modules<span class="ni">&amp;gt;</span>
+
+<span class="ni">&amp;lt;</span>properties<span class="ni">&amp;gt;</span>
+    <span class="ni">&amp;lt;</span>export.packages<span class="ni">&amp;gt;</span><span class="cp">${</span><span class="n">export</span><span class="o">.</span><span class="n">package</span><span class="cp">}</span>*;version=<span class="cp">${</span><span class="n">unpack</span><span class="o">.</span><span class="n">version</span><span class="cp">}</span><span class="ni">&amp;lt;</span>/export.packages<span class="ni">&amp;gt;</span>
+    <span class="ni">&amp;lt;</span>import.packages<span class="ni">&amp;gt;</span>*<span class="ni">&amp;lt;</span>/import.packages<span class="ni">&amp;gt;</span>
+    <span class="ni">&amp;lt;</span>private.packages<span class="ni">&amp;gt;</span>!*<span class="ni">&amp;lt;</span>/private.packages<span class="ni">&amp;gt;</span>
+    <span class="ni">&amp;lt;</span>symbolic.name<span class="ni">&amp;gt;</span><span class="cp">${</span><span class="n">pom</span><span class="o">.</span><span class="n">groupId</span><span class="cp">}</span>.<span class="cp">${</span><span class="n">pom</span><span class="o">.</span><span class="n">artifactId</span><span class="cp">}</span><span class="ni">&amp;lt;</span>/symbolic.name<span class="ni">&amp;gt;</span>
+    <span class="ni">&amp;lt;</span>embed-dep<span class="ni">&amp;gt;</span>*;scope=compile;type=!pom;inline=true<span class="ni">&amp;lt;</span>/embed-dep<span class="ni">&amp;gt;</span>
+    <span class="ni">&amp;lt;</span>unpack-bundle<span class="ni">&amp;gt;</span>false<span class="ni">&amp;lt;</span>/unpack-bundle<span class="ni">&amp;gt;</span>
+<span class="ni">&amp;lt;</span>/properties<span class="ni">&amp;gt;</span>
+
+<span class="ni">&amp;lt;</span>build<span class="ni">&amp;gt;</span>
+    <span class="ni">&amp;lt;</span>directory<span class="ni">&amp;gt;</span><span class="cp">${</span><span class="n">env</span><span class="o">.</span><span class="n">BUILD_HOME</span><span class="cp">}</span>/dependencies/<span class="cp">${</span><span class="n">symbolic</span><span class="o">.</span><span class="n">name</span><span class="cp">}</span><span class="ni">&amp;lt;</span>/directory<span class="ni">&amp;gt;</span>
+
+    <span class="ni">&amp;lt;</span>plugins<span class="ni">&amp;gt;</span>
+        <span class="ni">&amp;lt;</span>plugin<span class="ni">&amp;gt;</span>
+            <span class="ni">&amp;lt;</span>groupId<span class="ni">&amp;gt;</span>org.apache.felix<span class="ni">&amp;lt;</span>/groupId<span class="ni">&amp;gt;</span>
+            <span class="ni">&amp;lt;</span>artifactId<span class="ni">&amp;gt;</span>maven-bundle-plugin<span class="ni">&amp;lt;</span>/artifactId<span class="ni">&amp;gt;</span>
+            <span class="ni">&amp;lt;</span>version<span class="ni">&amp;gt;</span>1.2.0<span class="ni">&amp;lt;</span>/version<span class="ni">&amp;gt;</span>
+            <span class="ni">&amp;lt;</span>configuration<span class="ni">&amp;gt;</span>
+                <span class="ni">&amp;lt;</span>unpackBundle<span class="ni">&amp;gt;</span><span class="cp">${</span><span class="n">unpack</span><span class="o">.</span><span class="n">bundle</span><span class="cp">}</span><span class="ni">&amp;lt;</span>/unpackBundle<span class="ni">&amp;gt;</span>
+                <span class="ni">&amp;lt;</span>instructions<span class="ni">&amp;gt;</span>
+                    <span class="ni">&amp;lt;</span>Bundle-Name<span class="ni">&amp;gt;</span><span class="cp">${</span><span class="n">artifactId</span><span class="cp">}</span><span class="ni">&amp;lt;</span>/Bundle-Name<span class="ni">&amp;gt;</span>
+                    <span class="ni">&amp;lt;</span>Bundle-SymbolicName<span class="ni">&amp;gt;</span><span class="cp">${</span><span class="n">symbolic</span><span class="o">.</span><span class="n">name</span><span class="cp">}</span><span class="ni">&amp;lt;</span>/Bundle-SymbolicName<span class="ni">&amp;gt;</span>
+                    <span class="ni">&amp;lt;</span>Bundle-Description<span class="ni">&amp;gt;</span><span class="cp">${</span><span class="n">pom</span><span class="o">.</span><span class="n">name</span><span class="cp">}</span><span class="ni">&amp;lt;</span>/Bundle-Description<span class="ni">&amp;gt;</span>
+                    <span class="ni">&amp;lt;</span>Import-Package<span class="ni">&amp;gt;</span><span class="cp">${</span><span class="n">import</span><span class="o">.</span><span class="n">packages</span><span class="cp">}</span><span class="ni">&amp;lt;</span>/Import-Package<span class="ni">&amp;gt;</span>
+                    <span class="ni">&amp;lt;</span>Private-Package<span class="ni">&amp;gt;</span><span class="cp">${</span><span class="n">private</span><span class="o">.</span><span class="n">packages</span><span class="cp">}</span><span class="ni">&amp;lt;</span>/Private-Package<span class="ni">&amp;gt;</span>
+                    <span class="ni">&amp;lt;</span>Include-Resource<span class="ni">&amp;gt;</span><span class="cp">${</span><span class="n">include</span><span class="o">.</span><span class="n">resources</span><span class="cp">}</span><span class="ni">&amp;lt;</span>/Include-Resource<span class="ni">&amp;gt;</span>
+                    <span class="ni">&amp;lt;</span>Embed-Dependency<span class="ni">&amp;gt;</span><span class="cp">${</span><span class="n">embed</span><span class="o">-</span><span class="n">dep</span><span class="cp">}</span><span class="ni">&amp;lt;</span>/Embed-Dependency<span class="ni">&amp;gt;</span>
+                    <span class="ni">&amp;lt;</span>_exportcontents<span class="ni">&amp;gt;</span><span class="cp">${</span><span class="n">export</span><span class="o">.</span><span class="n">packages</span><span class="cp">}</span><span class="ni">&amp;lt;</span>/_exportcontents<span class="ni">&amp;gt;</span>
+                <span class="ni">&amp;lt;</span>/instructions<span class="ni">&amp;gt;</span>
+            <span class="ni">&amp;lt;</span>/configuration<span class="ni">&amp;gt;</span>
+            <span class="ni">&amp;lt;</span>extensions<span class="ni">&amp;gt;</span>true<span class="ni">&amp;lt;</span>/extensions<span class="ni">&amp;gt;</span>
+        <span class="ni">&amp;lt;</span>/plugin<span class="ni">&amp;gt;</span>
+    <span class="ni">&amp;lt;</span>/plugins<span class="ni">&amp;gt;</span>
+<span class="ni">&amp;lt;</span>/build<span class="ni">&amp;gt;</span>
+</pre></div>
+
+
+<p>&lt;/project&gt;[/xml]</p>
+<p>That really simple, we use some properties to generify the process to have really simple modules. </p>
+<p>Here is an example to wrap the substance look and feel library : </p>
+<p>[xml]&lt;?xml version="1.0" encoding="UTF-8"?&gt;</p>
+<p>&lt;project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"&gt;</p>
+<div class="code"><pre><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">modelVersion</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="mf">4.0.0</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">modelVersion</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+<span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">groupId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">org</span><span class="p">.</span><span class="n">substance</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">groupId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+<span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">packaging</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">bundle</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">packaging</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+<span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">artifactId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">org</span><span class="p">.</span><span class="n">jtheque</span><span class="p">.</span><span class="n">substance</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">artifactId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+<span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">name</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">apple</span><span class="o">-</span><span class="n">extensions</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">name</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+<span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">version</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="mf">6.0.0</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">version</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+
+<span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">parent</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+    <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">artifactId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">jtheque</span><span class="o">-</span><span class="n">osgi</span><span class="o">-</span><span class="n">wrap</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">artifactId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+    <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">groupId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">org</span><span class="p">.</span><span class="n">jtheque</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">groupId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+    <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">version</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="mf">1.0</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">version</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+<span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">parent</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+
+<span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">properties</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+    <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">unpack</span><span class="p">.</span><span class="n">version</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="mf">6.0.0</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">unpack</span><span class="p">.</span><span class="n">version</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+    <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">export</span><span class="p">.</span><span class="n">package</span><span class="o">/&amp;</span><span class="n">gt</span><span class="p">;</span>
+<span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">properties</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+
+<span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">dependencies</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+    <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">dependency</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+        <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">groupId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">org</span><span class="p">.</span><span class="n">substance</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">groupId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+        <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">artifactId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">substance</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">artifactId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+        <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">version</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="mf">6.0</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">version</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+    <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">dependency</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+<span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">dependencies</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+</pre></div>
+
+
+<p>&lt;/project&gt;[/xml]</p>
+<p>Like you can see, that's really simple and that generates a great OSGi Bundle. Here i didnt' specify any export package. Doing that all the packages are exported except the ones containing impl or internal. </p>
+<p>Thats it :)</p>
+<p>I hope that this post will be useful to some of you. </p></div>
+    </div>
+    </div>
+    
+        <ul class="pager">
+            <li class="previous">
+                <a href="mock-objects-easymock.html" rel="prev">← Previous post</a>
+            </li>
+            <li class="next">
+                <a href="osgi-enterprise-4-2-available.html" rel="next">Next post →</a>
+            </li>
+        </ul>
+
+        
+        
+        <div id="disqus_thread"></div>
+        <script>
+        var disqus_shortname ="nikolademo",
+            disqus_url="http://www.baptiste-wicht.com/posts/2010/03/bundle-non-osgi-dependencies-maven.html",
+        disqus_title="Bundle non-OSGi dependencies with Maven",
+        disqus_identifier="cache/posts/2010/03/bundle-non-osgi-dependencies-maven.html",
+        disqus_config = function () {
+            this.language = "en";
+        };
+        (function() {
+            var dsq = document.createElement('script'); dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink" rel="nofollow">Comments powered by <span class="logo-disqus">Disqus</span></a>
+
+
+    
+
+    </article>
+
+        </div>
+        <!--End of body content-->
+
+        <footer>
+            Contents © 2014         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         
+        </footer>
+    </div>
+</div>
+
+
+            <script src="../../../assets/js/all-nocdn.js" type="text/javascript"></script>
+
+
+    
+<!-- Social buttons -->
+<div id="addthisbox" class="addthis_toolbox addthis_peekaboo_style addthis_default_style addthis_label_style addthis_32x32_style">
+<a class="addthis_button_more">Share</a>
+<ul><li><a class="addthis_button_facebook"></a>
+</li><li><a class="addthis_button_google_plusone_share"></a>
+</li><li><a class="addthis_button_linkedin"></a>
+</li><li><a class="addthis_button_twitter"></a>
+</li></ul>
+</div>
+<script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-4f7088a56bb93798"></script>
+<!-- End of social buttons -->
+
+
+    <script type="text/javascript">jQuery("a.image-reference").colorbox({rel:"gal",maxWidth:"100%",maxHeight:"100%",scalePhotos:true});</script>
+    
+
+</body>
+</html>

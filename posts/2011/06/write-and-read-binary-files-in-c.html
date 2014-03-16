@@ -1,0 +1,197 @@
+<!DOCTYPE html><html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Baptiste Wicht">
+    <title>Write and read binary files in C++ | @Blog("Baptiste Wicht")</title>
+    
+            <link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
+      <link rel="canonical" href="http://www.baptiste-wicht.com/posts/2011/06/write-and-read-binary-files-in-c.html">
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js" type="text/javascript"></script>
+    <![endif]-->
+            <link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
+
+    
+
+
+
+
+
+    
+</head>
+<body>
+<!-- Menubar -->
+
+<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    <div class="container-fluid"><!-- This keeps the margins nice -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="http://www.baptiste-wicht.com/">@Blog("Baptiste Wicht")</a>
+        </div><!-- /.navbar-header -->
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+            <ul class="nav navbar-nav">
+                
+                <li><a href="../../../archive.html">Archives</a>
+                </li><li><a href="../../../categories/index.html">Tags</a>
+                </li><li><a href="../../../rss.xml">RSS</a>
+
+            </li></ul>
+
+            <ul class="nav navbar-nav navbar-right">
+                
+                
+                    
+    <li>
+    <a href="write-and-read-binary-files-in-c.wp" id="sourcelink">Source</a>
+    </li>
+
+            </ul>
+        </div><!-- /.navbar-collapse -->
+    </div><!-- /.container-fluid -->
+</nav>
+
+<!-- End of Menubar -->
+
+<div class="container">
+    <div class="body-content">
+        <!--Body content-->
+        <div class="row">
+            
+    <article class="postbox post-text">
+    <div class="h-entry" itemscope="itemscope" itemtype="http://schema.org/Article">
+    
+    <h1 class="p-name" itemprop="headline name">Write and read binary files in C++</h1>
+
+    <hr>
+    <small>
+        Posted: <time class="published dt-published" datetime="2011-06-15T08:35:15+00:00" itemprop="datePublished">2011-06-15 08:35</time>
+        
+
+        
+          |  
+        More posts about 
+    <span itemprop="keywords">
+        <a class="tag p-category" href="../../../categories/c.html"><span class="badge badge-info">C++</span></a>
+        <a class="tag p-category" href="../../../categories/c.html"><span class="badge badge-info">C++</span></a>
+        <a class="tag p-category" href="../../../categories/io.html"><span class="badge badge-info">I/O</span></a>
+        <a class="tag p-category" href="../../../categories/templates.html"><span class="badge badge-info">templates</span></a>
+    </span>
+
+
+    </small>
+    <hr>
+    <div class="e-content" itemprop="articleBody text">
+    <div><p></p><p>To write the EDDI compiler, I had to write and read binary files. Writing text files is really easy in C++, directly using the &lt;&lt; operator on the stream, but writing binary is a little harder and, I must say, a lot less elegant.</p>
+<p>First, to write to a binary file, we have to use the binary flag when we create the file :</p>
+<p>[cpp]std::ofstream stream("yourFile", std::ios::binary);[/cpp]</p>
+<p>and then, we have to use the write method to write to the file. But this function is really basic and takes only a char<em> and the size of the data we wan't to write, so we have to convert our data to char</em>. A good way to do that is using the reinterpret_cast function and the sizeof operator. For example, to write an int, you can make that :</p>
+<p>[cpp]int test = 22;</p>
+<p>outStream.write(reinterpret_cast&lt;const char*&gt;(&amp;test), sizeof(int));[/cpp]</p>
+<p>But your code is quickly polluted if you have of write operations to do.</p>
+<!--more-->
+
+<p>We can simplify that, using a function template like this one :</p>
+<p>[cpp]template</p>
+<p>std::ostream&amp; binary_write(std::ostream&amp; stream, const T&amp; value){
+    return stream.write(reinterpret_cast&lt;const char*&gt;(&amp;value), sizeof(T));
+}[/cpp]</p>
+<p>And you use it directly like that :</p>
+<p>[cpp]int test = 22;</p>
+<p>binary_write(stream, test);[/cpp]</p>
+<p>A little less verbose, isn't it ? You can also pass a class or struct instance directly tot his method. If you have complex objects, it's perhaps not the more proper way to do it, in that case, consider using some serialization API. If you have object with variable length, it will not work because the size cannot be computed with the sizeof operator. For example, this function doesn't work with a std::string because the sizeof operator doesn't represent the real size of the string. We can make another function to write string :</p>
+<p>[cpp]template&lt;&gt;</p>
+<p>std::ostream&amp; binary_write_string(std::ofstream&amp; stream, const std::string&amp; value){
+    return stream-&gt;write(value.c_str(), value.length());
+}[/cpp]</p>
+<p>Then, to read a binary, you have also to open it with the binary tag :</p>
+<p>[cpp]std::ifstream inStream("yourFile", std::ios::binary);[/cpp]</p>
+<p>And then, you have to use the read method to read your values :</p>
+<p>[cpp]int test;</p>
+<p>inStream.read(reinterpret_cast&lt;char*&gt;(&amp;test), sizeof(int));[/cpp]</p>
+<p>Once again, we can create a function template to have a little better code :</p>
+<p>[cpp]template</p>
+<p>std::istream &amp; binary_read(std::istream&amp; stream, T&amp; value){
+    return stream.read(reinterpret_cast&lt;char*&gt;(&amp;value), sizeof(T));
+}[/cpp]</p>
+<p>and you can use it the same way :</p>
+<p>[cpp]int test;</p>
+<p>binary_read(stream, test);[/cpp]</p>
+<p>Once again, this function will not work with the class or struct with variable size. Even with strings, there is no way to read them easily. If you want to read them, you'll have to write the size of the string directly in the file and then read the size before and you can read a char<em> using the read method passing the size of the string and create a new string using the char</em>.</p>
+<p>With that, you are able to read and write to and from binary files.</p></div>
+    </div>
+    </div>
+    
+        <ul class="pager">
+            <li class="previous">
+                <a href="eddi-new-programming-language.html" rel="prev">← Previous post</a>
+            </li>
+            <li class="next">
+                <a href="git-tip-restore-a-deleted-tag.html" rel="next">Next post →</a>
+            </li>
+        </ul>
+
+        
+        
+        <div id="disqus_thread"></div>
+        <script>
+        var disqus_shortname ="nikolademo",
+            disqus_url="http://www.baptiste-wicht.com/posts/2011/06/write-and-read-binary-files-in-c.html",
+        disqus_title="Write and read binary files in C++",
+        disqus_identifier="cache/posts/2011/06/write-and-read-binary-files-in-c.html",
+        disqus_config = function () {
+            this.language = "en";
+        };
+        (function() {
+            var dsq = document.createElement('script'); dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink" rel="nofollow">Comments powered by <span class="logo-disqus">Disqus</span></a>
+
+
+    
+
+    </article>
+
+        </div>
+        <!--End of body content-->
+
+        <footer>
+            Contents © 2014         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         
+        </footer>
+    </div>
+</div>
+
+
+            <script src="../../../assets/js/all-nocdn.js" type="text/javascript"></script>
+
+
+    
+<!-- Social buttons -->
+<div id="addthisbox" class="addthis_toolbox addthis_peekaboo_style addthis_default_style addthis_label_style addthis_32x32_style">
+<a class="addthis_button_more">Share</a>
+<ul><li><a class="addthis_button_facebook"></a>
+</li><li><a class="addthis_button_google_plusone_share"></a>
+</li><li><a class="addthis_button_linkedin"></a>
+</li><li><a class="addthis_button_twitter"></a>
+</li></ul>
+</div>
+<script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-4f7088a56bb93798"></script>
+<!-- End of social buttons -->
+
+
+    <script type="text/javascript">jQuery("a.image-reference").colorbox({rel:"gal",maxWidth:"100%",maxHeight:"100%",scalePhotos:true});</script>
+    
+
+</body>
+</html>

@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>@Blog("Baptiste Wicht") (Others)</title><link>http://www.baptiste-wicht.com/</link><description></description><atom:link href="http://www.baptiste-wicht.com/categories/others.xml" type="application/rss+xml" rel="self"></atom:link><language>en</language><lastBuildDate>Sun, 16 Mar 2014 17:07:38 GMT</lastBuildDate><generator>Nikola &lt;http://getnikola.com/&gt;</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>Zabbix - Low Level Discovery of cores, CPUs and Hard Disk</title><link>http://www.baptiste-wicht.com/posts/2013/12/zabbix-low-level-discovery-cores-cpus-hard-disk.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;a href="http://www.baptiste-wicht.com/wp-content/uploads/2013/12/Screenshot-from-2013-12-29-165743-e1388332859892.png"&gt;&lt;img src="http://www.baptiste-wicht.com/wp-content/uploads/2013/12/Screenshot-from-2013-12-29-165743-e1388332859892-300x151.png" alt="Zabbix SSD Status, configured with Low Level Discovery" width="300" height="151" class="size-medium wp-image-2644"&gt;&lt;/a&gt; Zabbix SSD Status, configured with Low Level Discovery
+&lt;p&gt;At home, I'm using Zabbix to monitor my servers, it has plenty of interesting features and can be extended a lot by using User Parameter.&lt;/p&gt;
+&lt;p&gt;In this post, I'm gonna talk about Low Level Discovery (LLD). If you are only interested in the final result, go the Conclusion section, you can download my template containing all the rules ;)&lt;/p&gt;
+&lt;h4&gt;Low Level Discovery (LLD)&lt;/h4&gt;
+
+&lt;p&gt;LLD is a feature to automatically discover some properties of the monitored host and create items, triggers and graphs.&lt;/p&gt;
+&lt;p&gt;By default, Zabbix support three types of item discovery:&lt;/p&gt;
+&lt;ul&gt;
+    &lt;li&gt;Mounted filesystems&lt;/li&gt;
+    &lt;li&gt;Network interface&lt;/li&gt;
+    &lt;li&gt;SNMP's OIDs&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;The first two are very useful, since they will give you by default, for instance, the free space of each mounted file system or the bandwith going in and out of each network interface. As I only monitor Linux servers, I don't use the last one, but it will eventually interest other people.&lt;/p&gt;
+&lt;p&gt;Another very interesting thing about this feature is that you can extend it by discovering more items. In this article, I will show how to discover CPUs, CPU Cores and Hard Disk.&lt;/p&gt;
+&lt;p&gt;The most important part of custom discovery is to create a script on the monitored machines that can "discover" something. It can be any executable, the only thing important is that it outputs data in the correct format. I have to say that the format is quite ugly, but that is probably not very important ;) Here is the output of my hard disk discovery script:&lt;/p&gt;
+&lt;p&gt;[javascript]&lt;/p&gt;
+&lt;p&gt;{&lt;/p&gt;
+&lt;p&gt;"data":[
+    {"{#DISKNAME}":"/dev/sda","{#SHORTDISKNAME}":"sda"},
+    {"{#DISKNAME}":"/dev/sdb","{#SHORTDISKNAME}":"sdb"},
+    {"{#DISKNAME}":"/dev/sdc","{#SHORTDISKNAME}":"sdc"},
+    {"{#DISKNAME}":"/dev/sdd","{#SHORTDISKNAME}":"sdd"},
+    {"{#DISKNAME}":"/dev/sde","{#SHORTDISKNAME}":"sde"},
+    {"{#DISKNAME}":"/dev/sdf","{#SHORTDISKNAME}":"sdf"},
+    {"{#DISKNAME}":"/dev/sdg","{#SHORTDISKNAME}":"sdg"},
+]&lt;/p&gt;
+&lt;p&gt;}[/javascript]&lt;/p&gt;
+&lt;p&gt;You can have as many keys for each discovered items, but the format must remains the same. In the item, trigger and graph prototypes, you will then use {#DISKNAME} or {#SHORTDISKNAME} to use the discovered values. &lt;/p&gt;
+&lt;p&gt;Once you have created your scripts, you have to register it in the zabbix configuration as a user parameter. For instance, if you use the zabbix daemon, you need these lines in /etc/zabbix/zabbix_agentd.conf: &lt;/p&gt;
+&lt;p&gt;&lt;code&gt;EnableRemoteCommands=1&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;...&lt;/p&gt;
+&lt;p&gt;UnsafeUserParameters=1&lt;/p&gt;
+&lt;p&gt;...&lt;/p&gt;
+&lt;p&gt;UserParameter=discovery.hard_disk,/scripts/discover_hdd.sh&lt;/p&gt;
+&lt;p&gt;Now, when you will create the discovery rule, you can use discovery.hard_disk as the key. &lt;/p&gt;
+&lt;p&gt;A discovery rule in itself is useful without prototypes, you can create three types of prototypes: &lt;/p&gt;
+&lt;ul&gt;
+    &lt;li&gt;Item Prototype: This will create a new item for each discovered entity&lt;/li&gt;
+    &lt;li&gt;Trigger Prototype: This will create a new trigger for each discovered entity. &lt;/li&gt;
+    &lt;li&gt;Graph Prototype: This will create a graph for each discovered entity. &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;The most useful are by far the item and trigger prototypes. The biggest problem with graphs is that you cannot create an aggregate graph of each discovered items. For instance, if you record the temperature of your CPU cores, you cannot automatically create a graph with the temperature of each discovered cores. For that, you have to create the graph in each host. Which makes, imho, graph prototypes pretty useless. Anyway...&lt;/p&gt;
+&lt;p&gt;In the next section, I'll show how I have created discovery rules for Hard Disk, CPU and CPU cores. &lt;/p&gt;
+&lt;h4&gt;Discover Hard Disk&lt;/h4&gt;
+
+&lt;p&gt;The discovery script is really simple: &lt;/p&gt;
+&lt;p&gt;[bash]#!/bin/bash&lt;/p&gt;
+&lt;p&gt;disks=&lt;code&gt;ls -l /dev/sd* | awk '{print $NF}' | sed 's/[0-9]//g' | uniq&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;echo "{"&lt;/p&gt;
+&lt;p&gt;echo "\"data\":["&lt;/p&gt;
+&lt;p&gt;for disk in $disks&lt;/p&gt;
+&lt;p&gt;do
+    echo "    {\"{#DISKNAME}\":\"$disk\",\"{#SHORTDISKNAME}\":\"${disk:5}\"},"
+done&lt;/p&gt;
+&lt;p&gt;echo "]"&lt;/p&gt;
+&lt;p&gt;echo "}"[/bash]&lt;/p&gt;
+&lt;p&gt;It just lists all the /dev/sdX devices, remove the partition number and remove the duplicates, to have only the hard disk at the end. &lt;/p&gt;
+&lt;p&gt;I've created several item prototypes for each hard disk. Here are some examples using S.M.A.R.T. (you can download the template with all the items in the Conclusion section): &lt;/p&gt;
+&lt;ul&gt;
+    &lt;li&gt;Raw Read Error Rate&lt;/li&gt;
+    &lt;li&gt;Spin Up Time&lt;/li&gt;
+    &lt;li&gt;SSD Life Left&lt;/li&gt;
+    &lt;li&gt;Temperature&lt;/li&gt;
+    &lt;li&gt;...&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;You may notice that some of them only make sense for SSD (SSD Life Left) and some others do not make any sense for SSD (Spin Up Time). This is not a problem since they will just be marked as Not Supported by Zabbix. &lt;/p&gt;
+&lt;p&gt;All these datas are collected using the smartctl utility. &lt;/p&gt;
+&lt;p&gt;I've also created some trigger to indicate the coming failure of an hard disk: &lt;/p&gt;
+&lt;ul&gt;
+    &lt;li&gt;SSD Life Left too low&lt;/li&gt;
+    &lt;li&gt;Reallocated Sector Count too low&lt;/li&gt;
+    &lt;li&gt;...&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;I've just used the threshold reported by smartctl, they may be different from one disk manufacturers to another. I don't put a lot of faith on these values, since disk generally fail before going to threshold, but it could be a good indicator anyway. &lt;/p&gt;
+&lt;h4&gt;Discover CPUs&lt;/h4&gt;
+
+&lt;p&gt;Here is the script to discover CPUs: &lt;/p&gt;
+&lt;p&gt;[bash]#!/bin/bash&lt;/p&gt;
+&lt;p&gt;cpus=&lt;code&gt;lscpu | grep "CPU(s):" | head -1 | awk '{print $NF}'&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;cpus=$(($cpus-1))&lt;/p&gt;
+&lt;p&gt;echo "{"&lt;/p&gt;
+&lt;p&gt;echo "\"data\":["&lt;/p&gt;
+&lt;p&gt;for cpu in $(seq 0 $cpus)&lt;/p&gt;
+&lt;p&gt;do
+    echo "    {\"{#CPUID}\":\"$cpu\"},"
+done&lt;/p&gt;
+&lt;p&gt;echo "]"&lt;/p&gt;
+&lt;p&gt;echo "}"[/bash]&lt;/p&gt;
+&lt;p&gt;It just uses lscpu and parses its output to find the number of CPU and then create an entry for each CPUs. &lt;/p&gt;
+&lt;p&gt;I just have one item for each CPU: The CPU Utilization. &lt;/p&gt;
+&lt;p&gt;I haven't created any trigger here. &lt;/p&gt;
+&lt;h4&gt;Discover CPU Cores&lt;/h4&gt;
+
+&lt;p&gt;Just before, we discovered the CPUs, but it is also interesting to discover the cores. If you don't have Hyperthreading, the result will be the same. It is especially interesting to get the temperature of each core. Here is the script: &lt;/p&gt;
+&lt;p&gt;[bash]#!/bin/bash&lt;/p&gt;
+&lt;p&gt;cores=&lt;code&gt;lscpu | grep "Core(s) per socket:" | awk '{print $NF}'&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;cores=$(($cores-1))&lt;/p&gt;
+&lt;p&gt;echo "{"&lt;/p&gt;
+&lt;p&gt;echo "\"data\":["&lt;/p&gt;
+&lt;p&gt;for core in $(seq 0 $cores)&lt;/p&gt;
+&lt;p&gt;do
+    echo "    {\"{#COREID}\":\"$core\"},"
+done&lt;/p&gt;
+&lt;p&gt;echo "]"&lt;/p&gt;
+&lt;p&gt;echo "}"[/bash]&lt;/p&gt;
+&lt;p&gt;It works in the same way as the previous script. &lt;/p&gt;
+&lt;p&gt;I've only created one item prototype, to get the temperature of each core with lm_sensors. &lt;/p&gt;
+&lt;h4&gt;Wrap-Up&lt;/h4&gt;
+
+&lt;p&gt;Here are all the UserParameter necessary to make the discovery and the items works: &lt;/p&gt;
+&lt;p&gt;&lt;code&gt;### System Temperature ###&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;UserParameter=system.temperature.core[*],sensors|grep Core\ $1 |cut -d "(" -f 1|cut -d "+" -f 2|cut -c 1-4&lt;/p&gt;
+&lt;h4&gt;DISK I/O&lt;/h4&gt;
+&lt;p&gt;UserParameter=custom.vfs.dev.read.ops[*],cat /proc/diskstats | egrep $1 | head -1 | awk '{print $$4}'&lt;/p&gt;
+&lt;p&gt;UserParameter=custom.vfs.dev.read.ms[*],cat /proc/diskstats | egrep $1 | head -1 | awk '{print $$7}'&lt;/p&gt;
+&lt;p&gt;UserParameter=custom.vfs.dev.write.ops[*],cat /proc/diskstats | egrep $1 | head -1 | awk '{print $$8}'&lt;/p&gt;
+&lt;p&gt;UserParameter=custom.vfs.dev.write.ms[*],cat /proc/diskstats | egrep $1 | head -1 | awk '{print $$11}'&lt;/p&gt;
+&lt;p&gt;UserParameter=custom.vfs.dev.io.active[*],cat /proc/diskstats | egrep $1 | head -1 | awk '{print $$12}'&lt;/p&gt;
+&lt;p&gt;UserParameter=custom.vfs.dev.io.ms[*],cat /proc/diskstats | egrep $1 | head -1 y| awk '{print $$13}'&lt;/p&gt;
+&lt;p&gt;UserParameter=custom.vfs.dev.read.sectors[*],cat /proc/diskstats | egrep $1 | head -1 | awk '{print $$6}'&lt;/p&gt;
+&lt;p&gt;UserParameter=custom.vfs.dev.write.sectors[*],cat /proc/diskstats | egrep $1 | head -1 | awk '{print $$10}'&lt;/p&gt;
+&lt;p&gt;UserParameter=system.smartd_raw[*],sudo smartctl -A $1| egrep $2| tail -1| xargs| awk '{print $$10}'&lt;/p&gt;
+&lt;p&gt;UserParameter=system.smartd_value[*],sudo smartctl -A $1| egrep $2| tail -1| xargs| awk '{print $$4}'&lt;/p&gt;
+&lt;h4&gt;Discovery&lt;/h4&gt;
+&lt;p&gt;UserParameter=discovery.hard_disk,/scripts/discover_hdd.sh&lt;/p&gt;
+&lt;p&gt;UserParameter=discovery.cpus,/scripts/discover_cpus.sh&lt;/p&gt;
+&lt;p&gt;UserParameter=discovery.cores,/scripts/discover_cores.sh&lt;/p&gt;
+&lt;p&gt;(it must be set in zabbix_agentd.conf)&lt;/p&gt;
+&lt;p&gt;You also need to give zabbix the right to use sudo with smartctl. For that, you have to edit your /etc/sudoers file and add this line: &lt;/p&gt;
+&lt;p&gt;&lt;code&gt;ALL ALL=(ALL)NOPASSWD: /usr/sbin/smartctl&lt;/code&gt;&lt;/p&gt;
+&lt;h4&gt;Conclusion and Download&lt;/h4&gt;
+
+&lt;p&gt;I hope that this helps some people to use Low Level Discovery in their Zabbix Monitoring Installation. &lt;/p&gt;
+&lt;p&gt;LLD eases a lot the creation of multiple items discovery for hosts with different hardware or configuration. However, it has some problems for which I have not yet found a proper solution. First, you have to duplicate the client scripts on each host (or at least have them on a share available from each of them). Then, the configuration of each agent is also duplicated in the configuration of each host. The biggest problem I think is the fact that you cannot automatically create graph with the generated items of each discovered entities. For instance, I had to create a CPU Temperature graph in each of my host. If you have few hosts, like many, it is acceptable, but if you have hundreds of hosts, you just don't do it. &lt;/p&gt;
+&lt;p&gt;All the scripts and the template export file are available in the &lt;a href="https://github.com/wichtounet/zabbix-lld" title="zabbix-lld repository"&gt;zabbix-lld&lt;/a&gt; repository. For everything to work, you need the lscpu, lm_sensors and smartmontools utilities. &lt;/p&gt;
+&lt;p&gt;If you have any question or if something doesn't work (I don't offer any guarantee, but it should work on most recent Linux machines), don't hesitate to comment on this post. &lt;/p&gt;&lt;/div&gt;</description><category>Linux</category><category>Others</category><category>Server</category><category>zabbix</category><guid>http://www.baptiste-wicht.com/posts/2013/12/zabbix-low-level-discovery-cores-cpus-hard-disk.html</guid><pubDate>Mon, 30 Dec 2013 09:12:31 GMT</pubDate></item><item><title>budgetwarrior 0.2 - Visual reports, fortune status and expenses aggregates</title><link>http://www.baptiste-wicht.com/posts/2013/10/budgetwarrior-0-2-visual-reports-fortune-status-expenses-aggregates.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;Hi,&lt;/p&gt;
+&lt;p&gt;I've released a new version of budgetwarrior the version 0.2.&lt;/p&gt;
+&lt;p&gt;I've several new features to the tool. First, I've added a graph of the expenses/earnings/balances of each month for a given year in the form of a bar plot. You can see an example in practice here:&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://www.baptiste-wicht.com/wp-content/uploads/2013/10/Screenshot-from-2013-10-25-215839.png"&gt;&lt;img class="size-medium wp-image-2617" alt="budgetwarrior monthly report" src="http://www.baptiste-wicht.com/wp-content/uploads/2013/10/Screenshot-from-2013-10-25-215839-300x266.png" width="300" height="266"&gt;&lt;/a&gt; budgetwarrior monthly report&lt;/p&gt;
+&lt;p&gt;Nothing fancy, but it gives a good overview of the current state of your budget.&lt;/p&gt;
+&lt;p&gt;I've added a new module, called fortune, that lets you enter your total fortune and then computes the difference between the entered fortune statuses. For now, it doesn't do anything else with this data. But in the future, I want to correlate this data with the balances to check the difference between the filled expenses and earnings and the fortune evolution.&lt;/p&gt;
+&lt;p&gt;I've also added a more convenient way of creating expenses and earnings. Just type "budget expense add" and you'll be able to fill all the fields one by one. Of course, the command line commands are still available.&lt;/p&gt;
+&lt;p&gt;The last new feature I've added is an aggregate report (budget overview aggregate). This view simply groups all the expenses with the same name of a year together. If you always use the same expense title for your groceries, you'll see the total you spent in groceries for a year. You can also name your expenses with the format "Category/Expenses" and all the expenses with the same category will be grouped together in the aggregate view. That allows you to still have enough details in the monthly overview but to logically groups your expenses together in the aggregate view.&lt;/p&gt;
+&lt;p&gt;The other changes are minor. I've improved the monthly overview to sort the expenses and earnings by date. To facilitate the storage of the files in a service like Dropbox, the data and configuration files are now only written if they have been modified. The mean in the current overview has been changed to reflect only the months up to the current month and not the future (which was just ruining the means).&lt;/p&gt;
+&lt;p&gt;If you are interested by the tool, you can download it on Github: &lt;a title="budgetwarrior repository" href="https://github.com/wichtounet/budgetwarrior"&gt;budgetwarrior&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;I hope this tool will be useful to some people. If you've any question, just let a comment on this post or contact me directly by email. I'll be glad to help.&lt;/p&gt;&lt;/div&gt;</description><category>budgetwarrior</category><category>C++</category><category>Others</category><category>projects</category><guid>http://www.baptiste-wicht.com/posts/2013/10/budgetwarrior-0-2-visual-reports-fortune-status-expenses-aggregates.html</guid><pubDate>Fri, 25 Oct 2013 16:10:50 GMT</pubDate></item><item><title>Why and how I completely left Windows for Linux</title><link>http://www.baptiste-wicht.com/posts/2013/07/why-how-left-windows-for-linux.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;For years now, I always kept a dual-boot at home with a Linux system (currently Gentoo) and a Windows system. At work, I only use Gentoo. This week-end, I decided to completely remove it and migrate the applications I used on Windows to my Gentoo system.
+&lt;/p&gt;&lt;h4&gt;Why Windows ?&lt;/h4&gt;
+&lt;p&gt;So first things first, why was I keeping the Windows system ? For several reasons:&lt;/p&gt;
+&lt;ol&gt;
+    &lt;li&gt;&lt;span style="line-height: 13px;"&gt;Games :) Unfortunately, most of the games I play are not natively compatible with Linux. &lt;/span&gt;&lt;/li&gt;
+    &lt;li&gt;Office. I always liked Microsoft Office. As I hate OpenOffice/LibreOffice, I never wanted to remove it For schools we always had several teachers forcing us to use Microsoft document formats.&lt;/li&gt;
+    &lt;li&gt;Hardware support. I always found that hardware support in Windows was great. Most of the time when you add new peripheral, there is nothing, it just works, which is great.&lt;/li&gt;
+    &lt;li&gt;Applications. I always had some applications that I didn't found good enough Linux equivalents for. For instance, Newsleecher, iTunes or TaggedFrog.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;On the other hand, I work on Linux for years now and I would like to have to work on Windows again.&lt;/p&gt;
+&lt;h4&gt;What Changed ?&lt;/h4&gt;
+
+&lt;p&gt;This weekend I upgraded my hardware configuration (Motherboard, CPU and RAM). I was afraid that I had to reinstall my Linux configurations (because of Gentoo compiled with march=native), but I never thought that I would have to reinstall Windows. I turned out the contrary: my Gentoo installation worked just fine and my Windows totally crashed (BSOD at each startup). I finally made it through Windows after disabled AHCI mode on my motherboard, but then activation was invalidated (of course...) and online activation was not working. I decided to install the new chipset drivers and launch the Windows update and after that, Windows decided to boot without any USB support (WTF...). After that, I decided that Windows what not so great at all for   hardware support...&lt;/p&gt;
+&lt;p&gt;Another reason I left Windows is Windows 8. I find that Window 7 was really great, but I really don't like Windows 8 and I would never have upgraded my Seven to it. Moreover, I recently bought Microsoft Office 2013 and it turned that I had to create an account at Microsoft to install it... Seriously ??? And moreover, it turned out to be worse thant Office 2010 (which, again, was great).&lt;/p&gt;
+&lt;p&gt;So all these reasons made me remove Windows.&lt;/p&gt;
+&lt;h4&gt;How to migrate everything to Linux ?&lt;/h4&gt;
+
+&lt;p&gt;First, I had no problem with my data. Most of my data are on a personal NAS and the remaining is on Dropbox, so no problem on this side.&lt;/p&gt;
+&lt;p&gt;I still had some problems to resolve. First of all, I needed my games to run on Linux. I currently play only Diablo III. As I had received a year free of &lt;a title="Crossover" href="http://www.codeweavers.com/products/"&gt;Crossover&lt;/a&gt;, I decided to give it a try. Crossover is based on Wine and ensures that some software are running correctly under it and provide technical support. After some tuning, Diablo III was running almost flawlessly on my Gentoo machine :) Problem 1 solved. I will totally buy a license of Crossover, once my free year is over.&lt;/p&gt;
+&lt;p&gt;I still add some applications to replace. I use iTunes as my main music player and library manager. Some time ago, I tried a lot of programs like Amarok/Rythmbox/Banshee, but I didn't liked them a lot and they were not running very well on large library of music files. This time, I tried &lt;a title="Clementine" href="http://www.clementine-player.org/"&gt;Clementine&lt;/a&gt;. Even if not very beautiful, it had all the features I needed and worked very well. I decided to stick with it. Another program I like a lot on Windows is TaggedFrog. It is a very simple program allowing to put tags on any file on the system and then search by tag on them. I haven't found a total equivalent. I first tried Tracker that is a Gnome project, but I was not satisfied with the search interface. After that, I tried the very simple &lt;a title="TMSU" href="http://tmsu.org/"&gt;TMSU&lt;/a&gt;. It is a command-line based tagging manager. All the tagging must be done in command line. In my case, it is not a problem, as I don't mind using the command-line and I don't tag files very often. What is very interesting about TMSU is that it can create a virtual file system (based on FUSE). In this file system, you have all your tags  as folder and you can see directly all the files of each tag. Moreover, you can directly make cross search (has tag X and Y and Z) by just going down in the tag folder. It is really great and has everything I needed. Finally, I also needed something to replace Newsleecher. I haven't found something as great (especially no replacement for the Supersearch function), but I installed &lt;a title="Sabnzbd" href="http://sabnzbd.org/"&gt;Sabnzbd&lt;/a&gt; which works really well and is very simple. For now, I just use the web interface and haven't installed any other front-end, but that will perhaps change in the future. &lt;a href="http://tmsu.org/"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;
+&lt;p&gt;I haven't replaced Office for now on. It occurred to me that since I left school, I haven't used it a lot, so that will probably not be a problem anymore. I will change to write the few letters I have to write on Latex and if I have Office documents, I'll probably read them on Google Drive.&lt;/p&gt;
+&lt;h4&gt;Conclusion&lt;/h4&gt;
+
+&lt;p&gt;Even if I lost a lot of time with all that, I think it is a great think. It makes one less configuration to maintain and some less costs on the future. Moreover, I will save some time, because I won't have to switch between Linux and Windows for different tasks. And now, I have a second SSD ready for something else, either for RAID 1 to ensure redundancy on Linux or to mount on a server, I'll see later.&lt;/p&gt;
+&lt;p&gt;I will probably have some more problems in the future, but I'm convinced that there will be Linux solutions to it :)&lt;/p&gt;&lt;/div&gt;</description><category>Gentoo</category><category>Linux</category><category>Linux</category><category>Others</category><category>Personal</category><category>Windows</category><guid>http://www.baptiste-wicht.com/posts/2013/07/why-how-left-windows-for-linux.html</guid><pubDate>Mon, 01 Jul 2013 08:24:25 GMT</pubDate></item><item><title>Some news</title><link>http://www.baptiste-wicht.com/posts/2013/06/some-news.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;No, I'm not dead ;)&lt;/p&gt;
+&lt;p&gt;After having finished my Master thesis in March, I took a break from my personal projects including this project. I then started a job in my school, waiting for a Ph.D thesis. I'm now working on a very interesting Machine Learning project about Speech, unfortunately in Java ;)&lt;/p&gt;
+&lt;p&gt;I just started again working on eddic this week. I'm gonna try to improve as much as possible the performances of the parser. I will also try to post again some articles on this blog, although I don't know about what. &lt;/p&gt;&lt;/div&gt;</description><category>C++</category><category>EDDI</category><category>Java</category><category>Machine Learning</category><category>Others</category><guid>http://www.baptiste-wicht.com/posts/2013/06/some-news.html</guid><pubDate>Tue, 04 Jun 2013 23:52:24 GMT</pubDate></item><item><title>Use CMake to easily compiles Latex documents into PDF</title><link>http://www.baptiste-wicht.com/posts/2012/09/cmake-compile-latex-documents.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;Everyone who compiles Latex documents by hand knows that it is not a panacea. You have to compile the file several times to handle the references. Moreover, if you have a glossary or an index, you have to run others commands between Latex commands so that everything is correctly resolved. The better way to handle Latex compilation is to write a MakeFile compiling each part. However, writing a Latex MakeFile by hand is not easy and especially not interesting. &lt;/p&gt;
+&lt;p&gt;Using CMake for most of my development projects, I tried to find a CMake script to generates a MakeFile easily. I did found a good script for that, but I wanted to add some features and change some things, so I forked it to Github: &lt;a href="https://github.com/wichtounet/CMakeLatex" title="CMakeLatex Github repository"&gt;The CMakeLatex repository&lt;/a&gt;. &lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;h3&gt;Usage&lt;/h3&gt;
+&lt;p&gt;Here is an example using all the features of the script for one of my Latex documents. &lt;/p&gt;
+&lt;p&gt;[bash]PROJECT(master_project NONE)&lt;/p&gt;
+&lt;p&gt;cmake_minimum_required(VERSION 2.8)&lt;/p&gt;
+&lt;p&gt;SET(LATEX_OUTPUT_PATH build)&lt;/p&gt;
+&lt;p&gt;INCLUDE(UseLATEX.cmake)&lt;/p&gt;
+&lt;p&gt;file(GLOB_RECURSE contents_files RELATIVE ${CMAKE_SOURCE_DIR} contents/*.tex)&lt;/p&gt;
+&lt;p&gt;ADD_LATEX_DOCUMENT(
+    master.tex
+    INPUTS ${contents_files}
+    IMAGE_DIRS images
+    BIBFILES bibliography.bib
+    USE_INDEX
+    USE_GLOSSARY
+    FILTER_OUTPUT
+    )
+[/bash]&lt;/p&gt;
+&lt;p&gt;To use it, you have to download the files of the repository and put them aside your Latex files (or just make symlinks to the files in a clone of the repository for easy update). Then, the &lt;em&gt;UseLATEX.cmake&lt;/em&gt; file has to be included in your CMakeLists.txt file. &lt;/p&gt;
+&lt;p&gt;I think that it is a good practice to generates the Latex files in another directory. This directory can be set using the &lt;em&gt;LATEX_OUTPUT_PATH&lt;/em&gt; variable. &lt;/p&gt;
+&lt;p&gt;Then, to add a latex document, you can use the &lt;em&gt;ADD_LATEX_DOCUMENT&lt;/em&gt; function. The first parameter is the name of the main Latex file. After that, you have to give several parameters: &lt;/p&gt;
+&lt;ul&gt;
+    &lt;li&gt;INPUTS: It needs the list of Latex files that are included in master file. I use the GLOB_RECURSE function to find all of them in a contents subfolder. &lt;/li&gt;
+    &lt;li&gt;IMAGE_DIRS: The directory where the image are stored. They will be copied to the build folder and automatically converted if necessary. &lt;/li&gt;
+    &lt;li&gt;BIBFILES: If you have a bibliography, you just have to list all the .bib files of your project. &lt;/li&gt;
+    &lt;li&gt;USE_INDEX: Necessary only if your document use an index. &lt;/li&gt;
+    &lt;li&gt;USE_GLOSSARY: Necessary only if your document use a glossary. &lt;/li&gt;
+    &lt;li&gt;FILTER_OUTPUT: This option activates the filtering of pdflatex output to the console. For now, the option is quite limited, but it allows you to have a smoother output. It has to be taken into account that this option hides the overflow and underflow warnings. &lt;/li&gt;
+    &lt;li&gt;CONFIGURE: You can use the CMake configuration feature on some of your files if you want CMake variables to be replaced in the documents. &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Once your Latex document is configured, you can just run cmake on your project. After that, you can use targets to generate pdf: &lt;/p&gt;
+&lt;ul&gt;
+    &lt;li&gt;make pdf: This will generate the Latex file using several passes and running all the necessary commands. &lt;/li&gt;
+    &lt;li&gt;make fast: This will generate a pdf in only one pass. This can be useful if you want to see a rough draft of your document quickly.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;I already use this script for several of my documents. I hope that it will be useful for some of you. If you want any problem in the script or in the generate make file or if you have an idea for improvement, don't hesitate to let a command or to publish an Issue or a Pull Request in &lt;a href="https://github.com/wichtounet/CMakeLatex" title="CMakeLatex Github repository"&gt;the CMakeLatex repository&lt;/a&gt;. &lt;/p&gt;
+&lt;p&gt;This script only support pdflatex and can only generates pdf directly. If you want latex support with dvi/ps/pdf generation, you should take a look at the original project:  &lt;a href="http://public.kitware.com/Wiki/CMakeUserUseLATEX" title="CMakeUserUseLATEX"&gt;CMakeUserUseLATEX&lt;/a&gt;&lt;/p&gt;&lt;/div&gt;</description><category>cmake</category><category>Latex</category><category>Others</category><category>Tools</category><guid>http://www.baptiste-wicht.com/posts/2012/09/cmake-compile-latex-documents.html</guid><pubDate>Mon, 24 Sep 2012 09:07:33 GMT</pubDate></item><item><title>Back in Berkeley, California</title><link>http://www.baptiste-wicht.com/posts/2012/09/back-in-berkeley-california.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;I arrived yesterday to Berkeley, California.&lt;/p&gt;
+&lt;p&gt;Just like I did my Bachelor thesis in Lawrence Berkeley National Laboratory (LBNL), I will do my Master Thesis there too. The thesis will last a bit less than a semester.&lt;/p&gt;
+&lt;p&gt;During my Master Thesis I will try to use profiling samples from the Linux perf tools in GCC or Clang to optimize processor cache usage (avoid cache and page faults).&lt;/p&gt;
+&lt;p&gt;I will try to publish some posts about that during the semester if I have time.&lt;/p&gt;&lt;/div&gt;</description><category>Compilers</category><category>gcc</category><category>Others</category><category>Personal</category><category>The site</category><guid>http://www.baptiste-wicht.com/posts/2012/09/back-in-berkeley-california.html</guid><pubDate>Thu, 13 Sep 2012 10:35:43 GMT</pubDate></item><item><title>The site is now running WordPress 3.4</title><link>http://www.baptiste-wicht.com/posts/2012/06/the-site-now-running-wordpress-3-4.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;I just updated the site to run WordPress 3.4&lt;/p&gt;
+&lt;p&gt;Normally, you should see any differences as most of the new features of this version are in the admin side, but if you see something that doesn't work, don't hesitate to contact me. &lt;/p&gt;&lt;/div&gt;</description><category>Others</category><category>Releases</category><category>The site</category><category>WordPress</category><guid>http://www.baptiste-wicht.com/posts/2012/06/the-site-now-running-wordpress-3-4.html</guid><pubDate>Sun, 24 Jun 2012 02:36:37 GMT</pubDate></item><item><title>Merry Christmas</title><link>http://www.baptiste-wicht.com/posts/2011/12/merry-christmas.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;A bit late, but better late than never : Merry Christmas to all the readers of this blog :)&lt;/p&gt;&lt;/div&gt;</description><category>Others</category><category>Personal</category><category>The site</category><guid>http://www.baptiste-wicht.com/posts/2011/12/merry-christmas.html</guid><pubDate>Sun, 25 Dec 2011 01:12:57 GMT</pubDate></item><item><title>Moodle promotion on Packt Publishing Books</title><link>http://www.baptiste-wicht.com/posts/2011/12/moodle-promotion-on-packt-publishing-books.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;In their December promotion, Pack Publishing are offering heavy discounts on all their Moodle books during all the month.&lt;/p&gt;
+&lt;p&gt;You can find all books available on offer on this page : &lt;a href="http://www.packtpub.com/news/moodle-festive-month" target="_blank"&gt;http://www.packtpub.com/news/&lt;wbr&gt;moodle-festive-month&lt;/wbr&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;There are great offers:&lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;ul&gt;
+    &lt;li&gt;Buy any &lt;strong&gt;Moodle &lt;/strong&gt;print book and get&lt;strong&gt; 20% off&lt;/strong&gt;&lt;/li&gt;
+    &lt;li&gt;Buy any &lt;strong&gt;Moodle &lt;/strong&gt;eBook and get&lt;strong&gt; 30% off&lt;/strong&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;For those who don't know Moodle, Moodle is currently the world's most popular E-learning platform. Moodle is a free, open-source PHP web application for producing modular internet-based courses that support a modern social constructionist pedagogy.&lt;/p&gt;&lt;/div&gt;</description><category>Books</category><category>Others</category><category>Promotion</category><guid>http://www.baptiste-wicht.com/posts/2011/12/moodle-promotion-on-packt-publishing-books.html</guid><pubDate>Tue, 13 Dec 2011 08:40:08 GMT</pubDate></item><item><title>Packt Open Source Awards 2011</title><link>http://www.baptiste-wicht.com/posts/2011/09/packt-open-source-awards-2011.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;Packt launched the &lt;a title="Packt Open Source Awards 2011" href="http://www.packtpub.com/open-source-awards-home" target="_blank"&gt;Open Source Awards 2011&lt;/a&gt; contest. This is a contest that aims to encourage, support, recognize and reward Open Source projects.&lt;/p&gt;
+&lt;p&gt;This contest has been running since 2006.&lt;/p&gt;
+&lt;p&gt;The nominations started the first of August and finished on the 9th of September. The finalists of each category are available on the website. &lt;/p&gt;
+&lt;p&gt;You can vote for your favorite open source project in each of these categories:&lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;ul&gt;
+    &lt;li&gt;Open Source CMS&lt;/li&gt;
+    &lt;li&gt;Open Source Mobile Toolkits and Libraries&lt;/li&gt;
+    &lt;li&gt;Most Promising Open Source project&lt;/li&gt;
+    &lt;li&gt;Open Source Business Applications&lt;/li&gt;
+    &lt;li&gt;Open Source JavaScript Libraries&lt;/li&gt;
+    &lt;li&gt;Open Source Multimedia Software&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;The winner of each category will win 2500$ !&lt;/p&gt;
+&lt;p&gt;Morevoer, if you vote for your favorite project, you will be entered into a prize draw to win a Kindle!&lt;/p&gt;
+&lt;p&gt;The votes are open, you can vote now &lt;a href="http://www.packtpub.com/open-source-awards-home/voting-stage" title="Vote for your project"&gt;on this page&lt;/a&gt;. &lt;/p&gt;
+&lt;p&gt;You can have more information about the awards &lt;a title="Information about the Awards" href="http://www.packtpub.com/blog/2011-open-source-awards-announcement" target="_blank"&gt;here&lt;/a&gt;.&lt;/p&gt;&lt;/div&gt;</description><category>Others</category><category>Promotion</category><category>Web</category><guid>http://www.baptiste-wicht.com/posts/2011/09/packt-open-source-awards-2011.html</guid><pubDate>Fri, 23 Sep 2011 07:51:45 GMT</pubDate></item></channel></rss>

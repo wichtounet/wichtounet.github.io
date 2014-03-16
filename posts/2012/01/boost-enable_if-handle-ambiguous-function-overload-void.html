@@ -1,0 +1,198 @@
+<!DOCTYPE html><html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Baptiste Wicht">
+    <title>Use Boost enable_if to handle ambiguous function overload return types | @Blog("Baptiste Wicht")</title>
+    
+            <link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
+      <link rel="canonical" href="http://www.baptiste-wicht.com/posts/2012/01/boost-enable_if-handle-ambiguous-function-overload-void.html">
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js" type="text/javascript"></script>
+    <![endif]-->
+            <link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
+
+    
+
+
+
+
+
+    
+</head>
+<body>
+<!-- Menubar -->
+
+<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    <div class="container-fluid"><!-- This keeps the margins nice -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="http://www.baptiste-wicht.com/">@Blog("Baptiste Wicht")</a>
+        </div><!-- /.navbar-header -->
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+            <ul class="nav navbar-nav">
+                
+                <li><a href="../../../archive.html">Archives</a>
+                </li><li><a href="../../../categories/index.html">Tags</a>
+                </li><li><a href="../../../rss.xml">RSS</a>
+
+            </li></ul>
+
+            <ul class="nav navbar-nav navbar-right">
+                
+                
+                    
+    <li>
+    <a href="boost-enable_if-handle-ambiguous-function-overload-void.wp" id="sourcelink">Source</a>
+    </li>
+
+            </ul>
+        </div><!-- /.navbar-collapse -->
+    </div><!-- /.container-fluid -->
+</nav>
+
+<!-- End of Menubar -->
+
+<div class="container">
+    <div class="body-content">
+        <!--Body content-->
+        <div class="row">
+            
+    <article class="postbox post-text">
+    <div class="h-entry" itemscope="itemscope" itemtype="http://schema.org/Article">
+    
+    <h1 class="p-name" itemprop="headline name">Use Boost enable_if to handle ambiguous function overload return types</h1>
+
+    <hr>
+    <small>
+        Posted: <time class="published dt-published" datetime="2012-01-13T08:51:25+00:00" itemprop="datePublished">2012-01-13 08:51</time>
+        
+
+        
+          |  
+        More posts about 
+    <span itemprop="keywords">
+        <a class="tag p-category" href="../../../categories/boost.html"><span class="badge badge-info">Boost</span></a>
+        <a class="tag p-category" href="../../../categories/c.html"><span class="badge badge-info">C++</span></a>
+        <a class="tag p-category" href="../../../categories/c.html"><span class="badge badge-info">C++</span></a>
+        <a class="tag p-category" href="../../../categories/templates.html"><span class="badge badge-info">templates</span></a>
+    </span>
+
+
+    </small>
+    <hr>
+    <div class="e-content" itemprop="articleBody text">
+    <div><p></p><p>The title is not really clear but I didn't found a better one. The example will be clearer (I hope). In EDDI, I had this little function : </p>
+<p>[cpp]template&lt;typename Visitor, typename Visitable&gt;</p>
+<p>void visit(Visitor&amp; visitor, Visitable&amp; visitable){
+    visitor(visitable);
+}[/cpp]</p>
+<p>For the record, this function is only invoking a specific operator of a visitor. The problem was that I wanted this function to handle also non-void visitors. The visitor in question has a <strong>result_type</strong> typedef indicating the return type of the visit. The naive version cannot work : </p>
+<p>[cpp]template&lt;typename Visitor, typename Visitable&gt;</p>
+<p>typename Visitor::result_type visit(Visitor&amp; visitor, Visitable&amp; visitable){
+    return visitor(visitable);
+}</p>
+<p>template&lt;typename Visitor, typename Visitable&gt;</p>
+<p>void visit(Visitor&amp; visitor, Visitable&amp; visitable){
+    visitor(visitable);
+}[/cpp]</p>
+<p>The problem here is that there are ambiguities for overload resolution because the return type is not considered in this resolution. What we want is that the overload resolution does not consider the function returning something (the first one). And that's here that Boost can help, specifically the <strong>Boost enable_if</strong> library. This function allows to enable of disable some function template of function class based on a boolean condition. In our case, we want to disable the function is the return type is void. So, we will use the <strong>boost::disable_if</strong> template to disable it. This template has to parameter B and T. When B is true, the template is evaluated to T, otherwise there is an error used for SFINAE (Substitution failure is not an error) To test if the return type is void, we will use Boost type_traits, specifically the <strong>boost::is_void</strong> template. </p>
+<p>Here is the version using disable_if : </p>
+<p>[cpp]template&lt;typename Visitor, typename Visitable&gt;</p>
+<p>typename boost::disable_if&lt;boost::is_void&lt;typename Visitor::result_type&gt;, typename Visitor::result_type&gt;::type</p>
+<p>visit(Visitor&amp; visitor, Visitable&amp; visitable){
+    return visitor(visitable);
+}</p>
+<p>template&lt;typename Visitor, typename Visitable&gt;</p>
+<p>void visit(Visitor&amp; visitor, Visitable&amp; visitable){
+    visitor(visitable);
+}[/cpp]</p>
+<p>With that, you can call the visitor with a void return type. However, it's not enough. Indeed, the call is still ambiguous when the return type is not void. So we have to enable the second function only if the return type is void : </p>
+<p>[cpp]template&lt;typename Visitor, typename Visitable&gt;</p>
+<p>typename boost::disable_if&lt;boost::is_void&lt;typename Visitor::result_type&gt;, typename Visitor::result_type&gt;::type</p>
+<p>visit(Visitor&amp; visitor, Visitable&amp; visitable){
+    return visitor(visitable);
+}</p>
+<p>template&lt;typename Visitor, typename Visitable&gt;</p>
+<p>typename boost::enable_if&lt;boost::is_void&lt;typename Visitor::result_type&gt;, typename Visitor::result_type&gt;::type</p>
+<p>visit(Visitor&amp; visitor, Visitable&amp; visitable){
+    visitor(visitable);
+}[/cpp]</p>
+<p>With that, you can call the function with both visitors and the good function will be chosen depending on the result type of the visitor. </p>
+<p>I hope this example of using Boost enable_if will help you when you face similar problems. </p></div>
+    </div>
+    </div>
+    
+        <ul class="pager">
+            <li class="previous">
+                <a href="compilers-principles-techniques-tools.html" rel="prev">← Previous post</a>
+            </li>
+            <li class="next">
+                <a href="install-insight-debugger-linux-mint-ubuntu.html" rel="next">Next post →</a>
+            </li>
+        </ul>
+
+        
+        
+        <div id="disqus_thread"></div>
+        <script>
+        var disqus_shortname ="nikolademo",
+            disqus_url="http://www.baptiste-wicht.com/posts/2012/01/boost-enable_if-handle-ambiguous-function-overload-void.html",
+        disqus_title="Use Boost enable_if to handle ambiguous function overload return types",
+        disqus_identifier="cache/posts/2012/01/boost-enable_if-handle-ambiguous-function-overload-void.html",
+        disqus_config = function () {
+            this.language = "en";
+        };
+        (function() {
+            var dsq = document.createElement('script'); dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink" rel="nofollow">Comments powered by <span class="logo-disqus">Disqus</span></a>
+
+
+    
+
+    </article>
+
+        </div>
+        <!--End of body content-->
+
+        <footer>
+            Contents © 2014         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         
+        </footer>
+    </div>
+</div>
+
+
+            <script src="../../../assets/js/all-nocdn.js" type="text/javascript"></script>
+
+
+    
+<!-- Social buttons -->
+<div id="addthisbox" class="addthis_toolbox addthis_peekaboo_style addthis_default_style addthis_label_style addthis_32x32_style">
+<a class="addthis_button_more">Share</a>
+<ul><li><a class="addthis_button_facebook"></a>
+</li><li><a class="addthis_button_google_plusone_share"></a>
+</li><li><a class="addthis_button_linkedin"></a>
+</li><li><a class="addthis_button_twitter"></a>
+</li></ul>
+</div>
+<script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-4f7088a56bb93798"></script>
+<!-- End of social buttons -->
+
+
+    <script type="text/javascript">jQuery("a.image-reference").colorbox({rel:"gal",maxWidth:"100%",maxHeight:"100%",scalePhotos:true});</script>
+    
+
+</body>
+</html>

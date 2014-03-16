@@ -1,0 +1,194 @@
+<!DOCTYPE html><html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Baptiste Wicht">
+    <title>eddic 1.2.2 - Performances, improved optimizations and additions to standard library | @Blog("Baptiste Wicht")</title>
+    
+            <link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
+      <link rel="canonical" href="http://www.baptiste-wicht.com/posts/2013/01/eddic-1-2-2-performances-optimization-library.html">
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js" type="text/javascript"></script>
+    <![endif]-->
+            <link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
+
+    
+
+
+
+
+
+    
+</head>
+<body>
+<!-- Menubar -->
+
+<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    <div class="container-fluid"><!-- This keeps the margins nice -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="http://www.baptiste-wicht.com/">@Blog("Baptiste Wicht")</a>
+        </div><!-- /.navbar-header -->
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+            <ul class="nav navbar-nav">
+                
+                <li><a href="../../../archive.html">Archives</a>
+                </li><li><a href="../../../categories/index.html">Tags</a>
+                </li><li><a href="../../../rss.xml">RSS</a>
+
+            </li></ul>
+
+            <ul class="nav navbar-nav navbar-right">
+                
+                
+                    
+    <li>
+    <a href="eddic-1-2-2-performances-optimization-library.wp" id="sourcelink">Source</a>
+    </li>
+
+            </ul>
+        </div><!-- /.navbar-collapse -->
+    </div><!-- /.container-fluid -->
+</nav>
+
+<!-- End of Menubar -->
+
+<div class="container">
+    <div class="body-content">
+        <!--Body content-->
+        <div class="row">
+            
+    <article class="postbox post-text">
+    <div class="h-entry" itemscope="itemscope" itemtype="http://schema.org/Article">
+    
+    <h1 class="p-name" itemprop="headline name">eddic 1.2.2 - Performances, improved optimizations and additions to standard library</h1>
+
+    <hr>
+    <small>
+        Posted: <time class="published dt-published" datetime="2013-01-26T16:35:42+00:00" itemprop="datePublished">2013-01-26 16:35</time>
+        
+
+        
+          |  
+        More posts about 
+    <span itemprop="keywords">
+        <a class="tag p-category" href="../../../categories/c11.html"><span class="badge badge-info">C++11</span></a>
+        <a class="tag p-category" href="../../../categories/eddi.html"><span class="badge badge-info">EDDI</span></a>
+        <a class="tag p-category" href="../../../categories/eddi.html"><span class="badge badge-info">EDDI</span></a>
+        <a class="tag p-category" href="../../../categories/releases.html"><span class="badge badge-info">Releases</span></a>
+    </span>
+
+
+    </small>
+    <hr>
+    <div class="e-content" itemprop="articleBody text">
+    <div><p></p><p>These last weeks, I had more work than expected with my Master thesis so it took me longer to finish this new version of eddic. Moreover, I included more stuff than I though in this version. Anyway, I'm happy to announce the version 1.2.2 of eddic.</p>
+<p>It is a minor version regarding the language itself. On the other, there are a lot of changes in the compiler itself.</p>
+<p>For the language:</p>
+<p></p><ol>
+    <li>Structures are now correclty copy constructed when passed by value</li>
+    <li>When the same header is included several times accross the program, it is not parsed again</li>
+    <li>The vector structure has now functions to insert and remove elements in arbitrary positions</li>
+    <li>The functions to print bools, floats and integers are now written in EDDI directly. Only the functions to print chars and raw string are now written in assembly</li>
+</ol>
+<p>I worked on improving the performances by improving the constant propagation pass that runs less times now and by tuning a bit the data-flow framework, avoiding virtual calls.</p>
+<p>Another improvement is that all the mtac::Statement types have been merged in mtac::Quadruple, this removes one level of indirection and simplifies several passes. Moreover, there are now directly stored inside a vector and not allocated via shared_ptr. This removes another level of indirection.</p>
+<p>Put together, these two optimizations improved the performances of the compiler by about 15%. On the other hand, now that printF and printI are written in EDDI, it takes much longer to compile. I will work on that for the next version too. One way to improve the performances will be to tune the ordering of passes and also to tune the passes themselves so that they do more work at once. I will also try to merge constant propagation and offset constant propagation together. They perform very similar work.</p>
+<p>There are also several improvements in the optimization engine:</p>
+<ul>
+    <li><span style="line-height: 13px;">The loop analysis has been fixed to handle loops bigger than one basic block. There was a problem in my implement of <strong>Lengauer and Tarjan</strong> making that dominators were not computed. </span></li>
+    <li>The optimization engine now create a call graph of the program. This call graph is used to remove unused functions that are called but not reachable from the main function.</li>
+    <li>A new analysis pass has been added: pure_analysis. This pass test if a function is pure (no write to pointers or global variables) and thus avoid creating a basic block for it</li>
+    <li>The L<strong>oop Invariant Code Motion algorithm</strong> has been improved to handle more invariants</li>
+    <li>The <strong>Common Subexpression Elimination</strong> algorithm has been improved to handle more expression</li>
+    <li>The <strong>Induction Variables analysis</strong> has been reviewed and several bugs have been corrected. It is now a bit complicated.</li>
+</ul>
+
+<p>A big bug has been fixed in the handling of the MEMSET LTAC instruction. This will be completely reviewed in the next version (See Future Work).</p>
+<p>Some analysis starts to become quite complicated. I'm thinking of using SSA in MTAC in order to simplify some of the passes and to easily compute ud-chains. Another thing that I'm thinking is to add a powerful and complete alias analysis that would really improve the efficiency of some passes (offset constant propagation for instance) by making them less conservative.</p>
+<p>I also have removed some memory leaks (will try to remove all of them in the next version). I added a new optimization level: O3. This level enables loop unrolling and complete loop peeling.</p>
+<h4>Future Work</h4>
+
+<p>The next version of the EDDI compiler (eddic) will be the version 1.2.3. The inliner will be improved to work directly in the call graph in postorder. That should produce better code. I will also try to improve the inlining heuristics. A first basic version of loop unswitching will be added as well. I will add a small local constant propagation pass for globals. I will also continue to work on the performances of the passes to avoid repeating them too much. MEMSET will be completely reviewed. That should produce smaller and faster code. Until now, the sizes of the types bool and chars were the same as int. They will be optimized to take only 1 byte.</p>
+<p>I will also continue the improvements of the data structures by merging all ltac::Statement into ltac::Instruction and storing them directly.</p>
+<p>And there will probably be some bug fixing as well.</p>
+<h4>Download</h4>
+
+<p>You can find the EDDI Compiler sources on the Github repository: <a title="Github repository of eddic" href="https://github.com/wichtounet/eddic">https://github.com/wichtounet/eddic</a></p>
+<p>The version is available in the <em>v1.2.2</em> tag available in the GitHub or directly in the <em>master</em> branch.</p></div>
+    </div>
+    </div>
+    
+        <ul class="pager">
+            <li class="previous">
+                <a href="../../2012/12/eddic-1-2-1-string-concatenation-and-vector.html" rel="prev">← Previous post</a>
+            </li>
+            <li class="next">
+                <a href="../03/eddic-1-2-3-better-data-flow-analysis.html" rel="next">Next post →</a>
+            </li>
+        </ul>
+
+        
+        
+        <div id="disqus_thread"></div>
+        <script>
+        var disqus_shortname ="nikolademo",
+            disqus_url="http://www.baptiste-wicht.com/posts/2013/01/eddic-1-2-2-performances-optimization-library.html",
+        disqus_title="eddic 1.2.2 - Performances, improved optimizations and additions to standard library",
+        disqus_identifier="cache/posts/2013/01/eddic-1-2-2-performances-optimization-library.html",
+        disqus_config = function () {
+            this.language = "en";
+        };
+        (function() {
+            var dsq = document.createElement('script'); dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink" rel="nofollow">Comments powered by <span class="logo-disqus">Disqus</span></a>
+
+
+    
+
+    </article>
+
+        </div>
+        <!--End of body content-->
+
+        <footer>
+            Contents © 2014         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         
+        </footer>
+    </div>
+</div>
+
+
+            <script src="../../../assets/js/all-nocdn.js" type="text/javascript"></script>
+
+
+    
+<!-- Social buttons -->
+<div id="addthisbox" class="addthis_toolbox addthis_peekaboo_style addthis_default_style addthis_label_style addthis_32x32_style">
+<a class="addthis_button_more">Share</a>
+<ul><li><a class="addthis_button_facebook"></a>
+</li><li><a class="addthis_button_google_plusone_share"></a>
+</li><li><a class="addthis_button_linkedin"></a>
+</li><li><a class="addthis_button_twitter"></a>
+</li></ul>
+</div>
+<script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-4f7088a56bb93798"></script>
+<!-- End of social buttons -->
+
+
+    <script type="text/javascript">jQuery("a.image-reference").colorbox({rel:"gal",maxWidth:"100%",maxHeight:"100%",scalePhotos:true});</script>
+    
+
+</body>
+</html>

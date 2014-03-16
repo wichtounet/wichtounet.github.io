@@ -1,0 +1,261 @@
+<!DOCTYPE html><html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Baptiste Wicht">
+    <title>Dynamic memory allocation in Intel Assembly on Linux | @Blog("Baptiste Wicht")</title>
+    
+            <link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
+      <link rel="canonical" href="http://www.baptiste-wicht.com/posts/2011/11/dynamic-memory-allocation-intel-assembly-linux.html">
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js" type="text/javascript"></script>
+    <![endif]-->
+            <link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
+
+    
+
+
+
+
+
+    
+</head>
+<body>
+<!-- Menubar -->
+
+<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    <div class="container-fluid"><!-- This keeps the margins nice -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="http://www.baptiste-wicht.com/">@Blog("Baptiste Wicht")</a>
+        </div><!-- /.navbar-header -->
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+            <ul class="nav navbar-nav">
+                
+                <li><a href="../../../archive.html">Archives</a>
+                </li><li><a href="../../../categories/index.html">Tags</a>
+                </li><li><a href="../../../rss.xml">RSS</a>
+
+            </li></ul>
+
+            <ul class="nav navbar-nav navbar-right">
+                
+                
+                    
+    <li>
+    <a href="dynamic-memory-allocation-intel-assembly-linux.wp" id="sourcelink">Source</a>
+    </li>
+
+            </ul>
+        </div><!-- /.navbar-collapse -->
+    </div><!-- /.container-fluid -->
+</nav>
+
+<!-- End of Menubar -->
+
+<div class="container">
+    <div class="body-content">
+        <!--Body content-->
+        <div class="row">
+            
+    <article class="postbox post-text">
+    <div class="h-entry" itemscope="itemscope" itemtype="http://schema.org/Article">
+    
+    <h1 class="p-name" itemprop="headline name">Dynamic memory allocation in Intel Assembly on Linux</h1>
+
+    <hr>
+    <small>
+        Posted: <time class="published dt-published" datetime="2011-11-29T09:16:26+00:00" itemprop="datePublished">2011-11-29 09:16</time>
+        
+
+        
+          |  
+        More posts about 
+    <span itemprop="keywords">
+        <a class="tag p-category" href="../../../categories/assembly.html"><span class="badge badge-info">Assembly</span></a>
+        <a class="tag p-category" href="../../../categories/assembly.html"><span class="badge badge-info">Assembly</span></a>
+        <a class="tag p-category" href="../../../categories/eddi.html"><span class="badge badge-info">EDDI</span></a>
+        <a class="tag p-category" href="../../../categories/intel.html"><span class="badge badge-info">Intel</span></a>
+        <a class="tag p-category" href="../../../categories/linux.html"><span class="badge badge-info">Linux</span></a>
+    </span>
+
+
+    </small>
+    <hr>
+    <div class="e-content" itemprop="articleBody text">
+    <div><p></p><p>For the version 0.6.0 of the EDDI Compiler, I have written a simple dynamic memory allocation function in assembly. I did that to avoid using malloc in my assembly code. As this is not an easy subject, this article will explain the main parts of writing this function.</p>
+<p>As the EDDI Compiler creates program for Linux platform, this article will focus on writing a little memory allocator for Linux in Intel Assembly.</p>
+<p>In this article I will follow the <em>AT&amp;T notation</em>.</p>
+<p></p><h4>Specifications</h4>
+<p>The function works like malloc but is simpler. The specifications are the following ones:</p>
+<ul>
+    <li>We call the function with one argument: the dynamic memory size we need</li>
+    <li>The function returns the start address of the allocated memory in the <strong>%eax</strong> register</li>
+    <li>There is no need to deallocate the allocated memory</li>
+    <li>The size that we ask will generally small and always less than 16384 octets</li>
+    <li>Having some gaps in the memory is not a problem for now</li>
+</ul>
+
+<p>So as you can see there are several limitations to this memory allocator. These limitations are the one I had for EDDI, so I'll follow them in this article.</p>
+<h4>Dynamic memory allocation</h4>
+
+<p>In Linux, there are two ways for performing dynamic memory allocation:</p>
+<ul>
+    <li><strong>brk</strong>: Increment the size of the data segment after the end of the program. This memory is directly after the program and is always contiguous. It's the easiest way for allocating memory. This technique is not perfect for large blocks of data.</li>
+    <li><strong>mmap</strong>: Creates a new memory mapping in the virtual address space. The kernel gives you memory in virtually every place of the memory.</li>
+</ul>
+
+<p>In our case, as we need only small blocks, we will use <strong>brk</strong> to dynamically allocate memory.</p>
+<p>We can call these procedures using system calls. In assembly, you can use system calls with interruptions (0x80).</p>
+<h4>Implementation</h4>
+
+<p>We need two variables for this function. One to keep track of the remaining size and another one to keep track of the current address of the allocated memory.</p>
+<p>[assembly].data</p>
+<p>.size VIeddi_remaining, 4</p>
+<p>VIeddi_remaining:</p>
+<p>.long 0</p>
+<p>.size VIeddi_current, 4</p>
+<p>VIeddi_current:</p>
+<p>.long 0[/assembly]</p>
+<p>Both variables are initialized to 0.</p>
+<p>And here is the function I've developed :</p>
+<p>[assembly]eddi_alloc:</p>
+<p>pushl %ebp</p>
+<p>movl %esp, %ebp</p>
+<p>movl 8(%ebp), %ecx</p>
+<p>movl VIeddi_remaining, %ebx</p>
+<p>cmpl %ebx, %ecx</p>
+<p>jle alloc_normal</p>
+<p>movl $45, %eax</p>
+<p>xorl %ebx, %ebx</p>
+<p>int  $0x80</p>
+<p>movl %eax, %esi</p>
+<p>movl %eax, %ebx</p>
+<p>addl $16384, %ebx</p>
+<p>movl $45, %eax</p>
+<p>int  $0x80</p>
+<p>movl %esi, %eax</p>
+<p>movl $16384, VIeddi_remaining</p>
+<p>movl %esi, VIeddi_current</p>
+<p>alloc_normal:</p>
+<p>movl VIeddi_current, %eax</p>
+<p>movl VIeddi_current, %ebx</p>
+<p>addl %ecx, %ebx</p>
+<p>movl %ebx, VIeddi_current</p>
+<p>movl VIeddi_remaining, %ebx</p>
+<p>subl %ecx, %ebx</p>
+<p>movl %ebx, VIeddi_remaining</p>
+<p>leave</p>
+<p>ret[/assembly]</p>
+<p>I will describe now each part of the alloc function.</p>
+<p>[assembly]movl 8(%ebp), %ecx</p>
+<p>movl VIeddi_remaining, %ebx</p>
+<p>cmpl %ebx, %ecx</p>
+<p>jle alloc_normal[/assembly]</p>
+<p>In this part we test if there is enough remaining size for the dynamic memory allocation request. It's equivalent to <em>if(remaining &gt;= size)</em>. If there is enough size, we jump to the normal allocation part :</p>
+<p>[assembly]alloc_normal:</p>
+<p>movl VIeddi_current, %eax</p>
+<p>movl VIeddi_current, %ebx</p>
+<p>addl %ecx, %ebx</p>
+<p>movl %ebx, VIeddi_current</p>
+<p>movl VIeddi_remaining, %ebx</p>
+<p>subl %ecx, %ebx</p>
+<p>movl %ebx, VIeddi_remaining[/assembly]</p>
+<p>First, we move the current address of memory into the <strong>%eax</strong> register for the return value. Then we add the size of the new allocated block to the current address. Finally we remove the size of the new allocated block from the remaining size. After that, we can leave the function.</p>
+<p>The most interesting part is what we do when we have to allocate more memory :</p>
+<p>[assembly]movl $45, %eax</p>
+<p>xorl %ebx, %ebx</p>
+<p>int  $0x80</p>
+<p>movl %eax, %esi</p>
+<p>movl %eax, %ebx</p>
+<p>addl $16384, %ebx</p>
+<p>movl $45, %eax</p>
+<p>int  $0x80</p>
+<p>movl $16384, VIeddi_remaining</p>
+<p>movl %esi, VIeddi_current[/assembly]</p>
+<p>We start by doing an interruption to execute a system call. The <strong>45</strong> in the <strong>%eax</strong> register indicates a <strong>sys_brk</strong> call. The 0 in the <strong>%ebx</strong> register, indicates that we want the current position of brk space. We save this current position into the <strong>%esi</strong> register. Then we add 16384 bits (4K octets) to this address. We call again the <strong>sys_brk</strong> routine to set the address of the brk space to the calculated address. This is the way to dynamically allocates 4K of memory. Finally, we add 4K to the remaining size in octets and we put the current address (before the add) as the current address.</p>
+<h4>Possible improvements</h4>
+
+<p>We should make some optimization if this function has to be invoked frequently. The first interruption (call to sys_brk) has only to be done once. The very first time we need to get the start address. Then, we can use the current address as the base address when we do the new allocation.</p>
+<p>Another improvement is to avoid having gaps between the used blocks. For that, we can avoid setting the current address directly to the newly allocated address but just add 4K to the remaining size. The blocks will overlap 2 allocated blocks.</p>
+<p>We could also check that the value returned by the <strong>sys_brk</strong> is valid. On error, the procedure can return -1.</p>
+<h4>Conclusion</h4>
+
+<p>In this post, we developed a basic dynamic memory allocation function in Intel assembly on the Linux platform. I hope that this information can helps some of you.</p>
+<p>Don't hesitate if you have a question or a comment on my implementation.</p></div>
+    </div>
+    </div>
+    
+        <ul class="pager">
+            <li class="previous">
+                <a href="eddi-compiler-0-6-1.html" rel="prev">← Previous post</a>
+            </li>
+            <li class="next">
+                <a href="cpp-templates-complete-guide-book.html" rel="next">Next post →</a>
+            </li>
+        </ul>
+
+        
+        
+        <div id="disqus_thread"></div>
+        <script>
+        var disqus_shortname ="nikolademo",
+            disqus_url="http://www.baptiste-wicht.com/posts/2011/11/dynamic-memory-allocation-intel-assembly-linux.html",
+        disqus_title="Dynamic memory allocation in Intel Assembly on Linux",
+        disqus_identifier="cache/posts/2011/11/dynamic-memory-allocation-intel-assembly-linux.html",
+        disqus_config = function () {
+            this.language = "en";
+        };
+        (function() {
+            var dsq = document.createElement('script'); dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink" rel="nofollow">Comments powered by <span class="logo-disqus">Disqus</span></a>
+
+
+    
+
+    </article>
+
+        </div>
+        <!--End of body content-->
+
+        <footer>
+            Contents © 2014         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         
+        </footer>
+    </div>
+</div>
+
+
+            <script src="../../../assets/js/all-nocdn.js" type="text/javascript"></script>
+
+
+    
+<!-- Social buttons -->
+<div id="addthisbox" class="addthis_toolbox addthis_peekaboo_style addthis_default_style addthis_label_style addthis_32x32_style">
+<a class="addthis_button_more">Share</a>
+<ul><li><a class="addthis_button_facebook"></a>
+</li><li><a class="addthis_button_google_plusone_share"></a>
+</li><li><a class="addthis_button_linkedin"></a>
+</li><li><a class="addthis_button_twitter"></a>
+</li></ul>
+</div>
+<script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-4f7088a56bb93798"></script>
+<!-- End of social buttons -->
+
+
+    <script type="text/javascript">jQuery("a.image-reference").colorbox({rel:"gal",maxWidth:"100%",maxHeight:"100%",scalePhotos:true});</script>
+    
+
+</body>
+</html>

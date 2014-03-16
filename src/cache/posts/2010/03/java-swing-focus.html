@@ -1,0 +1,278 @@
+<p><html><body><h3>1. Introduction</h3>
+The focus is the "selected" state of a component. The component who has the focus is the active component. It's possible to ask focus fror a specific component but normally this is perfectly managed by Swing.</p>
+<p>With this tutorial, you will learn how to ask focus for a specific component and how to define an order of focus. We will also learn a bit about the validation of input fields, the focus listen and the utility of KeyboardFocusManager.</p>
+<h3>2. Ask focus</h3>
+
+<p>Normally, the focus is managed by a component on the mouse click or when we come to a component with keyboard. A component who is focused is often visually modified, with a special border or an other background color.</p>
+<p>To manage the focus of the windows, it's a little bit different and depends of the operating system, but nothing can give you the guarantee to have focus. On Windows, you can obtain focus on a window using toFront but nothing is guraranteed.</p>
+<p>For the components, you can use the requestFocusInWindow() method :</p>
+<p>[java]component.requestFocusInWindow();[/java]</p>
+<p>To obtain the focus, you have to ask focus after the add of the component but before the display of the window.</p>
+<p>Before Java 1.4, you needed to use the requestFocus() method, but now it is not a good idea to use it, because it give also focus to the window of the component, and that's not always possible.</p>
+<!--nextpage-->
+
+<h3>3. Navigation keys</h3>
+
+<p>By default, we navigate in an application with the Tab and Shift+Tab keys. But we can edit these keys.</p>
+<p>For that, we have to get the keys with getFocusTraversalKeys(int id) and add the new key. By example, here is how to add the Enter key for the forward focus navigation :</p>
+<p>[java]Set keys = textField.getFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS);</p>
+<p>Set newKeys = new HashSet(keys);</p>
+<p>newKeys.add(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0));</p>
+<p>textField.setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, newKeys);[/java]</p>
+<p>If you want to add a key for the backward navigation, you need to use BACKWARD_TRAVERSAL_KEYS instead of FORWARD_TRAVERSAL_KEYS.</p>
+<h3>4. Validate an input</h3>
+
+<p>You often need to validate to validate the inputs of the user in a field. The best way to do that is to test the content directly after the focus lost. Of course, there is still Formatter to do that, but it's possible that you must use the validation on a custom component.</p>
+<p>To do that, we'lll use InputVerifier. This InputVerifier enable to get the value of a field when this field lost focus. If the value is not valid, the InputVerifier can execute a particular action by example set the old value in the field insted of the new invalid value or give focus again to the field.</p>
+<p>To use it, we've to create a class extending InputVerifier and use the setInputVerifier() method on the component to test :</p>
+<p>[java]CustomInputVerifier verifier = new CustomInputVerifier();</p>
+<p>...</p>
+<p>monComposant.setInputVerifier(verifier)[/java]</p>
+<p>The inputVerifier class has only two methods :</p>
+<ul>
+    <li>verifiy(JComponent input) : Indicate if the value of the component is correct. It's must be overriden.</li>
+    <li>shouldYieldFocus(JComponent input) : This method idnicate if the component can loose focus or not. If it's return true, the focus change normally to the next component else the focus remains in the</li>
+</ul>
+
+<p>current component while the input is invalid. By default, it's only return the value of verify().</p>
+<p>For lisibility reasons, it's better to only implement the test of the input value in the verify method and add the other functionalities by example a beep it it's invalid in the shouldYieldFocus method.</p>
+<p>We will see a simple example of InputVerifier. This verifier verify that the value is a number greater than zero but lower than x. If the value is not valid, we simple emit a beep.</p>
+<p>[java]import java.awt.Toolkit;</p>
+<p>import javax.swing.InputVerifier;</p>
+<p>import javax.swing.JComponent;</p>
+<p>import javax.swing.JTextField;</p>
+<p>public class NumberInputVerifier extends InputVerifier {
+    private int max = 0;</p>
+<div class="code"><pre><span class="n">public</span> <span class="nf">NumberInputVerifier</span><span class="p">(){</span>
+    <span class="n">this</span><span class="p">(</span><span class="mi">100</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="n">public</span> <span class="nf">NumberInputVerifier</span><span class="p">(</span><span class="kt">int</span> <span class="n">maximum</span><span class="p">){</span>
+    <span class="n">super</span><span class="p">();</span>
+
+    <span class="n">this</span><span class="p">.</span><span class="n">max</span> <span class="o">=</span> <span class="n">maximum</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>public boolean shouldYieldFocus(JComponent input) {
+        boolean valid = verify(input);</p>
+<div class="code"><pre>    <span class="k">if</span> <span class="p">(</span><span class="n">valid</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="n">Toolkit</span><span class="p">.</span><span class="n">getDefaultToolkit</span><span class="p">().</span><span class="n">beep</span><span class="p">();</span>
+        <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="n">public</span> <span class="n">boolean</span> <span class="n">verify</span><span class="p">(</span><span class="n">JComponent</span> <span class="n">input</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">JTextField</span> <span class="n">field</span> <span class="o">=</span> <span class="p">(</span><span class="n">JTextField</span><span class="p">)</span><span class="n">input</span><span class="p">;</span>
+
+    <span class="n">String</span> <span class="n">value</span> <span class="o">=</span> <span class="n">field</span><span class="p">.</span><span class="n">getText</span><span class="p">();</span>
+    <span class="kt">int</span> <span class="n">intValue</span><span class="p">;</span>
+
+    <span class="n">try</span> <span class="p">{</span>
+        <span class="n">intValue</span> <span class="o">=</span> <span class="n">Integer</span><span class="p">.</span><span class="n">parseInt</span><span class="p">(</span><span class="n">value</span><span class="p">);</span>
+    <span class="p">}</span> <span class="n">catch</span> <span class="p">(</span><span class="n">NumberFormatException</span> <span class="n">pe</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span><span class="p">(</span><span class="n">intValue</span> <span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">lt</span><span class="p">;</span> <span class="mi">0</span> <span class="o">||</span> <span class="n">intValue</span> <span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">gt</span><span class="p">;</span> <span class="n">max</span><span class="p">){</span>
+        <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>}[/java]</p>
+<p>You can of course make a lot of things with this class. You can use it to change the format of a number adding " or , or modify everithing else in the input component.</p>
+<p>You can also use the same InputVerifier for several components. You just have to test the concerned component with the parameter of the verify method. But don't make too complex InputVerifier.</p>
+<!--nextpage-->
+
+<h3>5. Listen the focus</h3>
+
+<p>A first way to know which component has the focus is to use a focus listener. You just have to create a class implementing FocusListener and add this listerner to every components you want to manage. Then, you just have to make things in the methods of the listener : focusGained and focusLost. This way is quite simple, but if you have a lot of components, it will be really heavy to implement.</p>
+<p>An other way is to use the KeyboardFocusManager class. You just have to add a PropertyChangeListener on this class and verify the property focusOwner. You can also listener some other things : the focus of the windows, the changes on the focus order, ... You can find here a complete liste of properties. This times, you'll directly see all the focus changes for all the components in your application. If you want to restrain the set of components, you have to use the first way with FocusListener.</p>
+<p>[java]Here is an example with KeyboardFocusManager :</p>
+<p>KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();</p>
+<p>focusManager.addPropertyChangeListener(
+    new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent e) {
+            String properties = e.getPropertyName();
+            if (("focusOwner".equals(properties)) &amp;amp;&amp;amp; (e.getNewValue() != null)) {
+                Component component = (Component)e.getNewValue();
+                String name = component.getName();</p>
+<div class="code"><pre>            <span class="n">System</span><span class="p">.</span><span class="n">out</span><span class="p">.</span><span class="n">println</span><span class="p">(</span><span class="n">name</span> <span class="o">+</span> <span class="s">&quot; take focus&quot;</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>}[/java]</p>
+<h3>6. Manage the order of focus</h3>
+
+<p>Swing has a correct focus order by default and normally it's enough. But you can change this order, by example to navigate in a complex form. By default, Swing determinate the focus order using the order of adding the components to the content pane.</p>
+<p>Before Java 1.4, you had to use setNextFocusableComponent() on every component to specify the next component to have the focus. This method is now deprecated. We'll use the LayoutFocusTraversalPolicy class to define the focus order in a Swing application.</p>
+<p>For that, we have to create a new class extending FocusTraversalPolicy and define this set of methods :</p>
+<ul>
+    <li><strong>getComponentAfter</strong> : Indicate which component will have focus after the component in parameter.</li>
+    <li><strong>getComponentBefore</strong> : Indicate which component has the focus before the component in parameter.</li>
+    <li><strong>getDefaultComponent</strong> : Indicate which component is the default component of the container on which we've applied the policy. It's used when we swith to this focus cycle.</li>
+    <li><strong>getLastComponent</strong> : Indicate which component is the last of this continer. It's used when we swith to this focus cycle.</li>
+    <li><strong>getFirstComponent</strong> : Indicate which component is the first of this container. It's used when we swith to this focus cycle.</li>
+    <li><strong>getInitialComponent</strong> : Indicate which component must have the focus when the window is displayed.</li>
+</ul>
+
+<p>Here is a little example :</p>
+<p>[java]public class TestFocusTraversalPolicy extends FocusTraversalPolicy {
+    public Component getComponentAfter(Container focusCycleRoot, Component aComponent) {
+        if (aComponent.equals(component1)) {
+            return component2;
+        } else if (aComponent.equals(component2)) {
+            return component3;
+        } else if (aComponent.equals(component3)) {
+            return component4;
+        } else if (aComponent.equals(component4)) {
+            return component5;
+        } else if (aComponent.equals(component5)) {
+            return component1;
+        } </p>
+<div class="code"><pre>    <span class="k">return</span> <span class="n">component1</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="n">public</span> <span class="n">Component</span> <span class="n">getComponentBefore</span><span class="p">(</span><span class="n">Container</span> <span class="n">focusCycleRoot</span><span class="p">,</span> <span class="n">Component</span> <span class="n">aComponent</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">aComponent</span><span class="p">.</span><span class="n">equals</span><span class="p">(</span><span class="n">component1</span><span class="p">))</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="n">component5</span><span class="p">;</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">aComponent</span><span class="p">.</span><span class="n">equals</span><span class="p">(</span><span class="n">component2</span><span class="p">))</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="n">component1</span><span class="p">;</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">aComponent</span><span class="p">.</span><span class="n">equals</span><span class="p">(</span><span class="n">component3</span><span class="p">))</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="n">component2</span><span class="p">;</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">aComponent</span><span class="p">.</span><span class="n">equals</span><span class="p">(</span><span class="n">component4</span><span class="p">))</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="n">component3</span><span class="p">;</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">aComponent</span><span class="p">.</span><span class="n">equals</span><span class="p">(</span><span class="n">component5</span><span class="p">))</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="n">component4</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">component1</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="n">public</span> <span class="n">Component</span> <span class="n">getDefaultComponent</span><span class="p">(</span><span class="n">Container</span> <span class="n">focusCycleRoot</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">component1</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="n">public</span> <span class="n">Component</span> <span class="n">getLastComponent</span><span class="p">(</span><span class="n">Container</span> <span class="n">focusCycleRoot</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">component5</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="n">public</span> <span class="n">Component</span> <span class="n">getFirstComponent</span><span class="p">(</span><span class="n">Container</span> <span class="n">focusCycleRoot</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">component1</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>}[/java]</p>
+<p>The disadvantage of this technique is that the policy must know all the components. That why we often use an inner class to give it access to the member of the current class. Here is a simple example :</p>
+<p>[java]public class View {
+    private Component component1;
+    private Component component2;
+    private Component component3;
+    private Component component4;
+    private Component component5;</p>
+<div class="code"><pre><span class="n">class</span> <span class="n">TestFocusTraversalPolicy</span> <span class="n">extends</span> <span class="n">FocusTraversalPolicy</span> <span class="p">{</span>
+    <span class="c1">//Traversal policy methods</span>
+    <span class="p">}</span>
+</pre></div>
+
+
+<p>}[/java]</p>
+<p>You can also use an inner anonymous class, but with that kind of class, you cannot use it for several components.</p>
+<p>To apply this policy, you have to use the setFocusTraversalPolicy() method of the Container class :</p>
+<p>[java]TestFocusTraversalPolicy newPolicy = new TestFocusTraversalPolicy();</p>
+<p>myContainer.setFocusTraversalPolicy(newPo[/java]</p>
+<p>Of course you can define several strategies for several panels or the same policy for several panels.</p>
+<p>If you want to restore the default focus policy, you just have to call setFocusTraversalPolicy() with null as parameter.</p>
+<p>You can also edit the default FocusTraversalPolicy with one of yours with the setDefaultTraversalPolicy() method from the KeyboardFocusManager class.</p>
+<h4>6.1. Simplification</h4>
+
+<p>But it's not very easy to do that and that can quickly be heavy. So here is a simple class to manage the positions of all the components with an integer :</p>
+<p>[java]import java.awt.Component;</p>
+<p>import java.awt.Container;</p>
+<p>import java.awt.FocusTraversalPolicy;</p>
+<p>import java.util.HashMap;</p>
+<p>/<em><em>
+ * A focus traversal policy who manage the order of components in the focus cycle using a int.
+ * The first component of the cycle  has the position of 0 and all the others follows with an interval of 1.
+ * The last component must have the position (size() -1).
+ </em>
+ * @author Baptiste Wicht
+ </em>
+ */
+public class MapFocusTraversalPolicy extends FocusTraversalPolicy {
+    private HashMap components = new HashMap();
+    private HashMap positions = new HashMap();</p>
+<div class="code"><pre><span class="cm">/**</span>
+<span class="cm"> * Add the component to the order with the specfieid position.</span>
+<span class="cm"> *</span>
+<span class="cm"> * @param component The component to add.</span>
+<span class="cm"> * @param position The position of the component in the focus cycle root.</span>
+<span class="cm"> */</span>
+<span class="n">public</span> <span class="k">void</span> <span class="n">addComponent</span><span class="p">(</span><span class="n">Component</span> <span class="n">component</span><span class="p">,</span> <span class="k">int</span> <span class="n">position</span><span class="p">){</span>
+    <span class="n">components</span><span class="p">.</span><span class="n">put</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">component</span><span class="p">);</span>
+    <span class="n">positions</span><span class="p">.</span><span class="n">put</span><span class="p">(</span><span class="n">component</span><span class="p">,</span> <span class="n">position</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="p">@</span><span class="n">Override</span>
+<span class="n">public</span> <span class="n">Component</span> <span class="n">getComponentAfter</span><span class="p">(</span><span class="n">Container</span> <span class="n">parent</span><span class="p">,</span> <span class="n">Component</span> <span class="n">component</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">int</span> <span class="n">position</span> <span class="o">=</span> <span class="n">positions</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">component</span><span class="p">);</span>
+
+    <span class="k">if</span><span class="p">(</span><span class="n">position</span> <span class="o">=</span> <span class="n">positions</span><span class="p">.</span><span class="n">size</span><span class="p">()</span> <span class="o">-</span> <span class="mh">1</span><span class="p">){</span>
+        <span class="n">position</span> <span class="o">=</span> <span class="mh">0</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">components</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">position</span> <span class="o">+</span> <span class="mh">1</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="p">@</span><span class="n">Override</span>
+<span class="n">public</span> <span class="n">Component</span> <span class="n">getComponentBefore</span><span class="p">(</span><span class="n">Container</span> <span class="n">parent</span><span class="p">,</span> <span class="n">Component</span> <span class="n">component</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">int</span> <span class="n">position</span> <span class="o">=</span> <span class="n">positions</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">component</span><span class="p">);</span>
+
+    <span class="k">if</span><span class="p">(</span><span class="n">position</span> <span class="o">=</span> <span class="mh">0</span><span class="p">){</span>
+        <span class="n">position</span> <span class="o">=</span> <span class="n">positions</span><span class="p">.</span><span class="n">size</span><span class="p">()</span> <span class="o">-</span> <span class="mh">1</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">components</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">position</span> <span class="o">-</span> <span class="mh">1</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="p">@</span><span class="n">Override</span>
+<span class="n">public</span> <span class="n">Component</span> <span class="n">getDefaultComponent</span><span class="p">(</span><span class="n">Container</span> <span class="n">parent</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">components</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="mh">0</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="p">@</span><span class="n">Override</span>
+<span class="n">public</span> <span class="n">Component</span> <span class="n">getFirstComponent</span><span class="p">(</span><span class="n">Container</span> <span class="n">parent</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">components</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="mh">0</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="p">@</span><span class="n">Override</span>
+<span class="n">public</span> <span class="n">Component</span> <span class="n">getLastComponent</span><span class="p">(</span><span class="n">Container</span> <span class="n">parent</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">components</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">components</span><span class="p">.</span><span class="n">size</span><span class="p">()</span> <span class="o">-</span> <span class="mh">1</span><span class="p">);</span>
+    <span class="p">}</span>
+</pre></div>
+
+
+<p>}[/java]</p>
+<p>Vous can use this class as every other focus traversal policy we saw before. Just add all the components before using the policy.</p>
+<p>An other way that you can explore it's to make all your components implementing an interface like Focusable with a getFocusPosition() method and use a policy to make the order with that Focusable components.</p>
+<h3>7. The KeyboardFocusManager class</h3>
+
+<p>There is also other utilities to the KeyboardFocusManager class.</p>
+<p>First, you can change the component who has the focus with the focusXXX methods. By example, you can use the focusNextComponent() method to give the focus to the next component. you can also give the focus to a specific component with the setFocusOwner method or to a window with with the setActiveWindows method.</p>
+<p>Then, you can also get the active window, the component with the focux and the container who contains the active component. If the components are in an other thread, you have to use the getGlobalXXX methods to get it.</p>
+<!--nextpage-->
+
+<h3>8. Conclusion</h3>
+
+<p>To conclude, you can do almost everithing with the focus system. You can modify the order of focus for the components, say which components must have the focus, make tests on the input fields, know who has the focus. But that's sometimes weird when we start. But once we've understand which classes to use, it is quite simple.</body></html></p>

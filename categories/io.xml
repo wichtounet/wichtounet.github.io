@@ -1,0 +1,421 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>@Blog("Baptiste Wicht") (I/O)</title><link>http://www.baptiste-wicht.com/</link><description></description><atom:link href="http://www.baptiste-wicht.com/categories/io.xml" type="application/rss+xml" rel="self"></atom:link><language>en</language><lastBuildDate>Sun, 16 Mar 2014 17:07:38 GMT</lastBuildDate><generator>Nikola &lt;http://getnikola.com/&gt;</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>Write and read binary files in C++</title><link>http://www.baptiste-wicht.com/posts/2011/06/write-and-read-binary-files-in-c.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;To write the EDDI compiler, I had to write and read binary files. Writing text files is really easy in C++, directly using the &amp;lt;&amp;lt; operator on the stream, but writing binary is a little harder and, I must say, a lot less elegant.&lt;/p&gt;
+&lt;p&gt;First, to write to a binary file, we have to use the binary flag when we create the file :&lt;/p&gt;
+&lt;p&gt;[cpp]std::ofstream stream("yourFile", std::ios::binary);[/cpp]&lt;/p&gt;
+&lt;p&gt;and then, we have to use the write method to write to the file. But this function is really basic and takes only a char&lt;em&gt; and the size of the data we wan't to write, so we have to convert our data to char&lt;/em&gt;. A good way to do that is using the reinterpret_cast function and the sizeof operator. For example, to write an int, you can make that :&lt;/p&gt;
+&lt;p&gt;[cpp]int test = 22;&lt;/p&gt;
+&lt;p&gt;outStream.write(reinterpret_cast&amp;lt;const char*&amp;gt;(&amp;amp;test), sizeof(int));[/cpp]&lt;/p&gt;
+&lt;p&gt;But your code is quickly polluted if you have of write operations to do.&lt;/p&gt;
+&lt;!--more--&gt;
+
+&lt;p&gt;We can simplify that, using a function template like this one :&lt;/p&gt;
+&lt;p&gt;[cpp]template&lt;/p&gt;
+&lt;p&gt;std::ostream&amp;amp; binary_write(std::ostream&amp;amp; stream, const T&amp;amp; value){
+    return stream.write(reinterpret_cast&amp;lt;const char*&amp;gt;(&amp;amp;value), sizeof(T));
+}[/cpp]&lt;/p&gt;
+&lt;p&gt;And you use it directly like that :&lt;/p&gt;
+&lt;p&gt;[cpp]int test = 22;&lt;/p&gt;
+&lt;p&gt;binary_write(stream, test);[/cpp]&lt;/p&gt;
+&lt;p&gt;A little less verbose, isn't it ? You can also pass a class or struct instance directly tot his method. If you have complex objects, it's perhaps not the more proper way to do it, in that case, consider using some serialization API. If you have object with variable length, it will not work because the size cannot be computed with the sizeof operator. For example, this function doesn't work with a std::string because the sizeof operator doesn't represent the real size of the string. We can make another function to write string :&lt;/p&gt;
+&lt;p&gt;[cpp]template&amp;lt;&amp;gt;&lt;/p&gt;
+&lt;p&gt;std::ostream&amp;amp; binary_write_string(std::ofstream&amp;amp; stream, const std::string&amp;amp; value){
+    return stream-&amp;gt;write(value.c_str(), value.length());
+}[/cpp]&lt;/p&gt;
+&lt;p&gt;Then, to read a binary, you have also to open it with the binary tag :&lt;/p&gt;
+&lt;p&gt;[cpp]std::ifstream inStream("yourFile", std::ios::binary);[/cpp]&lt;/p&gt;
+&lt;p&gt;And then, you have to use the read method to read your values :&lt;/p&gt;
+&lt;p&gt;[cpp]int test;&lt;/p&gt;
+&lt;p&gt;inStream.read(reinterpret_cast&amp;lt;char*&amp;gt;(&amp;amp;test), sizeof(int));[/cpp]&lt;/p&gt;
+&lt;p&gt;Once again, we can create a function template to have a little better code :&lt;/p&gt;
+&lt;p&gt;[cpp]template&lt;/p&gt;
+&lt;p&gt;std::istream &amp;amp; binary_read(std::istream&amp;amp; stream, T&amp;amp; value){
+    return stream.read(reinterpret_cast&amp;lt;char*&amp;gt;(&amp;amp;value), sizeof(T));
+}[/cpp]&lt;/p&gt;
+&lt;p&gt;and you can use it the same way :&lt;/p&gt;
+&lt;p&gt;[cpp]int test;&lt;/p&gt;
+&lt;p&gt;binary_read(stream, test);[/cpp]&lt;/p&gt;
+&lt;p&gt;Once again, this function will not work with the class or struct with variable size. Even with strings, there is no way to read them easily. If you want to read them, you'll have to write the size of the string directly in the file and then read the size before and you can read a char&lt;em&gt; using the read method passing the size of the string and create a new string using the char&lt;/em&gt;.&lt;/p&gt;
+&lt;p&gt;With that, you are able to read and write to and from binary files.&lt;/p&gt;&lt;/div&gt;</description><category>C++</category><category>C++</category><category>I/O</category><category>templates</category><guid>http://www.baptiste-wicht.com/posts/2011/06/write-and-read-binary-files-in-c.html</guid><pubDate>Wed, 15 Jun 2011 08:35:15 GMT</pubDate></item><item><title>Java File Copy Benchmark Updates (once again)</title><link>http://www.baptiste-wicht.com/posts/2010/08/file-copy-benchmark-updates-once-again.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;I've made another updates to my file copy benchmark.&lt;/p&gt;
+&lt;p&gt;First of all, I used my &lt;a title="Utility class to create graphs of benchmark results" href="http://www.baptiste-wicht.com/2010/08/generate-graphs-benchmarks-easily/" target="_blank"&gt;little utility class to automatically create the graphs&lt;/a&gt;. The graph are a little less clean, but I spare a lot of time not creating them myself.&lt;/p&gt;
+&lt;p&gt;Then, I've also made some corrections on the code :&lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;ul&gt;
+    &lt;li&gt;I''ve used a buffer size of 8192 instead of 4096&lt;/li&gt;
+    &lt;li&gt;I've made some corrections using the channels because the old code can forgot to write some portions of the file&lt;/li&gt;
+    &lt;li&gt;I used allocateDirect() instead of allocate() for the ByteBuffer.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;And I've added a new method using Java 7 : Path.copyTo(Path path).&lt;/p&gt;
+&lt;p&gt;So the new results are all based on a Java 7 Virtual Machine.&lt;/p&gt;
+&lt;p&gt;You'll find all the new informations and result, on the original post : &lt;a title="Java File Copy Benchmark" href="http://www.baptiste-wicht.com/2010/08/file-copy-in-java-benchmark/" target="_self"&gt;File Copy in Java - Benchmark&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;I hope this new informations will interest you.&lt;/p&gt;&lt;/div&gt;</description><category>Benchmarks</category><category>I/O</category><category>Java</category><category>Java</category><category>Java 7</category><category>Performances</category><guid>http://www.baptiste-wicht.com/posts/2010/08/file-copy-benchmark-updates-once-again.html</guid><pubDate>Wed, 25 Aug 2010 07:26:11 GMT</pubDate></item><item><title>Java File Copy Benchmarks Update</title><link>http://www.baptiste-wicht.com/posts/2010/08/java-file-copy-benchmarks-update.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;I've made an update of my benchmark about file copy methods in Java. I've been asked for new informations about this benchmark and for new test, so I've included more results and informations.&lt;/p&gt;
+&lt;p&gt;This new version include two new complete benchmarks :&lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;ol&gt;
+    &lt;li&gt;Benchmark on the same disk (Ext4)&lt;/li&gt;
+    &lt;li&gt;Benchmark between two disks (Ext4 -&amp;gt; Ext4)&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;And of course the old benchmark is always here : Benchmark between two disks (Ext4 -&amp;gt; NTFS).&lt;/p&gt;
+&lt;p&gt;I've also included more informations about the disk and the benchmark. The statistics informations about the results are also included in the post. So you can found the standard deviation of the results and the confidence intervals of the results stats.&lt;/p&gt;
+&lt;p&gt;And last but not least I've included a new method to copy files using the cp executable of Linux.&lt;/p&gt;
+&lt;p&gt;The results are always available at the same place : &lt;a title="File Copy in Java - Benchmark" href="http://www.baptiste-wicht.com/2010/08/file-copy-in-java-benchmark/" target="_self"&gt;File Copy in Java - Benchmark&lt;/a&gt;&lt;/p&gt;&lt;/div&gt;</description><category>Benchmarks</category><category>I/O</category><category>Java</category><category>Java</category><category>Performances</category><guid>http://www.baptiste-wicht.com/posts/2010/08/java-file-copy-benchmarks-update.html</guid><pubDate>Wed, 04 Aug 2010 09:04:35 GMT</pubDate></item><item><title>File copy in Java - Benchmark</title><link>http://www.baptiste-wicht.com/posts/2010/08/file-copy-in-java-benchmark.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;Yesterday I wondered if the copyFile method in JTheque Utils was the best method or if I need to change. So I decided to do a benchmark.&lt;/p&gt;
+&lt;p&gt;So I searched all the methods to copy a File in Java, even the bad methods and found 5 methods :&lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;ol&gt;
+    &lt;li&gt;&lt;strong&gt;Native Copy&lt;/strong&gt; : Make the copy using the cp executable of Linux&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Naive Streams Copy&lt;/strong&gt; : Open two streams, one to read, one to write and transfer the content byte by byte.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Naive Readers Copy&lt;/strong&gt; : Open two readers, one to read, one to write and transfer the content character by character.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Buffered Streams Copy&lt;/strong&gt; : Same as the first but using buffered streams instead of simple streams.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Buffered Readers Copy&lt;/strong&gt; : Same as the second but using buffered readers instead of simple readers.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Custom Buffer Stream Copy&lt;/strong&gt; : Same as the first but reading the file not byte by byte but using a simple byte array as buffer.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Custom Buffer Reader Copy&lt;/strong&gt; : Same as the fifth but using a Reader instead of a stream.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Custom Buffer Buffered Stream Copy&lt;/strong&gt; : Same as the fifth but using buffered streams.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Custom Buffer Buffered Reader Copy&lt;/strong&gt; : Same as the sixth but using buffered readers.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;NIO Buffer Copy&lt;/strong&gt; : Using NIO Channel and using a ByteBuffer to make the transfer.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;NIO Transfer Copy&lt;/strong&gt; : Using NIO Channel and direct transfer from one channel to other.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Path (Java 7) Copy&lt;/strong&gt; : Using the Path class of Java 7 and its method copyTo()&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;I think, this is the principal methods to copy a file to another file. The different methods are available at the end of the post. Pay attention that the methods with Readers only works with text files because Readers are using character by character reading so it doesn't work on a binary file like an image. Here I used a buffer size of 4096 bytes. Of course, use a higher value improve the performances of custom buffer strategies.&lt;/p&gt;
+&lt;p&gt;For the benchmark, I made the tests using different files.&lt;/p&gt;
+&lt;ol&gt;
+    &lt;li&gt;Little file (5 KB)&lt;/li&gt;
+    &lt;li&gt;Medium file (50 KB)&lt;/li&gt;
+    &lt;li&gt;Big file (5 MB)&lt;/li&gt;
+    &lt;li&gt;Fat file (50 MB)&lt;/li&gt;
+    &lt;li&gt;And an enormous file (1.3 GB) only binary&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;And I made the tests first using text files and then using binary files. I made the tests using in three modes :&lt;/p&gt;
+&lt;ol&gt;
+    &lt;li&gt;On the same hard disk. It's an IDE Hard Disk of 250 GB with 8 MB of cache. It's formatted in Ext4.&lt;/li&gt;
+    &lt;li&gt;Between two disk. I used the first disk and an other SATA Hard Disk of 250 GB with 16 MB of cache. It's formatted in Ext4.&lt;/li&gt;
+    &lt;li&gt;Between two disk. I used the first disk and an other SATA Hard Disk of 1 TB with 32 MB of cache. It's formatted using NTFS.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;I used a benchmark framework, &lt;a title="Micro-Benchmarking framework" href="http://www.baptiste-wicht.com/2010/04/write-corrects-benchmarks/" target="_blank"&gt;described here&lt;/a&gt;, to make the tests of all the methods. The tests have been made on my personal computer (Ubuntu 10.04 64 bits, Intel Core 2 Duo 3.16 GHz, 6 Go DDR2, SATA Hard Disks). The Java version used is a Java 7 64 bits Virtual Machine.&lt;/p&gt;
+&lt;p&gt;I've cut the post into several pages due to the length of the post :&lt;/p&gt;
+&lt;ol&gt;
+    &lt;li&gt;Introduction about the benchmark&lt;/li&gt;
+    &lt;li&gt;Benchmark on the same disk&lt;/li&gt;
+    &lt;li&gt;Benchmark between Ext4 and Ext4&lt;/li&gt;
+    &lt;li&gt;Benchmark between Ext4 and NTFS&lt;/li&gt;
+    &lt;li&gt;Conclusions about the benchmark results&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;!--nextpage--&gt;
+
+&lt;h4&gt;Benchmark on the same disk (Ext4)&lt;/h4&gt;
+
+&lt;p&gt;So let's start with the results of the benchmarking using the same disk.&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/little-text-same-disk.png"&gt;&lt;img class="size-full wp-image-964" title="Little Text Benchmark Results" src="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/little-text-same-disk.png" alt="Little Text Benchmark Results" width="500" height="400"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;We can see that here the native and naive streams methods are a lot slower than the other methods. So lets remove the naive  streams method from the graph to have a better view on the other methods :&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/little-text-same-disk-sub.png"&gt;&lt;img class="size-full wp-image-965" title="Little Text Benchmark Sub Results" src="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/little-text-same-disk-sub.png" alt="Little Text Benchmark Sub Results" width="500" height="400"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;The first conclusion we can do is that the naive readers is a lot faster than the naive streams. It's because Reader use a buffer internally and this is not the case in streams. The others methods are closer, so we'll see with the next sizes what happens.&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/medium-text-same-disk-sub.png"&gt;&lt;img class="size-full wp-image-967" title="Medium Text Benchmark Results" src="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/medium-text-same-disk-sub.png" alt="Medium Text Benchmark Results" width="500" height="400"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Here, we have removed the two naive methods because they are too slows compared to the others.&lt;/p&gt;
+&lt;p&gt;The readers methods are slower than the equivalent streams methods because readers are working on chars, so they must make characters conversion for every char of the file, so this is a cost to add.&lt;/p&gt;
+&lt;p&gt;Another observation is that the custom buffer strategy is faster than the buffering of the streams and than using custom buffer with a buffered stream or a single stream doesn't change anything. The same observation can be made using the custom buffer using readers, it's the same with buffered readers or not. This is logical, because with custom buffer we made 4096 (size of the buffer) times less invocations to the read method and because we ask for a complete buffer we have not a lot of I/O operations. So the buffer of the streams (or the readers) is not useful here.&lt;/p&gt;
+&lt;p&gt;The NIO Buffer, NIO Transfer and Path strategies are almost equivalent to custom buffer.&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/big-text-same-disk-sub.png"&gt;&lt;img class="size-full wp-image-969" title="Big Text Benchmark Results" src="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/big-text-same-disk-sub.png" alt="Big Text Benchmark Results" width="500" height="400"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Here we see the limits of the simple buffered stream (and readers methods). And another really interesting thing we see is that the native is now faster than buffered streams and readers. Native method must start an external program and this has a cost not negligible. But the copy using the cp executable is really fast and that's because when the file size grows, the native method becomes interesting. All the other methods except the readers are almost equivalent.&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/fat-text-same-disk.png"&gt;&lt;img class="size-full wp-image-970" title="Fat Text Benchmark Results" src="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/fat-text-same-disk.png" alt="Fat Text Benchmark Results" width="500" height="400"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;This time we can see that the native copy method is here as fast as the custom buffer streams. The fast method is the NIO Transfer method.&lt;/p&gt;
+&lt;p&gt;It's interesting to see that it doesn't take 100 ms to copy a 50 MB file.&lt;/p&gt;
+&lt;p&gt;We'll see with binary now. We'll directly start with a 5 MB file.&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/big-binary-same-disk.png"&gt;&lt;img class="size-full wp-image-971" title="Big Binary Benchmark Results" src="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/big-binary-same-disk.png" alt="Big Binary Benchmark Results" width="500" height="400"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;We see exactly the same results as with a text file. The native method start to be interesting. We see precisely that the NIOand Path methods are really interesting here.&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/fat-binary-same-disk.png"&gt;&lt;img class="size-full wp-image-972" title="Fat Binary Benchmark Results" src="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/fat-binary-same-disk.png" alt="Fat Binary Benchmark Results" width="500" height="400"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;We can see that all the methods are really, really close, but the native, NIO Buffer, NIO Transfer and Path methods are the best. Just to be sure of these results, let's test with a bigger file :&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/enormous-binary-same-disk.png"&gt;&lt;img class="size-full wp-image-973" title="Enormous Binary Benchmark Results" src="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/enormous-binary-same-disk.png" alt="Enormous Binary Benchmark Results" width="500" height="400"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Here we can see that the native method become to be the fastest one. The other method are really close. I thought the NIO Transfer will be normally faster. Due to the size of the file the benchmark has been made only a little number of times, so the number can be inaccurate. We see that he Path method is really close to the other.&lt;/p&gt;
+&lt;p&gt;The detailed informations (standard deviation, confidence intervals and other stats stuff) are available in the conclusion page.&lt;/p&gt;
+&lt;!--nextpage--&gt;
+
+&lt;h4&gt;Benchmark between two disks (Ext4 -&amp;gt; Ext4)&lt;/h4&gt;
+
+&lt;p&gt;Here are the results of the same tests but using two hard disk with the same formatting (Ext4).&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/little-text-same-disk1.png"&gt;&lt;img class="size-full wp-image-975" title="Little Text Benchmark Results" src="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/little-text-same-disk1.png" alt="Little Text Benchmark Results" width="500" height="400"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;We see exactly the same results as in the first benchmark. The naive streams iscompletely useless for little files. So let's remove itand see what happens for interesting methods :&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/little-text-between-disks-sub.png"&gt;&lt;img class="size-full wp-image-976" title="Little Text Benchmark Results" src="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/little-text-between-disks-sub.png" alt="Little Text Benchmark Results" width="500" height="400"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Here again, the conclusion are the same and the times are not enough big to make global conclusions.&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/medium-text-between-disks-sub.png"&gt;&lt;img class="size-full wp-image-977" title="Medium Text Benchmark Results" src="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/medium-text-between-disks-sub.png" alt="Medium Text Benchmark Results" width="500" height="400"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Here, we have the limits of the buffered strategy and see a real advantage of custom buffer strategy. We also see that the NIO Transfer and Path methods are taking a little advantage. But again, the times are really short.&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/big-text-between-disks-sub.png"&gt;&lt;img class="size-full wp-image-978" title="Big Text Benchmark Results" src="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/big-text-between-disks-sub.png" alt="Big Text Benchmark Results" width="500" height="400"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;We can see the reintroduction of the native method on the interesting methods.&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/fat-text-between-disks.png"&gt;&lt;img class="size-full wp-image-979" title="Fat Text Benchmark Results" src="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/fat-text-between-disks.png" alt="Fat Text Benchmark Results" width="500" height="400"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;So we covered the text files. If we compare the times between the first benchmark (the same disk) and this method (between two disk), we can see that the times are almost the same, just a little slower for some methods. So let's watch the big binary files :&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/fat-binary-between-disks.png"&gt;&lt;img class="size-full wp-image-980" title="Fat Binary Benchmark Results" src="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/fat-binary-between-disks.png" alt="Fat Binary Benchmark Results" width="500" height="400"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Again, the results are close to using the same disk. So let's see with the last file :&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/enormous-binary-between-disks.png"&gt;&lt;img class="size-full wp-image-981" title="Enormous Binary Benchmark Results" src="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/enormous-binary-between-disks.png" alt="Enormous Binary Benchmark Results" width="500" height="400"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;This time, the differences are impressive. The native and NIO Buffer methods are the fastest methods. The NIO Transfer is a little slower but the Path method is a lot slower here.&lt;/p&gt;
+&lt;p&gt;This transfer is a lot faster than on the same disk. I'm not sure of the cause of these results. The only reason I can found is that the operating system can made the two things at the same time, reading on the first disk and writing on the second disk. If someone has a better conclusion, don't hesitate to comment the post.&lt;/p&gt;
+&lt;p&gt;The detailed informations (standard deviation, confidence intervals and other stats stuff) are available in the conclusion page.&lt;/p&gt;
+&lt;!--nextpage--&gt;
+
+&lt;h4&gt;Benchmark between two disks (Ext4 -&amp;gt; NTFS)&lt;/h4&gt;
+
+&lt;p&gt;Here are the results of the first version of this post. The first disk is always the same, but the second disk is a NTFS. For concision, I removed some graphes. I've also removed the conclusion that are the same as the first two benchmarks. The native method is not covered in these results.&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/little-text-file-2.png"&gt;&lt;img class="size-full wp-image-876" title="Little Text File - Best results" src="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/little-text-file-2.png" alt="Little Text File - Best results" width="483" height="411"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;The best two versions are the Buffered Streams and Buffered Readers. Here this is because the buffered streams and readers can write the file in only one operation. Here the times are in microseconds, so there is really little differences between the methods. So the results are not really relevant.&lt;/p&gt;
+&lt;p&gt;Now, let's test with a bigger file.&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/medium-text-file.png"&gt;&lt;img class="size-full wp-image-877" title="Medium Text File" src="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/medium-text-file.png" alt="Medium Text File" width="488" height="371"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;We can see that the versions with the Readers are a little slower than the version with the streams. This is because Readers works on character and for every read() operation, a char conversion must be made, and the same conversion must be made on the other side.&lt;/p&gt;
+&lt;p&gt;Another observation is that the custom buffer strategy is faster than the buffering of the streams and than using custom buffer with a buffered stream or a single stream doesn't change anything. The same observation can be made using the custom buffer using readers, it's the same with buffered readers or not. This is logical, because with custom buffer we made 4096 (size of the buffer) times less invocations to the read method and because we ask for a complete buffer we have not a lot of I/O operations. So the buffer of the streams (or the readers) is not useful here. The NIO buffer strategy is almost equivalent to custom buffer. And the direct transfer using NIO is here slower than the custom buffer methods. I think this is because here the cost of invoking native methods in the operating system level is higher than simply the cost of making the file copy.&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/big-text-file-2.png"&gt;&lt;img class="size-full wp-image-879" title="Big Text File - Best results" src="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/big-text-file-2.png" alt="Big Text File - Best results" width="483" height="391"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Here, it's now clear that the custom buffer strategy is a better than the simple buffered streams or readers and that using custom buffer and buffered streams is really useful for bigger files. The Custom Buffer Readers method is better than Custom Buffer Streams because FileReader use a buffer internally.&lt;/p&gt;
+&lt;p&gt;And now, continue with a bigger file :&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/fat-text-file.png"&gt;&lt;img class="size-full wp-image-880" title="Fat Text File Results" src="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/fat-text-file.png" alt="Fat Text File Results" width="483" height="392"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;You can see that it doesn't take 500 ms to copy a 50 MB file using the custom buffer strategy and that it even doesn't take 400 ms with the NIO Transfer method. Really quick isn't it ? We can see that for a big file, the NIO Transfer start to show an advantage, we'll better see that in the binary file benchmarks. We will directly start with a big file (5 MB) for this benchmark :&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/big-binary-file.png"&gt;&lt;img class="size-full wp-image-881" title="Big Binary File Results" src="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/big-binary-file.png" alt="Big Binary File Results" width="483" height="291"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;So we can make the same conclusion as for the text files, of course, the buffered streams methods is not fast. The other methods are really close.&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/fat-binary-file.png"&gt;&lt;img class="size-full wp-image-883" title="Fat Binary File Results" src="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/fat-binary-file.png" alt="Fat Binary File Results" width="483" height="291"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;We see here again that the NIO Transfer is gaining advantages more the files is bigger.&lt;/p&gt;
+&lt;p&gt;And just for the pleasure, a great file (1.3 GB) :&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/enormous-binary-file.png"&gt;&lt;img class="size-full wp-image-882" title="Enormous Binary File Results" src="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/enormous-binary-file.png" alt="Enormous Binary File Results" width="483" height="291"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;We see that all the methods are really close, but the NIO Transfer method has an advantage of 500 ms. It's not negligible.&lt;/p&gt;
+&lt;p&gt;A conclusion we can make is that transfering a file from Ext4 to Ext4 is a lot faster than from Ext4 to NTFS. I think it's logical because the operating system must made conversions. I think it's not because of the disk, because the NTFS disk is the faster I've.&lt;/p&gt;
+&lt;!--nextpage--&gt;
+
+&lt;h4&gt;Conclusion&lt;/h4&gt;
+
+&lt;p&gt;In conclusion, the NIO Transfer method is the best one for big files but it's not the fastest for little files (&amp;lt; 5 MB). But the custom buffer strategy (and the NIO Buffer too) are also really fast methods to copy files. We've also see that the method using the native utility tools to make the copy is faster as NIO for big files (&amp;lt; 1 GB) but it's really slow for little files because of the cost of invoking an external program.&lt;/p&gt;
+&lt;p&gt;So perhaps, the best method is a method that make a custom buffer strategy on the little files and a NIO Transfer on the big ones and perhaps use the native executable on the really bigger ones. But it will be interesting to also make the tests on an other computer and operating system.&lt;/p&gt;
+&lt;p&gt;We can take several rules from this benchmark :&lt;/p&gt;
+&lt;ol&gt;
+    &lt;li&gt;Never made a copy of file byte by byte (or char by char)&lt;/li&gt;
+    &lt;li&gt;Prefer a buffer in your side more than in the stream to make less invocations of the read method, but don't forget the buffer in the side of the streams&lt;/li&gt;
+    &lt;li&gt;Pay attention to the size of the buffers&lt;/li&gt;
+    &lt;li&gt;Don't use char conversion if you only need to tranfer the content of a file, so don't use Reader if you need only streams.&lt;/li&gt;
+    &lt;li&gt;Don't hesitate to use channels to make file transfer, it's the fastest way to make a file transfer.&lt;/li&gt;
+    &lt;li&gt;Consider the native executable invocation only for really bigger files.&lt;/li&gt;
+    &lt;li&gt;The new Path method of Java 7 is really fast except for the transfer of an enormous file between two disks.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;I hope this benchmark (and its results) interested you.&lt;/p&gt;
+&lt;p&gt;Here are the sources of the benchmark : &lt;a href="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/FileCopyBenchmark2.java"&gt;File Copy Benchmark Version 3&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Here are the informations complete for the benchmark between two disks : &lt;a href="http://www.baptiste-wicht.com/wp-content/uploads/2010/08/results.txt"&gt;Complete results of first two benchmarks&lt;/a&gt;&lt;/p&gt;&lt;/div&gt;</description><category>Benchmarks</category><category>I/O</category><category>Java</category><category>Java</category><category>Performances</category><guid>http://www.baptiste-wicht.com/posts/2010/08/file-copy-in-java-benchmark.html</guid><pubDate>Mon, 02 Aug 2010 07:18:44 GMT</pubDate></item><item><title>Java 7 : New I/O features (Asynchronous operations, multicasting, random access) with JSR 203 (NIO.2)</title><link>http://www.baptiste-wicht.com/posts/2010/04/java-7-new-io-features-asynchronous-operations-multicasting-random-access-with-jsr-203-nio-2.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;div&gt;Like I've said in other post, &lt;a href="http://www.baptiste-wicht.com/2010/03/nio-2-path-api-java-7/"&gt;we will have a new API to access File System in Java 7&lt;/a&gt;, but we'll have several others new features in NIO.2 that I've not covered&lt;/div&gt;
+So I'll try to cover them in that post. Indeed the &lt;strong&gt;JSR 203&lt;/strong&gt; (also known as &lt;strong&gt;NIO.2&lt;/strong&gt;) add several new classes that improve I/O code.
+&lt;p&gt;In this post I cover the following features :&lt;/p&gt;
+&lt;ul&gt;
+    &lt;li&gt;SeekableByteChannel : A random access channel&lt;/li&gt;
+    &lt;li&gt;MulticastChannel : A channel that allow for IP multicasting&lt;/li&gt;
+    &lt;li&gt;NetworkChannel : The new super interface for the network-oriented channels&lt;/li&gt;
+    &lt;li&gt;Asynchronous I/O API : The new API to make I/O operations in an asynchronous way.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;!--more--&gt;
+
+&lt;p&gt;&lt;strong&gt;SeekableByteChannel&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;First of all, the Java 7 includes a new ByteChannel, the &lt;strong&gt;SeekableByteChannel&lt;/strong&gt;. This Channel maintains a current position, so you can read and write from this position. That allows &lt;strong&gt;random access&lt;/strong&gt; positions. With that type of Channel, you can even add several threads reading/writing the same threads at different positions.&lt;/p&gt;
+&lt;p&gt;[java]SeekableByteChannel channel1 = Paths.get("Path to file").newByteChannel(); //Simply READ&lt;/p&gt;
+&lt;p&gt;SeekableByteChannel channel2 = Paths.get("Path to file").newByteChannel(StandardOpenOption.READ, StandardOpenOption.WRITE); //READ and WRITE[/java]&lt;/p&gt;
+&lt;p&gt;You can use these methods to manipulate the positions and size of the channel :&lt;/p&gt;
+&lt;ul&gt;
+    &lt;li&gt;long position() : Return the current position&lt;/li&gt;
+    &lt;li&gt;long size() : Return the current size of the entity this channel is connected to, by example the size of the file the channel is connecting to&lt;/li&gt;
+    &lt;li&gt;position(long newPosition) : Move the current position to the given one&lt;/li&gt;
+    &lt;li&gt;truncate(long size) : Truncates the entity to the given size.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;The position() and truncate() methods simply returns the current Channel to allow chained invocations.&lt;/p&gt;
+&lt;p&gt;Now, &lt;strong&gt;FileChannel&lt;/strong&gt; implements this new interface, so you can make random access with all FileChannels.&lt;/p&gt;
+&lt;p&gt;You can of course read a file with that channel :&lt;/p&gt;
+&lt;p&gt;[java]SeekableByteChannel channel = null;&lt;/p&gt;
+&lt;p&gt;try {
+    channel = Paths.get("Path to file").newByteChannel(StandardOpenOption.READ);
+    ByteBuffer buffer = ByteBuffer.allocate(4096);&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;out&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"File size: "&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;channel&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;size&lt;/span&gt;&lt;span class="p"&gt;());&lt;/span&gt;
+
+&lt;span class="k"&gt;while&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;channel&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;read&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;buffer&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;amp&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="n"&gt;buffer&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;rewind&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+
+    &lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;out&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;new&lt;/span&gt; &lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;buffer&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;array&lt;/span&gt;&lt;span class="p"&gt;(),&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;buffer&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;remaining&lt;/span&gt;&lt;span class="p"&gt;()));&lt;/span&gt;
+
+    &lt;span class="n"&gt;buffer&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;flip&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+
+    &lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;out&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Current position : "&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;channel&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;position&lt;/span&gt;&lt;span class="p"&gt;());&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;} catch (IOException e) {
+    System.out.println("Expection when reading : " + e.getMessage());
+    e.printStackTrace();
+} finally {
+    if (sbc != null){
+        channel.close();
+    }
+}[/java]&lt;/p&gt;
+&lt;h4&gt;MulticastChannel&lt;/h4&gt;
+
+&lt;p&gt;This new interface enable to make Internet Protocol (IP) &lt;strong&gt;Multicasting&lt;/strong&gt;. So you can send and receive IP datagrams from a complete group. The multicast implementations are directly bind to the native multicast facility. This interface is implement by DatagramChannel and AsynchronousDatagramChannel.&lt;/p&gt;
+&lt;p&gt;A simple example taken from the Javadoc to open a DatagramChannel t :&lt;/p&gt;
+&lt;p&gt;[java]NetworkInterface networkInterface = NetworkInterface.getByName("hme0");&lt;/p&gt;
+&lt;p&gt;DatagramChannel dc = DatagramChannel.open(StandardProtocolFamily.INET)
+         .setOption(StandardSocketOption.SO_REUSEADDR, true)
+         .bind(new InetSocketAddress(5000))
+         .setOption(StandardSocketOption.IP_MULTICAST_IF, networkInterface);&lt;/p&gt;
+&lt;p&gt;InetAddress group = InetAddress.getByName("225.4.5.6");&lt;/p&gt;
+&lt;p&gt;MembershipKey key = dc.join(group, networkInterface);[/java]&lt;/p&gt;
+&lt;p&gt;With that, you can use your DatagramChannel as all others DatagramChannel you used in the past, but the operations are made with multicast, so you receive all the packets of the interface and you send packets to all the group.&lt;/p&gt;
+&lt;h4&gt;NetworkChannel&lt;/h4&gt;
+
+&lt;p&gt;Now, all the network-oriented channels implements the new &lt;strong&gt;NetworkChannel&lt;/strong&gt; interface. With that, you easily bind the channel socket, set and query for socket options. Furthermore, the socket optioins are now extensible, so you can use operating system specific options, that could be interesting for high performances servers.&lt;/p&gt;
+&lt;h4&gt;Asynchronous I/O&lt;/h4&gt;
+
+&lt;p&gt;And after that little introduction, we go to the main new feature : The new &lt;strong&gt;Asynchronous I/O API&lt;/strong&gt;. Its name indicate all the purpose of this new features, indeed enable Asynchronous I/O operations.This new channels provide &lt;strong&gt;asynchronous operations&lt;/strong&gt; for both sockets and files.&lt;/p&gt;
+&lt;p&gt;Of course, all that operations are non-blocking, but there is also blocking operations that you can do with all the asynchronous channels.&lt;/p&gt;
+&lt;p&gt;All the asynchronous I/O operations have one of two forms :&lt;/p&gt;
+&lt;ul&gt;
+    &lt;li&gt;The first one returns a java.util.concurrent.Future that represent the pending result. You can use that Future to wait for the I/O operations to finish.&lt;/li&gt;
+    &lt;li&gt;The second one is created using  a CompletionHandler. That handler is invoked when the operation is has completed, like callbacks systems.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;So here are the examples of the two forms :&lt;/p&gt;
+&lt;p&gt;The first form, using Future :&lt;/p&gt;
+&lt;p&gt;[java]AsynchronousFileChannel channel = AsynchronousFileChannel.open(Paths.get("Path to file"));&lt;/p&gt;
+&lt;p&gt;ByteBuffer buffer = ByteBuffer.allocate(capacity);&lt;/p&gt;
+&lt;p&gt;Future result = channel.read(buffer, 100); //Read capacity bytes from the file starting at position 100&lt;/p&gt;
+&lt;p&gt;boolean done = result.isDone(); //Indicate if the result is already terminated&amp;lt;/pre&amp;gt;&lt;/p&gt;
+&lt;p&gt;You can also wait for completion :&lt;/p&gt;
+&lt;p&gt;[java]int bytesRead = result.get();[/java]&lt;/p&gt;
+&lt;p&gt;Or wait with a timeout :&lt;/p&gt;
+&lt;p&gt;[java]int bytesRead = result.get(10, TimeUnit.SECONDS); //Wait at most 10 seconds on the result[/java]&lt;/p&gt;
+&lt;p&gt;The second form, using CompletionHandler :&lt;/p&gt;
+&lt;p&gt;[java]Future result = channel.read(buffer, 100, null, new CompletionHandler(){
+    public void completed(Integer result, Object attachement){
+        //Compute the result
+    }&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;failed&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;Throwable&lt;/span&gt; &lt;span class="n"&gt;exception&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;Object&lt;/span&gt; &lt;span class="n"&gt;attachement&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="c1"&gt;//Answer to the fail&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/java]&lt;/p&gt;
+&lt;p&gt;As you can see, you can give an attachement to the operation. This attachement is given to the CompletionHandler at the end of the operation. You can give null as attachement with no problem. But you can pass anything you want, like the Connection for a AsynchronousSocketChannel or the ByteBuffer for our read :&lt;/p&gt;
+&lt;p&gt;[java]Future result = channel.read(buffer, 100, buffer, new CompletionHandler(){
+    public void completed(Integer result, ByteBuffer buffer){
+        //Compute the result
+    }&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;failed&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;Throwable&lt;/span&gt; &lt;span class="n"&gt;exception&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;ByteBuffer&lt;/span&gt; &lt;span class="n"&gt;buffer&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="c1"&gt;//Answer to the fail&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/java]&lt;/p&gt;
+&lt;p&gt;And as you can see, the form with the CompletionHandle gives also you a Future element representing the pending result, so you can merge the two forms.&lt;/p&gt;
+&lt;p&gt;Here, are all the asynchronous channels available in NIO.2 :&lt;/p&gt;
+&lt;ul&gt;
+
+&lt;ul&gt;
+    &lt;li&gt;AsynchronousFileChannel : An asynchronous channel for reading and writing from and to a file. This channel has no global positions, so each read/write operations needs a position to operate. You can access concurrently to different parts of the file using different threads. You have to specify the options (READ, WRITE, but not APPEND) when you open this channel.&lt;/li&gt;
+    &lt;li&gt;AsynchronousSocketChannel : A simple asynchronous channel to a Socket. The connect, read/write and scatter/gather methods are all asynchronous. The read/write method supports timeouts.&lt;/li&gt;
+    &lt;li&gt;AsynchronousServerSocketChannel : An asynchronous channel to a ServerSocket. The accept() method is asynchronous and the CompletionHandler is called when a connection has been accepted. The result of this kind of connection is an AsynchronousSocketChannel.&lt;/li&gt;
+    &lt;li&gt;AsynchronousDatagramChannel :&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;/ul&gt;
+
+&lt;p&gt;An channel to datagram-oriented socket. The read/write (connected) and receive/send (unconnected) methods are asynchronous.&lt;/p&gt;
+&lt;h4&gt;Groups&lt;/h4&gt;
+
+&lt;p&gt;When you use AsynchronousChannels, there is of course threads that invoke the completion handlers. These threads are bound to an AsynchronousChannelGroup. This group contains a thread pool and encapsulates the resources shared by all the threads working for the channels. You can greate these groups using thread pool. The AsynchronousFileChannel can be created with its own group, passing an ExecutorService as argument to the open() method. The channels are created using an AsynchronousChannelGroup in the open method, if you don't give it a group or you pass null, the default group is used. The channel is said to be owned by the group, so, if the group is closed, the channel is closed too.&lt;/p&gt;
+&lt;p&gt;You can create a group with a ThreadFactory :&lt;/p&gt;
+&lt;p&gt;[java]ThreadFactory myThreadFactory = Executors.defaultThreadFactory();&lt;/p&gt;
+&lt;p&gt;AsynchronousChannelGroup channelGroup = AsynchronousChannelGroup.withFixedThreadPool(25, myThreadFactory);[/java]&lt;/p&gt;
+&lt;p&gt;Or with an ExecutorService :&lt;/p&gt;
+&lt;p&gt;ExecutorService service = Executors.newFixedThreadPool(25);&lt;/p&gt;
+&lt;p&gt;[java]AsynchronousChannelGroup channelGroup = AsynchronousChannelGroup.withThreadPool(service);[/java]&lt;/p&gt;
+&lt;p&gt;And you easily use it :&lt;/p&gt;
+&lt;p&gt;[java]AsynchronousSocketChannel socketChannel = AsynchronousSocketChannel.open(channelGroup);[/java]&lt;/p&gt;
+&lt;p&gt;You can close the group using the shutdown() method on the group. After that, you cannot create more channels using this group and the group effectively terminates when all the channels are closed, the completion handlers terminated and the resources released.&lt;/p&gt;
+&lt;p&gt;You must give attention to a points when you use any type of pools and CompletionHandler : DO NOT USE blocking or long operation inside a CompletionHandler. That can block the entire application if all the threads are blocking. If you've custom or cached thread pool, that can make the queue growing infinitely and cause OutOfMemoryError.&lt;/p&gt;
+&lt;p&gt;I think (and I hope), I've covered the main news from this new Asynchronous I/O API. This is not simple stuff of course and that will not be used by every one but that can be useful in several cases and it's a good thing that Java will have this kind of I/O. I therefore apologize if I made some errors in my code or my explanations, is not a easy subject and I tried to explain it for everyone.&lt;/p&gt;
+&lt;p&gt;You have also others informations in &lt;a href="http://openjdk.java.net/projects/nio/presentations/TS-4222.pdf"&gt;the overview of Asynchronous I/O at JavaOne 2009&lt;/a&gt;, by Alan Bateman and Jean-François Arcand.&lt;/p&gt;&lt;/div&gt;</description><category>I/O</category><category>Java</category><category>Java</category><category>Java 7</category><category>Performances</category><guid>http://www.baptiste-wicht.com/posts/2010/04/java-7-new-io-features-asynchronous-operations-multicasting-random-access-with-jsr-203-nio-2.html</guid><pubDate>Wed, 21 Apr 2010 06:06:58 GMT</pubDate></item><item><title>NIO.2 : The new Path API in Java 7</title><link>http://www.baptiste-wicht.com/posts/2010/03/nio-2-path-api-java-7.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;In Java 7 we'll see a new API to manipulate file paths. This is part of the NIO.2 API.&lt;/p&gt;
+&lt;p&gt;Instead of using the class &lt;strong&gt;java.io.File&lt;/strong&gt; to manipulate a file of the file system of the computer we will now use the &lt;strong&gt;java.nio.file.Path&lt;/strong&gt; class to manipulate a file in any file system (&lt;strong&gt;FileSystem&lt;/strong&gt;). This &lt;strong&gt;FileSystem &lt;/strong&gt;can use any storage place (&lt;strong&gt;FileStorage&lt;/strong&gt;). To support several implementations, this new API is based on factories. With that, you doesn't have to care about the real implementation.&lt;/p&gt;
+&lt;!--more--&gt;
+
+&lt;p&gt;A little example to start : In Java &amp;lt; 7, you do that :&lt;/p&gt;
+&lt;p&gt;[java]File file = new File("index.html");[/java]&lt;/p&gt;
+&lt;p&gt;and with Java 7, you can do that :&lt;/p&gt;
+&lt;p&gt;[java]Path path = Paths.get("index.html");[/java]&lt;/p&gt;
+&lt;p&gt;To make the migration easier, the File class has a new method toPath() that allows you to transform File to Path :&lt;/p&gt;
+&lt;p&gt;[java]Path path = new File("index.html").toPath();[/java]&lt;/p&gt;
+&lt;p&gt;But, it's only useful for migration purpose, we will not use that normally.&lt;/p&gt;
+&lt;p&gt;By default, all the Path will refers to files in the basic file system (the file system of the computer), but this new API is totally modular. We could imagine an implementation of FileSystem for data in memory, on the network or a virtual file system.&lt;/p&gt;
+&lt;p&gt;Like File, a Path can also refer to a not existing file. That's only file path, not the data containing in a file.&lt;/p&gt;
+&lt;p&gt;If we look at the methods of this new class, we can see that we have almost the same methods than the File class. But there is an important difference. The methods of the Path class throws Exception and that's a really good points. In fact, with the old File methods, we doesn't know anything if there is a problem. Sometimes we know that a problem occured with a simple boolean, but that's all.&lt;/p&gt;
+&lt;p&gt;Now we can have the cause of the Exception, that's far better. Here is a little example to delete a file using File :&lt;/p&gt;
+&lt;p&gt;[java]if (!file.delete()){
+    //What happens ?
+}[/java]&lt;/p&gt;
+&lt;p&gt;and now using Path :&lt;/p&gt;
+&lt;p&gt;[java]try {      
+    path.delete();    
+} catch (IOException e) {
+    // We can know the cause and have a good reaction
+}[/java]&lt;/p&gt;
+&lt;p&gt;An other enormous difference is the access to the attributes of the denoted file. In the old style, we have only access to the properties available in all the operating system. Now with views we can access the basic views, existing for all the operating systems and more specific views (DOS and POSIX) for properties available only in certain operating systems.&lt;/p&gt;
+&lt;p&gt;Here is a little example to get the basic attributes of a Path :&lt;/p&gt;
+&lt;p&gt;[java]BasicFileAttributeView basicView = path.getFileAttributeView(BasicFileAttributeView.class, LinkOption.NOFOLLOW_LINKS); &lt;/p&gt;
+&lt;p&gt;//This attribute view is perhaps not available in this system&lt;/p&gt;
+&lt;p&gt;if (basicView != null) {
+    BasicFileAttributes basic = basicView.readAttributes(); //Get the attributes of the view&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;out&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Path refers to a regular file : "&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;basic&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;isRegularFile&lt;/span&gt;&lt;span class="p"&gt;());&lt;/span&gt;
+&lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;out&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Path refers to a directory : "&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;basic&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;isDirectory&lt;/span&gt;&lt;span class="p"&gt;());&lt;/span&gt;
+&lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;out&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Path refers to a symbolic link : "&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;basic&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;isSymbolicLink&lt;/span&gt;&lt;span class="p"&gt;());&lt;/span&gt;
+&lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;out&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Path refers to a file with a size of : "&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;basic&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;size&lt;/span&gt;&lt;span class="p"&gt;());&lt;/span&gt;
+&lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;out&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Path refers to a file last created at : "&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;basic&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;creationTime&lt;/span&gt;&lt;span class="p"&gt;());&lt;/span&gt;
+&lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;out&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Path refers to a file last accessed at : "&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;basic&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;lastAccessTime&lt;/span&gt;&lt;span class="p"&gt;());&lt;/span&gt;
+&lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;out&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Path refers to a file last modified at  : "&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;basic&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;lastModifiedTime&lt;/span&gt;&lt;span class="p"&gt;());&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}&lt;/p&gt;
+&lt;p&gt;[/java]&lt;/p&gt;
+&lt;p&gt;This methods can return null if the attribute is not supported. We can also do that for the DOS attributes :&lt;/p&gt;
+&lt;p&gt;[java]DosFileAttributeView dosView = path.getFileAttributeView(DosFileAttributeView.class); &lt;/p&gt;
+&lt;p&gt;//This attribute view is perhaps not available in this system&lt;/p&gt;
+&lt;p&gt;if (dosView != null) {
+    DosFileAttributes dos = dosView.readAttributes(); //Get the attributes of the view&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;out&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Path refers to a hidden file : "&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;dos&lt;/span&gt; &lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;isHidden&lt;/span&gt;&lt;span class="p"&gt;());&lt;/span&gt;
+&lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;out&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Path refers to a read only file : "&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;dos&lt;/span&gt; &lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;isReadOnly&lt;/span&gt;&lt;span class="p"&gt;());&lt;/span&gt;
+&lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;out&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Path refers to a system file: "&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;dos&lt;/span&gt; &lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;isSystem&lt;/span&gt;&lt;span class="p"&gt;());&lt;/span&gt;
+&lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;out&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Path refers to an archive file : "&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;dos&lt;/span&gt; &lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;isArchive&lt;/span&gt;&lt;span class="p"&gt;());&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}&lt;/p&gt;
+&lt;p&gt;[/java]&lt;/p&gt;
+&lt;p&gt;You're really lucky if that works in Unix ;)&lt;/p&gt;
+&lt;p&gt;All the DOS and POSIX implementations extends the Basic view, so you can access all the basic attributes from an implementation view.&lt;/p&gt;
+&lt;p&gt;To make easier, there is also static methods in the Attributes class to access the attributes. By example :&lt;/p&gt;
+&lt;p&gt;[java]BasicFileAttributes basic = Attributes.readBasicFileAttributes(path);[/java]&lt;/p&gt;
+&lt;p&gt;In the other functionalities, we can note that this new API supports symbolic links (only if the system supports them, of course). Next, the Path class has also flows factories methods like newInputStream() or newByteChannel() to easily create streams to or from the Path. That's also an advantage because the system can choose the good stream implementations to open depending on the system specifications.&lt;/p&gt;
+&lt;p&gt;An other facility offered by Path, is stream on directories. It seems that you can iterate through a directory with an iterator. That's better than File.listFiles() because not all the File are loaded in memory and that's also a bit clearer in code :&lt;/p&gt;
+&lt;p&gt;[java]DirectoryStream directory = path.newDirectoryStream(); &lt;/p&gt;
+&lt;p&gt;try {
+    for (Path p : directory) {
+        System.out.println(p);
+    }
+} finally {
+    directory.close();
+}[/java]&lt;/p&gt;
+&lt;p&gt;And last, but not least, you can now watch for modifications in a directory with WatchService :&lt;/p&gt;
+&lt;p&gt;[java]WatchService watcher = path.getFileSystem().newWatchService(); &lt;/p&gt;
+&lt;p&gt;path.register(watcher,
+      StandardWatchEventKind.ENTRY_CREATE,
+      StandardWatchEventKind.ENTRY_MODIFY,
+      StandardWatchEventKind.ENTRY_DELETE); &lt;/p&gt;
+&lt;p&gt;while (true) {
+    WatchKey watchKey = watcher.take(); &lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;WatchEvent&lt;/span&gt; &lt;span class="n"&gt;event&lt;/span&gt; &lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;watchKey&lt;/span&gt; &lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;pollEvents&lt;/span&gt;&lt;span class="p"&gt;())&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;out&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;event&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;kind&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="s"&gt;" : "&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;event&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;context&lt;/span&gt;&lt;span class="p"&gt;());&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="n"&gt;watchKey&lt;/span&gt; &lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;reset&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/java]&lt;/p&gt;
+&lt;p&gt;That will use the services offered by the operating system (Notification, inotify, FSEvents). This is really easier than writing native code to do that, isn't it ?&lt;/p&gt;
+&lt;p&gt;Here we are. We've covered the main functionalities of the new Path API in Java 7.&lt;/p&gt;
+&lt;p&gt;I hope you find this article interesting and that helped you discovering the new features of Java 7.&lt;/p&gt;&lt;/div&gt;</description><category>I/O</category><category>Java</category><category>Java</category><category>Java 7</category><category>Performances</category><guid>http://www.baptiste-wicht.com/posts/2010/03/nio-2-path-api-java-7.html</guid><pubDate>Wed, 31 Mar 2010 06:55:52 GMT</pubDate></item></channel></rss>

@@ -1,0 +1,129 @@
+<p><html><body><p>Now that we've seen <a href="http://www.baptiste-wicht.com/2010/05/develop-a-modular-application-implementation/">how to describe a module in Java</a>, we'll see how to load it dynamically in our application.</p>
+<p>In Java, all the classes are loaded using several ClassLoader.In this article, we'll develop a loader for our modules and watch the problems that arrive when working with custom ClassLoaders.</p>
+<!--more-->
+
+<p>Normally, Java use the system ClassLoader to load all the classes of our application. So it contains all the classes of our application and all the classes our application needs to work. But the problem is that we cannot add our modules jar files into classpath because the application doesn't know the modules jar files names.</p>
+<p>Moreover, we cannot theoretically add files to the system ClassLoader. I say theoretically because, we can add files using reflection and call to a private method, but i thing it's not a really good practice.</p>
+<p>So we've to create a new ClassLoader to load our modules. We'll do that in two phases :</p>
+<p></p><ol>
+    <li>Browse the module files to get the classes of the modules and the URLs of the modules Jar files</li>
+    <li>Load the modules into our ClassLoader using the URLs of the first phase</li>
+</ol></p>
+<p>We'll do all the loading in a new class ModularLoader. so let's create a create a method that return the list of classes to load :</p>
+<p>[java]public class ModuleLoader { 
+  private static List&lt;URL&gt; urls = new ArrayList&lt;URL&gt;(); </p>
+<p>private static List&lt;String&gt; getModuleClasses(){ 
+    List&lt;String&gt; classes = new ArrayList&lt;String&gt;(); </p>
+<div class="code"><pre><span class="c1">//Get all the modules of the modules folder</span>
+<span class="n">File</span><span class="p">[]</span> <span class="n">files</span> <span class="o">=</span> <span class="k">new</span> <span class="n">File</span><span class="p">(</span><span class="s">&quot;folder&quot;</span><span class="p">).</span><span class="n">listFiles</span><span class="p">(</span><span class="k">new</span> <span class="n">ModuleFilter</span><span class="p">());</span>
+
+<span class="k">for</span><span class="p">(</span><span class="n">File</span> <span class="n">f</span> <span class="o">:</span> <span class="n">files</span><span class="p">){</span> 
+  <span class="n">JarFile</span> <span class="n">jarFile</span> <span class="o">=</span> <span class="k">null</span><span class="p">;</span>
+
+  <span class="n">try</span> <span class="p">{</span> 
+    <span class="c1">//Open the Jar File</span>
+    <span class="n">jarFile</span> <span class="o">=</span> <span class="k">new</span> <span class="n">JarFile</span><span class="p">(</span><span class="n">f</span><span class="p">);</span>
+
+    <span class="c1">//We get the manifest</span>
+    <span class="n">Manifest</span> <span class="n">manifest</span> <span class="o">=</span> <span class="n">jarFile</span><span class="p">.</span><span class="n">getManifest</span><span class="p">();</span>
+
+    <span class="c1">//We get the class name from the manifest attributes</span>
+    <span class="n">classes</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="n">manifest</span><span class="p">.</span><span class="n">getMainAttributes</span><span class="p">().</span><span class="n">getValue</span><span class="p">(</span><span class="s">&quot;Module-Class&quot;</span><span class="p">));</span>
+
+    <span class="n">urls</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="n">f</span><span class="p">.</span><span class="n">toURI</span><span class="p">().</span><span class="n">toURL</span><span class="p">());</span> 
+  <span class="p">}</span> <span class="n">catch</span> <span class="p">(</span><span class="n">IOException</span> <span class="n">e</span><span class="p">)</span> <span class="p">{</span> 
+    <span class="n">e</span><span class="p">.</span><span class="n">printStackTrace</span><span class="p">();</span> 
+  <span class="p">}</span> <span class="n">finally</span> <span class="p">{</span> 
+    <span class="k">if</span><span class="p">(</span><span class="n">jarFile</span> <span class="o">!=</span> <span class="k">null</span><span class="p">){</span> 
+      <span class="n">try</span> <span class="p">{</span> 
+        <span class="n">jarFile</span><span class="p">.</span><span class="n">close</span><span class="p">();</span> 
+      <span class="p">}</span> <span class="n">catch</span> <span class="p">(</span><span class="n">IOException</span> <span class="n">e</span><span class="p">)</span> <span class="p">{</span> 
+        <span class="n">e</span><span class="p">.</span><span class="n">printStackTrace</span><span class="p">();</span> 
+      <span class="p">}</span> 
+    <span class="p">}</span> 
+  <span class="p">}</span> 
+<span class="p">}</span>
+
+<span class="k">return</span> <span class="n">classes</span><span class="p">;</span>
+</pre></div>
+
+
+<p>} </p>
+<p>private static class ModuleFilter implements FileFilter { 
+    @Override 
+    public boolean accept(File file) { 
+      return file.isFile() &amp;&amp; file.getName().toLowerCase().endsWith(".jar"); 
+    } 
+  } 
+}[/java]</p>
+<p>Like you see, it's not complicated at all. We search all the module files and then for each jar file, we open it, get the manifest et read the class name of the module. And then, for the second phase, we get the URL to the Jar file. </p>
+<p>Of course, this loader is not perfect. We can have modules with no manifest or manifest with no class name and the errors must be correctly treated, but this is not the objective of this post to be perfect. </p>
+<p>Now we can do the second phase, adding a method to create the ClassLoader, instantiate the modules and return them : </p>
+<p>[java]private static ClassLoader classLoader; </p>
+<p>public static List&lt;IModule&gt; loadModules(){ 
+  List&lt;IModule&gt; modules = new ArrayList&lt;IModule&gt;(); </p>
+<p>AccessController.doPrivileged(new PrivilegedAction&lt;Object&gt;(){ 
+    @Override 
+    public Object run() { 
+      classLoader = new URLClassLoader( 
+          urls.toArray(new URL[urls.size()]),<br />
+          ModuleLoader.class.getClassLoader()); </p>
+<div class="code"><pre>  <span class="k">return</span> <span class="n">null</span><span class="p">;</span> 
+<span class="p">}</span>
+</pre></div>
+
+
+<p>}); </p>
+<p>//Load all the modules
+  for(String c : getModuleClasses()){ 
+    try { 
+      Class&lt;?&gt; moduleClass = Class.forName(c, true, classLoader); </p>
+<div class="code"><pre>  <span class="k">if</span><span class="p">(</span><span class="n">IModule</span><span class="p">.</span><span class="n">class</span><span class="p">.</span><span class="n">isAssignableFrom</span><span class="p">(</span><span class="n">moduleClass</span><span class="p">)){</span> 
+    <span class="n">Class</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">IModule</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="n">castedClass</span> <span class="o">=</span> <span class="p">(</span><span class="n">Class</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">IModule</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;)</span> <span class="n">moduleClass</span><span class="p">;</span>
+
+    <span class="n">IModule</span> <span class="n">module</span> <span class="o">=</span> <span class="n">castedClass</span><span class="p">.</span><span class="n">newInstance</span><span class="p">();</span>
+
+    <span class="n">modules</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="n">module</span><span class="p">);</span> 
+  <span class="p">}</span>  
+<span class="p">}</span> <span class="n">catch</span> <span class="p">(</span><span class="n">ClassNotFoundException</span> <span class="n">e</span><span class="p">)</span> <span class="p">{</span> 
+  <span class="n">e</span><span class="p">.</span><span class="n">printStackTrace</span><span class="p">();</span> 
+<span class="p">}</span> <span class="n">catch</span> <span class="p">(</span><span class="n">InstantiationException</span> <span class="n">e</span><span class="p">)</span> <span class="p">{</span> 
+  <span class="n">e</span><span class="p">.</span><span class="n">printStackTrace</span><span class="p">();</span> 
+<span class="p">}</span> <span class="n">catch</span> <span class="p">(</span><span class="n">IllegalAccessException</span> <span class="n">e</span><span class="p">)</span> <span class="p">{</span> 
+  <span class="n">e</span><span class="p">.</span><span class="n">printStackTrace</span><span class="p">();</span> 
+<span class="p">}</span>
+</pre></div>
+
+
+<p>} </p>
+<p>return modules; 
+}[/java]</p>
+<p>So we start creating a new ClassLoader taking the urls of the Jar files. Then, we use this ClassLoader to load all the module classes and instantiate them. We only verify if the class is of type IModule. </p>
+<p>This is all for our ModuleLoader. We can now test our simple modular application. We create a JAR file for the module of the previous post and then we create a very simple application to test that : </p>
+<p>[java]List&lt;IModule&gt; modules = ModuleLoader.loadModules(); </p>
+<p>for(IModule module : modules){ 
+  System.out.println("Plug : " + module.getName()); 
+  module.plug(); 
+} </p>
+<p>System.out.println("Lot of other things done by the application. "); </p>
+<p>for(IModule module : modules){ 
+  module.unplug(); 
+}[/java]</p>
+<p>And here is the output of the application : </p>
+<pre>Plug : Simple module
+
+Hello kernel !
+
+Lot of other things done by the application. 
+
+Bye kernel !</pre>
+
+<p>Like you can see, we just created a modular applications ! The application doesn't know the modules, but the modules can do things in the application. </p>
+<p>Of course, to create a real applicatio, we have to develop all the extension points and services, but this is a base to start with. </p>
+<p>However, there is some problems with the current implementations : </p>
+<ul>
+    <li>We cannot deploy modules without restarting the application, because we must create a new ClassLoader for the modules. This is possible if there is no interation between modules, but that's not often the case. You have also the possibility to isolate all the modules in a specific ClassLoader, but with that second solution, the interations between modules are made harder. </li>
+    <li>Using a second ClassLoader may be problematic with libraries loading dynamically the classes like Spring or Hibernate. To make these libraries working with your ClassLoader, you have to look at case by case depending on the library. Often, you achieve specifying the contextClassLoader using the method  Thread.currentThread().setContextClassLoader(ClassLoader cl) with your ClassLoader</li>
+</ul>
+
+<p>So here is the end of this four posts about creating a modular application. I hope you find these posts interesting. </body></html></p>

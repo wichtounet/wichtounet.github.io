@@ -1,0 +1,451 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>@Blog("Baptiste Wicht") (Algorithm)</title><link>http://www.baptiste-wicht.com/</link><description></description><atom:link href="http://www.baptiste-wicht.com/categories/algorithm.xml" type="application/rss+xml" rel="self"></atom:link><language>en</language><lastBuildDate>Sun, 16 Mar 2014 17:07:38 GMT</lastBuildDate><generator>Nikola &lt;http://getnikola.com/&gt;</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>Integer Linear Time Sorting Algorithms</title><link>http://www.baptiste-wicht.com/posts/2012/11/integer-linear-time-sorting-algorithms.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;strong&gt;Update&lt;/strong&gt;: The code is now more C++
+&lt;p&gt;Most of the sorting algorithms that are used are generally comparison sort. It means that each element of the collection being sorted will be compared to see which one is the first one. A comparison must have a lower bound of Ω(n log n) comparisons. That is why there are no comparison-based sorting algorithm better than O(n log n).&lt;/p&gt;
+&lt;p&gt;On the other hand, there are also sorting algorithms that are performing better. This is the family of the integer sorting algorithms. These algorithms are using properties of integer to sort them without comparing them. They can be only be used to sort integers. Nevertheless, a hash function can be used to assign a unique integer to any value and so sort any value. All these algorithms are using extra space. There are several of these algorithms. In this article, we will see three of them and I will present an implementation in C++. At the end of the article, I will compare them to &lt;em&gt;std::sort&lt;/em&gt;.&lt;/p&gt;
+&lt;p&gt;In the article, I will use &lt;em&gt;n&lt;/em&gt; as the size of the array to sort and &lt;em&gt;m&lt;/em&gt; as the max number that is permitted in the array.&lt;/p&gt;
+&lt;h3&gt;Bin Sort&lt;/h3&gt;
+
+&lt;p&gt;Bin Sort, or Bucket Sort, is a very simple algorithm that partition all the input numbers into a number of buckets. Then, all the buckets are outputted in order in the array, resulting in a sorting array. I decided to implement the simplest case of Bin Sort where each number goes in its own bucket, so there are &lt;em&gt;m&lt;/em&gt; buckets.&lt;/p&gt;
+&lt;p&gt;The implementation is pretty straightforward:&lt;/p&gt;
+&lt;p&gt;[cpp]void binsort(std::vector&amp;lt;std::size_t&amp;gt;&amp;amp; A){
+    std::vector&amp;lt;std::vector&amp;lt;std::size_t&amp;gt;&amp;gt; B(MAX + 1);&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;SIZE&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="n"&gt;B&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;A&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;]].&lt;/span&gt;&lt;span class="n"&gt;push_back&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;A&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;]);&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;current&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;MAX&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="k"&gt;auto&lt;/span&gt; &lt;span class="n"&gt;item&lt;/span&gt; &lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;B&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;]){&lt;/span&gt;
+        &lt;span class="n"&gt;A&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;current&lt;/span&gt;&lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;item&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/cpp]&lt;/p&gt;
+&lt;p&gt;B is the array of buckets. Each bucket is implemented as a std::vector. The algorithm starts by filling each buckets with the numbers from the input array. Then, it outputs them in order in the array.&lt;/p&gt;
+&lt;p&gt;This algorithm works in &lt;em&gt;O(n + m)&lt;/em&gt; and requires &lt;em&gt;O(m)&lt;/em&gt; extra memory. With these properties, it makes a very limited algorithm, because if you don't know the maximum number and you have to use the maximum number of the array type, you will have to allocate for instance 2^32 buckets. That won't be possible.&lt;/p&gt;
+&lt;h3&gt;Couting Sort&lt;/h3&gt;
+
+&lt;p&gt;An interesting fact about binsort is that each bucket contains only the same numbers. The size of the bucket would be enough. That is exactly what Counting Sort. It counts the number of times an element is present instead of the elements themselves. I will present two versions. The first one is a version using a secondary array and then copying again into the input array and the second one is an in-place sort.&lt;/p&gt;
+&lt;p&gt;[cpp]void counting_sort(std::vector&amp;lt;std::size_t&amp;gt;&amp;amp; A){
+    std::vector&amp;lt;std::size_t&amp;gt; B(SIZE);
+    std::vector&amp;lt;std::size_t&amp;gt; C(MAX);&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;SIZE&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;C&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;A&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;]];&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;MAX&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="n"&gt;C&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;+=&lt;/span&gt; &lt;span class="n"&gt;C&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;];&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;long&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;SIZE&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="o"&gt;--&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="n"&gt;B&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;C&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;A&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;]]&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;A&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;];&lt;/span&gt;
+    &lt;span class="o"&gt;--&lt;/span&gt;&lt;span class="n"&gt;C&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;A&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;]];&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;SIZE&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="n"&gt;A&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;B&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;];&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/cpp]&lt;/p&gt;
+&lt;p&gt;The algorithm is also simple. It starts by counting the number of elements in each bucket. Then, it aggregates the number by summing them to obtain the position of the element in the final sorted array. Then, all the elements are copied in the temporary array. Finally, the temporary array is copied in the final array. This algorithms works in &lt;em&gt;O(m + n)&lt;/em&gt; and requires &lt;em&gt;O(m + n)&lt;/em&gt;. This version is presented only because it is present in the literature. We can do much better by avoiding the temporary array and optimizing it a bit:&lt;/p&gt;
+&lt;p&gt;[cpp]void in_place_counting_sort(std::vector&amp;lt;std::size_t&amp;gt;&amp;amp; A){
+    std::vector&amp;lt;std::size_t&amp;gt; C(MAX + 1);&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;SIZE&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;C&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;A&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;]];&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;current&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;MAX&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;j&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;j&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;C&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;];&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;j&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+        &lt;span class="n"&gt;A&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;current&lt;/span&gt;&lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/cpp]&lt;/p&gt;
+&lt;p&gt;The temporary array is removed and the elements are directly written in the sorted array. The counts are not used directly as position, so there is no need to sum them. This version still works in &lt;em&gt;O(m + n)&lt;/em&gt; but requires only &lt;em&gt;O(m)&lt;/em&gt; extra memory. It is much faster than the previous version.&lt;/p&gt;
+&lt;h3&gt;Radix Sort&lt;/h3&gt;
+
+&lt;p&gt;The last version that I will discuss here is a Radix Sort. This algorithm sorts the number digit after digit in a specific radix. It is a form of bucket sort, where there is a bucket by digit. Like Counting Sort, only the counts are necessary. For example, if you use radix sort in base 10. It will first sort all the numbers by their first digit, then the second, .... It can work in any base and that is its force. With a well chosen base, it can be very powerful. Here, we will focus on radix that are in the form 2^r. These radix have good properties, we can use shifts and mask to perform division and modulo, making the algorithm much faster.&lt;/p&gt;
+&lt;p&gt;The implementation is a bit more complex than the other implementations:&lt;/p&gt;
+&lt;p&gt;[cpp]static const std::size_t digits = 2;        //Digits&lt;/p&gt;
+&lt;p&gt;static const std::size_t r = 16;                 //Bits&lt;/p&gt;
+&lt;p&gt;static const std::size_t radix = 1 &amp;lt;&amp;lt; r;         //Bins&lt;/p&gt;
+&lt;p&gt;static const std::size_t mask = radix - 1;&lt;/p&gt;
+&lt;p&gt;void radix_sort(std::vector&amp;lt;std::size_t&amp;gt;&amp;amp; A){
+    std::vector&amp;lt;std::size_t&amp;gt; B(SIZE);
+    std::vector&amp;lt;std::size_t&amp;gt; cnt(radix);&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;shift&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;digits&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;shift&lt;/span&gt; &lt;span class="o"&gt;+=&lt;/span&gt; &lt;span class="n"&gt;r&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;j&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;j&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;radix&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;j&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+        &lt;span class="n"&gt;cnt&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;j&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+
+    &lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;j&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;j&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;SIZE&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;j&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+        &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;cnt&lt;/span&gt;&lt;span class="p"&gt;[(&lt;/span&gt;&lt;span class="n"&gt;A&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;j&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;shift&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;amp&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;mask&lt;/span&gt;&lt;span class="p"&gt;];&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+
+    &lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;j&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;j&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;radix&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;j&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+        &lt;span class="n"&gt;cnt&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;j&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;+=&lt;/span&gt; &lt;span class="n"&gt;cnt&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;j&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;];&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+
+    &lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;long&lt;/span&gt; &lt;span class="n"&gt;j&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;SIZE&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;j&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="o"&gt;--&lt;/span&gt;&lt;span class="n"&gt;j&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+        &lt;span class="n"&gt;B&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="o"&gt;--&lt;/span&gt;&lt;span class="n"&gt;cnt&lt;/span&gt;&lt;span class="p"&gt;[(&lt;/span&gt;&lt;span class="n"&gt;A&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;j&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;shift&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;amp&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;mask&lt;/span&gt;&lt;span class="p"&gt;]]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;A&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;j&lt;/span&gt;&lt;span class="p"&gt;];&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+
+    &lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;j&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;j&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;SIZE&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;j&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+       &lt;span class="n"&gt;A&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;j&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;B&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;j&lt;/span&gt;&lt;span class="p"&gt;];&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/cpp]&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;r&lt;/em&gt; indicates the power of two used as the radix (2^r). The mask is used to compute modulo faster. The algorithm repeats the steps for each digit. Here &lt;em&gt;digits&lt;/em&gt; equals 2. It means that we support 2^32 values. A 32 bits value is sorted in two pass. The steps are very similar to counting sort. Each value of the digit is counted and then the counts are summed to give the position of the number. Finally, the numbers are put in order in the temporary array and copied into A.&lt;/p&gt;
+&lt;p&gt;This algorithm works in &lt;em&gt;O(digits (m + radix))&lt;/em&gt; and requires &lt;em&gt;O(n + radix)&lt;/em&gt; extra memory. A very good thing is that the algorithm does not require space based on the maximum value, only based on the radix.&lt;/p&gt;
+&lt;h3&gt;Results&lt;/h3&gt;
+
+&lt;p&gt;It's time to compare the different implementations in terms of runtime. For each size, each version is tested 25 times on different random arrays. The arrays are the same for each algorithm. The number is the time necessary to sort the 25 arrays. The benchmark has been compiler with GCC 4.7.&lt;/p&gt;
+&lt;p&gt;The first test is made with very few duplicates (m = 10n).&lt;/p&gt;
+&lt;p&gt;[bar_chart title="m = 10n" width="600px" height="400px" scale_button="true" v_title="ms" h_title="n"]&lt;/p&gt;
+&lt;p&gt;['x', 'std::sort', 'counting_sort', 'in_place_counting_sort', 'bin_sort', 'radix_sort'],&lt;/p&gt;
+&lt;p&gt;['100000', 171, 182, 105, 945, 89],&lt;/p&gt;
+&lt;p&gt;['500000', 993, 2229, 970, 6435, 461],&lt;/p&gt;
+&lt;p&gt;['1000000', 2175, 4812, 2046, 14096, 1068],&lt;/p&gt;
+&lt;p&gt;['5000000', 11791, 27050, 10202, 81255, 6148],&lt;/p&gt;
+&lt;p&gt;[/bar_chart]&lt;/p&gt;
+&lt;p&gt;Radix Sort comes to be the fastest in this case, &lt;strong&gt;twice faster as &lt;em&gt;std::sort&lt;/em&gt;&lt;/strong&gt;. In place counting sort has almost the same performance as &lt;em&gt;std::sort&lt;/em&gt;. The other are performing worse.&lt;/p&gt;
+&lt;p&gt;The second test is made with few duplicates (m ~= n).&lt;/p&gt;
+&lt;p&gt;[bar_chart title="m ~= n" width="600px" height="400px" scale_button="true" v_title="ms" h_title="n"]&lt;/p&gt;
+&lt;p&gt;['x', 'std::sort', 'counting_sort', 'in_place_counting_sort', 'bin_sort', 'radix_sort'],&lt;/p&gt;
+&lt;p&gt;['100000', 186, 73, 37, 309, 90],&lt;/p&gt;
+&lt;p&gt;['500000', 991, 611, 189, 3126, 455],&lt;/p&gt;
+&lt;p&gt;['1000000', 2235, 2171, 547, 7978, 1038],&lt;/p&gt;
+&lt;p&gt;['5000000', 12184, 18470, 4516, 49056, 5791],&lt;/p&gt;
+&lt;p&gt;[/bar_chart]&lt;/p&gt;
+&lt;p&gt;The numbers are impressive. In place &lt;strong&gt;counting sort is between 3-4 times faster than &lt;em&gt;std::sort&lt;/em&gt;&lt;/strong&gt; and &lt;strong&gt;radix sort is twice faster than &lt;em&gt;std::sort&lt;/em&gt;&lt;/strong&gt; ! Bin Sort does not performs very well and counting sort even if generally faster than &lt;em&gt;std::sort&lt;/em&gt; does not scale very well.&lt;/p&gt;
+&lt;p&gt;Let's test with more duplicates (m = n / 2).&lt;/p&gt;
+&lt;p&gt;[bar_chart title="m = n / 2" width="600px" height="400px" scale_button="true" v_title="ms" h_title="n"]&lt;/p&gt;
+&lt;p&gt;['x', 'std::sort', 'counting_sort', 'in_place_counting_sort', 'bin_sort', 'radix_sort'],&lt;/p&gt;
+&lt;p&gt;['100000', 178, 65, 25, 262, 90],&lt;/p&gt;
+&lt;p&gt;['500000', 979, 450, 143, 2332, 461],&lt;/p&gt;
+&lt;p&gt;['1000000', 2171, 1480, 321, 6240, 1041],&lt;/p&gt;
+&lt;p&gt;['5000000', 11978, 16205, 3453, 41709, 5890],&lt;/p&gt;
+&lt;p&gt;[/bar_chart]&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;std::sort&lt;/em&gt; and radix sort performance does not change a lot but the other sort are performing better. In-place counting sort is still the leader with a higher margin.&lt;/p&gt;
+&lt;p&gt;Finally, with a lot of duplicates (m = n / 10).&lt;/p&gt;
+&lt;p&gt;[bar_chart title="m = n / 10n" width="600px" height="400px" scale_button="true" v_title="ms" h_title="n"]&lt;/p&gt;
+&lt;p&gt;['x', 'std::sort', 'counting_sort', 'in_place_counting_sort', 'bin_sort', 'radix_sort'],&lt;/p&gt;
+&lt;p&gt;['100000', 161, 46, 12, 144, 74],&lt;/p&gt;
+&lt;p&gt;['500000', 918, 322, 76, 1023, 449],&lt;/p&gt;
+&lt;p&gt;['1000000', 2062, 824, 167, 2721, 1041],&lt;/p&gt;
+&lt;p&gt;['5000000', 10789, 8534, 1030, 24026, 5686],&lt;/p&gt;
+&lt;p&gt;[/bar_chart]&lt;/p&gt;
+&lt;p&gt;Again, &lt;em&gt;std::sort&lt;/em&gt; and radix sort performance are stable, but in-place counting is now &lt;strong&gt;ten times faster than &lt;em&gt;std::sort&lt;/em&gt;&lt;/strong&gt; !&lt;/p&gt;
+&lt;h3&gt;Conclusion&lt;/h3&gt;
+
+&lt;p&gt;To conclude, we have seen that these algorithms can outperforms &lt;em&gt;std::sort&lt;/em&gt; by a high factor (10 times for In place Counting Sort when there m &amp;lt;&amp;lt; n). If you have to sort integers, you should consider these two cases:&lt;/p&gt;
+&lt;ul&gt;
+    &lt;li&gt;m &amp;gt; n or m is unknown : Use radix sort that is about twice faster than &lt;em&gt;std::sort&lt;/em&gt;.&lt;/li&gt;
+    &lt;li&gt;m &amp;lt;&amp;lt; n : Use in place counting sort that can be much faster than &lt;em&gt;std::sort&lt;/em&gt;.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;I hope you found this article interesting. The implementation can be found on Github: https://github.com/wichtounet/articles/tree/master/src/linear_sorting&lt;/p&gt;&lt;/div&gt;</description><category>Algorithm</category><category>Benchmarks</category><category>C++</category><category>C++</category><category>Performances</category><guid>http://www.baptiste-wicht.com/posts/2012/11/integer-linear-time-sorting-algorithms.html</guid><pubDate>Wed, 07 Nov 2012 09:02:46 GMT</pubDate></item><item><title>Algorithms books Reviews</title><link>http://www.baptiste-wicht.com/posts/2012/08/algorithms-books-reviews.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;To be sure to be well prepared for an interview, I decided to read several &lt;strong&gt;Algorithms book&lt;/strong&gt;. I also chosen books in order to have information about data structures. I chose these books to read:
+&lt;/p&gt;&lt;ol&gt;
+    &lt;li&gt;Data Structures &amp;amp; Algorithm Analysis in C++, Third Edition, by Clifford A. Shaffer&lt;/li&gt;
+    &lt;li&gt;Algorithms in a Nutshell, by George T. Heineman, Gary Pollice and Stanley Selkow&lt;/li&gt;
+    &lt;li&gt;Algorithms, Fourth Edition, by Robert Sedgewick and Kevin Wayne&lt;/li&gt;
+    &lt;li&gt;Introduction to Algorithms, by Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest and Clifford Stein. I have to say that I have only read most of it, not completely, because some chapters were not interesting for me at the current time, but I will certainly read them later.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;As some of my comments are about the presentation of the books, it has to be noted that I have read the three first books on my Kindle.&lt;/p&gt;
+&lt;p&gt;In this post, you will find my point of view about all these books.&lt;/p&gt;
+&lt;h4&gt;Data Structures &amp;amp; Algorithm Analysis in C++&lt;/h4&gt;
+
+&lt;p&gt;This book is really great. It contains a lot of data structures and algorithms. Each of them is very clearly presented. It is not hard to understand the data structures and the algorithms.&lt;/p&gt;
+&lt;p&gt;Each data structure is first presented as an ADT (Abstract Data Structure) and then several possible implementations are presented. Each implementation is precisely defined and analyzed to find its sweet pots and worst cases.  Other implementations are also presented with enough references to know where to start with them.&lt;/p&gt;
+&lt;p&gt;I have found that some other books about algorithms are writing too much stuff for a single thing. This is not the case with this book. Indeed, each interesting thing is clearly and succinctly explained.&lt;/p&gt;
+&lt;p&gt;About the presentation, the code is well presented and the content of the book is very well written. A good think would have been to add a summary of the most important facts about each algorithm and data structure. If you want to know these facts, you have to read several pages (but the facts are always here).&lt;/p&gt;
+&lt;p&gt;The book contains very good explanation about the complexity analysis of algorihtms. It also contains a very interesting chapter about limits to computation where it treats P, NP, NP-Complete and NP-Hard complexity classes.&lt;/p&gt;
+&lt;p&gt;This book contains a large number of exercises and projects that can be used to improve even more your algorithmic skills. Moreover, there are very good references at the end of each chapters if you want more documentation about a specific subject.&lt;/p&gt;
+&lt;p&gt;I had some difficulty reading it on my Kindle. Indeed, it's impossible to switch chapters directly with the Kindle button. If you want quick access to the next chapter, you have to use the table of contents.&lt;/p&gt;
+&lt;h4&gt;Algorithms in a Nutshell&lt;/h4&gt;
+
+&lt;p&gt;This book is much shorter than the previous one. Even if it could be a good book for beginners, I didn't liked this book a lot. The explanations are a bit messy sometimes and it could contain more data structures (even if I know that this is not the subject of the book). The analysis of the different algorithms are a bit short too. Even if it looks normal for a book that short, it has to be known that this book has no exercise.&lt;/p&gt;
+&lt;p&gt;However, this book has also several good points. Each algorithm is very well presented in a single panel. The complexity of each algorithm is directly given alongside its code. It helps finding quickly an algorithm and its main properties.&lt;/p&gt;
+&lt;p&gt;Another thing that I found good is that the author included empiric benchmarks as well as complexity analysis. The chapters about Path Finding in AI and computational geometry were very interesting, especially because it is not widely dealt with in other books.&lt;/p&gt;
+&lt;p&gt;It also has very good references for each chapter.&lt;/p&gt;
+&lt;p&gt;This book was perfect to read with Kindle, the navigation was very easy.&lt;/p&gt;
+&lt;h4&gt;Algorithms&lt;/h4&gt;
+
+&lt;p&gt;This book is a good book, but suffers from several drawbacks regarding to other books. First, the book covers a lot of data structures and algorithms. Then, it also has very good explanations about complexity classes. It also has a lot of exercises. I also liked a lot the chapter about string algorithms that was lacking in previous books.&lt;/p&gt;
+&lt;p&gt;Most of the time, the explanations are good, but sometimes, I found them quite hard to understand. Moreover, some parts of code are also hard to follow. The author included Java runs of some of programs. In my opinion, this is quite useless, empiric benchmarks could have been useful, but not single runs of the program. Some of the diagrams were also hard to read, but that's perhaps a consequence of the Kindle.&lt;/p&gt;
+&lt;p&gt;A think that disappointed me a bit is that the author doesn't use big Oh notation. Even, if we have enough information to easily get the Big Oh equivalent, I don't understand why a book about algorithms doesn't use this notation.&lt;/p&gt;
+&lt;p&gt;Just like the first book, there is no simple view of a given algorithm that contains all the information about an algorithm. Another think that disturbed me is that the author takes time to describe an API around the algorithms and data structures and about the Java API. Again, in my opinion only, it takes a too large portion of the book.&lt;/p&gt;
+&lt;p&gt;Again, this book was perfect to read with Kindle, the navigation was very easy.&lt;/p&gt;
+&lt;h4&gt;Introduction to Algorithms&lt;/h4&gt;
+
+&lt;p&gt;This book is the most complete I read about algorithms and data structures by a large factor. It has very complete explanations about complexity analysis: big Oh, Big Theta, Small O. For each data structure and algorithm, the complexity analysis is very detailed and very well explained. The pieces of code are written in a very good pseudo code manner.&lt;/p&gt;
+&lt;p&gt;As I said before, the complexity analysis are very complete and sometimes very complex. This can be either an advantage or a disadvantage, depending of what you awaits from the book. For example, the analysis is made using several notations Big Oh, Big Theta or even small Oh. Sometimes, it is a bit hard to follow, but it provides very good basis for complexity analysis in general.&lt;/p&gt;
+&lt;p&gt;The book  was also the one with the best explanations about linear time sorting algorithms. In the other books, I found difficult to understand sorts like counting sort or bucket sort, but in this book, the explanations are very clear. It also includes multithreaded algorithm analysis, number theoretic algorithms, polynomials and a very complete chapter about linear programming.&lt;/p&gt;
+&lt;p&gt;The book contains a huge number of exercises for each chapters and sub chapters.&lt;/p&gt;
+&lt;p&gt;This book will not only help you find the best suited algorithm for a given problem, it will also help you understand how to write your own algorithm for a problem or how to analyze deeply an existing solution.&lt;/p&gt;
+&lt;h4&gt;Algorithms Book Wrap-up&lt;/h4&gt;
+
+&lt;p&gt;As I read all these Algorithms books in order, it's possible that my review is a bit subjective regarding to comparisons to other books.&lt;/p&gt;
+&lt;p&gt;If you plan to work in C++ and need more knowledge in algorithms and C++, I advice you to read &lt;strong&gt;Data Structures &amp;amp; Algorithm Analysis in C++&lt;/strong&gt;, that is really awesome. If you want a very deep knowledge about algorithm analysis and algorithms in general and have good mathematical basis, you should really take a deep look at &lt;strong&gt;Introduction to Algorithms&lt;/strong&gt;. If you want short introduction about algorithms and don't care about the implementation language, you can read &lt;strong&gt;Algorithms in a Nutshell&lt;/strong&gt;. &lt;strong&gt;Algorithms&lt;/strong&gt; is like a master key, it will gives you good starting knowledge about algorithm analysis and a broad range of algorithms and data structures.&lt;/p&gt;&lt;/div&gt;</description><category>Algorithm</category><category>Books</category><category>C++</category><category>Conception</category><category>Java</category><category>Performances</category><category>Programming</category><guid>http://www.baptiste-wicht.com/posts/2012/08/algorithms-books-reviews.html</guid><pubDate>Fri, 24 Aug 2012 08:52:04 GMT</pubDate></item><item><title>Find closest pair of point with Plane Sweep Algorithm in O(n ln n)</title><link>http://www.baptiste-wicht.com/posts/2010/04/closest-pair-of-point-plane-sweep-algorithm.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;Finding the closest pair of Point in a given collection of points is a standard problem in computational geometry. In this article I'll explain an efficient algorithm using plane sweep, compare it to the naive implementation and discuss its complexity.&lt;/p&gt;
+&lt;!--more--&gt;
+
+&lt;p&gt;This problem is standard, but not really easy to solve in an efficient way. The first implementation we think of is the naive one, comparing each point to each other point.&lt;/p&gt;
+&lt;p&gt;In my examples, I'll use the java.awt.Point class to represent a point. This naive implementation is really easy to implement :&lt;/p&gt;
+&lt;p&gt;[java]public static Point[] naiveClosestPair(Point[] points) {
+    double min = Double.MAX_VALUE;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;Point&lt;/span&gt;&lt;span class="p"&gt;[]&lt;/span&gt; &lt;span class="n"&gt;closestPair&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;new&lt;/span&gt; &lt;span class="n"&gt;Point&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="mi"&gt;2&lt;/span&gt;&lt;span class="p"&gt;];&lt;/span&gt;
+
+&lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;Point&lt;/span&gt; &lt;span class="n"&gt;p1&lt;/span&gt; &lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;points&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;Point&lt;/span&gt; &lt;span class="n"&gt;p2&lt;/span&gt; &lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;points&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;p1&lt;/span&gt; &lt;span class="o"&gt;!=&lt;/span&gt; &lt;span class="n"&gt;p2&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+            &lt;span class="kt"&gt;double&lt;/span&gt; &lt;span class="n"&gt;dist&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;p1&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;distance&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;p2&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+            &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;dist&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;min&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+                &lt;span class="n"&gt;min&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;dist&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+                &lt;span class="n"&gt;closestPair&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;p1&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+                &lt;span class="n"&gt;closestPair&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;p2&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+            &lt;span class="p"&gt;}&lt;/span&gt;
+        &lt;span class="p"&gt;}&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;closestPair&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/java]&lt;/p&gt;
+&lt;p&gt;As you can directly see, this naive implementation has a complexity of O(n^2). But we can do a lot better using a plane sweep algorithm.&lt;/p&gt;
+&lt;p&gt;With that algorithm, we'll sweep the plane from left to right (right to left is also a possibility) and when we reach a point we'll compute all the interesting candidates (the candidates that can be in the closest pair).&lt;/p&gt;
+&lt;p&gt;For that we'll make the following operations :&lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;ol&gt;
+    &lt;li&gt;We sort the list of points from left to right in the x axis&lt;/li&gt;
+    &lt;li&gt;And then for each point :
+&lt;ol&gt;
+    &lt;li&gt;We remove from the candidates all the point that are further in x axis that the current min distance&lt;/li&gt;
+    &lt;li&gt;We take all the candidates that are located more or less current min distance from the current point in y axis&lt;/li&gt;
+    &lt;li&gt;We test for the min distance all the founded candidates with the current point&lt;/li&gt;
+    &lt;li&gt;And finally we add the current point to the list of candidates&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+
+&lt;/ol&gt;
+
+&lt;p&gt;So when we found a new min distance, we can make the rectangle of candidates smaller in the x axis and smaller in the y axis. So we make a lot less comparisons between the points.&lt;/p&gt;
+&lt;p&gt;Here is a picture illustrating that :&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://www.baptiste-wicht.com/wp-content/uploads/2010/04/Sweep.png"&gt;&lt;img class="size-full wp-image-473" title="Plane Sweep Algorithm" src="http://www.baptiste-wicht.com/wp-content/uploads/2010/04/Sweep.png" alt="Plane Sweep Algorithm" width="500" height="436"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;The red points are the closest pair at this time of the algorithm. The red rectangle is the rectangle of the candidates delimited in right by the current point. And the yellow rectangle contains only the candidates interesting for the current point.&lt;/p&gt;
+&lt;p&gt;There is always a maximum of 6 points in the yellow rectangle, the 4 vertices, the point with the same coordinates as the current point and finally the point in the same y coordinate and in the limit of the x axis. Even if the maximum is 6, you'll almost never have more than 2 points in that list (the maximum is see in my test was 3 with a collection of 1'000'000 random points). You can see this 6 points here :&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://www.baptiste-wicht.com/wp-content/uploads/2010/04/Sweep-points.png"&gt;&lt;img class="size-full wp-image-474" title="Maximum points to compare" src="http://www.baptiste-wicht.com/wp-content/uploads/2010/04/Sweep-points.png" alt="Maximum points to compare" width="132" height="232"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;If all that stuff is not really clear for you, you can watch it in action here &lt;a href="http://www.cs.mcgill.ca/~cs251/ClosestPair/ClosestPairApplet/ClosestPairApplet.html" target="_blank"&gt;in a Java applet&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;The candidates must also be always sorted. For that, we'll use a Binary Search Tree for good performances.&lt;/p&gt;
+&lt;p&gt;If we look at the complexity :&lt;/p&gt;
+&lt;ul&gt;
+    &lt;li&gt;Sorting all the points in right axis : Cost O(n ln n) with Quick Sort by example&lt;/li&gt;
+    &lt;li&gt;Shrinking the list of candidates take O(n) from start to end of the algorithm because we add n points to the candidates and we can remove only n points. So this is constant for each point : O(1).&lt;/li&gt;
+    &lt;li&gt;Searching all the candidates between two values in y axis cost O(ln n) with binary search&lt;/li&gt;
+    &lt;li&gt;The comparisons with at maximum 6 points are made in O(1)&lt;/li&gt;
+    &lt;li&gt;Add the candidates and keep the list of candidates sorted cost O(ln n).&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;So the total complexity is O(n ln(n) + n * ( 1 + ln(n) + 1 + ln(n) ) ) = O(n ln n).&lt;/p&gt;
+&lt;p&gt;So it's really better than O(n^2) for the naive implementation.&lt;/p&gt;
+&lt;p&gt;So now, we can go to the implementation in Java.&lt;/p&gt;
+&lt;p&gt;[java]public static Point[] closestPair(Point[] points) {
+    Point[] closestPair = new Point[2];&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="c1"&gt;//When we start the min distance is the infinity&lt;/span&gt;
+&lt;span class="n"&gt;double&lt;/span&gt; &lt;span class="n"&gt;crtMinDist&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;Double&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="no"&gt;POSITIVE_INFINITY&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+&lt;span class="c1"&gt;//Get the points and sort them&lt;/span&gt;
+&lt;span class="n"&gt;Point&lt;/span&gt;&lt;span class="p"&gt;[]&lt;/span&gt; &lt;span class="n"&gt;sorted&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;Arrays&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;copyOf&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;points&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;points&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;length&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="n"&gt;Arrays&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;sort&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;sorted&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="no"&gt;HORIZONTAL_COMPARATOR&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+&lt;span class="c1"&gt;//When we start the left most candidate is the first one&lt;/span&gt;
+&lt;span class="k"&gt;int&lt;/span&gt; &lt;span class="n"&gt;leftMostCandidateIndex&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mh"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+&lt;span class="c1"&gt;//Vertically sorted set of candidates&lt;/span&gt;
+&lt;span class="n"&gt;SortedSet&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;Point&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;candidates&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;TreeSet&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;Point&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;(&lt;/span&gt;&lt;span class="no"&gt;VERTICAL_COMPARATOR&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+&lt;span class="c1"&gt;//For each point from left to right&lt;/span&gt;
+&lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;Point&lt;/span&gt; &lt;span class="n"&gt;current&lt;/span&gt; &lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;sorted&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="c1"&gt;//Shrink the candidates&lt;/span&gt;
+    &lt;span class="k"&gt;while&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;current&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;x&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="n"&gt;sorted&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;leftMostCandidateIndex&lt;/span&gt;&lt;span class="p"&gt;].&lt;/span&gt;&lt;span class="n"&gt;x&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;amp&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;crtMinDist&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="n"&gt;candidates&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;remove&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;sorted&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;leftMostCandidateIndex&lt;/span&gt;&lt;span class="p"&gt;]);&lt;/span&gt;
+        &lt;span class="n"&gt;leftMostCandidateIndex&lt;/span&gt;&lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+
+    &lt;span class="c1"&gt;//Compute the y head and the y tail of the candidates set&lt;/span&gt;
+    &lt;span class="n"&gt;Point&lt;/span&gt; &lt;span class="n"&gt;head&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;Point&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;current&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="k"&gt;int&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;current&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;y&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="n"&gt;crtMinDist&lt;/span&gt;&lt;span class="p"&gt;));&lt;/span&gt;
+    &lt;span class="n"&gt;Point&lt;/span&gt; &lt;span class="n"&gt;tail&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;Point&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;current&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="k"&gt;int&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;current&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;y&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;crtMinDist&lt;/span&gt;&lt;span class="p"&gt;));&lt;/span&gt;
+
+    &lt;span class="c1"&gt;//We take only the interesting candidates in the y axis&lt;/span&gt;
+    &lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;Point&lt;/span&gt; &lt;span class="n"&gt;point&lt;/span&gt; &lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;candidates&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;subSet&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;head&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;tail&lt;/span&gt;&lt;span class="p"&gt;))&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="n"&gt;double&lt;/span&gt; &lt;span class="n"&gt;distance&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;current&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;distance&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;point&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+        &lt;span class="c1"&gt;//Simple min computation&lt;/span&gt;
+        &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;distance&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;crtMinDist&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+            &lt;span class="n"&gt;crtMinDist&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;distance&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+            &lt;span class="n"&gt;closestPair&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="mh"&gt;0&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;current&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+            &lt;span class="n"&gt;closestPair&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="mh"&gt;1&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;point&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+        &lt;span class="p"&gt;}&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+
+    &lt;span class="c1"&gt;//The current point is now a candidate&lt;/span&gt;
+    &lt;span class="n"&gt;candidates&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;add&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;current&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;closestPair&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/java]&lt;/p&gt;
+&lt;p&gt;The code isn't overcomplicated. We see all the steps explained in the article and that works well. The Horizontal and Vertical comparators are really simple : &lt;/p&gt;
+&lt;p&gt;[java]private static final Comparator&amp;lt;Point&amp;gt; VERTICAL_COMPARATOR = new Comparator&amp;lt;Point&amp;gt;() {
+    @Override
+    public int compare(Point a, Point b) {
+        if (a.y &amp;lt; b.y) {
+            return -1;
+        }
+        if (a.y &amp;gt; b.y) {
+            return 1;
+        }
+        if (a.x &amp;lt; b.x) {
+            return -1;
+        }
+        if (a.x &amp;gt; b.x) {
+            return 1;
+        }
+        return 0;
+    }
+};&lt;/p&gt;
+&lt;p&gt;private static final Comparator&amp;lt;Point&amp;gt; HORIZONTAL_COMPARATOR = new Comparator&amp;lt;Point&amp;gt;() {
+    @Override
+    public int compare(Point a, Point b) {
+        if (a.x &amp;lt; b.x) {
+            return -1;
+        }
+        if (a.x &amp;gt; b.x) {
+            return 1;
+        }
+        if (a.y &amp;lt; b.y) {
+            return -1;
+        }
+        if (a.y &amp;gt; b.y) {
+            return 1;
+        }
+        return 0;
+    }
+}[/java]&lt;/p&gt;
+&lt;p&gt;Here is a performance comparison for some sizes with &lt;a href="http://www.baptiste-wicht.com/2010/04/write-corrects-benchmarks/" target="_blank"&gt;a Benchmark Framework I described here&lt;/a&gt; for some sizes of collection points.&lt;/p&gt;
+&lt;table border="1" cellspacing="0" cellpadding="0"&gt;
+
+&lt;tbody&gt;
+
+&lt;tr&gt;
+
+&lt;td width="55" valign="top"&gt;&lt;strong&gt; &lt;/strong&gt;&lt;/td&gt;
+
+&lt;td width="91" valign="top"&gt;&lt;strong&gt;Naive&lt;/strong&gt;&lt;/td&gt;
+
+&lt;td width="87" valign="top"&gt;&lt;strong&gt;Sweeping&lt;/strong&gt;&lt;/td&gt;
+
+&lt;/tr&gt;
+
+&lt;tr&gt;
+
+&lt;td width="55" valign="top"&gt;&lt;strong&gt;100&lt;/strong&gt;&lt;/td&gt;
+
+&lt;td width="91" valign="top"&gt;189.923 us&lt;/td&gt;
+
+&lt;td width="87" valign="top"&gt;53.685 us&lt;/td&gt;
+
+&lt;/tr&gt;
+
+&lt;tr&gt;
+
+&lt;td width="55" valign="top"&gt;&lt;strong&gt;500&lt;/strong&gt;&lt;/td&gt;
+
+&lt;td width="91" valign="top"&gt;4.448 ms&lt;/td&gt;
+
+&lt;td width="87" valign="top"&gt;279.042 us&lt;/td&gt;
+
+&lt;/tr&gt;
+
+&lt;tr&gt;
+
+&lt;td width="55" valign="top"&gt;&lt;strong&gt;1000&lt;/strong&gt;&lt;/td&gt;
+
+&lt;td width="91" valign="top"&gt;17.790 ms&lt;/td&gt;
+
+&lt;td width="87" valign="top"&gt;556.731 us&lt;/td&gt;
+
+&lt;/tr&gt;
+
+&lt;tr&gt;
+
+&lt;td width="55" valign="top"&gt;&lt;strong&gt;5000&lt;/strong&gt;&lt;/td&gt;
+
+&lt;td width="91" valign="top"&gt;458.728 ms&lt;/td&gt;
+
+&lt;td width="87" valign="top"&gt;3.320 ms&lt;/td&gt;
+
+&lt;/tr&gt;
+
+&lt;/tbody&gt;
+
+&lt;/table&gt;
+
+&lt;p&gt;Like you can see, this is really better than the naive implementation. So we make a good job. But if we make one more test with 10 elements :&lt;/p&gt;
+&lt;table border="1" cellspacing="0" cellpadding="0"&gt;
+
+&lt;tbody&gt;
+
+&lt;tr&gt;
+
+&lt;td width="55" valign="top"&gt;&lt;strong&gt; &lt;/strong&gt;&lt;/td&gt;
+
+&lt;td width="91" valign="top"&gt;&lt;strong&gt;Naive&lt;/strong&gt;&lt;/td&gt;
+
+&lt;td width="87" valign="top"&gt;&lt;strong&gt;Sweeping&lt;/strong&gt;&lt;/td&gt;
+
+&lt;/tr&gt;
+
+&lt;tr&gt;
+
+&lt;td width="55" valign="top"&gt;&lt;strong&gt;10&lt;/strong&gt;&lt;/td&gt;
+
+&lt;td width="91" valign="top"&gt;1.932 us&lt;/td&gt;
+
+&lt;td width="87" valign="top"&gt;4.746 us&lt;/td&gt;
+
+&lt;/tr&gt;
+
+&lt;/tbody&gt;
+
+&lt;/table&gt;
+
+&lt;p&gt;Now our good sweeping algorithm is slower than the naive !&lt;/p&gt;
+&lt;p&gt;When we think about that, we realize that it's logical. In fact we made a lot of computations before starting the algorithm like sorting the points, creating a list of candidantes, ... All that stuff is heavier than make n^2 comparisons in little number. So what can we do to have good performances with small number of points ?&lt;/p&gt;
+&lt;p&gt;It's really easy to solve. We just have to found the number before which the naive algorithm is quicker than the sweeping and when the size of the points collection is smaller than this pivot number we use the naive implementation. On my computer I found that before 75 elements, the naive implementation was faster than the sweeping algorithm, so we can refactor our method :&lt;/p&gt;
+&lt;p&gt;[java]public static Point[] closestPair(Point[] points) {
+    if(points.length &amp;lt; 75){
+        return naiveClosestPair(points);
+    }&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="c1"&gt;//No changes&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/java]&lt;/p&gt;
+&lt;p&gt;And we've good performances for little set of points :)&lt;/p&gt;
+&lt;p&gt;So our method is now complete. I hope you found that post interesting and that will be useful to someone.&lt;/p&gt;&lt;/div&gt;</description><category>Algorithm</category><category>Benchmarks</category><category>Conception</category><category>Java</category><category>Java</category><category>Performances</category><guid>http://www.baptiste-wicht.com/posts/2010/04/closest-pair-of-point-plane-sweep-algorithm.html</guid><pubDate>Tue, 27 Apr 2010 16:08:10 GMT</pubDate></item></channel></rss>

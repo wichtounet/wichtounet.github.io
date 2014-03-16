@@ -1,0 +1,434 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>@Blog("Baptiste Wicht") (Optimization)</title><link>http://www.baptiste-wicht.com/</link><description></description><atom:link href="http://www.baptiste-wicht.com/categories/optimization.xml" type="application/rss+xml" rel="self"></atom:link><language>en</language><lastBuildDate>Sun, 16 Mar 2014 17:07:37 GMT</lastBuildDate><generator>Nikola &lt;http://getnikola.com/&gt;</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>eddic 1.2.3 - Better data-flow analysis</title><link>http://www.baptiste-wicht.com/posts/2013/03/eddic-1-2-3-better-data-flow-analysis.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;I finally finished the version 1.2.3 of eddic. I have been quite busy finishing my master thesis in february and then taking some vacations in United States, so this version came later than I wanted. &lt;/p&gt;
+&lt;p&gt;The main change is about the speed of the data-flow optimizations. I refactored a lot the data-flow to make it much faster. Some test cases are up to 10 times faster :)&lt;/p&gt;
+&lt;p&gt;There are still some work to do for speed of optimizations, but it is much better now. Dead Code Elimination and Constant Propagation still have to be made faster, but now the main bottleneck. In the next version of eddic, the parsing performance will be improved. &lt;/p&gt;
+&lt;p&gt;Inlining performance has also been greatly improved. The functions are considered in topological order of the call graph. This makes it much faster and moreover the resulting code is more efficient too. &lt;/p&gt;
+&lt;p&gt;There are also some improvements of the language. char and bool types now takes only one byte each. Copy constructors for structures containing field of structure type are now automatically generated. The grammar has been enhanced to support postfix operations in for loops. &lt;/p&gt;
+&lt;p&gt;Other improvements have been made to the optimization engine. A new optimization has been implemented: Loop Unswitching. This optimization transforms a code like that: &lt;/p&gt;
+&lt;p&gt;[cpp]for(int i = 0; i &amp;lt; X; ++i){&lt;/p&gt;
+&lt;p&gt;if(a){
+   //Something
+} else {
+   //Something else
+}&lt;/p&gt;
+&lt;p&gt;}[/cpp]&lt;/p&gt;
+&lt;p&gt;In some code like that: &lt;/p&gt;
+&lt;p&gt;[cpp]if(a){
+   for(int i = 0; i &amp;lt; X; ++i){
+      //Something
+   }
+} else {
+   for(int i = 0; i &amp;lt; X; ++i){
+      //Something else
+   }
+}[/cpp]&lt;/p&gt;
+&lt;p&gt;when a doesn't depend on the loop body. The body of the loops is much faster in the second version. &lt;/p&gt;
+&lt;p&gt;The induction variable analysis is now able to handle loops with induction variable divided in each iteration. With that new feature, the call: &lt;/p&gt;
+&lt;p&gt;[cpp]print(123);[/cpp]&lt;/p&gt;
+&lt;p&gt;is reduced to&lt;/p&gt;
+&lt;p&gt;[cpp]print('1');&lt;/p&gt;
+&lt;p&gt;print('2');&lt;/p&gt;
+&lt;p&gt;print('3');[/cpp]&lt;/p&gt;
+&lt;p&gt;Another small optimization is that variables contributing only to themselves are now correctly identified as dead. &lt;/p&gt;
+&lt;p&gt;On the compiler side, the timing system has been greatly improved to contains almost all part of the compilation process. The timings for the complete compilation is available &lt;a href="https://github.com/wichtounet/eddic/wiki/Performance" title="Performance"&gt;on the wiki&lt;/a&gt;. &lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;h4&gt;Future Work&lt;/h4&gt;
+&lt;p&gt;The next version of the EDDI compiler (eddic) will be the version 1.2.4. &lt;/p&gt;
+&lt;p&gt;Performances will stil be focused for this version. The first change will be to improve the performances of the parsing. Then, I'm gonna try to improve register allocation performances by improving handling of bound registers which I believe is a bottleneck. &lt;/p&gt;
+&lt;p&gt;There are also several refactorings that I think of doing to the code. I will probably also implement new minor language features, but I still don't know what. &lt;/p&gt;
+&lt;p&gt;Moreover, I have to serve in the army the next three weeks, so there won't be any progress these weeks. &lt;/p&gt;
+&lt;h4&gt;Download&lt;/h4&gt;
+
+&lt;p&gt;You can find the EDDI Compiler sources on the Github repository: &lt;a title="Github repository of eddic" href="https://github.com/wichtounet/eddic"&gt;https://github.com/wichtounet/eddic&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;The version is available in the &lt;em&gt;v1.2.3&lt;/em&gt; tag available in the GitHub or directly in the &lt;em&gt;master&lt;/em&gt; branch.&lt;/p&gt;&lt;/div&gt;</description><category>Compilers</category><category>EDDI</category><category>EDDI</category><category>Optimization</category><category>projects</category><category>Releases</category><guid>http://www.baptiste-wicht.com/posts/2013/03/eddic-1-2-3-better-data-flow-analysis.html</guid><pubDate>Sat, 09 Mar 2013 11:50:27 GMT</pubDate></item><item><title>EDDI Compiler 1.1.0 - Member functions</title><link>http://www.baptiste-wicht.com/posts/2012/07/eddi-compiler-1-1-0-member-functions.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;The &lt;strong&gt;version 1.1.0&lt;/strong&gt; of the &lt;strong&gt;EDDI Compiler&lt;/strong&gt; (eddic) is available. It took much less time to implement that version than I thought. &lt;/p&gt;
+&lt;p&gt;The main change to the language is the &lt;strong&gt;support of member functions&lt;/strong&gt;. Each structure can now declare some functions. Functions can be called in each structure object. Here is an example of what can be done with that feature in EDDI:&lt;/p&gt;
+&lt;p&gt;[cpp]struct Counter {
+    int value;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;increment&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+    &lt;span class="n"&gt;this&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;this&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;add&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;number&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="n"&gt;this&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;this&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;number&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;add&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;n1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;n2&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="n"&gt;this&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;this&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;n1&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="n"&gt;this&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;this&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;n2&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}&lt;/p&gt;
+&lt;p&gt;void main(){
+    Counter counter;
+    counter.increment();
+    println(counter.value);&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;counter&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;add&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;99&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;counter&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+&lt;span class="n"&gt;counter&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;add&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;11&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;69&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;counter&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/cpp]&lt;/p&gt;
+&lt;p&gt;The &lt;em&gt;this&lt;/em&gt; pointer is available in each member function. The pointer is passed on the stack just like any other parameter. &lt;/p&gt;
+&lt;p&gt;Another improvement is the support of the &lt;strong&gt;ternary operator&lt;/strong&gt;:&lt;/p&gt;
+&lt;p&gt;[cpp]void main(){
+    int a = 5 &amp;gt; 2 ? 44 : 66;
+    println(a);
+}[/cpp]&lt;/p&gt;
+&lt;p&gt;The inliner has been improved to support inlining member functions and functions with pointer parameters. The parameter allocation in register is only done starting at O1. &lt;/p&gt;
+&lt;p&gt;The peephole optimizer has also been improved. Some stacks operations optimization are performed and some unnecessary copies of parameter register are removed.  &lt;/p&gt;
+&lt;p&gt;Finally, the assembly generation has been improved to not use stack frames starting at O2. When this optimization is enabled, the local variables are addressed using stack pointers instead of the base pointer that is not used anymore. This optimization reduces the overhead of function calls. &lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;h4&gt;Future work&lt;/h4&gt;
+&lt;p&gt;The next version of the EDDI Compiler will be the &lt;strong&gt;version 1.1.1&lt;/strong&gt;.&lt;/p&gt;
+&lt;h4&gt;Download&lt;/h4&gt;
+
+&lt;p&gt;You can find the compiler sources on the Github repository: &lt;a title="eddic on GitHub" href="https://github.com/wichtounet/eddic"&gt;https://github.com/wichtounet/eddic&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;The exact version I refer to is the v1.1 available in the GitHub tags or directly as the release branch.&lt;/p&gt;&lt;/div&gt;</description><category>C++</category><category>Compilers</category><category>EDDI</category><category>EDDI</category><category>Optimization</category><guid>http://www.baptiste-wicht.com/posts/2012/07/eddi-compiler-1-1-0-member-functions.html</guid><pubDate>Sun, 22 Jul 2012 06:18:57 GMT</pubDate></item><item><title>EDDI Compiler 1.0.3 - Inlining and register allocation</title><link>http://www.baptiste-wicht.com/posts/2012/07/eddi-compiler-1-0-3-inlining-register-allocation.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;The &lt;strong&gt;version 1.0.3&lt;/strong&gt; of the &lt;strong&gt;EDDI Compiler&lt;/strong&gt; (eddic) is available.&lt;/p&gt;
+&lt;p&gt;The only improvement to the language is that the size of a global array can now be defined using a constant global variable.&lt;/p&gt;
+&lt;p&gt;The main improvement of this version is the addition of &lt;strong&gt;inlining&lt;/strong&gt; in the optimization engine. This optimization replace a call to a function by the body of the function. For now, the inlining optimizer is quite basic. For now, it doesn't inline only a specific call site but all the call sites of a given function. Moreover, the heuristics used for inlining are quite simple (only the size of the function is taken into account). Only functions that takes int and float parameters can be inlined. This optimization will be improved in the future.&lt;/p&gt;
+&lt;p&gt;The second main change is the arrival of a &lt;strong&gt;basic register allocation&lt;/strong&gt;. In each function, one or more variables can be assigned to registers. Only the most used variables are allocated into registers. Another optimization is that variables that are not used after all optimization techniques have been applied are removed from the function storage. The unused functions are also removed from the program after the optimization passes.&lt;/p&gt;
+&lt;p&gt;Moreover, the performances of optimization engine have been improved by about 20%.&lt;/p&gt;
+&lt;p&gt;The MTAC representation has been improved. The ARRAY operators have been removed because they can be replaced with the DOT operators. The preamble and prologue generations for LTAC has also been refactored. When it is possible, the stack frames are not generated.&lt;/p&gt;
+&lt;p&gt;Finally, the configuration of the compiler has been improved with several new optimization option and the options being separated into several option groups.&lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;h4&gt;Future work&lt;/h4&gt;
+&lt;p&gt;The next version of the EDDI Compiler will be the &lt;strong&gt;version 1.1.0&lt;/strong&gt;.&lt;/p&gt;
+&lt;p&gt;The main change will be member functions inside of structures. For now, there will be no kind of virtual functions and inheritance but that will certainly come in its time.&lt;/p&gt;
+&lt;p&gt;And as ever, I will be more than pleased to hear any idea you could have about this project :)&lt;/p&gt;
+&lt;h4&gt;Download&lt;/h4&gt;
+
+&lt;p&gt;You can find the compiler sources on the Github repository: &lt;a title="eddic on GitHub" href="https://github.com/wichtounet/eddic"&gt;https://github.com/wichtounet/eddic&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;The exact version I refer to is the v1.0.3 available in the GitHub tags or directly as the release branch.&lt;/p&gt;&lt;/div&gt;</description><category>C++</category><category>Compilers</category><category>EDDI</category><category>EDDI</category><category>Optimization</category><category>Releases</category><guid>http://www.baptiste-wicht.com/posts/2012/07/eddi-compiler-1-0-3-inlining-register-allocation.html</guid><pubDate>Sat, 14 Jul 2012 08:46:15 GMT</pubDate></item><item><title>EDDI Compiler 1.0.2 – Better pointer support and Dead-Code Elimination</title><link>http://www.baptiste-wicht.com/posts/2012/07/eddi-compiler-1-0-2-better-pointer-support-new-optimizations.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;The &lt;strong&gt;version 1.0.2&lt;/strong&gt; of the &lt;strong&gt;EDDI Compiler&lt;/strong&gt; (eddic) is available.&lt;/p&gt;
+&lt;p&gt;The language itself does not features something new, but the support of pointers has been greatly improved. You can now declare arrays of pointers and return pointers from functions. Structures can hold pointers as well. Moreover, arrays of structures are now supported. These new features have increased the number of operators of the MTAC Level.&lt;/p&gt;
+&lt;p&gt;The more important part of this new version resides in the Optimization Engine. A new optimization technique has been implemented: Dead-Code Elimination. This technique removes all code that calculates values for variables that are not used anymore after this statement. Another change is that empty functions are removed after optimization (as well as every call to the removed functions). The liveness analyzer has been replaced by a global Live-Variable Analysis routine. This information is used in the optimization engine and in the LTAC Compiler. Finally, the Peephole Optimizer has been improved to support some local optimization techniques like constant propagation and basic dead-code elimination.&lt;/p&gt;
+&lt;p&gt;The code generators have also been improved by outputting only native functions that are called. It means that if the program does not print a float, the _F5printF function will not be generated. Moreover, the native functions have been moved in external assembly files.&lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;h4&gt;Future work&lt;/h4&gt;
+&lt;p&gt;The next version of the EDDI Compiler will be the &lt;strong&gt;version 1.0.3&lt;/strong&gt;.&lt;/p&gt;
+&lt;p&gt;This version will see a first basic version of Inlining optimization and certainly register-allocation of the most used variables. There will certainly be no change of the language itself.&lt;/p&gt;
+&lt;p&gt;A cleanup of the two compilers (MTAC and LTAC) will be performed as well as simplification of the MTAC Language if possible.&lt;/p&gt;
+&lt;p&gt;The other changes will mainly be minor changes to the compiler.&lt;/p&gt;
+&lt;p&gt;And as ever, I will be more than pleased to hear any idea you could have about this project :)&lt;/p&gt;
+&lt;h4&gt;Download&lt;/h4&gt;
+
+&lt;p&gt;You can find the compiler sources on the Github repository: &lt;a title="eddic on GitHub" href="https://github.com/wichtounet/eddic"&gt;https://github.com/wichtounet/eddic&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;The exact version I refer to is the v1.0.2 available in the GitHub tags or directly as the release branch.&lt;/p&gt;&lt;/div&gt;</description><category>C++</category><category>Compilers</category><category>EDDI</category><category>EDDI</category><category>Optimization</category><guid>http://www.baptiste-wicht.com/posts/2012/07/eddi-compiler-1-0-2-better-pointer-support-new-optimizations.html</guid><pubDate>Wed, 04 Jul 2012 08:56:22 GMT</pubDate></item><item><title>EDDI Compiler 1.0.1 - Pointers and better struct support</title><link>http://www.baptiste-wicht.com/posts/2012/06/eddi-compiler-1-0-1-pointers-better-struct-support.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;The &lt;strong&gt;version 1.0.1&lt;/strong&gt; of the &lt;strong&gt;EDDI Compiler&lt;/strong&gt; (eddic) is now available. &lt;/p&gt;
+&lt;p&gt;The language itself has been updated to support &lt;strong&gt;pointers&lt;/strong&gt;. For now, this support is quite basic, but it allows to pass any type of the language by pointer to a function. No arithmetic is permitted on pointers, only dereferencing is allowed. The following sample shows how pointers are used in the language: &lt;/p&gt;
+&lt;p&gt;[cpp]struct A {
+    int a;
+    string b;
+    float c;
+}&lt;/p&gt;
+&lt;p&gt;void main(){
+    A a;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;44&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;b&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s"&gt;"44"&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;c&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mf"&gt;44f&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+&lt;span class="n"&gt;test&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+&lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"|"&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}&lt;/p&gt;
+&lt;p&gt;void test(A&lt;em&gt; a){
+    A&lt;/em&gt; b = a;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;55&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+&lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"|"&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+&lt;span class="n"&gt;b&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;66&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="n"&gt;b&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;b&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s"&gt;"66"&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="n"&gt;b&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;c&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mf"&gt;66f&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+&lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"|"&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;b&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"|"&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/cpp]&lt;/p&gt;
+&lt;p&gt;This sample is not very useful, but it shows the usage of pointers well enough. &lt;/p&gt;
+&lt;p&gt;Another improvement to the language is that it supports now nested struct. It means that a member of a struct can be a struct itself. &lt;/p&gt;
+&lt;p&gt;That's it for the language improvements. On the side of the compiler itself, I've improved the error reporting for structs. For example, the compiler display a clear error when a struct is recursively nested. The peephole optimizer has been improved a bit with new optimization, but it still rather simple. The optimization engine is now able to optimize functions in parallel. The improvement is not quite large, but that can be useful if there are a lot of functions. I've also improved a lot the Abstract Syntax Tree representation of assignments to unify variable, array and struct assignments in one Node with the notion of LeftValue. &lt;/p&gt;
+&lt;p&gt;Finally, the tests have also been improved. New tests have been added and helped me find new bugs. Moreover, the tests are now made on each optimization levels for each test case. There was some issue with smallest optimization level. &lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;h4&gt;Future work&lt;/h4&gt;
+&lt;p&gt;The next version of the EDDI Compiler will be the &lt;strong&gt;version 1.0.2&lt;/strong&gt;. &lt;/p&gt;
+&lt;p&gt;This version will adds support for returning a pointer from a function. Moreover, it will also adds support for pointers inside of struct. The last change to the language will be that you will be able to declare array of pointers and array of structure. &lt;/p&gt;
+&lt;p&gt;The peephole optimizer will perform more powerful optimization. At least, I will add an optimization to remove assignments to registers that are not used and use less registers. That will perhaps imply to add support for basic blocks in the LTAC Language. &lt;/p&gt;
+&lt;p&gt;I will also add a powerful dead-code optimization to the Optimization Engine. This will replace the RemoveAssign and RemoveMultipleAssign pass of the engine, being more powerful. &lt;/p&gt;
+&lt;p&gt;As ever, I'm open to any idea you could have about this project :)&lt;/p&gt;
+&lt;h4&gt;Download&lt;/h4&gt;
+
+&lt;p&gt;You can find the compiler sources on the Github repository: &lt;a title="eddic on GitHub" href="https://github.com/wichtounet/eddic"&gt;https://github.com/wichtounet/eddic&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;The exact version I refer to is the v1.0.1 available in the GitHub tags or directly as the release branch.&lt;/p&gt;&lt;/div&gt;</description><category>C++</category><category>Compilers</category><category>EDDI</category><category>EDDI</category><category>Optimization</category><guid>http://www.baptiste-wicht.com/posts/2012/06/eddi-compiler-1-0-1-pointers-better-struct-support.html</guid><pubDate>Mon, 25 Jun 2012 08:57:17 GMT</pubDate></item><item><title>EDDI Compiler 1.0 - Structures and Global Optimizations</title><link>http://www.baptiste-wicht.com/posts/2012/06/eddic-1-0-structures-global-optimizations.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;I've the pleasure to announce the availability of &lt;strong&gt;version 1.0&lt;/strong&gt; of the &lt;strong&gt;EDDI Compiler&lt;/strong&gt; (eddic). &lt;/p&gt;
+&lt;p&gt;This release adds one big enhancement to the language: &lt;strong&gt;Structures&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;Structures are used like in the C programming language: &lt;/p&gt;
+&lt;p&gt;[cpp]struct Complex {
+    int imag;
+    int real;
+}&lt;/p&gt;
+&lt;p&gt;void main(){
+    Complex c;
+    c.imag = 222;
+    c.real = 666;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;c&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;imag&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;c&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;real&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+&lt;span class="n"&gt;c&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;imag&lt;/span&gt; &lt;span class="o"&gt;+=&lt;/span&gt; &lt;span class="mi"&gt;111&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="n"&gt;c&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;real&lt;/span&gt; &lt;span class="o"&gt;+=&lt;/span&gt; &lt;span class="mi"&gt;222&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+&lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;c&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;imag&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;c&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;real&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+&lt;span class="n"&gt;test&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;c&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+&lt;span class="k"&gt;if&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;c&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;b&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;c&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;imag&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="k"&gt;else&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;c&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;real&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}&lt;/p&gt;
+&lt;p&gt;void test(Complex a){
+    println(a.imag);
+    println(a.real);
+}[/cpp]&lt;/p&gt;
+&lt;p&gt;For now on, you can declare structures, use local variables of the struct type and pass them as parameter. But the usage of structure is still limited, there are no way to return a structure from a function and no way to pass a structure by reference. Another limitation is that a member of struct cannot be of a struct type. At least, the last limitation will be addressed in the next version of eddic. &lt;/p&gt;
+&lt;p&gt;Another main change is the use of a new low-level Intermediate Representation (LTAC). This change is describe more in details in &lt;a href="http://www.baptiste-wicht.com/2012/05/compiler-architecture-refinements-eddic/" title="Compiler Architecture refinements for eddic" target="_blank"&gt;this article&lt;/a&gt;. &lt;/p&gt;
+&lt;p&gt;The main other change is the use of a data-flow framework for global optimization in the optimization engine. An optimization is global if it takes into account all the basic blocks of the function being optimized. For that, it takes a Control-Flow graph of the function and follow the logical flow of the function to determine what can be optimized. Two old optimization have been transformed from local to global: Constant Propagation and Copy Propagation. They have also been merged for being more efficient, so they are done both in one pass of the flow. I also implemented a new technique: Common Subexpression Elimination. This optimization make sure that no computation is made when the result is still available. The control flow graph is handled with the &lt;em&gt;Boost Graph Library&lt;/em&gt;. &lt;/p&gt;
+&lt;p&gt;I also fixed a performance issue on the Optimization Engine. Before, the optimization were done for the whole program and if one optimization was successful, all the optimization techniques were tried again on the whole program. Now, there are made one function at a time and restarted only for this function. It should prove faster on problem with a lot of functions. &lt;/p&gt;
+&lt;p&gt;In the side of the assembly generation, I changed the way the floats constants are handled. Before, a general purpose register was used to load the constant and then load it in the SSE register. To avoid having to use a GP Register, I used a constant float pool and loaded the float directly from memory to the SSE Register. &lt;/p&gt;
+&lt;p&gt;On the compiler side, I added several new unit test and fixed the old tests. They were lots of bugs in the tests itself that made that they were not working at all. The test suite is now much more robust and showed me lots of other bugs. &lt;/p&gt;
+&lt;p&gt;I removed the dependency to &lt;em&gt;Boost Chrono&lt;/em&gt; by relying on the new std::chrono library. &lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;h4&gt;Future work&lt;/h4&gt;
+&lt;p&gt;The next version will be the &lt;strong&gt;1.0.1 version&lt;/strong&gt;. There will be several changes with this version. &lt;/p&gt;
+&lt;p&gt;I will improve the support of structures. I will add the support for struct inside structs and perhaps passing struct by reference (which would also means adding supports for references for other types as well). &lt;/p&gt;
+&lt;p&gt;I will also make more improvements to the optimization engine. I will add at least one new data-flow optimization and I will try to make the optimization pass faster. &lt;/p&gt;
+&lt;p&gt;Finally, as ever, I will certainly make some refactorings on some parts of the Compiler, but it starts looking good. &lt;/p&gt;
+&lt;h4&gt;Download&lt;/h4&gt;
+
+&lt;p&gt;You can find the compiler sources on the Github repository: &lt;a title="eddic on GitHub" href="https://github.com/wichtounet/eddic"&gt;https://github.com/wichtounet/eddic&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;The exact version I refer to is the v1.0 available in the GitHub tags or directly as the release branch.&lt;/p&gt;&lt;/div&gt;</description><category>C++</category><category>Compilers</category><category>EDDI</category><category>EDDI</category><category>Optimization</category><guid>http://www.baptiste-wicht.com/posts/2012/06/eddic-1-0-structures-global-optimizations.html</guid><pubDate>Mon, 04 Jun 2012 08:32:46 GMT</pubDate></item><item><title>Advanced Compiler Design and Implementation - Book Review</title><link>http://www.baptiste-wicht.com/posts/2012/05/advanced-compiler-design-and-implementation-book-review.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;After &lt;a title="Compilers : Principles, Techniques &amp;amp; Tools – Book Review" href="http://www.baptiste-wicht.com/2012/01/compilers-principles-techniques-tools/"&gt;having read my first book about compilers&lt;/a&gt;, I decided to try another one more focused on optimizations. For that, I chose "&lt;strong&gt;Advanced Compiler Design and Implementation&lt;/strong&gt;", by Steven S. Muchnick.&lt;/p&gt;
+&lt;p&gt;This book covers several subjects about compilers, but more than 60% of the text is about compiler optimizations.&lt;/p&gt;
+&lt;p&gt;The first chapter introduces the main concepts of compiler design. It also explains why optimization is so important in a compiler.&lt;/p&gt;
+&lt;p&gt;The algorithms of this book are presented in ICAN (Informal Compiler Algorithm Notation) notation. The chapter two provides both a brief and a full description of this notation. In my case, the brief description has been enough to understand the algorithms presented in the following chapters, but it can be useful for a deep understanding of the notation to read the full description.&lt;/p&gt;
+&lt;p&gt;The next chapter covers Symbol Table. It also includes a way to generate load and store instructions directly based on the information contained in the Symbol Table. Then, the fourth chapter presents the intermediate representations used in that book. This book uses three different intermediate languages: A high-level one, a medium-level one and a low-level. This chapter covers each of them in details. The importance of the design of an intermediate representation is also discussed here. There will be two more intermediate forms used in the book, static single-assignment (SSA) and program dependence graphs that are discussed later in the book.&lt;/p&gt;
+&lt;p&gt;The chapter five gives some information about the different runtime support of some architectures. It is very useful to know how to handle high-level languages at runtime. The next one is about producing code generators automatically from machine descriptions. Three approaches are covered in this chapter.&lt;/p&gt;
+&lt;p&gt;With the seventh chapter, the optimization techniques start. This chapter covers control-flow analysis. It will introduce several techniques that can be used to perform this kind of analysis, namely depth first search and dominators, interval analysis and structural analysis. These analysis can be used to identify structures like loops and branches in the intermediate representations. The chapter eight covers data-flow analysis. This chapter introduces a lot of mathematical concepts like lattices or flow functions. It takes some time to understand completely the concepts of this chapter, but the explanations are very good. Again, three methods of doing this analysis are studied. It covers iterative data-flow analysis, control-tree techniques and slotwise analysis. Another techniques are also introduced, but not covered in details. The chapter 9 covers dependence analysis. This analysis will be vital for optimizations on arrays and loops and to instruction scheduling techniques that will be studied later. Finally, the chapter ten introduces alias-analysis techniques.&lt;/p&gt;
+&lt;p&gt;Once the analysis techniques have been covered, the other chapters are about optimization themselves. The chapter 11 introduces optimizations. It explains which optimizations should be performed at which level and in which order. It also describes briefly the optimizations that are covered in the next chapters. You will see that the following chapters are very rich, each of them containing a lot of optimizations that can be performed.&lt;/p&gt;
+&lt;p&gt;The first optimizations that are covered (in chapter 12) are the so-called early optimizations. It includes scalar replacement of aggregates, value numbering, copy propagation and sparse conditional constant propagation. It also covers constant folding and algebraic simplifications. After that, the optimizations that reduce redundancy are covered. Again, several techniques are covered, common subexpression elimination, forward substitution, loop invariant code motion, partial redundancy elimination and code hoisting. Then, the loop optimizations are introduced. This chapter first introduces a way to identify induction variables in a loop and then covers some optimization that can be used. For example, strength reduction and unnecessary bounds checking optimizations are covered.&lt;/p&gt;
+&lt;p&gt;The next two chapters are more related to low-level problematic. The chapter 15 covers optimizations that can be applied to reduce the cost of procedures. It discusses tail-call optimization, procedure integration, in-line expansion, leaf-routine optimization and shrink wrapping. The, the chapter 16 covers a very important subject that is Register Allocation. It covers several techniques like cost based methods and global graph coloring.&lt;/p&gt;
+&lt;p&gt;The chapter 17 deals with code scheduling. It is a technique that reorder instructions to take best advantage of the pipelines built into ,modern processors. First, local approaches (within a basic block) are discussed and then optimization for scheduling across basic-block boundaries are covered. For the two subjects, several techniques are discussed. The chapter 18 covers low-level optimizations like unreachable-code elimination, loop inversion, dead-code elimination, etc... This chapter is very broad and very interesting too.&lt;/p&gt;
+&lt;p&gt;The chapter 19 covers more complex optimization: the inteprocedural optimizations. Several techniques for doing inteprocedural analysis are covered in details as well as several optimizations depending on these analysis, like constant propagation. This chapter is not very simple to understand and even less to apply, but it is very interesting. The chapter 20 is the last about optimizations. It covers techniques to improve the memory hierarchy usage. The first optimizations are about instruction-cache: instruction prefetching, procedure sorting and procedure splitting for example. Then, data-cache optimizations are covered. It includes data prefetching and scalar replacement of array elements in details and gives an outline for some other optimizations.&lt;/p&gt;
+&lt;p&gt;Finally, the chapter 21 studies four different compilers to see what optimizations are applied and in which order. Their intermediate forms are also studied. It is very interesting how this is done in real-world compiler.&lt;/p&gt;
+&lt;p&gt;To conclude, I think that this book is really great. It covers a lot of optimizations that can be implemented in a compiler. All the optimizations are covered in details with code samples and examples of applying the optimization on some code. However, it has to be said that this book is not easy to read and sometimes it is hard to understand exactly what means a specific optimization and in what it differs from some close technique. If you want to write an aggressive optimizer compiler or just write some optimizations for an existing one, you should consider to take a look at this book.&lt;/p&gt;
+&lt;p&gt;If you know another good book on Compilers, I will be glad to hear about it.&lt;/p&gt;&lt;/div&gt;</description><category>Books</category><category>Compilers</category><category>Compilers</category><category>Optimization</category><guid>http://www.baptiste-wicht.com/posts/2012/05/advanced-compiler-design-and-implementation-book-review.html</guid><pubDate>Tue, 15 May 2012 08:54:36 GMT</pubDate></item><item><title>EDDIC 0.8.1 : do while loop and better optimization</title><link>http://www.baptiste-wicht.com/posts/2012/02/eddic-0-8-1-do-while-loop-and-better-optimization.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;Only three days after the 0.8 version, I finished the 0.8.1 version.&lt;/p&gt;
+&lt;p&gt;It's a minor version, so there is no big changes to the language. However, I added support for the &lt;strong&gt;do while loop&lt;/strong&gt; in the source code.&lt;/p&gt;
+&lt;p&gt;Another change is that assignment is now returning a value. That allows you to make some code like this one:&lt;/p&gt;
+&lt;p&gt;[cpp]int a = b = 5;&lt;/p&gt;
+&lt;p&gt;b = (a = 4) + 1;[/cpp]&lt;/p&gt;
+&lt;p&gt;This new version includes also some new changes for the optimization engine. I implemented &lt;strong&gt;constant propagation&lt;/strong&gt; and &lt;strong&gt;copy propagation&lt;/strong&gt; for offset assignment. For example:&lt;/p&gt;
+&lt;p&gt;[cpp]a(8) = 4;&lt;/p&gt;
+&lt;p&gt;b = a(8);[/cpp]&lt;/p&gt;
+&lt;p&gt;becomes:&lt;/p&gt;
+&lt;p&gt;[cpp]a(8) = 4;&lt;/p&gt;
+&lt;p&gt;b = 4;[/cpp]&lt;/p&gt;
+&lt;p&gt;And the last change is that the concatenations that are detected to be constant after some optimization are made at compile-time by the optimization engine. This simplify a lot the generated code for source file with a lot of concatenations.&lt;/p&gt;
+&lt;p&gt;The next version (the 0.9) will introduce floating point operations and parameter passing with registers (probably only in 64 bit). It's also possible that I will try to implement a first version of global optimization.&lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;h4&gt;Download&lt;/h4&gt;
+&lt;p&gt;You can find the compiler sources on the Github repository: &lt;a title="eddic on Github" href="https://github.com/wichtounet/eddic"&gt;https://github.com/wichtounet/eddic&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;The exact version I refer to is the v0.8.1 available in the github tags or directly as the release branch.&lt;/p&gt;&lt;/div&gt;</description><category>EDDI</category><category>EDDI</category><category>Optimization</category><guid>http://www.baptiste-wicht.com/posts/2012/02/eddic-0-8-1-do-while-loop-and-better-optimization.html</guid><pubDate>Sun, 19 Feb 2012 07:21:50 GMT</pubDate></item><item><title>Local optimization of Three-Address-Code</title><link>http://www.baptiste-wicht.com/posts/2012/02/local-optimization-on-three-address-code.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;Some compilers are using Three-Address-Code (TAC) as an intermediate representation. This representation is very simple to understand and write. Moreover, it's easy to run some optimization on this representation.&lt;/p&gt;
+&lt;p&gt;Each TAC statement has this general form : result = operand1 operator operand2&lt;/p&gt;
+&lt;p&gt;For example, here are some TAC statements:&lt;/p&gt;
+&lt;p&gt;[cpp]a = 1&lt;/p&gt;
+&lt;p&gt;x = a * 3&lt;/p&gt;
+&lt;p&gt;if x &amp;amp;gt; a goto test&lt;/p&gt;
+&lt;p&gt;param "dddd"&lt;/p&gt;
+&lt;p&gt;call print&lt;/p&gt;
+&lt;p&gt;test:&lt;/p&gt;
+&lt;p&gt;param "asdf"&lt;/p&gt;
+&lt;p&gt;call print[/cpp]&lt;/p&gt;
+&lt;p&gt;In this post, we will see some of the local optimizations that can be applied on TAC. A local optimization is an optimization that is applied locally to a basic block. A basic block is a set of TAC statements that has only one entry point and one exit point. Once the first instruction of the basic block is executed, the rest of the instructions are necessarily executed exactly once. These optimizations are easy to design and implement. If you want to run global optimizations (through all the basic blocks of a function) or even Interprocedural Optimization (IPO), you will need a far more complex framework to run optimizations. I will try to write something on global optimization when I will have implemented some of them in EDDI.&lt;/p&gt;
+&lt;p&gt;The goal of optimization is of course to replace some statements with more efficient statements. &lt;/p&gt;
+&lt;!--more--&gt;
+
+&lt;p&gt;The list presented in this post is not exhaustive, this is only the optimizations that I've implemented in EDDIC, but this represent most of the local optimizations.&lt;/p&gt;
+&lt;p&gt;The first three optimization techniques can be applied independently on each statement of the program. &lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;h4&gt;1. Arithmetic Identities&lt;/h4&gt;
+&lt;p&gt;The first optimization is about arithmetic identities. There are some properties in math that we can use to simplify simple TAC statement.&lt;/p&gt;
+&lt;p&gt;Here are all the identities that are simplified in EDDIC:&lt;/p&gt;
+&lt;ul&gt;
+    &lt;li&gt;&lt;em&gt;x = a + 0&lt;/em&gt; or &lt;em&gt;x = 0 + a&lt;/em&gt; =&amp;gt; &lt;em&gt;x = a&lt;/em&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;em&gt;x = a - 0&lt;/em&gt; =&amp;gt; &lt;em&gt;x = a&lt;/em&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;em&gt;x = 0 - a&lt;/em&gt; =&amp;gt; &lt;em&gt;x = -a&lt;/em&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;em&gt;x = a - a&lt;/em&gt; =&amp;gt; &lt;em&gt;x = 0&lt;/em&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;em&gt;x = a * 1&lt;/em&gt; or &lt;em&gt;x = 1 * a&lt;/em&gt; =&amp;gt; &lt;em&gt;x = a&lt;/em&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;em&gt;x = a * 0&lt;/em&gt; or &lt;em&gt;x = 0 * a&lt;/em&gt; =&amp;gt; &lt;em&gt;x = 0&lt;/em&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;em&gt;x = a * -1&lt;/em&gt; or &lt;em&gt;x = -1 * a&lt;/em&gt; =&amp;gt; &lt;em&gt;x = -a&lt;/em&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;em&gt;x = a / 1&lt;/em&gt; =&amp;gt; &lt;em&gt;x = a&lt;/em&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;em&gt;x = a / -1&lt;/em&gt; =&amp;gt; &lt;em&gt;x = -a&lt;/em&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;em&gt;x = 0 / a&lt;/em&gt; =&amp;gt; &lt;em&gt;x = 0&lt;/em&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;em&gt;x = a / a&lt;/em&gt; =&amp;gt; &lt;em&gt;x = 1&lt;/em&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;All the expressions on the right are more efficient to compute than the one on the left. &lt;/p&gt;
+&lt;h4&gt;2. Reduce in strength&lt;/h4&gt;
+
+&lt;p&gt;Another easy optimization is the reduction of strength of some math operations. For example, an addition is cheaper than multiplication and multiplication is cheaper than division. If your language does not have floating point math, the only reduction that can be done is this one: &lt;/p&gt;
+&lt;p&gt;Here are all the identities that are simplified in EDDIC:&lt;/p&gt;
+&lt;ul&gt;
+    &lt;li&gt;&lt;em&gt;x = 2 * a&lt;/em&gt; or &lt;em&gt;x = a * 2&lt;/em&gt; =&amp;gt; &lt;em&gt;x = a + a&lt;/em&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;With floating point math, we can do a little better: &lt;/p&gt;
+&lt;ul&gt;
+    &lt;li&gt;&lt;em&gt;x = a / 2&lt;/em&gt; =&amp;gt; &lt;em&gt;x = a * 0.5&lt;/em&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;em&gt;x = a / 4&lt;/em&gt; =&amp;gt; &lt;em&gt;x = a * 0.25&lt;/em&gt;&lt;/li&gt;
+    &lt;li&gt;etc...&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4&gt;3. Constant folding&lt;/h4&gt;
+
+&lt;p&gt;When both operands on the right side of the TAC statement are integers, we can replace the math operation directly by the result of the computation. &lt;/p&gt;
+&lt;p&gt;With a and b being any integer, we can transform these TAC statements: &lt;/p&gt;
+&lt;ul&gt;
+    &lt;li&gt;&lt;em&gt;x = 1 + 2&lt;/em&gt; =&amp;gt; &lt;em&gt;x = 3&lt;/em&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;em&gt;x = 3 - 1&lt;/em&gt; =&amp;gt; &lt;em&gt;x = 2&lt;/em&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;em&gt;x = 3 * 2&lt;/em&gt; =&amp;gt; &lt;em&gt;x = 6&lt;/em&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;em&gt;x = 5 / 2&lt;/em&gt; =&amp;gt; &lt;em&gt;x = 2&lt;/em&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;em&gt;x = 5 % 2&lt;/em&gt; =&amp;gt; &lt;em&gt;x = 1&lt;/em&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;We can also use this optimization to simplify conditional jumps. For example, &lt;em&gt;if 3 &amp;gt; 2 goto B2&lt;/em&gt; can be replaced by &lt;em&gt;goto B2&lt;/em&gt;. &lt;/p&gt;
+&lt;p&gt;More than being way more efficient statements, it also enables other optimization to be performed on the TAC program. &lt;/p&gt;
+&lt;!--nextpage--&gt;
+
+&lt;p&gt;The next two optimizations cannot be made on each statement independently. They have to be made on each basic blocks. They are replacing some variables by other variables or values.  &lt;/p&gt;
+&lt;h4&gt;4. Constant propagation&lt;/h4&gt;
+
+&lt;p&gt;This optimization consists in replacing a variable by its constant value at each place we know it's constant. For example, this basic block: &lt;/p&gt;
+&lt;p&gt;[cpp]a = 2&lt;/p&gt;
+&lt;p&gt;b = c * a &lt;/p&gt;
+&lt;p&gt;a = 5&lt;/p&gt;
+&lt;p&gt;a = a + b&lt;/p&gt;
+&lt;p&gt;c = a + 2[/cpp]&lt;/p&gt;
+&lt;p&gt;can be optimized into:&lt;/p&gt;
+&lt;p&gt;[cpp]a = 2&lt;/p&gt;
+&lt;p&gt;b = c * 2&lt;/p&gt;
+&lt;p&gt;a = 5&lt;/p&gt;
+&lt;p&gt;a = 5 + b&lt;/p&gt;
+&lt;p&gt;c = a + 2[/cpp]&lt;/p&gt;
+&lt;p&gt;Two use of a variable have been replaced by its value. In this case, we cannot replace the last use of a because we do not know its value there. &lt;/p&gt;
+&lt;p&gt;This optimization can be made using a simple algorithm on each statement of a basic block: &lt;/p&gt;
+&lt;ol&gt;
+    &lt;li&gt;If the statement is of the form &lt;em&gt;x = constant&lt;/em&gt;, c[x] = constant&lt;/li&gt;
+    &lt;li&gt;If the statement is of the form &lt;em&gt;x = a + b, c[x] = null&lt;/em&gt;
+    &lt;/li&gt;&lt;li&gt;For each variable appearing in an operand of a statement, if c[x] is not null, replace the variable by c[x]
+&lt;/li&gt;&lt;/ol&gt;
+
+&lt;h4&gt;5. Copy propagation&lt;/h4&gt;
+
+&lt;p&gt;Copy propagation is almost the same as constant propagation. We replace a variable by the variable it refers to. For example, we can optimize: &lt;/p&gt;
+&lt;p&gt;[cpp]b = a&lt;/p&gt;
+&lt;p&gt;c = b + 2[/cpp]&lt;/p&gt;
+&lt;p&gt;into:&lt;/p&gt;
+&lt;p&gt;[cpp]b = a&lt;/p&gt;
+&lt;p&gt;c = a + 2[/cpp]&lt;/p&gt;
+&lt;p&gt;The algorithm is the same as the one for constant propagation but we keep track of the variables that are assigned to a variable. &lt;/p&gt;
+&lt;p&gt;These two optimizations does not create a more efficient code, but the optimized code can be optimized again. &lt;/p&gt;
+&lt;!--nextpage--&gt;
+
+&lt;h4&gt;6. Remove assign&lt;/h4&gt;
+
+&lt;p&gt;We can often find some assigns that are useless in a basic blocks. There are three types of assigns that can be removed: &lt;/p&gt;
+&lt;ol&gt;
+    &lt;li&gt;&lt;em&gt;x = x&lt;/em&gt; is never useful&lt;/li&gt;
+    &lt;li&gt;An assignment to a temporary variable that is not used after this assignment is not useful. A temporary is a variable created by the compiler to perform some complex expressions. They are not stored and are used only within one basic block, so its value is not useful after the basic block. 
+    &lt;/li&gt;&lt;li&gt;An assignment to x following another assignment to x, with no use of x between the two assignments, is not useful. 
+&lt;/li&gt;&lt;/ol&gt;
+
+&lt;h4&gt;7. Remove temporaries&lt;/h4&gt;
+
+&lt;p&gt;When compiling some expression, we often generate this kind of code: &lt;/p&gt;
+&lt;p&gt;[cpp]t1 = a + b&lt;/p&gt;
+&lt;p&gt;x = t1[/cpp]&lt;/p&gt;
+&lt;p&gt;We can simplify this code into: &lt;/p&gt;
+&lt;p&gt;[cpp]x = a + b[/cpp]&lt;/p&gt;
+&lt;p&gt;For that optimization, we can apply a more complex propagation. For each assignment to a temporary, we store the right side of the assignment. Then, for each assignment of a temporary to another variable (&lt;em&gt;x = t1&lt;/em&gt;) if this use of the temporary is the only one, we replace the right side by the right side of the assignment to the temporary. &lt;/p&gt;
+&lt;h4&gt;8. Remove needless jumps&lt;/h4&gt;
+
+&lt;p&gt;We can also find some jumps from basic blocks to basic that are not useful. A jump (conditional or not) to the next basic blocks is not useful. If we have two basic blocks: &lt;/p&gt;
+&lt;p&gt;[cpp]B1:&lt;/p&gt;
+&lt;p&gt;a = 2&lt;/p&gt;
+&lt;p&gt;goto B2&lt;/p&gt;
+&lt;p&gt;B2: &lt;/p&gt;
+&lt;p&gt;b = a[/cpp]&lt;/p&gt;
+&lt;p&gt;we can optimize into: &lt;/p&gt;
+&lt;p&gt;[cpp]B1:&lt;/p&gt;
+&lt;p&gt;a = 2&lt;/p&gt;
+&lt;p&gt;B2: &lt;/p&gt;
+&lt;p&gt;b = a[/cpp]&lt;/p&gt;
+&lt;p&gt;For that optimization, we have to test each jump for the distance of the target block. If the distance is only one, we can remove the jump. This works also for conditional jumps. A conditional has two exit points. If the condition is true, we jump to the specified block, otherwise we jump to the next block. If the target block is the next one, the effect is the same has a non-conditional jump and then can be removed. &lt;/p&gt;
+&lt;!--nextpage--&gt;
+
+&lt;p&gt;The last two optimizations are not really local, but are simple versions of global optimizations. There are not as powerful as they are not following a data-flow, but they can be greatly improve the efficiency of some function, even if they don't have the power of the equivalent global optimization.  &lt;/p&gt;
+&lt;h4&gt;9. Remove dead basic blocks&lt;/h4&gt;
+
+&lt;p&gt;Sometimes after having simplified some conditional jumps into simple jumps or even removed some of them, some basic blocks are not reachable. For example, this set of basic block:&lt;/p&gt;
+&lt;p&gt;[cpp]B1:&lt;/p&gt;
+&lt;p&gt;a = 2&lt;/p&gt;
+&lt;p&gt;goto B3&lt;/p&gt;
+&lt;p&gt;B2: &lt;/p&gt;
+&lt;p&gt;b = a&lt;/p&gt;
+&lt;p&gt;B3:&lt;/p&gt;
+&lt;p&gt;b = 33[/cpp]&lt;/p&gt;
+&lt;p&gt;can be optimized into:&lt;/p&gt;
+&lt;p&gt;[cpp]B1:&lt;/p&gt;
+&lt;p&gt;a = 2&lt;/p&gt;
+&lt;p&gt;goto B3&lt;/p&gt;
+&lt;p&gt;B3:&lt;/p&gt;
+&lt;p&gt;b = 33[/cpp]&lt;/p&gt;
+&lt;p&gt;There are no general algorithm for applying that. It depends on the instruction set that you TAC language has. &lt;/p&gt;
+&lt;h4&gt;10. Merge basic blocks&lt;/h4&gt;
+
+&lt;p&gt;Finally, another optimization, not really local again, is to merge some basic blocks. After the basic blocks have been optimized, we often have some blocks that are redundant. For example: &lt;/p&gt;
+&lt;p&gt;[cpp]B1:&lt;/p&gt;
+&lt;p&gt;a = 2&lt;/p&gt;
+&lt;p&gt;B2: &lt;/p&gt;
+&lt;p&gt;b = a[/cpp]&lt;/p&gt;
+&lt;p&gt;can be optimized into:&lt;/p&gt;
+&lt;p&gt;[cpp]B1:&lt;/p&gt;
+&lt;p&gt;a = 2&lt;/p&gt;
+&lt;p&gt;b = a[/cpp]&lt;/p&gt;
+&lt;p&gt;Of course, the second basic block that is merged with the first one must not be referred by a jump. &lt;/p&gt;
+&lt;!--nextpage--&gt;
+
+&lt;h4&gt;Optimization passes&lt;/h4&gt;
+
+&lt;p&gt;When you have ten optimization techniques, you will have to find a way to make them interact correctly. As you certainly saw on the examples, some of the optimized sample can be optimized again with another optimization. &lt;/p&gt;
+&lt;p&gt;There are no general algorithm to make all optimization techniques work together in an optimal way. I chose a simple technique in EDDI. All the techniques are run on the complete code one after another. Then, if one or more techniques have had an effect on the program, we run again all the optimization techniques. So the optimizations run until there are no more changes to the program. &lt;/p&gt;
+&lt;h4&gt;Conclusion&lt;/h4&gt;
+
+&lt;p&gt;By using all the techniques described in this post, you will be able to have an efficient code. It won't be as good as with local optimization coupled to global optimization, but it's a good start for a simple compiler. &lt;/p&gt;
+&lt;p&gt;I hope I will have the time to implement some global optimization techniques into eddic and then write about it on this blog. &lt;/p&gt;&lt;/div&gt;</description><category>Compilers</category><category>Compilers</category><category>EDDI</category><category>Optimization</category><guid>http://www.baptiste-wicht.com/posts/2012/02/local-optimization-on-three-address-code.html</guid><pubDate>Wed, 08 Feb 2012 08:55:40 GMT</pubDate></item><item><title>Compilers : Principles, Techniques &amp; Tools - Book Review</title><link>http://www.baptiste-wicht.com/posts/2012/01/compilers-principles-techniques-tools.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;Some weeks ago, I finished reading &lt;strong&gt;Compilers : Principles, Techniques &amp;amp; Tools&lt;/strong&gt;, by Afred V. Aho, Monica S. Lam, Ravi Sethi and Jeffrey D. Ullman. This book is also called the &lt;strong&gt;Dragon Book&lt;/strong&gt; due to the cover.&lt;/p&gt;
+&lt;p&gt;This book is a reference about compiler construction and design. If you are interested in this subject, this book is for you, it's a must-have. However, I have to warn you that this book is very technical and hard. Honestly, some of the chapters are beyond my comprehension. Before this book, I had no real comprehension of the subject. I will certainly read again some of the chapters when I will have more practice into the subject.&lt;/p&gt;
+&lt;p&gt;If you want, the book is full of exercises about each subject covered in the book. If you plan to do all the exercises, you'll need a lot of time as there are a lot of them and some of them are quite hard. I've done some of them but only a little part.&lt;/p&gt;
+&lt;p&gt;The first chapter introduces the construction of compilers. You will see the common structure of compilers, the evolution of programming languages and the science behind building a compiler and its applications. The second chapter is still quite general. It will teach you how to develop a simple syntax-directed translator. This chapter is very important as it will give you the basics for understanding the following chapters. You will learn how to define a grammar, what are the main parsing techniques and what is lexical analysis. It will also covers symbol tables and intermediate language generation.&lt;/p&gt;
+&lt;p&gt;With the third chapter (&lt;strong&gt;Lexical Analysis&lt;/strong&gt;), we are entering the hearth of the matter. You will learn the vocabulary behind lexical analysis (tokens, lexemes, attributes, ...). Then, after you've learned how to define and recognize tokens, you will see the different techniques to build an efficient lexical analyzer. The first technique that will be covered is the use of a lexer generator (Lex). Then you will see in details how to construct a lexer using regular expressions or finite automata especially Nondeterministic Finite Automata and Deterministic Finite Automata.&lt;/p&gt;
+&lt;p&gt;The next one (&lt;strong&gt;Syntax Analysis&lt;/strong&gt;) is about parsing. After learning how to define and write a grammar you will see how to parse it. You will see in details the most commons types of parsing (Top-Down, Bottom-Up) and the most common parsers (LL(K) and LR(K) parsers). The construction of these kinds of parsers is covered in details and the way to optimize them is also teached. Finally, you will see how to automatically generate a parser using Lex and Yacc. This chapter is sometimes very hard to understand (in my own opinion) but very interesting especially if you plan to build parser without generating it with some advanced tools (for example Yacc or Boost Spirit for C++).&lt;/p&gt;
+&lt;p&gt;The fourth chapter (&lt;strong&gt;Syntax Directed Translation&lt;/strong&gt;) explains you how to translate some source code (parse it) into a coherent structure (an abstract tree) using a Syntax Directed Scheme. The translation is made based on a syntax using semantic actions and rules to translate the source into something else. You'll see different ways of doing that translations.&lt;/p&gt;
+&lt;p&gt;Then, the next one (&lt;strong&gt;Intermediate Code Generation&lt;/strong&gt;) teaches you how to generate Intermediate Code from the source. Two different representations are covered : syntax trees and three-address-code. Another subject covered in this chapter is type checking. You'll see in details how to translate expressions, control flow instructions and switch statements into three-address-code statements.&lt;/p&gt;
+&lt;p&gt;The seventh chapter (&lt;strong&gt;Run-Time Environment&lt;/strong&gt;) gives a lot of information about the different run-time targets that you can compile for. A lot of subjects are covered here: stack and heap allocation, locality exploitation, garbage collectors... This chapter is in my opinion a very good instruction to computer architecture. You cannot imagine develop a compiler without having a deep understanding of the target machine.&lt;/p&gt;
+&lt;p&gt;The next chapter (&lt;strong&gt;Code Generation&lt;/strong&gt;) is also a very important one. In this chapter, you will see how to generate assembly code from the three-address-code. You will learn how to select the good instructions. A very important subject covered in this chapter is register allocation. You'll learn how to choose wisely the registers to produce efficient code. The basic blocks are also covered there with flow graphs. More than just generating code from Three-Address-Code statements, you'll also see how to optimize them. Only local (to a basic block) optimization techniques  will be covered in this chapter. Several techniques that aims at testing if code is optimal are also taught there.&lt;/p&gt;
+&lt;p&gt;The global optimizations are covered in the next chapter (&lt;strong&gt;Machine-Independent Optimizations&lt;/strong&gt;). You will discover several optimizations that you can do globally (inside a function but among different basic blocks). A data-flow analysis framework is explained here in details. After that, for each of the optimization, the parameters of the data flow analysis are explained. The optimization of loops is treated too.&lt;/p&gt;
+&lt;p&gt;The three next chapters (&lt;strong&gt;Instruction-Level Parallelism&lt;/strong&gt;, &lt;strong&gt;Optimizing for Parallelism&lt;/strong&gt; &lt;strong&gt;and Localit&lt;/strong&gt;y and &lt;strong&gt;Interprocedural Analysis&lt;/strong&gt;) are the most complex of the book. They are covering in details the optimizations that can be made when a compiler supports instruction-level parallelism (executes several instructions in one clock cycle). It also covers interprocedural analysis of a program to allow even better optimization than global optimization inside a function. Honestly, I didn't understand some of the concepts described here. I will read them again one by one, chapter by chapter and try to implement some of the techniques in EDDI in the future.&lt;/p&gt;
+&lt;p&gt;To conclude, I will say that Compilers : Principles, Techniques &amp;amp; Tools is a very good book that every compiler designer and developer should read before starting constructing a  compiler. Although very technical, it's quite clear and contains a huge amount of information. If  you plan to develop a compiler, it is a very good idea to read this book first.&lt;/p&gt;
+&lt;p&gt;I've implement some of the techniques explained in this book in my own compiler. I implemented most of the local optimizations presented and Intermediate Code generation. You can find some information &lt;a title="EDDIC 0.7 : New compilation model and optimizations" href="http://www.baptiste-wicht.com/2012/01/eddic-0-7-compiler-model-optimizations/"&gt;here&lt;/a&gt;.&lt;/p&gt;&lt;/div&gt;</description><category>Books</category><category>C++</category><category>Compilers</category><category>Compilers</category><category>EDDI</category><category>Java</category><category>Optimization</category><category>Programming</category><guid>http://www.baptiste-wicht.com/posts/2012/01/compilers-principles-techniques-tools.html</guid><pubDate>Thu, 12 Jan 2012 09:27:19 GMT</pubDate></item></channel></rss>

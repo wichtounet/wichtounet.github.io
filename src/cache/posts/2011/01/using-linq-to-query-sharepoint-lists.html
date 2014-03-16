@@ -1,0 +1,86 @@
+<p><html><body><p>When I started using Sharepoint 2010 with .NET, I used the Sharepoint 2010 API to query the Sharepoint Lists, but when I come with lookup column with multiple values, it started to be really difficult to use.</p>
+<p>So I found that I can use LINQ to query Sharepoint lists and for what I saw on the internet, it was really simple to use. LINQ provide a complete API to query data and to update them. More than that, LINQ is also able to do mapping object-relational, what is really helpful in code lisibility.</p>
+<p>In this code, I will take as example a Sharepoint site with two lists :</p>
+<p></p><ul>
+    <li>departments : only a Title column</li>
+    <li>projects : Title, year, nbstudents and department, a lookup column to departments with multiple values</li>
+</ul></p>
+<p>So first of all, you need to create the entities and the data context, but you don't have to do it by hand. There is a tool that make all that for you, SPMetal.</p>
+<!--more-->
+
+<p>Open a command line and cd to "C:\Program Files\Common Files\Microsoft Shared\Web Server Extensions\14\bin", and then you can use the following command :</p>
+<pre>SPMetal.exe /web:http://localhost/ /code:C:\Projects.cs</pre>
+
+<p>You can use the URL of your Sharepoint site and you can change the name of the C# file. This will generate a long file containing the DataContext and the mapping objects. Here is a part of the code I get in this file :</p>
+<p>[csharp][/csharp]public partial class ProjectsDataContext : Microsoft.SharePoint.Linq.DataContext {</p>
+<div class="code"><pre><span class="vi">#region</span> <span class="nx">Extensibility</span> <span class="nb">Method</span> <span class="nx">Definitions</span>
+<span class="nx">partial</span> <span class="bp">void</span> <span class="nx">OnCreated</span><span class="p">();</span>
+<span class="vi">#endregion</span>
+
+<span class="k">public</span> <span class="nf">ProjectsDataContext</span><span class="p">(</span><span class="na">string</span> <span class="nx">requestUrl</span><span class="p">)</span> <span class="p">:</span> <span class="nx">this</span><span class="p">(</span><span class="nx">requestUrl</span><span class="p">,</span> <span class="kc">true</span><span class="p">)</span> <span class="p">{</span>
+
+<span class="p">}</span>
+
+<span class="k">public</span> <span class="nf">ProjectsDataContext</span><span class="p">(</span><span class="na">string</span> <span class="nx">requestUrl</span><span class="p">,</span> <span class="na">Boolean</span> <span class="nx">tracking</span><span class="p">)</span> <span class="p">:</span> <span class="nx">base</span><span class="p">(</span><span class="nx">requestUrl</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="nx">this.OnCreated</span><span class="p">();</span>
+    <span class="n">ObjectTrackingEnabled</span> <span class="o">=</span> <span class="nx">tracking</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="err">[</span><span class="nx">Microsoft.SharePoint.Linq.ListAttribute</span><span class="p">(</span><span class="n">Name</span><span class="o">=</span><span class="s2">&quot;departments&quot;</span><span class="p">)</span><span class="cp">]</span>
+public Microsoft.SharePoint.Linq.EntityList<span class="nt">&lt;item&gt;</span> Departments {
+    get {
+        return this.GetList<span class="nt">&lt;item&gt;</span>(&quot;departments&quot;);
+    }
+}
+
+    //...
+</pre></div>
+
+
+<p>[csharp][/csharp]</p>
+<p>Add this file to your Visual Studio Project. You will have some errors because, you must include the reference to LINQ for Sharepoint. Right click the preferences of your project, choose "Add reference" and add the Microsoft.SharePoint.Linq.dll and now you're ready to use LINQ for Sharepoint in your project. </p>
+<h4>Query Data</h4>
+
+<p>First, you can query data using LINQ, by example, getting all the projects : </p>
+<p>[csharp][/csharp]using (ProjectsDataContext context = new ProjectsDataContext(SPContext.Current.Web.Url))</p>
+<p>{
+    var query = from c in context.Projects select c;</p>
+<div class="code"><pre><span class="n">foreach</span> <span class="p">(</span><span class="n">var</span> <span class="n">project</span> <span class="n">in</span> <span class="n">query</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">console</span><span class="p">.</span><span class="n">writeLine</span><span class="p">(</span><span class="s">&quot;Title : &quot;</span> <span class="o">+</span> <span class="n">project</span><span class="p">.</span><span class="n">Title</span><span class="p">.</span><span class="n">ToString</span><span class="p">());</span>
+    <span class="n">console</span><span class="p">.</span><span class="n">writeLine</span><span class="p">(</span><span class="s">&quot;Year: &quot;</span> <span class="o">+</span> <span class="n">project</span><span class="p">.</span><span class="n">Year</span><span class="p">.</span><span class="n">ToString</span><span class="p">());</span>
+    <span class="n">console</span><span class="p">.</span><span class="n">writeLine</span><span class="p">(</span><span class="s">&quot;Nb of students : &quot;</span> <span class="o">+</span> <span class="n">project</span><span class="p">.</span><span class="n">Nbstudents</span><span class="p">.</span><span class="n">ToString</span><span class="p">());</span>
+
+    <span class="n">string</span> <span class="n">str</span> <span class="o">=</span> <span class="s">&quot;&quot;</span><span class="p">;</span>
+
+    <span class="kt">int</span> <span class="n">index</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="n">foreach</span> <span class="p">(</span><span class="n">Item</span> <span class="n">item</span> <span class="n">in</span> <span class="n">project</span><span class="p">.</span><span class="n">Department</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">str</span> <span class="o">+=</span> <span class="n">index</span><span class="o">++</span> <span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="mi">0</span> <span class="o">?</span> <span class="s">&quot;, &quot;</span> <span class="o">+</span> <span class="n">item</span><span class="p">.</span><span class="n">Title</span> <span class="o">:</span> <span class="n">item</span><span class="p">.</span><span class="n">Title</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="n">console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">str</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>}[csharp][/csharp]</p>
+<p>You can see that it's really simple and a lot easier than the way with Sharepoint API. More than that, the mapping to Object is just great :)</p>
+<h4>Update Data</h4>
+
+<p>You can also insert data, really easily with LINQ : </p>
+<p>[csharp][/csharp]using (ProjectsDataContext context = new ProjectsDataContext(SPContext.Current.Web.Url))</p>
+<p>{
+    Item department = new Item();
+    department.Title = "New department";</p>
+<div class="code"><pre><span class="n">context</span><span class="p">.</span><span class="n">Departments</span><span class="p">.</span><span class="n">InsertOnSubmit</span><span class="p">(</span><span class="n">department</span><span class="p">);</span>
+
+<span class="n">context</span><span class="p">.</span><span class="n">SubmitChanges</span><span class="p">();</span>
+</pre></div>
+
+
+<p>}[csharp][/csharp]</p>
+<p>To delete a Data, you can query it and then use DeleteOnSubmit to delete it. To update a data, it's even more simple, you just have to edit the item and then use SubmitChanges() to commit them. </p>
+<p>As you can see, using LINQ allows you to write code simple, readable and all that faster than if you use Sharepoint API. </p>
+<p>I hope this can be useful to someone. </item></item></body></html></p>

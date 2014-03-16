@@ -1,0 +1,389 @@
+<!DOCTYPE html><html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Baptiste Wicht">
+    <title>C++11 Concurrency Tutorial - Part 3: Advanced locking and condition variables | @Blog("Baptiste Wicht")</title>
+    
+            <link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
+      <link rel="canonical" href="http://www.baptiste-wicht.com/posts/2012/04/c11-concurrency-tutorial-advanced-locking-and-condition-variables.html">
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js" type="text/javascript"></script>
+    <![endif]-->
+            <link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
+
+    
+
+
+
+
+
+    
+</head>
+<body>
+<!-- Menubar -->
+
+<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    <div class="container-fluid"><!-- This keeps the margins nice -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="http://www.baptiste-wicht.com/">@Blog("Baptiste Wicht")</a>
+        </div><!-- /.navbar-header -->
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+            <ul class="nav navbar-nav">
+                
+                <li><a href="../../../archive.html">Archives</a>
+                </li><li><a href="../../../categories/index.html">Tags</a>
+                </li><li><a href="../../../rss.xml">RSS</a>
+
+            </li></ul>
+
+            <ul class="nav navbar-nav navbar-right">
+                
+                
+                    
+    <li>
+    <a href="c11-concurrency-tutorial-advanced-locking-and-condition-variables.wp" id="sourcelink">Source</a>
+    </li>
+
+            </ul>
+        </div><!-- /.navbar-collapse -->
+    </div><!-- /.container-fluid -->
+</nav>
+
+<!-- End of Menubar -->
+
+<div class="container">
+    <div class="body-content">
+        <!--Body content-->
+        <div class="row">
+            
+    <article class="postbox post-text">
+    <div class="h-entry" itemscope="itemscope" itemtype="http://schema.org/Article">
+    
+    <h1 class="p-name" itemprop="headline name">C++11 Concurrency Tutorial - Part 3: Advanced locking and condition variables</h1>
+
+    <hr>
+    <small>
+        Posted: <time class="published dt-published" datetime="2012-04-10T08:37:37+00:00" itemprop="datePublished">2012-04-10 08:37</time>
+        
+
+        
+          |  
+        More posts about 
+    <span itemprop="keywords">
+        <a class="tag p-category" href="../../../categories/c.html"><span class="badge badge-info">C++</span></a>
+        <a class="tag p-category" href="../../../categories/c.html"><span class="badge badge-info">C++</span></a>
+        <a class="tag p-category" href="../../../categories/c11.html"><span class="badge badge-info">C++11</span></a>
+        <a class="tag p-category" href="../../../categories/c11-concurrency-tutorial.html"><span class="badge badge-info">C++11 Concurrency Tutorial</span></a>
+        <a class="tag p-category" href="../../../categories/concurrency.html"><span class="badge badge-info">Concurrency</span></a>
+    </span>
+
+
+    </small>
+    <hr>
+    <div class="e-content" itemprop="articleBody text">
+    <div><p></p><p>In the previous article, we saw how to use mutexes to fix concurrency problems. In this post, we will continue to work on mutexes with more advanced techniques. We will also study another concurrency technique of the C++11 Concurrency Library: condition variables.
+</p><h4>Recursive locking</h4>
+<p>Let's imagine that you have a simple class like this one:</p>
+<p>[cpp]struct Complex {
+    std::mutex mutex;
+    int i;</p>
+<div class="code"><pre><span class="n">Complex</span><span class="p">()</span> <span class="o">:</span> <span class="n">i</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="p">{}</span>
+
+<span class="kt">void</span> <span class="n">mul</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">){</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="n">lock</span><span class="p">(</span><span class="n">mutex</span><span class="p">);</span>
+    <span class="n">i</span> <span class="o">*=</span> <span class="n">x</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="n">div</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">){</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="n">lock</span><span class="p">(</span><span class="n">mutex</span><span class="p">);</span>
+    <span class="n">i</span> <span class="o">/=</span> <span class="n">x</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>};[/cpp]</p>
+<p>And you want to add an operation doing both operations with no problems, so you add a new function:</p>
+<p>[cpp]void both(int x, int y){
+    std::lock_guard&lt;std::mutex&gt; lock(mutex);
+    mul(x);
+    div(y);
+}[/cpp]</p>
+<p>Now, it's time to test this function:</p>
+<p>[cpp]int main(){
+    Complex complex;
+    complex.both(32, 23);</p>
+<div class="code"><pre><span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</pre></div>
+
+
+<p>}[/cpp]</p>
+<p>If you launch this application, you'll see that the program will never terminates. The problem is very simple. In the <em>both()</em> function, the thread acquires the lock and then calls the <em>mul()</em> function. In this function, the threads tries to acquire the lock again, but the lock is already locked. This is a case of deadlock. By default, a thread cannot acquire the same mutex twice.</p>
+<p>There is a simple solution to this problem: <strong>std::recursive_mutex</strong>. This mutex can be acquired several times by the same thread. Here is the correct version of the Complex struct:</p>
+<p>[cpp]struct Complex {
+    std::recursive_mutex mutex;
+    int i;</p>
+<div class="code"><pre><span class="n">Complex</span><span class="p">()</span> <span class="o">:</span> <span class="n">i</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="p">{}</span>
+
+<span class="kt">void</span> <span class="n">mul</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">){</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">std</span><span class="o">::</span><span class="n">recursive_mutex</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="n">lock</span><span class="p">(</span><span class="n">mutex</span><span class="p">);</span>
+    <span class="n">i</span> <span class="o">*=</span> <span class="n">x</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="n">div</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">){</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">std</span><span class="o">::</span><span class="n">recursive_mutex</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="n">lock</span><span class="p">(</span><span class="n">mutex</span><span class="p">);</span>
+    <span class="n">i</span> <span class="o">/=</span> <span class="n">x</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="n">both</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">,</span> <span class="kt">int</span> <span class="n">y</span><span class="p">){</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">std</span><span class="o">::</span><span class="n">recursive_mutex</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="n">lock</span><span class="p">(</span><span class="n">mutex</span><span class="p">);</span>
+    <span class="n">mul</span><span class="p">(</span><span class="n">x</span><span class="p">);</span>
+    <span class="n">div</span><span class="p">(</span><span class="n">y</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>};[/cpp]</p>
+<p>This time, the application works correctly.</p>
+<h4>Timed locking</h4>
+
+<p>Sometimes, you doesn't want a thread to wait ad infinitum for a mutex. For example, if your thread can do something else when waiting for the thread. For this purpose, the standard library has a solution: <strong>std::timed_mutex</strong> and <strong>std::recursive_timed_mutex</strong> (if you need the recursivity properties of the mutex). You have access to the same functions as a <strong>std::mutex</strong>: <em>lock()</em> and <em>unlock()</em>, but you have also two new functions: <em>try_lock_for()</em> and <em>try_lock_until()</em>.</p>
+<p>The first one is also the most useful. It allows you to set a timeout after when the function automatically returns even if the lock was not acquired. The function returns true if the lock has been acquired, false otherwise. Let's try it with a simple example:</p>
+<p>[cpp]std::timed_mutex mutex;</p>
+<p>void work(){
+    std::chrono::milliseconds timeout(100);</p>
+<div class="code"><pre><span class="k">while</span><span class="p">(</span><span class="nb">true</span><span class="p">){</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">mutex</span><span class="p">.</span><span class="n">try_lock_for</span><span class="p">(</span><span class="n">timeout</span><span class="p">)){</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="n">std</span><span class="o">::</span><span class="n">this_thread</span><span class="o">::</span><span class="n">get_id</span><span class="p">()</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="s">": do work with the mutex"</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+
+        <span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">milliseconds</span> <span class="n">sleepDuration</span><span class="p">(</span><span class="mi">250</span><span class="p">);</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">this_thread</span><span class="o">::</span><span class="n">sleep_for</span><span class="p">(</span><span class="n">sleepDuration</span><span class="p">);</span>
+
+        <span class="n">mutex</span><span class="p">.</span><span class="n">unlock</span><span class="p">();</span>
+
+        <span class="n">std</span><span class="o">::</span><span class="n">this_thread</span><span class="o">::</span><span class="n">sleep_for</span><span class="p">(</span><span class="n">sleepDuration</span><span class="p">);</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="n">std</span><span class="o">::</span><span class="n">this_thread</span><span class="o">::</span><span class="n">get_id</span><span class="p">()</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="s">": do work without mutex"</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+
+        <span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">milliseconds</span> <span class="n">sleepDuration</span><span class="p">(</span><span class="mi">100</span><span class="p">);</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">this_thread</span><span class="o">::</span><span class="n">sleep_for</span><span class="p">(</span><span class="n">sleepDuration</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>}</p>
+<p>int main(){
+    std::thread t1(work);
+    std::thread t2(work);</p>
+<div class="code"><pre><span class="n">t1</span><span class="p">.</span><span class="n">join</span><span class="p">();</span>
+<span class="n">t2</span><span class="p">.</span><span class="n">join</span><span class="p">();</span>
+
+<span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</pre></div>
+
+
+<p>}[/cpp]</p>
+<p>(The example is completely useless in practice)</p>
+<p>The first interesting thing in this example is the declaration of the duration with <strong>std::chrono::milliseconds</strong>. This is also a new feature of the C++11 standard. You have access to several time unit: nanoseconds, microseconds, milliseconds, seconds, minutes and hours. We use a variable of this kind to set the timeout of the try_lock_for function. We also use this to make a thread sleeps with <strong>std::this_thread::sleep_for(duration)</strong>. The rest of the example has nothing exciting in it, just some prints to see the results visually. Note that the program never stops, you have to kill it.</p>
+<h4>Call once</h4>
+
+<p>Sometimes you want a function to be called only once no matter the number of threads that are used. Imagine a function that has two parts. The first part has to be called only once and the second has to be executed every time the function gets called. We can use the std::call_once function to fix this problem very easily. Here is an example using this mechanism:</p>
+<p>[cpp]std::once_flag flag;</p>
+<p>void do_something(){
+    std::call_once(flag, <a href="#"></a>{std::cout &lt;&lt; "Called once" &lt;&lt; std::endl;});</p>
+<div class="code"><pre><span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="s">"Called each time"</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+</pre></div>
+
+
+<p>}</p>
+<p>int main(){
+    std::thread t1(do_something);
+    std::thread t2(do_something);
+    std::thread t3(do_something);
+    std::thread t4(do_something);</p>
+<div class="code"><pre><span class="n">t1</span><span class="p">.</span><span class="n">join</span><span class="p">();</span>
+<span class="n">t2</span><span class="p">.</span><span class="n">join</span><span class="p">();</span>
+<span class="n">t3</span><span class="p">.</span><span class="n">join</span><span class="p">();</span>
+<span class="n">t4</span><span class="p">.</span><span class="n">join</span><span class="p">();</span>
+
+<span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</pre></div>
+
+
+<p>}[/cpp]</p>
+<p>Each <strong>std::call_once</strong> is matched to a <strong>std::once_flag</strong> variable. Here I put a closure to be executed only once, but a function pointer or a std::function will make the trick.</p>
+<h4>Condition variables</h4>
+
+<p>A condition variable manages a list of threads waiting until another thread notify them. Each thread that wants to wait on the condition variable has to acquire a lock first. The lock is then released when the thread starts to wait on the condition and the lock is acquired again when the thread is awakened.</p>
+<p>A very good example is a concurrent Bounded Buffer. It’s a cyclic buffer with a certain capacity with a start and an end. Here is our implementation of a Bounded Buffer using condition variables:</p>
+<p>[cpp]struct BoundedBuffer {
+    int* buffer;
+    int capacity;</p>
+<div class="code"><pre><span class="kt">int</span> <span class="n">front</span><span class="p">;</span>
+<span class="kt">int</span> <span class="n">rear</span><span class="p">;</span>
+<span class="kt">int</span> <span class="n">count</span><span class="p">;</span>
+
+<span class="n">std</span><span class="o">::</span><span class="n">mutex</span> <span class="n">lock</span><span class="p">;</span>
+
+<span class="n">std</span><span class="o">::</span><span class="n">condition_variable</span> <span class="n">not_full</span><span class="p">;</span>
+<span class="n">std</span><span class="o">::</span><span class="n">condition_variable</span> <span class="n">not_empty</span><span class="p">;</span>
+
+<span class="n">BoundedBuffer</span><span class="p">(</span><span class="kt">int</span> <span class="n">capacity</span><span class="p">)</span> <span class="o">:</span> <span class="n">capacity</span><span class="p">(</span><span class="n">capacity</span><span class="p">),</span> <span class="n">front</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">rear</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">count</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">buffer</span> <span class="o">=</span> <span class="n">new</span> <span class="kt">int</span><span class="p">[</span><span class="n">capacity</span><span class="p">];</span>
+<span class="p">}</span>
+
+<span class="o">~</span><span class="n">BoundedBuffer</span><span class="p">(){</span>
+    <span class="n">delete</span><span class="p">[]</span> <span class="n">buffer</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="n">deposit</span><span class="p">(</span><span class="kt">int</span> <span class="n">data</span><span class="p">){</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">unique_lock</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="n">l</span><span class="p">(</span><span class="n">lock</span><span class="p">);</span>
+
+    <span class="n">not_full</span><span class="p">.</span><span class="n">wait</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="p">[</span><span class="n">this</span><span class="p">](){</span><span class="k">return</span> <span class="n">count</span> <span class="o">!=</span> <span class="n">capacity</span><span class="p">;</span> <span class="p">});</span>
+
+    <span class="n">buffer</span><span class="p">[</span><span class="n">rear</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">;</span>
+    <span class="n">rear</span> <span class="o">=</span> <span class="p">(</span><span class="n">rear</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="n">capacity</span><span class="p">;</span>
+    <span class="o">++</span><span class="n">count</span><span class="p">;</span>
+
+    <span class="n">not_empty</span><span class="p">.</span><span class="n">notify_one</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="n">fetch</span><span class="p">(){</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">unique_lock</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="n">l</span><span class="p">(</span><span class="n">lock</span><span class="p">);</span>
+
+    <span class="n">not_empty</span><span class="p">.</span><span class="n">wait</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="p">[</span><span class="n">this</span><span class="p">](){</span><span class="k">return</span> <span class="n">count</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">;</span> <span class="p">});</span>
+
+    <span class="kt">int</span> <span class="n">result</span> <span class="o">=</span> <span class="n">buffer</span><span class="p">[</span><span class="n">front</span><span class="p">];</span>
+    <span class="n">front</span> <span class="o">=</span> <span class="p">(</span><span class="n">front</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="n">capacity</span><span class="p">;</span>
+    <span class="o">--</span><span class="n">count</span><span class="p">;</span>
+
+    <span class="n">not_full</span><span class="p">.</span><span class="n">notify_one</span><span class="p">();</span>
+
+    <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>};</p>
+<p>[/cpp]</p>
+<p>The mutexes are managed by a <strong>std::unique_lock</strong>. It is a wrapper to manage a lock. This is necessary to be used with the condition variables. To wake up a thread that is waiting on a condition variable, the <em>notify_one()</em> function is used. The wait function is a bit special. It takes as the first argument the unique lock and a the second one a predicate. The predicate must return false when the waiting must be continued (it is equivalent to while(!pred()){cv.wait(l);}). The rest of the example has nothing special.</p>
+<p>We can use this structure to fix multiple consumers / multiple producers problem. This problem is very common in concurrent programming. Several threads (consumers) are waiting from data produced by another several threads (producers). Here is an example with several threads using the structure:</p>
+<p>[cpp]void consumer(int id, BoundedBuffer&amp; buffer){
+    for(int i = 0; i &lt; 50; ++i){
+        int value = buffer.fetch();
+        std::cout &lt;&lt; "Consumer " &lt;&lt; id &lt;&lt; " fetched " &lt;&lt; value &lt;&lt; std::endl;
+        std::this_thread::sleep_for(std::chrono::milliseconds(250));
+    }
+}</p>
+<p>void producer(int id, BoundedBuffer&amp; buffer){
+    for(int i = 0; i &lt; 75; ++i){
+        buffer.deposit(i);
+        std::cout &lt;&lt; "Produced " &lt;&lt; id &lt;&lt; " produced " &lt;&lt; i &lt;&lt; std::endl;
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+}</p>
+<p>int main(){
+    BoundedBuffer buffer(200);</p>
+<div class="code"><pre><span class="n">std</span><span class="o">::</span><span class="kr">thread</span> <span class="n">c1</span><span class="p">(</span><span class="n">consumer</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">ref</span><span class="p">(</span><span class="n">buffer</span><span class="p">));</span>
+<span class="n">std</span><span class="o">::</span><span class="kr">thread</span> <span class="n">c2</span><span class="p">(</span><span class="n">consumer</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">ref</span><span class="p">(</span><span class="n">buffer</span><span class="p">));</span>
+<span class="n">std</span><span class="o">::</span><span class="kr">thread</span> <span class="n">c3</span><span class="p">(</span><span class="n">consumer</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">ref</span><span class="p">(</span><span class="n">buffer</span><span class="p">));</span>
+<span class="n">std</span><span class="o">::</span><span class="kr">thread</span> <span class="n">p1</span><span class="p">(</span><span class="n">producer</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">ref</span><span class="p">(</span><span class="n">buffer</span><span class="p">));</span>
+<span class="n">std</span><span class="o">::</span><span class="kr">thread</span> <span class="n">p2</span><span class="p">(</span><span class="n">producer</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">ref</span><span class="p">(</span><span class="n">buffer</span><span class="p">));</span>
+
+<span class="n">c1</span><span class="p">.</span><span class="n">join</span><span class="p">();</span>
+<span class="n">c2</span><span class="p">.</span><span class="n">join</span><span class="p">();</span>
+<span class="n">c3</span><span class="p">.</span><span class="n">join</span><span class="p">();</span>
+<span class="n">p1</span><span class="p">.</span><span class="n">join</span><span class="p">();</span>
+<span class="n">p2</span><span class="p">.</span><span class="n">join</span><span class="p">();</span>
+
+<span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</pre></div>
+
+
+<p>}[/cpp]</p>
+<p>Three consumer threads and two producer threads are created and query the structure constantly. An interesting thing about this example is the use of std::ref to pass the buffer by reference, it is necessary to avoid a copy of the buffer.</p>
+<h4>Wrap-Up</h4>
+
+<p>In this article we saw several things. First, we saw how to use a recursive_mutex to allow a thread to acquire a thread more than once. Then, we saw how to acquire a mutex with a timeout. After that, a method to call a function only once has been studied. And finally, condition variables were used to solve the multiple consumers / multiple producers problem.</p>
+<p>The source code for this article can be found on <a title="Source code of this article" href="https://github.com/wichtounet/articles/tree/master/src/threads/part3/">Github</a>.</p>
+<h4>Next</h4>
+
+<p>In the next post of this series, we will another technique of this new C++11 Concurrency Library, the Atomics.</p></div>
+    </div>
+    </div>
+    
+        <ul class="pager">
+            <li class="previous">
+                <a href="linux-kernel-tip-do-not-disable-system-v-ipc-for-x-org-and-chrome.html" rel="prev">← Previous post</a>
+            </li>
+            <li class="next">
+                <a href="switching-gentoo-linux.html" rel="next">Next post →</a>
+            </li>
+        </ul>
+
+        
+        
+        <div id="disqus_thread"></div>
+        <script>
+        var disqus_shortname ="nikolademo",
+            disqus_url="http://www.baptiste-wicht.com/posts/2012/04/c11-concurrency-tutorial-advanced-locking-and-condition-variables.html",
+        disqus_title="C++11 Concurrency Tutorial - Part 3: Advanced locking and condition variables",
+        disqus_identifier="cache/posts/2012/04/c11-concurrency-tutorial-advanced-locking-and-condition-variables.html",
+        disqus_config = function () {
+            this.language = "en";
+        };
+        (function() {
+            var dsq = document.createElement('script'); dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink" rel="nofollow">Comments powered by <span class="logo-disqus">Disqus</span></a>
+
+
+    
+
+    </article>
+
+        </div>
+        <!--End of body content-->
+
+        <footer>
+            Contents © 2014         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         
+        </footer>
+    </div>
+</div>
+
+
+            <script src="../../../assets/js/all-nocdn.js" type="text/javascript"></script>
+
+
+    
+<!-- Social buttons -->
+<div id="addthisbox" class="addthis_toolbox addthis_peekaboo_style addthis_default_style addthis_label_style addthis_32x32_style">
+<a class="addthis_button_more">Share</a>
+<ul><li><a class="addthis_button_facebook"></a>
+</li><li><a class="addthis_button_google_plusone_share"></a>
+</li><li><a class="addthis_button_linkedin"></a>
+</li><li><a class="addthis_button_twitter"></a>
+</li></ul>
+</div>
+<script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-4f7088a56bb93798"></script>
+<!-- End of social buttons -->
+
+
+    <script type="text/javascript">jQuery("a.image-reference").colorbox({rel:"gal",maxWidth:"100%",maxHeight:"100%",scalePhotos:true});</script>
+    
+
+</body>
+</html>

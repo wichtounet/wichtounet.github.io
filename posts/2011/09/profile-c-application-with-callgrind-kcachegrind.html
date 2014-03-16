@@ -1,0 +1,205 @@
+<!DOCTYPE html><html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Baptiste Wicht">
+    <title>How to profile C++ application with Callgrind / KCacheGrind | @Blog("Baptiste Wicht")</title>
+    
+            <link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
+      <link rel="canonical" href="http://www.baptiste-wicht.com/posts/2011/09/profile-c-application-with-callgrind-kcachegrind.html">
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js" type="text/javascript"></script>
+    <![endif]-->
+            <link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
+
+    
+
+
+
+
+
+    
+</head>
+<body>
+<!-- Menubar -->
+
+<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    <div class="container-fluid"><!-- This keeps the margins nice -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="http://www.baptiste-wicht.com/">@Blog("Baptiste Wicht")</a>
+        </div><!-- /.navbar-header -->
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+            <ul class="nav navbar-nav">
+                
+                <li><a href="../../../archive.html">Archives</a>
+                </li><li><a href="../../../categories/index.html">Tags</a>
+                </li><li><a href="../../../rss.xml">RSS</a>
+
+            </li></ul>
+
+            <ul class="nav navbar-nav navbar-right">
+                
+                
+                    
+    <li>
+    <a href="profile-c-application-with-callgrind-kcachegrind.wp" id="sourcelink">Source</a>
+    </li>
+
+            </ul>
+        </div><!-- /.navbar-collapse -->
+    </div><!-- /.container-fluid -->
+</nav>
+
+<!-- End of Menubar -->
+
+<div class="container">
+    <div class="body-content">
+        <!--Body content-->
+        <div class="row">
+            
+    <article class="postbox post-text">
+    <div class="h-entry" itemscope="itemscope" itemtype="http://schema.org/Article">
+    
+    <h1 class="p-name" itemprop="headline name">How to profile C++ application with Callgrind / KCacheGrind</h1>
+
+    <hr>
+    <small>
+        Posted: <time class="published dt-published" datetime="2011-09-01T08:25:10+00:00" itemprop="datePublished">2011-09-01 08:25</time>
+        
+
+        
+          |  
+        More posts about 
+    <span itemprop="keywords">
+        <a class="tag p-category" href="../../../categories/c.html"><span class="badge badge-info">C++</span></a>
+        <a class="tag p-category" href="../../../categories/c.html"><span class="badge badge-info">C++</span></a>
+        <a class="tag p-category" href="../../../categories/linux.html"><span class="badge badge-info">Linux</span></a>
+        <a class="tag p-category" href="../../../categories/performances.html"><span class="badge badge-info">Performances</span></a>
+        <a class="tag p-category" href="../../../categories/tools.html"><span class="badge badge-info">Tools</span></a>
+        <a class="tag p-category" href="../../../categories/ubuntu.html"><span class="badge badge-info">Ubuntu</span></a>
+    </span>
+
+
+    </small>
+    <hr>
+    <div class="e-content" itemprop="articleBody text">
+    <div><p></p><p>I have shown before how to <a title="Profile a C++ application with the Linux perf tools" href="http://www.baptiste-wicht.com/2011/07/profile-applications-linux-perf-tools/">profile a C++ application using the Linux perf tools</a>.  In this post, we will see how to profile the same kind of application using Callgrind. Callgrind is a tool in part of the Valgrind toolchain. It is running in Valgrind framework. The principle is not the same. When you use Callgrind to profile an application, your application is transformed in an intermediate language and then ran in a virtual processor emulated by valgrind. This has a huge run-time overhead, but the precision is really good and your profiling data is complete. An application running in Callgrind can be 10 to 50 times slower than normally.</p>
+<p>The output of Callgrind is flat cal graph that is not really usable directly. In this post, we will use KCachegrind to display the informations about the profiling of the analyzed application.</p>
+<!--more-->
+
+<p></p><h4>Installation</h4>
+<p>First of all, you need to install Callgrind and KCachegrind. You also need to install graphviz in order to view the call graph in KCachegrind. The applications are already packaged for the most important Linux distributions. You can just use apt-get to install them:</p>
+<p>[bash]sudo apt-get install valgrind kcachegrind graphviz[/bash]</p>
+<p>or aptitude:</p>
+<p>[bash]sudo aptitude install valgrind kcachegrind graphviz[/bash]</p>
+<p>or whatever your favourite package manager is.</p>
+<h4>Usage</h4>
+
+<p>We have to start by profiling the application with Callgrind. To profile an application with Callgrind, you just have to prepend the Callgrind invocation in front of your normal program invocation:</p>
+<p>[bash]valgrind --tool=callgrind program [program_options][/bash]</p>
+<p>The result will be stored in a callgrind.out.XXX file where XXX will be the process identifier. </p>
+<p>You can read this file using a text editor, but it won't be very useful because it's very cryptic. That's here that KCacheGrind will be useful. You can launch KCacheGrind using command line or in the program menu if your system installed it here. Then, you have to open your profile file. </p>
+<p>The first view present a list of all the profiled functions. You can see the inclusive and the self cost of each function and the location of each one. </p>
+<p><a href="../../../wp-content/uploads/2011/09/first-view2.png"><img src="../../../wp-content/uploads/2011/09/first-view2-300x212.png" alt="" title="List of functions" width="300" height="212" class="size-medium wp-image-1322"></a></p>
+<p>Once you click on a function, the other views are filled with information. The view in uppper right part of the window gives some information about the selected function. </p>
+<p><a href="../../../wp-content/uploads/2011/09/second-view.png"><img src="../../../wp-content/uploads/2011/09/second-view-300x166.png" alt="Information about the function" title="Information about the function" width="300" height="166" class="size-medium wp-image-1323"></a></p>
+<p>The view have several tabs presenting different information: </p>
+<ul>
+    <li>Types : Present the types of events that have been recorded. In our case, it's not really interesting, it's just the number of instructions fetch</li>
+    <li>Callers : List of the direct callers</li>
+    <li>All Callers : List of all the callers, it seems the callers and the callers of the callers</li>
+    <li>Callee Map : A map of the callee, personally, I do not really understand this view, but it's a kind of call graph representing the cost of the functions</li>
+    <li>Source code : The source code of the function if the application has been compiled with the debug symbol</li>
+</ul>
+
+<p>And finally, you have another view with data about the selected function. </p>
+<p><a href="../../../wp-content/uploads/2011/09/third-view.png"><img src="../../../wp-content/uploads/2011/09/third-view-300x208.png" alt="Information about the function" title="Information about the function" width="300" height="208" class="size-medium wp-image-1324"></a></p>
+<p>Again, several tabs: </p>
+<ul>
+    <li>Callees : The direct callees of the function</li>
+    <li>Call Graph : The call graph from the function to the end</li>
+    <li>All Callees : All the callees and the callees of the callees</li>
+    <li>Caller Map : The map of the caller, again not really understandable for me</li>
+    <li>Machine Code : The machine code of the function if the application has been profiled with --dump-instr=yes option</li>
+</ul>
+
+<p>You have also several display options and filter features to find exactly what you want and display it the way you want. </p>
+<p>The information provided by KCacheGrind can be very useful to find which functions takes too much time or which functions are called too much. </p>
+<p>I hope this article will be useful. </p></div>
+    </div>
+    </div>
+    
+        <ul class="pager">
+            <li class="previous">
+                <a href="../08/compute-metrics-of-c-project-using-cccc.html" rel="prev">← Previous post</a>
+            </li>
+            <li class="next">
+                <a href="book-review-effective-c.html" rel="next">Next post →</a>
+            </li>
+        </ul>
+
+        
+        
+        <div id="disqus_thread"></div>
+        <script>
+        var disqus_shortname ="nikolademo",
+            disqus_url="http://www.baptiste-wicht.com/posts/2011/09/profile-c-application-with-callgrind-kcachegrind.html",
+        disqus_title="How to profile C++ application with Callgrind / KCacheGrind",
+        disqus_identifier="cache/posts/2011/09/profile-c-application-with-callgrind-kcachegrind.html",
+        disqus_config = function () {
+            this.language = "en";
+        };
+        (function() {
+            var dsq = document.createElement('script'); dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink" rel="nofollow">Comments powered by <span class="logo-disqus">Disqus</span></a>
+
+
+    
+
+    </article>
+
+        </div>
+        <!--End of body content-->
+
+        <footer>
+            Contents © 2014         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         
+        </footer>
+    </div>
+</div>
+
+
+            <script src="../../../assets/js/all-nocdn.js" type="text/javascript"></script>
+
+
+    
+<!-- Social buttons -->
+<div id="addthisbox" class="addthis_toolbox addthis_peekaboo_style addthis_default_style addthis_label_style addthis_32x32_style">
+<a class="addthis_button_more">Share</a>
+<ul><li><a class="addthis_button_facebook"></a>
+</li><li><a class="addthis_button_google_plusone_share"></a>
+</li><li><a class="addthis_button_linkedin"></a>
+</li><li><a class="addthis_button_twitter"></a>
+</li></ul>
+</div>
+<script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-4f7088a56bb93798"></script>
+<!-- End of social buttons -->
+
+
+    <script type="text/javascript">jQuery("a.image-reference").colorbox({rel:"gal",maxWidth:"100%",maxHeight:"100%",scalePhotos:true});</script>
+    
+
+</body>
+</html>

@@ -1,0 +1,209 @@
+<!DOCTYPE html><html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Baptiste Wicht">
+    <title>EDDIC 0.7 : New compilation model and optimizations | @Blog("Baptiste Wicht")</title>
+    
+            <link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
+      <link rel="canonical" href="http://www.baptiste-wicht.com/posts/2012/01/eddic-0-7-compiler-model-optimizations.html">
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js" type="text/javascript"></script>
+    <![endif]-->
+            <link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
+
+    
+
+
+
+
+
+    
+</head>
+<body>
+<!-- Menubar -->
+
+<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    <div class="container-fluid"><!-- This keeps the margins nice -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="http://www.baptiste-wicht.com/">@Blog("Baptiste Wicht")</a>
+        </div><!-- /.navbar-header -->
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+            <ul class="nav navbar-nav">
+                
+                <li><a href="../../../archive.html">Archives</a>
+                </li><li><a href="../../../categories/index.html">Tags</a>
+                </li><li><a href="../../../rss.xml">RSS</a>
+
+            </li></ul>
+
+            <ul class="nav navbar-nav navbar-right">
+                
+                
+                    
+    <li>
+    <a href="eddic-0-7-compiler-model-optimizations.wp" id="sourcelink">Source</a>
+    </li>
+
+            </ul>
+        </div><!-- /.navbar-collapse -->
+    </div><!-- /.container-fluid -->
+</nav>
+
+<!-- End of Menubar -->
+
+<div class="container">
+    <div class="body-content">
+        <!--Body content-->
+        <div class="row">
+            
+    <article class="postbox post-text">
+    <div class="h-entry" itemscope="itemscope" itemtype="http://schema.org/Article">
+    
+    <h1 class="p-name" itemprop="headline name">EDDIC 0.7 : New compilation model and optimizations</h1>
+
+    <hr>
+    <small>
+        Posted: <time class="published dt-published" datetime="2012-01-10T09:28:18+00:00" itemprop="datePublished">2012-01-10 09:28</time>
+        
+
+        
+          |  
+        More posts about 
+    <span itemprop="keywords">
+        <a class="tag p-category" href="../../../categories/books.html"><span class="badge badge-info">Books</span></a>
+        <a class="tag p-category" href="../../../categories/c.html"><span class="badge badge-info">C++</span></a>
+        <a class="tag p-category" href="../../../categories/compilers.html"><span class="badge badge-info">Compilers</span></a>
+        <a class="tag p-category" href="../../../categories/eddi.html"><span class="badge badge-info">EDDI</span></a>
+        <a class="tag p-category" href="../../../categories/eddi.html"><span class="badge badge-info">EDDI</span></a>
+        <a class="tag p-category" href="../../../categories/optimization.html"><span class="badge badge-info">Optimization</span></a>
+    </span>
+
+
+    </small>
+    <hr>
+    <div class="e-content" itemprop="articleBody text">
+    <div><p></p><p>I'm proud to announce a new release of EDDIC, the version 0.7.</p>
+<p>Most of the changes are internal to the compiler. I read a new book : <em>Compilers: Principles, Techniques, and Tools</em> and applied some of the advices of the author. The biggest change is the use of a new intermediate representation : Three-Address-Code statements. This representation is easy, all the statements are basically of the form a = b + c with + being any operator of the language. The big advantage of this representation is that we can easily run optimization on it. Another advantage is that this representation is complete enough to represent most of the programming languages, so, we can imagine compiling several different source languages into the TAC language and then compiling them the same way.</p>
+<p>Once the Three-Address-Code representation is generated and separated into basic blocks, it is compiled into X86 assembly using a code generator. I've made a lot of improvements on the generated assembly. For example, I'm using several new instructions (neg, inc, dec, xor, ...) to generate more efficient code. Moreover, I'm doing a better use of registers with keeping variables into registers as long as possible.</p>
+<p></p><h4>Better optimization engine</h4>
+<p>Here is the list of what the optimizer do at the TAC level:</p>
+<ul>
+    <li>Simplify arithmetic identities : a = b + 0 =&gt; a = b</li>
+    <li>Reduce in strength : a = b * 2 =&gt; a = b + b</li>
+    <li>Constant folding : a = 2 + 2 =&gt; a = 4</li>
+    <li>Constant propagation : when a constant is assigned to a, reuse the constant as long as no other assignment is made to a</li>
+    <li>Remove overridden assign</li>
+    <li>Remove dead basic blocks : when a condition is known at compile time we can know the path it will take and remove basic blocks that will never be taken</li>
+    <li>Remove needless jumps : After the other optimization have been done it is possible that a goto is directly targeting the next basic block so we can remove it</li>
+    <li>Merge basic blocks : After some statements have been replaced or removed it is possible that we can merge some basic blocks together</li>
+</ul>
+
+<div>The optimizer is running the different optimization technique as long as one of them as an effect on the code. At the present time, the optimization techniques are used locally (within a basic block) so the generated assembly is not perfect, but for what I tested so far, it's a good start.</div>
+
+<h4>Other changes</h4>
+
+<div>Moreover, the language itself has also had some improvements:</div>
+
+<div>
+
+<ul>
+    <li>The minus and plus unary operators have been added to the grammar</li>
+    <li>The local and global variables can be const</li>
+    <li>A source file can now includes another source or a file from the standard library (very little for now, but a little start)</li>
+</ul>
+
+<div>The project itself has also been improved</div>
+
+<div>
+
+<ul>
+    <li>Most of the classes and files are now documented using Doxygen</li>
+    <li>The unit tests are now testing compilation and execution of some samples, that helped me finding some bugs in the code base and in the new changes</li>
+</ul>
+
+<h4>Download</h4>
+
+</div>
+
+</div>
+
+<p>You can find the compiler sources on the Github repository : <a title="EDDI Compiler Repository" href="http://github.com/wichtounet/eddic">https://github.com/wichtounet/eddic</a>.</p>
+<p>The exact version I refer to is the v0.7 available in the github tags or directly as the release branch.</p></div>
+    </div>
+    </div>
+    
+        <ul class="pager">
+            <li class="previous">
+                <a href="install-cinnamon-linux-mint.html" rel="prev">← Previous post</a>
+            </li>
+            <li class="next">
+                <a href="compilers-principles-techniques-tools.html" rel="next">Next post →</a>
+            </li>
+        </ul>
+
+        
+        
+        <div id="disqus_thread"></div>
+        <script>
+        var disqus_shortname ="nikolademo",
+            disqus_url="http://www.baptiste-wicht.com/posts/2012/01/eddic-0-7-compiler-model-optimizations.html",
+        disqus_title="EDDIC 0.7 : New compilation model and optimizations",
+        disqus_identifier="cache/posts/2012/01/eddic-0-7-compiler-model-optimizations.html",
+        disqus_config = function () {
+            this.language = "en";
+        };
+        (function() {
+            var dsq = document.createElement('script'); dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink" rel="nofollow">Comments powered by <span class="logo-disqus">Disqus</span></a>
+
+
+    
+
+    </article>
+
+        </div>
+        <!--End of body content-->
+
+        <footer>
+            Contents © 2014         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         
+        </footer>
+    </div>
+</div>
+
+
+            <script src="../../../assets/js/all-nocdn.js" type="text/javascript"></script>
+
+
+    
+<!-- Social buttons -->
+<div id="addthisbox" class="addthis_toolbox addthis_peekaboo_style addthis_default_style addthis_label_style addthis_32x32_style">
+<a class="addthis_button_more">Share</a>
+<ul><li><a class="addthis_button_facebook"></a>
+</li><li><a class="addthis_button_google_plusone_share"></a>
+</li><li><a class="addthis_button_linkedin"></a>
+</li><li><a class="addthis_button_twitter"></a>
+</li></ul>
+</div>
+<script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-4f7088a56bb93798"></script>
+<!-- End of social buttons -->
+
+
+    <script type="text/javascript">jQuery("a.image-reference").colorbox({rel:"gal",maxWidth:"100%",maxHeight:"100%",scalePhotos:true});</script>
+    
+
+</body>
+</html>

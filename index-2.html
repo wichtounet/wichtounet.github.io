@@ -1,0 +1,1424 @@
+<!DOCTYPE html><html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Website about technologies Java, Spring, OSGi, Hardware,...">
+    <meta name="author" content="Baptiste Wicht">
+    <title>@Blog("Baptiste Wicht") (old posts, page 2) | @Blog("Baptiste Wicht")</title>
+    
+            <link href="assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
+      <link rel="canonical" href="http://www.baptiste-wicht.com/index-2.html">
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js" type="text/javascript"></script>
+    <![endif]-->
+            <link rel="alternate" type="application/rss+xml" title="RSS" href="rss.xml">
+
+    
+    
+    
+</head>
+<body>
+<!-- Menubar -->
+
+<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    <div class="container-fluid"><!-- This keeps the margins nice -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="http://www.baptiste-wicht.com/">@Blog("Baptiste Wicht")</a>
+        </div><!-- /.navbar-header -->
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+            <ul class="nav navbar-nav">
+                
+                <li><a href="archive.html">Archives</a>
+                </li><li><a href="categories/index.html">Tags</a>
+                </li><li><a href="rss.xml">RSS</a>
+
+            </li></ul>
+
+            <ul class="nav navbar-nav navbar-right">
+                
+                
+                    
+            </ul>
+        </div><!-- /.navbar-collapse -->
+    </div><!-- /.container-fluid -->
+</nav>
+
+<!-- End of Menubar -->
+
+<div class="container">
+    <div class="body-content">
+        <!--Body content-->
+        <div class="row">
+            
+        <article class="postbox h-entry post-text">
+        <h1 class="p-name"><a href="posts/2010/03/welcome-to-my-new-website.html" class="u-url">Welcome to my new website !</a>
+        <small>  
+             Posted: <time class="published dt-published" datetime="2010-03-17T04:21:29+00:00">2010-03-17 04:21</time>
+        </small></h1>
+        <hr>
+        <div class="e-content">
+        <div><p></p><p>Hi,</p>
+<p>Welcome to my new english website :)</p>
+<p>I've moved all my english stuff from Developpez.com to make here a completely english website.</p>
+<p>I hope you'll find here some interesting stuff. I will publish articles and posts about Java, Spring, Swing, OSGi, Hardware and Web and perhaps others technologies.</p>
+<p>Don't hesitate to say me what you think about this website.</p>
+<p>Baptiste</p></div>
+        </div>
+            
+        
+    <p>
+        <a href="posts/2010/03/welcome-to-my-new-website.html#disqus_thread" data-disqus-identifier="cache/posts/2010/03/welcome-to-my-new-website.html">Comments</a>
+
+
+        </p></article>
+        <article class="postbox h-entry post-text">
+        <h1 class="p-name"><a href="posts/2010/03/osgi-and-cyclic-dependencies.html" class="u-url">OSGi and cyclic dependencies</a>
+        <small>  
+             Posted: <time class="published dt-published" datetime="2010-03-15T16:19:54+00:00">2010-03-15 16:19</time>
+        </small></h1>
+        <hr>
+        <div class="e-content">
+        <div><p></p><p>Hi, </p>
+<p>I'm currently working on the "bundlisation" of the JTheque Core. I choose to cut core into several bundles each one representing a service provided by the core. </p>
+<p>I quickly have experencied problems with </p>
+<p>I quickly realized that the decoupling of my various services was almost nil. I had a huge number of dependencies for each bundle and worse, I had a lot of cyclic dependencies, either direct or indirect.</p>
+<p>For information, a direct cyclic dependency is a situation in which a bundle X depends on a bundle that depends on Y who is also depending itself of X. An indirect dependency cycle is the situation where X depends on Y, Y depends on Z and Z depends on X. I speak here of bundles, but it may relate to projects, classes or packages.</p>
+<p>Note that the different techniques that I will present also apply for dependencies between components non-OSGi, the principles are exactly the same.</p>
+<!--more-->
+
+<p>In the case of packages within the same application, even if we avoid this, it is possible to live with. However, in the case of bundle or projects, it is generally not even possible for the application builder. For me, the bundles are Maven modules. It is impossible to start the build of a bundle in a cycle since the builder must first bundle before the second and the second before the first, which is obviously not possible.</p>
+<p>In addition to be very bad in a system build, cyclic dependencies between components are also a huge design problem. Indeed, we cannot work on a bundle without working on the bundle B and vice versa. In addition to this, the two components are very difficult to evolve in a healthy way.</p>
+<p>The cyclic dependencies at the class level within a component does not pose real problems. It is always in the same component, classes can thus be linked in a cyclical way, even if it would still avoid it as soon as possible (it is not always).</p>
+<p>To return to JTheque so I had to solve the problem of cyclic dependencies before advancing further. There are many techniques to do this. Here are the tracks that I explored to resolve these dependencies. Note that these techiques cannot only solve the problem of cyclic dependencies, but also improves the architecture of its application.</p>
+<ol>
+<li>
+<p><strong>Move the classes to the right location</strong> : In some cases, I had classes in a bundle when they had nothing to do here. In this case, it may suffice to move them to another bundle. Note that this case is the easiest to solve and it's unfortunately not the most common. In addition to this, in case the classes to move depends on another bundles, it is possible that this creates new cyclic dependencies. An example is the collection management module, which was contained in the bundle of graphical interfaces.</p>
+</li>
+<li>
+<p><strong>Move functionalities</strong> : I also found a lot of features, typically methods within a bundle that was not at the right place. For example, the bundle "modules" provided methods for updates while a bundle "update" existed. It was enough to move these features to the bundle update to solve my cycle.</p>
+</li>
+<li>
+<p><strong>Badly cutted features</strong> : Often, a feature, usually a method or a class, do too much things and causes dependencies that are not welcome here. Sometimes, thing again about the functionality and the role of each class / method may be enough to solve the problem. Note that this does not concern only the concepts of dependency, but is a basic principle of object-oriented design. In the case of JTheque I had for example a method allowing to select a collection that returns true if we could open the collection with the login / password entered false otherwise. But besides that, it displays an error in the collection view if there was a problem. But that was clearly not his role. I have updated this method so it does that test if we could open the collection or not and I implemented the display of the error in the Swing Action. </p>
+</li>
+<li>
+<p><strong>Separate functionalities of bundle</strong> : It may happen that the bundle to do too much things or has several distinct aspects. In this case, you should immediately separate the bundle into several others with each one a clear responsibility. Often this will help solve a cyclic dependency, as fewer bundles have dependencies to each new bundles and each new bundles should have fewer dependencies to other bundles. But it can also introduce new cycles. In JTheque, I cut the modules "views" in 2 two bundles: views and ui. The views module contains the implementation of JTheque views and the "ui" module contains utility classes for creating views and generic Swing components that can be used elsewhere.</p>
+</li>
+<li>
+<p><strong>Introduce callback system</strong> : A callback system is a simple listeners system that could solve dependencies. Rather than a bundle directly notify another bundle, the second register as the first listener. Thus the first does not need to know the second. It is immediately obvious that listeners are more powerful than they might initially appear. In the case of JTheque, I implemented this for selecting collections. In fact, the collections manager called directly the view that the collection had been chosen. Using a listener, it is much more flexible and collections manager automatically notifies all listeners. In addition to this, if I need later a second listener, I have nothing to change in the collections bundle.</p>
+</li>
+<li>
+<p><strong>Separate specification and implementation</strong> : As it is not always possible to remove cyclic dependencies directly, we can bypass them by separating the specification part and the  implementation part. This technique can sometimes be useful when it is really difficult to solve the cycle. It therefore separates a bundle in any specific part that is called from the outside and part of implementation which can then have dependencies outside. Note that this is clearly not often feasible in the state because it is not always possible to completely separate the implementation of the specification without cycles. </p>
+</li>
+<li>
+<p><strong>Group to modules in one</strong> : In some cases, we realize that two modules are so intrinsically linked they are in fact only one module. In this case, the best solution is to group them in one bundle.</p>
+</li>
+</ol>
+<p>Well, now I have list the various techniques I used to resolve cyclic dependencies in bundles of JTheque Core. There are certainly many others, but it was enough for me. </p>
+<p>I hope this will be useful to people trying to solve problems of cyclic dependencies.</p></div>
+        </div>
+            
+        
+    <p>
+        <a href="posts/2010/03/osgi-and-cyclic-dependencies.html#disqus_thread" data-disqus-identifier="cache/posts/2010/03/osgi-and-cyclic-dependencies.html">Comments</a>
+
+
+        </p></article>
+        <article class="postbox h-entry post-text">
+        <h1 class="p-name"><a href="posts/2010/03/sonar-2-0-released.html" class="u-url">The version 2.0 of Sonar has been released</a>
+        <small>  
+             Posted: <time class="published dt-published" datetime="2010-03-11T15:27:25+00:00">2010-03-11 15:27</time>
+        </small></h1>
+        <hr>
+        <div class="e-content">
+        <div><p></p><div id="_mcePaste">The developers of Sonar have just released the version 2.0 of Sonar.</div>
+<div></div>
+<div>Several major features :</div>
+
+<div>
+
+<ul>
+    <li>Architecture analysis : The architecture of the projects are now analyzed. We can see a matrix of project dependencies and a list of dependencies to delete to improve architecture quality.</li>
+    <li>Object oriented analysis : New metrics for the quality of the object oriented conception.</li>
+    <li>Improvements of the user interface.</li>
+</ul>
+
+</div>
+
+<div>Only good stuff :)</div>
+
+<div></div>
+
+<div>I didn't test this new version, i will wait that my plugins be compatibles with the new version, but i will give informations of the new version once installed.</div>
+
+<div></div>
+
+<div>More informations on the <a title="Sonar source" href="http://sonar.codehaus.org/sonar-2-0-in-screenshots/" target="_blank">Sonar website</a>.</div>
+
+<p></p></div>
+        </div>
+            
+        
+    <p>
+        <a href="posts/2010/03/sonar-2-0-released.html#disqus_thread" data-disqus-identifier="cache/posts/2010/03/sonar-2-0-released.html">Comments</a>
+
+
+        </p></article>
+        <article class="postbox h-entry post-text">
+        <h1 class="p-name"><a href="posts/2010/03/java-swing-focus.html" class="u-url">Manage focus with Swing in Java</a>
+        <small>  
+             Posted: <time class="published dt-published" datetime="2010-03-10T11:25:00+00:00">2010-03-10 11:25</time>
+        </small></h1>
+        <hr>
+        <div class="e-content">
+        <div><p></p><h4>1. Introduction</h4>
+The focus is the "selected" state of a component. The component who has the focus is the active component. It's possible to ask focus fror a specific component but normally this is perfectly managed by Swing.
+<p>With this tutorial, you will learn how to ask focus for a specific component and how to define an order of focus. We will also learn a bit about the validation of input fields, the focus listen and the utility of KeyboardFocusManager.</p>
+<h4>2. Ask focus</h4>
+
+<p>Normally, the focus is managed by a component on the mouse click or when we come to a component with keyboard. A component who is focused is often visually modified, with a special border or an other background color.</p>
+<p>To manage the focus of the windows, it's a little bit different and depends of the operating system, but nothing can give you the guarantee to have focus. On Windows, you can obtain focus on a window using toFront but nothing is guraranteed.</p>
+<p>For the components, you can use the requestFocusInWindow() method :</p>
+<p>[java]component.requestFocusInWindow();[/java]</p>
+<p>To obtain the focus, you have to ask focus after the add of the component but before the display of the window.</p>
+<p>Before Java 1.4, you needed to use the requestFocus() method, but now it is not a good idea to use it, because it give also focus to the window of the component, and that's not always possible.</p>
+<!--nextpage-->
+
+<h4>3. Navigation keys</h4>
+
+<p>By default, we navigate in an application with the Tab and Shift+Tab keys. But we can edit these keys.</p>
+<p>For that, we have to get the keys with getFocusTraversalKeys(int id) and add the new key. By example, here is how to add the Enter key for the forward focus navigation :</p>
+<p>[java]Set keys = textField.getFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS);</p>
+<p>Set newKeys = new HashSet(keys);</p>
+<p>newKeys.add(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0));</p>
+<p>textField.setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, newKeys);[/java]</p>
+<p>If you want to add a key for the backward navigation, you need to use BACKWARD_TRAVERSAL_KEYS instead of FORWARD_TRAVERSAL_KEYS.</p>
+<h4>4. Validate an input</h4>
+
+<p>You often need to validate to validate the inputs of the user in a field. The best way to do that is to test the content directly after the focus lost. Of course, there is still Formatter to do that, but it's possible that you must use the validation on a custom component.</p>
+<p>To do that, we'lll use InputVerifier. This InputVerifier enable to get the value of a field when this field lost focus. If the value is not valid, the InputVerifier can execute a particular action by example set the old value in the field insted of the new invalid value or give focus again to the field.</p>
+<p>To use it, we've to create a class extending InputVerifier and use the setInputVerifier() method on the component to test :</p>
+<p>[java]CustomInputVerifier verifier = new CustomInputVerifier();</p>
+<p>...</p>
+<p>monComposant.setInputVerifier(verifier)[/java]</p>
+<p>The inputVerifier class has only two methods :</p>
+<ul>
+    <li>verifiy(JComponent input) : Indicate if the value of the component is correct. It's must be overriden.</li>
+    <li>shouldYieldFocus(JComponent input) : This method idnicate if the component can loose focus or not. If it's return true, the focus change normally to the next component else the focus remains in the</li>
+</ul>
+
+<p>current component while the input is invalid. By default, it's only return the value of verify().</p>
+<p>For lisibility reasons, it's better to only implement the test of the input value in the verify method and add the other functionalities by example a beep it it's invalid in the shouldYieldFocus method.</p>
+<p>We will see a simple example of InputVerifier. This verifier verify that the value is a number greater than zero but lower than x. If the value is not valid, we simple emit a beep.</p>
+<p>[java]import java.awt.Toolkit;</p>
+<p>import javax.swing.InputVerifier;</p>
+<p>import javax.swing.JComponent;</p>
+<p>import javax.swing.JTextField;</p>
+<p>public class NumberInputVerifier extends InputVerifier {
+    private int max = 0;</p>
+<div class="code"><pre><span class="n">public</span> <span class="nf">NumberInputVerifier</span><span class="p">(){</span>
+    <span class="n">this</span><span class="p">(</span><span class="mi">100</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="n">public</span> <span class="nf">NumberInputVerifier</span><span class="p">(</span><span class="kt">int</span> <span class="n">maximum</span><span class="p">){</span>
+    <span class="n">super</span><span class="p">();</span>
+
+    <span class="n">this</span><span class="p">.</span><span class="n">max</span> <span class="o">=</span> <span class="n">maximum</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>public boolean shouldYieldFocus(JComponent input) {
+        boolean valid = verify(input);</p>
+<div class="code"><pre>    <span class="k">if</span> <span class="p">(</span><span class="n">valid</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="n">Toolkit</span><span class="p">.</span><span class="n">getDefaultToolkit</span><span class="p">().</span><span class="n">beep</span><span class="p">();</span>
+        <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="n">public</span> <span class="n">boolean</span> <span class="n">verify</span><span class="p">(</span><span class="n">JComponent</span> <span class="n">input</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">JTextField</span> <span class="n">field</span> <span class="o">=</span> <span class="p">(</span><span class="n">JTextField</span><span class="p">)</span><span class="n">input</span><span class="p">;</span>
+
+    <span class="n">String</span> <span class="n">value</span> <span class="o">=</span> <span class="n">field</span><span class="p">.</span><span class="n">getText</span><span class="p">();</span>
+    <span class="kt">int</span> <span class="n">intValue</span><span class="p">;</span>
+
+    <span class="n">try</span> <span class="p">{</span>
+        <span class="n">intValue</span> <span class="o">=</span> <span class="n">Integer</span><span class="p">.</span><span class="n">parseInt</span><span class="p">(</span><span class="n">value</span><span class="p">);</span>
+    <span class="p">}</span> <span class="n">catch</span> <span class="p">(</span><span class="n">NumberFormatException</span> <span class="n">pe</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span><span class="p">(</span><span class="n">intValue</span> <span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">lt</span><span class="p">;</span> <span class="mi">0</span> <span class="o">||</span> <span class="n">intValue</span> <span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">gt</span><span class="p">;</span> <span class="n">max</span><span class="p">){</span>
+        <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>}[/java]</p>
+<p>You can of course make a lot of things with this class. You can use it to change the format of a number adding " or , or modify everithing else in the input component.</p>
+<p>You can also use the same InputVerifier for several components. You just have to test the concerned component with the parameter of the verify method. But don't make too complex InputVerifier.</p>
+<!--nextpage-->
+
+<h4>5. Listen the focus</h4>
+
+<p>A first way to know which component has the focus is to use a focus listener. You just have to create a class implementing FocusListener and add this listerner to every components you want to manage. Then, you just have to make things in the methods of the listener : focusGained and focusLost. This way is quite simple, but if you have a lot of components, it will be really heavy to implement.</p>
+<p>An other way is to use the KeyboardFocusManager class. You just have to add a PropertyChangeListener on this class and verify the property focusOwner. You can also listener some other things : the focus of the windows, the changes on the focus order, ... You can find here a complete liste of properties. This times, you'll directly see all the focus changes for all the components in your application. If you want to restrain the set of components, you have to use the first way with FocusListener.</p>
+<p>[java]Here is an example with KeyboardFocusManager :</p>
+<p>KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();</p>
+<p>focusManager.addPropertyChangeListener(
+    new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent e) {
+            String properties = e.getPropertyName();
+            if (("focusOwner".equals(properties)) &amp;amp;&amp;amp; (e.getNewValue() != null)) {
+                Component component = (Component)e.getNewValue();
+                String name = component.getName();</p>
+<div class="code"><pre>            <span class="n">System</span><span class="p">.</span><span class="n">out</span><span class="p">.</span><span class="n">println</span><span class="p">(</span><span class="n">name</span> <span class="o">+</span> <span class="s">" take focus"</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>}[/java]</p>
+<h4>6. Manage the order of focus</h4>
+
+<p>Swing has a correct focus order by default and normally it's enough. But you can change this order, by example to navigate in a complex form. By default, Swing determinate the focus order using the order of adding the components to the content pane.</p>
+<p>Before Java 1.4, you had to use setNextFocusableComponent() on every component to specify the next component to have the focus. This method is now deprecated. We'll use the LayoutFocusTraversalPolicy class to define the focus order in a Swing application.</p>
+<p>For that, we have to create a new class extending FocusTraversalPolicy and define this set of methods :</p>
+<ul>
+    <li><strong>getComponentAfter</strong> : Indicate which component will have focus after the component in parameter.</li>
+    <li><strong>getComponentBefore</strong> : Indicate which component has the focus before the component in parameter.</li>
+    <li><strong>getDefaultComponent</strong> : Indicate which component is the default component of the container on which we've applied the policy. It's used when we swith to this focus cycle.</li>
+    <li><strong>getLastComponent</strong> : Indicate which component is the last of this continer. It's used when we swith to this focus cycle.</li>
+    <li><strong>getFirstComponent</strong> : Indicate which component is the first of this container. It's used when we swith to this focus cycle.</li>
+    <li><strong>getInitialComponent</strong> : Indicate which component must have the focus when the window is displayed.</li>
+</ul>
+
+<p>Here is a little example :</p>
+<p>[java]public class TestFocusTraversalPolicy extends FocusTraversalPolicy {
+    public Component getComponentAfter(Container focusCycleRoot, Component aComponent) {
+        if (aComponent.equals(component1)) {
+            return component2;
+        } else if (aComponent.equals(component2)) {
+            return component3;
+        } else if (aComponent.equals(component3)) {
+            return component4;
+        } else if (aComponent.equals(component4)) {
+            return component5;
+        } else if (aComponent.equals(component5)) {
+            return component1;
+        } </p>
+<div class="code"><pre>    <span class="k">return</span> <span class="n">component1</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="n">public</span> <span class="n">Component</span> <span class="n">getComponentBefore</span><span class="p">(</span><span class="n">Container</span> <span class="n">focusCycleRoot</span><span class="p">,</span> <span class="n">Component</span> <span class="n">aComponent</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">aComponent</span><span class="p">.</span><span class="n">equals</span><span class="p">(</span><span class="n">component1</span><span class="p">))</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="n">component5</span><span class="p">;</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">aComponent</span><span class="p">.</span><span class="n">equals</span><span class="p">(</span><span class="n">component2</span><span class="p">))</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="n">component1</span><span class="p">;</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">aComponent</span><span class="p">.</span><span class="n">equals</span><span class="p">(</span><span class="n">component3</span><span class="p">))</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="n">component2</span><span class="p">;</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">aComponent</span><span class="p">.</span><span class="n">equals</span><span class="p">(</span><span class="n">component4</span><span class="p">))</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="n">component3</span><span class="p">;</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">aComponent</span><span class="p">.</span><span class="n">equals</span><span class="p">(</span><span class="n">component5</span><span class="p">))</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="n">component4</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">component1</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="n">public</span> <span class="n">Component</span> <span class="n">getDefaultComponent</span><span class="p">(</span><span class="n">Container</span> <span class="n">focusCycleRoot</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">component1</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="n">public</span> <span class="n">Component</span> <span class="n">getLastComponent</span><span class="p">(</span><span class="n">Container</span> <span class="n">focusCycleRoot</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">component5</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="n">public</span> <span class="n">Component</span> <span class="n">getFirstComponent</span><span class="p">(</span><span class="n">Container</span> <span class="n">focusCycleRoot</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">component1</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>}[/java]</p>
+<p>The disadvantage of this technique is that the policy must know all the components. That why we often use an inner class to give it access to the member of the current class. Here is a simple example :</p>
+<p>[java]public class View {
+    private Component component1;
+    private Component component2;
+    private Component component3;
+    private Component component4;
+    private Component component5;</p>
+<div class="code"><pre><span class="n">class</span> <span class="n">TestFocusTraversalPolicy</span> <span class="n">extends</span> <span class="n">FocusTraversalPolicy</span> <span class="p">{</span>
+    <span class="c1">//Traversal policy methods</span>
+    <span class="p">}</span>
+</pre></div>
+
+
+<p>}[/java]</p>
+<p>You can also use an inner anonymous class, but with that kind of class, you cannot use it for several components.</p>
+<p>To apply this policy, you have to use the setFocusTraversalPolicy() method of the Container class :</p>
+<p>[java]TestFocusTraversalPolicy newPolicy = new TestFocusTraversalPolicy();</p>
+<p>myContainer.setFocusTraversalPolicy(newPo[/java]</p>
+<p>Of course you can define several strategies for several panels or the same policy for several panels.</p>
+<p>If you want to restore the default focus policy, you just have to call setFocusTraversalPolicy() with null as parameter.</p>
+<p>You can also edit the default FocusTraversalPolicy with one of yours with the setDefaultTraversalPolicy() method from the KeyboardFocusManager class.</p>
+<h5>6.1. Simplification</h5>
+
+<p>But it's not very easy to do that and that can quickly be heavy. So here is a simple class to manage the positions of all the components with an integer :</p>
+<p>[java]import java.awt.Component;</p>
+<p>import java.awt.Container;</p>
+<p>import java.awt.FocusTraversalPolicy;</p>
+<p>import java.util.HashMap;</p>
+<p>/<em><em>
+ * A focus traversal policy who manage the order of components in the focus cycle using a int.
+ * The first component of the cycle  has the position of 0 and all the others follows with an interval of 1.
+ * The last component must have the position (size() -1).
+ </em>
+ * @author Baptiste Wicht
+ </em>
+ */
+public class MapFocusTraversalPolicy extends FocusTraversalPolicy {
+    private HashMap components = new HashMap();
+    private HashMap positions = new HashMap();</p>
+<div class="code"><pre><span class="cm">/**</span>
+<span class="cm"> * Add the component to the order with the specfieid position.</span>
+<span class="cm"> *</span>
+<span class="cm"> * @param component The component to add.</span>
+<span class="cm"> * @param position The position of the component in the focus cycle root.</span>
+<span class="cm"> */</span>
+<span class="n">public</span> <span class="k">void</span> <span class="n">addComponent</span><span class="p">(</span><span class="n">Component</span> <span class="n">component</span><span class="p">,</span> <span class="k">int</span> <span class="n">position</span><span class="p">){</span>
+    <span class="n">components</span><span class="p">.</span><span class="n">put</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">component</span><span class="p">);</span>
+    <span class="n">positions</span><span class="p">.</span><span class="n">put</span><span class="p">(</span><span class="n">component</span><span class="p">,</span> <span class="n">position</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="p">@</span><span class="n">Override</span>
+<span class="n">public</span> <span class="n">Component</span> <span class="n">getComponentAfter</span><span class="p">(</span><span class="n">Container</span> <span class="n">parent</span><span class="p">,</span> <span class="n">Component</span> <span class="n">component</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">int</span> <span class="n">position</span> <span class="o">=</span> <span class="n">positions</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">component</span><span class="p">);</span>
+
+    <span class="k">if</span><span class="p">(</span><span class="n">position</span> <span class="o">=</span> <span class="n">positions</span><span class="p">.</span><span class="n">size</span><span class="p">()</span> <span class="o">-</span> <span class="mh">1</span><span class="p">){</span>
+        <span class="n">position</span> <span class="o">=</span> <span class="mh">0</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">components</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">position</span> <span class="o">+</span> <span class="mh">1</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="p">@</span><span class="n">Override</span>
+<span class="n">public</span> <span class="n">Component</span> <span class="n">getComponentBefore</span><span class="p">(</span><span class="n">Container</span> <span class="n">parent</span><span class="p">,</span> <span class="n">Component</span> <span class="n">component</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">int</span> <span class="n">position</span> <span class="o">=</span> <span class="n">positions</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">component</span><span class="p">);</span>
+
+    <span class="k">if</span><span class="p">(</span><span class="n">position</span> <span class="o">=</span> <span class="mh">0</span><span class="p">){</span>
+        <span class="n">position</span> <span class="o">=</span> <span class="n">positions</span><span class="p">.</span><span class="n">size</span><span class="p">()</span> <span class="o">-</span> <span class="mh">1</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">components</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">position</span> <span class="o">-</span> <span class="mh">1</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="p">@</span><span class="n">Override</span>
+<span class="n">public</span> <span class="n">Component</span> <span class="n">getDefaultComponent</span><span class="p">(</span><span class="n">Container</span> <span class="n">parent</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">components</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="mh">0</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="p">@</span><span class="n">Override</span>
+<span class="n">public</span> <span class="n">Component</span> <span class="n">getFirstComponent</span><span class="p">(</span><span class="n">Container</span> <span class="n">parent</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">components</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="mh">0</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="p">@</span><span class="n">Override</span>
+<span class="n">public</span> <span class="n">Component</span> <span class="n">getLastComponent</span><span class="p">(</span><span class="n">Container</span> <span class="n">parent</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">components</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">components</span><span class="p">.</span><span class="n">size</span><span class="p">()</span> <span class="o">-</span> <span class="mh">1</span><span class="p">);</span>
+    <span class="p">}</span>
+</pre></div>
+
+
+<p>}[/java]</p>
+<p>Vous can use this class as every other focus traversal policy we saw before. Just add all the components before using the policy.</p>
+<p>An other way that you can explore it's to make all your components implementing an interface like Focusable with a getFocusPosition() method and use a policy to make the order with that Focusable components.</p>
+<h4>7. The KeyboardFocusManager class</h4>
+
+<p>There is also other utilities to the KeyboardFocusManager class.</p>
+<p>First, you can change the component who has the focus with the focusXXX methods. By example, you can use the focusNextComponent() method to give the focus to the next component. you can also give the focus to a specific component with the setFocusOwner method or to a window with with the setActiveWindows method.</p>
+<p>Then, you can also get the active window, the component with the focux and the container who contains the active component. If the components are in an other thread, you have to use the getGlobalXXX methods to get it.</p>
+<!--nextpage-->
+
+<h4>8. Conclusion</h4>
+
+<p>To conclude, you can do almost everithing with the focus system. You can modify the order of focus for the components, say which components must have the focus, make tests on the input fields, know who has the focus. But that's sometimes weird when we start. But once we've understand which classes to use, it is quite simple.</p></div>
+        </div>
+            
+        
+    <p>
+        <a href="posts/2010/03/java-swing-focus.html#disqus_thread" data-disqus-identifier="cache/posts/2010/03/java-swing-focus.html">Comments</a>
+
+
+        </p></article>
+        <article class="postbox h-entry post-text">
+        <h1 class="p-name"><a href="posts/2010/03/bookmarks-bar-disappears-google-chrome.html" class="u-url">Tip : The bookmarks bar disappears on Google Chrome !</a>
+        <small>  
+             Posted: <time class="published dt-published" datetime="2010-03-07T15:15:44+00:00">2010-03-07 15:15</time>
+        </small></h1>
+        <hr>
+        <div class="e-content">
+        <div><p></p><p>Hi,</p>
+<p>I Found that my bookmarks bar on Google Chrome disappear sometimes. This behavior is very confusing, is searched a few and i find that it was me that make it disappears and appears.</p>
+<p>On Google Chrome, you can hide/display the bookmarks bar using &lt;Ctrl&gt; + &lt;B&gt;.</p>
+<p>Hope that will help someone.</p></div>
+        </div>
+            
+        
+    <p>
+        <a href="posts/2010/03/bookmarks-bar-disappears-google-chrome.html#disqus_thread" data-disqus-identifier="cache/posts/2010/03/bookmarks-bar-disappears-google-chrome.html">Comments</a>
+
+
+        </p></article>
+        <article class="postbox h-entry post-text">
+        <h1 class="p-name"><a href="posts/2010/03/hardware-guide-memory.html" class="u-url">Hardware Guide : The memory chips</a>
+        <small>  
+             Posted: <time class="published dt-published" datetime="2010-03-03T13:31:23+00:00">2010-03-03 13:31</time>
+        </small></h1>
+        <hr>
+        <div class="e-content">
+        <div><p></p><h4>1. Introduction</h4>
+The RAM memory (Random Access Memory) of a computer is used to stock data during their treatment. The operating system will load in memory the useful files and all the datas of the launched programs. Its necessary to have an adequate quantity of memory.
+<p>The RAM has two important caracteristics :</p>
+<ul>
+    <li>Speed data access : The access to data in RAM is very fast, a lot more than access to hard disks. It's essential to give access to data in a quick way.</li>
+    <li>Volatility : The data doesn't remain in memory after computer shutdown. So this is not a storage device only a temporary data storage device.</li>
+</ul>
+
+<p>If a computer doesn't have enough memory, the operating system will simulate virtual memory using the hard disks, but like said above, the access on the hard disk is a lot slower than memory and the performances of the system will decrease.</p>
+<p>So this is essential to make the good choice when choosing memory chips.</p>
+<p><a href="wp-content/uploads/2010/03/memory_chip.jpg"><img class="size-medium wp-image-194" title="Memory Chip" src="wp-content/uploads/2010/03/memory_chip-300x144.jpg" alt="Memory Chip" width="300" height="144"></a></p>
+<!--more-->
+
+<h4>2. Size</h4>
+
+<p>The first thing to define is the quantity of memory do you need. The minimum memory is 512 Mo, but the this will be just enough even in Windows XP and it's absolutely not enough for Windows Vista. For Windows Seven, you can have 512 Mo, but it will not be confortable.</p>
+<p>Thats why i will advise at least 1 Go of RAM, but better is 2 Go. After, you have also to see the used applications to estimate the needed memory size. If you need to do images/movies treatments or play recent games 2Go is necessary. If you use more than 3 Go of RAM, be sure that you operating system can support that. Only 64 bit operating system support more than 3 Go of RAM. Generally, the last motherboards use the Dual Channel technologies for memory chips. Namely we control the chips by pair to have better bandwith. With this technology, you must use 2 chips with the same caracterics (two same chips will be better). Some motherboards have Quad Channel technology support. This is the same as Dual Channel but for 4 chips.</p>
+<p>The motherboards have normally 4 memory locations. I advise to use only 2 for the start. This will make the update easier. It's not really useful to buy 4 chips of 512 Mo instead of 2 chips of 1 Go. The prices are almost the same.</p>
+<!--nextpage-->
+
+<h4>3. Type</h4>
+
+<p>There is several types of memory with for each type several standards. Here are the 4 main types :</p>
+<ul>
+    <li><strong>SDR-SDRAM</strong> : This is an obsolete type of RAM, but you can still find it in very old computers. A chip had 168 pins and 2 keyways.</li>
+    <li><strong>DDR-SDRAM</strong> : This is an evolution of the SDR, with better frequencies. It has 184 pins and one keyway. It's not selled today and have been replaced by DDR2.</li>
+    <li><strong>DDR2-SDRAM</strong> : This is the standard type of mmemory. All the new motherboards support this type. It has better frequencies. It has 240 pins.</li>
+    <li><strong>DDR3-SDRAM</strong> : Really recent technology and still almost few used. The motherboards support more and more that technology.</li>
+</ul>
+
+<p>Now, the main used chips are DDR2 and the new motherboards are all compatible with this norm. This is why, i'll advise to directly buy DDR2. If you want better performances use DDR3, but it's only necessary with big configurations.</p>
+<p>For each technology there is several formats. This formats indicate the frequency of the chip. The DDR have a internal frequency and an external one. Here are the different formats :</p>
+<ul>
+    <li><strong>DDR2 400</strong> - PC2-3200 : External Frequency (EF) : 200Mhz, Internal Frequency (IF) : 100Mhz</li>
+    <li><strong>DDR2 533</strong> - PC2-4200 : EF : 266, IF : 133</li>
+    <li><strong>DDR2 667</strong> - PC2-5300 : EF : 333, IF : 166</li>
+    <li><strong>DDR2 800</strong> - PC2-6400 : EF : 400, IF : 200</li>
+    <li><strong>DDR2 1000</strong> - PC2-8000 : EF : 500, IF : 250</li>
+    <li><strong>DDR2 1066</strong> - PC2-8500 : EF : 533, IF : 266</li>
+    <li><strong>DDR2 1200</strong> - PC2-10000 : EF : 600, IF : 300</li>
+</ul>
+
+<p>More the frequency is high, more the access to the data is fast. Nevertheless, like you will see in the next chapter, it's not enough to have a high frequency. In fact, a very high frequency has no utility with high latencies.</p>
+<p>The motherboard have also a frequency, so have to keep in mind to not decrease the performances of the memory with the motherboard and vice-versa. The motherboards doesn't support any formats, so you have to control the compatibility between the memory and the motherboard. More the frequency is high, more it will be costly. So have to choose the right middle between performances and price.</p>
+<p><strong>Note</strong> : Some mainboards have limitations on the supported number of chips of a certain type of chips. For example a mainboard XXX can support only three chips of type YYY.</p>
+<p>For the persons that want to make overclocking, i will advise to take chips with very high frequencies (DDR2 1066 and superior). But for all that want a simple configuration, lower frequencies will be enough.</p>
+<p>For the persons interested of the very high frequencies, here are the caracteristics of the DDR3 norm :</p>
+<ul>
+    <li><strong>DDR3-800</strong> : 100 MHz- 400 MHz</li>
+    <li><strong>DDR3-1066</strong> : 133 MHz - 533 MHz</li>
+    <li><strong>DDR3-1333</strong> : 166 MHz -à 667 MHz</li>
+    <li><strong>DDR3-1600</strong> : 200 MHz - 800 MHz</li>
+    <li><strong>DDR3-1800</strong> : 225 MHz - 900 MHz</li>
+    <li><strong>DDR3-1866</strong> : 233 MHz - 933 MHz</li>
+    <li><strong>DDR3-2000</strong> : 250 MHz - 1000 MHz</li>
+    <li><strong>DDR3-2133</strong> : 266 MHz - 1066 MHz</li>
+    <li><strong>DDR3-2200</strong> : 275 MHz - 1100 MHz</li>
+    <li><strong>DDR3-2300</strong> : 287 MHz - 1150 MHz</li>
+</ul>
+
+<p>To choose the DDR3 memory, the best criteria is the price. Take the format the most according to your budget.</p>
+<h4>4. Synchronisation</h4>
+
+<p>An other caracteristic of memory is the number of clock cycles necessary to access a data. This caracteristic is represented by 4 numbers (x-x-x-x) :</p>
+<ul>
+    <li><strong>CAS</strong> (Column Address Strobe) Delay or CAS Latency : Time to access a column. Namemly the number of cycles between the read request and the answer.</li>
+    <li><strong>RAS</strong> (Row Address Strobe) Precharge Time : Number of cycles between 2 RAS operations.</li>
+    <li><strong>RAS To CAS Dela</strong>y : Access time to swith from a row to a column.</li>
+    <li><strong>RAS Active Time</strong> : Access time for a row.</li>
+</ul>
+
+<p>More the timings are low more the chips is fast. But you have to balance the 4 numbers.</p>
+<p>It's possible to change timings in The BIOS, but these operations can be dangerous for the stability of the chips and also for their life time.</p>
+<p>This parameter is not the most important to keep in minde, but you cannot ignore it. Timings of 3-3-3-8 or less will be fine. If you have the budget, you can choose 2-2-2-5, but it's very expensive. Keep in mind that timings are lower for DDR3 than for DDR3.</p>
+<!--nextpage-->
+
+<h4>5. Miscellaneous</h4>
+
+<p>An other question that we can have is "brand chip or noname ? ". This depends on the tastes and the budget, but for the memory i will advice brand chips. The performances are in general really good and the chip is often guaranteed for a long times (sometimes for all the life). In the big constructors of chips we can include Corsair, Kingston or Crucial. You will rarely have problems with chips of these brands.</p>
+<p>Normally the memory chips doesn't need to be specially freezed, but on the big configurations very used, it's useful to freeze the chips. The best way is to use a simple heatsink (a lot of chips are directly selled with heatskins. There is also other systems like liquid cooling of fan system. But i've never seen a case where the heatsink isn't enough.</p>
+<h4>6. Conclusion</h4>
+
+<p>So the first thing to think about is the necessary quantity of memory. Once this is done, you have to see with your mainboard which chips you can use and make the good choice considering the budget and the need of performances.</p>
+<p>I hope that this article will be useful for the choice of memory chips.</p></div>
+        </div>
+            
+        
+    <p>
+        <a href="posts/2010/03/hardware-guide-memory.html#disqus_thread" data-disqus-identifier="cache/posts/2010/03/hardware-guide-memory.html">Comments</a>
+
+
+        </p></article>
+        <article class="postbox h-entry post-text">
+        <h1 class="p-name"><a href="posts/2010/03/jtheque-is-going-to-osgi.html" class="u-url">JTheque is going to OSGi</a>
+        <small>  
+             Posted: <time class="published dt-published" datetime="2010-03-02T13:35:52+00:00">2010-03-02 13:35</time>
+        </small></h1>
+        <hr>
+        <div class="e-content">
+        <div><p></p><p>Hi,</p>
+<p>Just a little post to inform you that i'm currently migrating JTheque Core to OSGI / Spring Dynamic Modules. The core will be fractioned into several bundles. The JTheque Modules will also be OSGi bundles.</p>
+<p>It will increase the modularity of the different services of the Core. And it will also be a more standard way to develop modules. And last but not least, it's an opportunity for me to learn OSGi and Spring Dm.</p>
+
+<p></p></div>
+        </div>
+            
+        
+    <p>
+        <a href="posts/2010/03/jtheque-is-going-to-osgi.html#disqus_thread" data-disqus-identifier="cache/posts/2010/03/jtheque-is-going-to-osgi.html">Comments</a>
+
+
+        </p></article>
+        <article class="postbox h-entry post-text">
+        <h1 class="p-name"><a href="posts/2010/02/modular-application-jtheque-core-2-0-3.html" class="u-url">Develop a modular application with JTheque Core 2.0.3</a>
+        <small>  
+             Posted: <time class="published dt-published" datetime="2010-02-07T05:38:45+00:00">2010-02-07 05:38</time>
+        </small></h1>
+        <hr>
+        <div class="e-content">
+        <div><p></p><h4>1. Introduction</h4>
+This article will teach you how to develop a first application with JTheque Core.
+<p>We will develop a basic modular application, like an hello world. This little program will be composed of :</p>
+<ul>
+    <li>A JTheque application</li>
+    <li>A JTheque module who display an Hello World on the main view</li>
+    <li>A module who will add an option menu to display one more time "Hello World"</li>
+</ul>
+
+<!--more-->
+
+<h4>2. JTheque environment</h4>
+
+<p>The first thing to do before starting develop our application and our modules is to download the "development environment" of JTheque Core. A JTheque application needs some files and librairies to work.</p>
+<p>You can download an archive containing all necessary files on the website of the projects. Then you must choose the dev-base-XXX.zip file where XXX is the version number. In our case, we need the dev-base-2.0.3.zip file.</p>
+<p>When you've downloaded the file, unzip it. Here is the content of the folder :</p>
+<ul>
+    <li><strong>core </strong>: Contains JTheque Core, the configuration and the application</li>
+    <li><strong>lib </strong>: Contains all the librairies</li>
+    <li><strong>modules </strong>: Contains all the modules</li>
+    <li><strong>JTheque-Launcher.jar</strong> : The launcher of the application. You must execute this file to launch your application.</li>
+</ul>
+
+<p>We only have two things to change in this folder. First, we have to add our application (application.xml) and its resources in the core folder. Then, we have to add our modules in the "modules" folder and declare it in the JTheque configuration.</p>
+<!--nextpage-->
+
+<h4>3. Application</h4>
+
+<p>Now that we seen what is a JTheque Application, we'll develop it, the first part of our program.</p>
+<p>An application is basically a container for modules. It has a name, a version but adds no functionaly to the application, this a function of the modules. An application without modules is not useful and vice-versa.</p>
+<p>An application is composed of several things :</p>
+<ul>
+    <li>An XML file (application.xml) describing the application</li>
+    <li>Some images (in the core/images folder)</li>
+    <li>Eventually some .properties i18n files in the core/i18n folder</li>
+</ul>
+
+<p>To define the internationalization values of the application, there is 2 ways. We can define the values directly in the XML file or use some i18n .properties files. This is this solution we will use in our case. The resource bundle must be named application and be in the core/i18n folder. Here are the files to create :</p>
+<p><strong>application.properties</strong></p>
+<pre>name=JTheque Demos
+
+author=Baptiste Wicht
+
+email=baptistewicht@redaction-developpez.com</pre>
+
+<p><strong>application_en.properties</strong></p>
+<pre>site=http://jtheque.developpez.com/en
+
+copyright=JTheque 2009 All rights reserved</pre>
+
+<p><strong>application_fr.properties</strong></p>
+<pre>site=http://jtheque.developpez.com/
+
+copyright=JTheque 2009 Tous droits reservés</pre>
+
+<p>Then, we can write the application.xml file :</p>
+<p>We declared than our application is available in french and in english. Moreover, we declare () to use the i18n files. i18n properties.</p>
+<p>The core is translated in english, french and german.</p>
+<p>For the images, we start to declare a logo.png file and a icon.png file for the application. We can use other extension specifying type="jpg" for exemple for a .jpg file.</p>
+<p>Here are the used images :</p>
+<p><a href="wp-content/uploads/2010/03/icon.png"><img class="size-full wp-image-138" title="The window icon" src="wp-content/uploads/2010/03/icon.png" alt="The window icon" width="16" height="16"></a></p>
+<p><a href="wp-content/uploads/2010/03/logo.png"><img class="size-full wp-image-139" title="The application logo" src="wp-content/uploads/2010/03/logo.png" alt="The application logo" width="171" height="100"></a></p>
+<p>We will now make a first try. For that, you just have to launch the JTheque-Launcher.jar at the root of the JTheque folder. It will launch the core with our application.</p>
+<p>Here is the result :</p>
+<p><a href="wp-content/uploads/2010/03/Screen1.png"><img class="size-medium wp-image-140" title="Launch without any modules" src="wp-content/uploads/2010/03/Screen1-300x233.png" alt="Launch without any modules" width="300" height="233"></a></p>
+<p>We can see that the application launches weel, but there is nothing really interesting to do in this application because there is no modules to add functionalities.</p>
+<!--nextpage-->
+
+<h4>4. The first module</h4>
+
+<p>Now that our module has been developed and is functional, we can make our first module of the application.</p>
+<p>This module will be very simple. It just display "Hello World !" on the main componnent of the application in an internationalized way.</p>
+<p>To declare a module, we need to create class with the @Module annotation. Then, we have to declare it in the Spring context and declare this last in the manifest of the jar.</p>
+<p>It's not necessary to know Spring to use JTheque. If you don't want to use Spring in your application, you can just declare the module in the Spring context withtout using it and then develop your application without use Spring context. You just have to know that the module will be created by Spring.</p>
+<p>The life cycle of a module is composed of three states :</p>
+<ul>
+    <li>pre-plug : To make pre-configuration</li>
+    <li>plug : Here you must add the module in the application. It means edit view, add config elements, ...</li>
+    <li>unplug : Remove the module from the application</li>
+</ul>
+
+<p>To make operations in this 3 phases, you just have to add annotations on methods, respectively @PrePlug, @Plug et @Unplug. Then the application will detect this methods and invoke them.</p>
+<p>In our case, we need to edit the main component of the view in the plug phase. So we doesn't need the other phases.</p>
+<p>Starting with declaring our module with necessary annotations :</p>
+<p>[java]package org.jtheque.demos.first;</p>
+<p>import org.jtheque.core.managers.module.annotations.Module;</p>
+<p>import org.jtheque.core.managers.module.annotations.Plug;</p>
+<p>@Module(id = "jtheque-demo-module-1", i18n = "classpath:org/jtheque/demos/first/i18n/first", version = "1.0", core = "2.0.3",
+        jarFile = "jtheque-demo-module-1.jar")
+public final class DemoFirstModule {
+    @Plug
+    public void plug(){</p>
+<div class="code"><pre><span class="p">}</span>
+</pre></div>
+
+
+<p>}[/java]</p>
+<p>Here again, there is nothing hard. The annotation Module declare the informations about the module. The plug method is for this time empty. The i18n annotation contains the path (Spring resource convention) to the resource bundle of the module. bundle du module.</p>
+<p>Now we can declare informations about the module in the i18n files.</p>
+<p>A i18n file is a simple .properties file who contains a list of key/value couples. A i18n file represent a language. We use a set of this files to internationalize the application. They must have the same base name and finish with _language where "language" is the short form of the language$ (de, fr, en, it, ...).</p>
+<p>The key will be search depending on the id of the module. We directly add also the internationalization of the main view :</p>
+<p><strong>first_en.properties</strong></p>
+<pre>jtheque-demo-module-1.name=JTheque Demo Module 1
+
+jtheque-demo-module-1.author=Baptiste Wicht
+
+jtheque-demo-module-1.description=First demo module</pre>
+
+<p>label.message=Hello World !</p>
+<p><strong>first_fr.properties</strong></p>
+<pre>jtheque-demo-module-1.name=JTheque Demo Module 1
+
+jtheque-demo-module-1.author=Baptiste Wicht
+
+jtheque-demo-module-1.description=Premier module de démo
+
+label.message=Bonjour le monde !</pre>
+
+<p>The application will automatically search and resolve this messages to internationalize the module. We put this files in the org/jtheque/demos/module/first/resources/18n folder.</p>
+<p>To extend the application or access to the services of JTheque, we always have to use the Managers class who provide access to the managers (services) of JTheque Core. In our case, we need to access IViewManager who manage the view of the application.</p>
+<p>In the plug() method, we just have to add a JLabel with an internationalizable text. In JTheque, to make a component internationalizable, we have to implement the Internationalizable interface and add it to ILanguageManager to keep it in the good language. In the case of a label, this component exists in JTheque Core, its the JThequeI18nLabel who takes a i18n key as constructor parameter :</p>
+<p>[java]@Plug</p>
+<p>public void plug(){
+    SwingUtils.inEdt(new Runnable(){
+        @Override
+        public void run(){
+            JThequeI18nLabel label = new JThequeI18nLabel("label.message");
+            label.setFont(label.getFont().deriveFont(36f));</p>
+<div class="code"><pre>        <span class="n">Managers</span><span class="p">.</span><span class="n">getManager</span><span class="p">(</span><span class="n">IViewManager</span><span class="p">.</span><span class="n">class</span><span class="p">).</span><span class="n">setMainComponent</span><span class="p">(</span><span class="n">label</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+</pre></div>
+
+
+<p>}[/java]</p>
+<p>It's easy. We get our manager with the Managers class, then, we set our label as the main component.</p>
+<p>Now we'll declare our module in Spring context. It's a simple XML file :</p>
+<p><strong>first.xml</strong></p>
+<p>We put this file at the same level of DemoFirstModule. For those who doesn't know spring, it's exactly if we create a new instance of our module and assign it to a variable named firstModule.</p>
+<p>We'll try this module. Then, we have to generate a jar of our project. The manifest of the jar must have the link to our XML file. Here is our manifest file :</p>
+<pre>Manifest-Version: 1.0
+
+Module-Context: org/jtheque/demos/first/first.xml</pre>
+
+<p>Then we generate our Jar file and put it on the modules files of the JTheque environment with the name of jtheque-demo-module-1.jar.</p>
+<p>Now we have to configure JTheque to put our module in the application. To do that, we have to edit the config.xml file in the core.file. We just add the discovery tag to say that all the modules in the modules folder to the application.</p>
+<p><strong>config.xml</strong></p>
+<p>We can now test the result launching JTheque-Launcher.jar and here is what we get :</p>
+<p><a href="wp-content/uploads/2010/02/Screen2.png"><img class="size-medium wp-image-151" title="Hello World" src="wp-content/uploads/2010/02/Screen2-300x233.png" alt="Hello World" width="300" height="233"></a></p>
+<p>Like we can see, our module is good integrated in our application.</p>
+<!--nextpage-->
+
+<h4>5. The second module</h4>
+
+<p>We will now create a second module who will add an option menu to display another Hello World. We could of course do that in the first module, but it's to show how to create several modules.</p>
+<p>To add options menu, we just need the plug pahse. Here is the base of the new module (DemoSecondModule) :</p>
+<p>[java]@Module(id = "jtheque-demo-module-2", i18n = "classpath:org/jtheque/demos/second/i18n/second", version = "1.0",
+        core = "2.0.3", jarFile = "jtheque-demo-module-2.jar")
+public final class DemoSecondModule {
+    @Plug
+    public void plug() {
+    }
+}[/java]</p>
+<p>With this i18n files :</p>
+<p><strong>second_fr.properties</strong></p>
+<pre>jtheque-demo-module-2.name=JTheque Demo Module 2
+
+jtheque-demo-module-2.author=Baptiste Wicht
+
+jtheque-demo-module-2.description=Deuxième module de démo
+
+dialog.message=Bonjour le monde !</pre>
+
+<p><strong>second_en.properties</strong></p>
+<pre>jtheque-demo-module-2.name=JTheque Demo Module 2
+
+jtheque-demo-module-2.author=Baptiste Wicht
+
+jtheque-demo-module-2.description=Second demo module
+
+dialog.message=Hello world !</pre>
+
+<p>It's basically the same things than for the first module. We'll now add an option to the "File" menu. For that, we have to add an internationalizable action, JThequeAction.</p>
+<p>So here is our simple action :</p>
+<p>[java]package org.jtheque.demos.second;</p>
+<p>import org.jtheque.core.managers.view.able.IViewManager;</p>
+<p>import org.jtheque.core.managers.view.impl.actions.JThequeAction;</p>
+<p>import org.jtheque.core.managers.Managers;</p>
+<p>import java.awt.event.ActionEvent;</p>
+<p>final class HelloWorldAction extends JThequeAction {
+    HelloWorldAction() {
+        super("dialog.message");
+    }</p>
+<div class="code"><pre><span class="err">@</span><span class="n">Override</span>
+<span class="n">public</span> <span class="kt">void</span> <span class="n">actionPerformed</span><span class="p">(</span><span class="n">ActionEvent</span> <span class="n">e</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">Managers</span><span class="p">.</span><span class="n">getManager</span><span class="p">(</span><span class="n">IViewManager</span><span class="p">.</span><span class="n">class</span><span class="p">).</span><span class="n">displayI18nText</span><span class="p">(</span><span class="s">"dialog.message"</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>}[/java]</p>
+<p>Nothing hard, we use the IViewManager to display an internationalizable text in a dialog box. We can now add this action on the menu using the IFeatureManager. From JTheque Core 2.0.3, there is a declarative way to create menu actions with the Menu interface. For that, we can extends the AbstractMenu class and choose the methods to override to add menus (features).</p>
+<p>[java]@Plug</p>
+<p>public void plug() {
+    Managers.getManager(IFeatureManager.class).addMenu(new DemoMenu());
+}</p>
+<p>private static final class DemoMenu extends AbstractMenu {
+    @Override
+    protected List getFileMenuSubFeatures(){
+        return features(
+                createSubFeature(150, new HelloWorldAction())
+        );
+    }
+}[/java]</p>
+<p>We just add an action on the "File" menu, with our action and we give it the 150 position (0 is the first position and 1000 is the last (exit)).</p>
+<p>Then we create the Spring xml file of the second module :</p>
+<p><strong>second.xml</strong></p>
+<p>[xml]&lt;?xml version="1.0" encoding="UTF-8"?&gt;</p>
+<p>&lt;beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="
+            http://www.springframework.org/schema/beans
+            http://www.springframework.org/schema/beans/spring-beans.xsd"&gt;</p>
+<div class="code"><pre><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">bean</span> <span class="n">id</span><span class="o">=</span><span class="s">"secondaryModule"</span> <span class="n">class</span><span class="o">=</span><span class="s">"org.jtheque.demos.second.DemoSecondModule"</span> <span class="n">lazy</span><span class="o">-</span><span class="n">init</span><span class="o">=</span><span class="s">"false"</span> <span class="o">/&amp;</span><span class="n">gt</span><span class="p">;</span>
+</pre></div>
+
+
+<p>&lt;/beans&gt;[/xml]</p>
+<p>We can now generate the Jar file of the second module with this manifest :</p>
+<pre>Manifest-Version: 1.0
+
+Module-Context: org/jtheque/demos/second/test.xml</pre>
+
+<p>Finally, we can test the complete application using JTheque-Launcher.jar :</p>
+<p><a href="wp-content/uploads/2010/02/Screen3.png"><img class="size-medium wp-image-160" title="Nouveau menu" src="wp-content/uploads/2010/02/Screen3-300x170.png" alt="Nouveau menu" width="300" height="170"></a></p>
+<p><a href="wp-content/uploads/2010/02/Screen4.png"><img class="size-medium wp-image-161" title="Hello world" src="wp-content/uploads/2010/02/Screen4-300x232.png" alt="Hello world" width="300" height="232"></a></p>
+<p>Our second module is well integrated.</p>
+<!--nextpage-->
+
+<h4>6. Conclusion</h4>
+
+<p>With relatively few code, we have developed a modular applications with 2 modules and that can have a lot more of modules.</p>
+<p>The services given by JTheque are many more. If you want to know more, for the moment, i'll guide you to the Javadoc of the last version of the core. I will try to create a full guide to present all the functionalities of the core.</p>
+<p>If you want to comment this article, don't hesitate to add a comment on the comment form at the end of the page.</p>
+<p>If you want to make a comment, a suggestion or talk about the JTheque project, you can also come to the dedicated forum. It's a french forum, but you can post in english.</p></div>
+        </div>
+            
+        
+    <p>
+        <a href="posts/2010/02/modular-application-jtheque-core-2-0-3.html#disqus_thread" data-disqus-identifier="cache/posts/2010/02/modular-application-jtheque-core-2-0-3.html">Comments</a>
+
+
+        </p></article>
+        <article class="postbox h-entry post-text">
+        <h1 class="p-name"><a href="posts/2010/02/hardware-guide-hard-disks.html" class="u-url">Hardware Guide : The Hard Disks</a>
+        <small>  
+             Posted: <time class="published dt-published" datetime="2010-02-06T13:25:20+00:00">2010-02-06 13:25</time>
+        </small></h1>
+        <hr>
+        <div class="e-content">
+        <div><p></p><p>You want buy a new computer, but you cannot which hard disk to buy ? Or you want to buy a new hard disk for your computer ? So, this article is done for you. It will describe all the things you must be careful of when choosing a hard disk.</p>
+<!--more-->
+
+<p></p><h4>1. Introduction</h4>
+<p>The hard disk is the element who enables you to store data of your computer. The operating system, your programs, your games and your documents will be stored in this device. So be careful not to stifle your computer choosing an inadequate hard disk.</p>
+<p>So you have to control some criterias, like the capacity or the rotation speed.</p>
+<p><a href="wp-content/uploads/2010/03/harddisk.jpg"><img src="wp-content/uploads/2010/03/harddisk-300x174.jpg" alt="Hard Disk" title="Hard Disk" width="300" height="174" class="size-medium wp-image-190"></a></p>
+<h4>2. Capacity</h4>
+
+<p>The capacity of the hard disk is the quantity of informations it can store. This is the first choice critera, people often search some storage space. But this capacity depends of your needs. The capacity is calculated in Go (Gigaoctets) and the price is directly depending of the capacity.</p>
+<p>For informations, 1 Go = 1024 Mo = 1 048 576 Ko = 1 073 741 824 octets. It now common to find hard disks with more than one To (Teraoctets). 1 To = 1024 Go.</p>
+<p>To evaluate the necessary capacity, here are the capacity for some applications or files :</p>
+<ul>
+    <li>A program : Between 10 and 500 Mo</li>
+    <li>A video game : Between 200 Mo and several Go</li>
+    <li>A Word document of several pages : 50 Ko</li>
+    <li>A song in MP3 : 3 to 7 Mo</li>
+    <li>A numeric photography : 1 Mo</li>
+    <li>A film (DivX format) : 700 Mo</li>
+    <li>Windows XP : 5 to 10 Go</li>
+    <li>Windows Vista : 10 to 20 Go</li>
+    <li>Linux : 5 to 10 Go</li>
+</ul>
+
+<p>Of course, this is only estimations, but that can allow you to make an idea of what you need.</p>
+<p>It's not usefull to buy a enormous hard disk when you have only some Word documents to store. The sellers will often try to sell you the biggest hard disks. So keep in mind your needs.</p>
+<p>For example, a 1 To hard disk can contains :</p>
+<ul>
+    <li>More than 1400 movies in DivX format or</li>
+    <li>1 million of photos in medium format or</li>
+    <li>200'000 songs in MP3 format or</li>
+    <li>Several tens of millions of pages in Word format</li>
+</ul>
+
+<p>So you can see that this kind of hard disk is often not necessary. I don't say that's a bad idea but it's a good thing to estimate your need before choosing an enormous (or too small). It's not really interesting to use moyen for space that we'll never use.</p>
+<!--nextpage-->
+
+<h4>3. Physical format</h4>
+
+<p>The first thing to decide is the physical format of the hard disk. There is 2 main formats of hard disks, namely :</p>
+<ul>
+    <li>3"1/2 : This is the format of hard disks for desktop computer.</li>
+    <li>2"1/2 : This is the hard disks for laptop.</li>
+</ul>
+
+<p>So the choice is simple, if you need a hard disk for your laptop, you need a 2"1/2 hard disk otherwise one 3"1/2.</p>
+<p>There is still the problem of external hard disk. In this case, the hard disk is directly inside a container, so this is not a big problem. If you search a little hard disk, opt for a 2"1/2 else in most cases, choose a 3"1/2.</p>
+<h4>4. Interface</h4>
+
+<p>The next thing to verify in the interface of the hard disk. That is the way the hard disk will be connected to the motherboard. You cannot connect a SATA hard disk on a motherbord that have only IDE. Here are the main existing formats :</p>
+<ul>
+    <li><strong>IDE</strong> (PATA) : This is the oldest interface, but also the most used one. The transfer rate is lowe than the other, but is even so acceptable for a normal usage. In its ATA133 version, the theorical transfer rate is 133 Mo/s</li>
+    <li><strong>SATA</strong> : This interface has better transfer rates than PATA. There is two versions (SATA I and II). They have transfer rates of, respectively 150 Mo/s and 300 Mo/s.</li>
+    <li><strong>SCSI</strong> : This interface is still better than SATA, but really the expansive and especially made for servers. Its theoretical transfert can go to 640 Mo/s.</li>
+    <li><strong>SAS</strong> : Serial Attached SCSI : This is the evolution of SCSI. The transfer rate is better and not distributed between hard disks. But this format is not really widespread and exclusively reserved for servers at this time.</li>
+</ul>
+
+<p>You also have to keep in mind that hard disk are limited in tranfer rate due to their mechanic state. So the transfer rate of the interface is mostly useful when several hard disks are connected on the same bus.</p>
+<p>For a new PC, it's recommended to opt for SATA hard disks who are the new standard for hard disk. If you really want big transfer rates with many disks or if you want to build a server, you can choose SCSI or SAS depending on your budget.</p>
+<!--nextpage-->
+
+<h4>5. Rotation speed</h4>
+
+<p>The hard disk is often the slowest element of a PC. It's a lot slower than a processor. It's especially because it's mechanic. A disk is composed of a plate in constant rotation and a read/write head who moves on the plate to read and write the data. So we can improve the data transfer rate improving the rotation speed of the plate. But keep in mind that doesn't really improve the access time because for the transfer time, the principal problem is the shift of the head.</p>
+<p>We have to distinguish here the 2"1/2 and 3"1/2 format because the speeds are not the same.</p>
+<h5>5.1. Hard disk for laptop : 2"1/2 format</h5>
+
+<p>Here are the different speeds for a 2"1/2 hard disk :</p>
+<ul>
+    <li>4200 rpm : It's the old version of the hard disk. That's not a good idea to buy one now.</li>
+    <li>5400 rpm : It's the standard speed for laptop hard disk.</li>
+    <li>7200 rpm : More and more hard disks are sell with this speed</li>
+</ul>
+
+<p>A hard disk with 5400 rpm is still comfortable, but it's really a good investment to buy a 7200rpm hard disk.</p>
+<h5>5.2. Hard disks for desktop computer : 3"1/2 format</h5>
+
+<p>Here are the different speeds for a 3"1/2 hard disk :</p>
+<ul>
+    <li>5400 Tours/min : It's the old version of the hard disk, not used anymore.</li>
+    <li>7200 Tours/min : It's the standard speed for desktop hard disk.</li>
+    <li>10'000 Tours/min : This is only SATA and SCSI hard disk. The capacity of this kind of disk is often limited.</li>
+    <li>15'000 Tours/min : This is only SCSI hard disk. You'll find only this disks in servers, very expensive.</li>
+</ul>
+
+<p>For the hard disks for store your data, I recommend to use 7200rpm hard disk. But for the main disk, to store operating system and your programs, i recommend a 10'000 rpm with little capacity (36 or 72 Go). That will improve the start of your system and of your programs. It's really comfortable to work with.</p>
+<h4>6. Memory cache</h4>
+
+<p>The actual hard disk have also a cache memory. This memory is used to store the most used data bits that can be reused. When this data are requested, they come directly from the memory cache so without mechanical access, this is faster. We have several memory cache sizes :</p>
+<ul>
+    <li>2Mo</li>
+    <li>8Mo</li>
+    <li>16Mo</li>
+    <li>32Mo</li>
+    <li>64Mo (very rare)</li>
+</ul>
+
+<p>It's a bad idea to buy disk with less than 8Mo of memory cache. If you can, i recommend you to buy hard disk with at least 16Mo. 32Mo or 64Mo will be better but more expensive.</p>
+<!--nextpage-->
+
+<h4>7. Internal / External</h4>
+
+<p>We call an external hard disk an hard disk who stay outside the computer. This kind of hard disk is inside a container and connected to the computer with a FireWire or USB interface. This is really practical to move data.</p>
+<p>An other possibility is an eSata interface who start to be available with the last computer and laptop, but not on all the computers. This the external version of the SATA format.</p>
+<p>If you choose an external hard disk in USB, take care to the supported USB version of your computer. Indeed, the USB 1.0 is really slow to make data transfer. If you don't have USB 2.0 in your computer, don't buy an USB hard disk. Otherwise choose an hard disk with USB 2.0 or 3.0 if you have a really recent computer. Normally the USB 3.0 hard disk are compatible with older standard.</p>
+<h4>8. SSD</h4>
+
+<p>The <strong>SSD</strong> (Solid State Drive) is a recent technology but that grows quickly. This is a hard disk but without any mechanic element. The transfer rates are better, the time to start the device is almost null and the device make no noise. Moreover the power consumption is lower and the crashworthiness is also better.</p>
+<p>Nevertheless, the SSD have a limited life duration. Indeed, the memory cells supports only a maximal number of write cycles. This tend to be improved. By example Intel has announced a life duration of 5 years for his SSD X25-M.</p>
+<p>But, the price is really more expensive than the price of a tranditional hard disk, 10 to 15 times more if we take the price per Go. En plus de cela, le prix est bien plus élevé que pour un disque dur traditionnel, environ 10 à 15 fois plus en prenant le prix au Go.</p>
+<p>If you want to try SSD, this can really improve the start time of your computer and of your applications. So it's interesting to opt for a little SSD for the operating system (32 or 64 Go). But it's not reasonable to use a SSD to store data.</p>
+<h4>9. Conclusion</h4>
+
+<p>In conclusion, although the capacity is really important, this is not the only criteria. You have to keep in mind the performances of the hard disk (memory cache, rotation speed, interface) to not decrease performances of your computer.</p>
+<p>Be also careful of the constructor and the series of the hard disk. It's a good thing to buy a more expensive one of a good construtor instead of a noname hard disk with several problems. Indeed, some series have problems and don't keep their promises at the level of the transfer rate. To know if a hard disk has a good reputation, the best thing is to consult comments of buyers in the sell website.</p></div>
+        </div>
+            
+        
+    <p>
+        <a href="posts/2010/02/hardware-guide-hard-disks.html#disqus_thread" data-disqus-identifier="cache/posts/2010/02/hardware-guide-hard-disks.html">Comments</a>
+
+
+        </p></article>
+        <article class="postbox h-entry post-text">
+        <h1 class="p-name"><a href="posts/2010/02/java-keywords.html" class="u-url">The reserved keywords of the Java Language</a>
+        <small>  
+             Posted: <time class="published dt-published" datetime="2010-02-03T11:29:29+00:00">2010-02-03 11:29</time>
+        </small></h1>
+        <hr>
+        <div class="e-content">
+        <div><p></p><p>This article will present you all the keywords of the Java Language and their purpose.</p>
+<p>First of all, what's a reserved keyword ? It's a keyword of the language, for example true.</p>
+<p>What does that change for the developer ? You cannot use one of there keywords to name a variable, a method, a class or a package. So you cannot have something like that :</p>
+<p>[java]Boolean true = new Boolean(true);</p>
+<p>public class true{}</p>
+<p>package com.wichtounet.true;[/java]</p>
+<p>This example will not pass the compilation. But you can use it into a variable identifier or by changing the case :</p>
+<p>[java]Boolean trueBoolean = new Boolean(true);</p>
+<p>public class TrueBoolean{}</p>
+<p>package com.wichtounet.trueBoolean;[/java]</p>
+<p>It's also really important for a developer to know all the keywords and to know how to use them.</p>
+<!--more-->
+
+<p>Here are the meanings of all the keywords.</p>
+<p><strong>abstract</strong></p>
+<p>Modifier of class or method. This indicate that the class or method is abstract. A class must be declared abstract when one or more methods are abstract. An abstract class cannot be instanciated. You must create a subclass to use it. An abstract class can have abstract and normal methods.</p>
+<p>An abstract method has no body and must be overriden by the subclass. An abstrac method cannot be final, static or private.</p>
+<p>An interface is implicitely abstract like all its methods.</p>
+<p>Here is a little example of an abstract class.</p>
+<p>[java]public abstract class Person{
+    public abstract String getName(){}</p>
+<div class="code"><pre><span class="err">@</span><span class="n">Override</span>
+<span class="n">public</span> <span class="n">String</span> <span class="n">toString</span><span class="p">(){</span>
+    <span class="k">return</span> <span class="s">"My name is "</span> <span class="o">+</span> <span class="n">getName</span><span class="p">();</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>}</p>
+<p>[/java]</p>
+<p>Note that you can call an abstract method from a non-abstrac one.</p>
+<p><strong>assert</strong></p>
+<p>This keyword enable to guarantee a boolean condition before continuing execution. This is like contract programming. We often verify the methods parameters with an assertion.</p>
+<p>An AssertionError is launched if the condition is not true. The assertions are disabled by default. You have to use -ea or --enableassertions options to enable them. An assertion must never edit the state of something, because they can be disabled.</p>
+<p>[java]private double divise(int a, int b){
+    assert b != 0 : "Unable to divide by zero";
+}[/java]</p>
+<p>Note that this example is not very good, in practice, it's better for this kind of test to throw an IllegalArgumentException.</p>
+<p>This keyword is present since java 1.4.</p>
+<p><strong>boolean</strong></p>
+<p>boolean is a primitive type of Java. It's a type indicating if something is true or false. This is the only two values than a boolean variable can take. This keyword can be used for the type of a variable, a parameter or the return of a method.</p>
+<p>[java]boolean test = true;[/java]</p>
+<p><strong>break</strong></p>
+<p>This keyword enable to go out of a control instruction, an iteration operator or a try block.</p>
+<p>[java]for(int i = 0; i &amp;lt; 1555; i++){
+    if(condition){
+        break; //We go out of the loop
+    }
+}[/java]</p>
+<p>I't also often used to go out of a switch case statement :</p>
+<p>[java]switch(id) {
+  case 1 : System.out.println("I'm first"); break;
+  case 2 : System.out.println("I'm second"); break;
+  case 3 : System.out.println("I'm third"); break;
+  default : System.out.println("I don't know where i'm");
+}[/java]</p>
+<p>We can also use the break operation with a label to specify which statemetn we want to break. But it's a really bad practice.</p>
+<p><strong>byte</strong></p>
+<p>byte is primitive type of Java. It represent a signed integer of 8 bits. So it can take values from -128 to 127.</p>
+<p>[java]byte var = 27;[/java]</p>
+<p><strong>case</strong></p>
+<p>This keyword indicate a label of the switch control instruction. It's used to make an action for a specific case :</p>
+<p>[java]switch(id) {
+  case 1 : System.out.println("I'm first"); break;
+  case 2 : System.out.println("I'm second"); break;
+  case 3 : System.out.println("I'm third"); break;
+  default : System.out.println("I don't know where i'm !");
+}[/java]</p>
+<p><strong>catch</strong></p>
+<p>This statement enable to catch an exception and to treat it. The catch block always follow a try block. If an exception is throwed inside of the try block, we arrive in the catch block and we can treat the exception.</p>
+<p>[java]try{
+    //Something
+} catch(AnException e){
+    //If AnException is throwed we go
+}[/java]</p>
+<p><strong>char</strong></p>
+<p>char is a primitive type of Java. It represent a character. Because character are only integer in Java, you can also see it like an unsigned integer of 16 bits from 0 to 65535. But if you do that, your code can quickly be hard to understand.</p>
+<p>[java]char var = 'a';</p>
+<p>char var = 4;[/java]</p>
+<p><strong>class</strong></p>
+<p>This keyword declare a class. All declaration of a class must start with this keyword.</p>
+<p>[java]public class Test{
+    //...</p>
+<div class="code"><pre><span class="n">private</span> <span class="k">static</span> <span class="n">class</span> <span class="n">InnerClass</span> <span class="p">{</span>
+    <span class="c1">//..</span>
+    <span class="p">}</span>
+</pre></div>
+
+
+<p>}[/java]</p>
+<p><strong>const</strong></p>
+<p>This keyword is reserved but not used.</p>
+<p><strong>continue</strong></p>
+<p>This keyword jump to the next iteration of a loop. So we go directly to the head (or the foot in the case of a do while) of the loop without executing the following instructions.</p>
+<p>[java]while(i &amp;gt; 100){
+    if(i % 25 == 0){
+        continue; //We go to the next iteration without executing "Others iterations"
+    }</p>
+<div class="code"><pre><span class="c1">//Others operations</span>
+</pre></div>
+
+
+<p>}[/java]</p>
+<p><strong>default</strong></p>
+<p>This word is the default label of a switch case. The code affected to the default case will be executed if there is no case that have been executed or if the last case has not used break statement.</p>
+<p>[java]switch(i){
+    case 1 :
+        System.out.println("i equals 1");
+        break;
+    case 2 :
+        System.out.println("i equals 2");
+        break;
+    default :
+        System.out.println("i doesn't equals 1");
+}[/java]</p>
+<p><strong>do</strong></p>
+<p>This keyword introduce a do... while loop. The stop condition of the loop is verified after the execution of the body of the loop. So the first iteration is always done.</p>
+<p>[java]do{
+    //Operations
+} while(condition);[/java]</p>
+<p><strong>double</strong></p>
+<p>double is a primitive type of Java. It's a floating-point number coded with 64 bits (8 octets). So it can take any value from 4.9E-324 to 1.7976931348623157E308. But take in memory than there is a loss of precision when you make double operations.</p>
+<p>[java]double var = 2.2335;[/java]</p>
+<!--nextpage-->
+
+<p><strong>else</strong></p>
+<p>This keyword introduce the facultative part of the if condition operation. This part is executed if there is no other verified if condition.</p>
+<p>[java]if(i == 2){
+    System.out.println("i equals 2");
+} else {
+    System.out.println("i doesn't equals 2");
+}[/java]</p>
+<p><strong>enum</strong></p>
+<p>This keyword declare a enumeration. It seems a type who has only a finished set of values.</p>
+<p>[java]public enum Season {
+   SPRING, SUMMER, FALL, WINTER;
+}[/java]</p>
+<p>This keyword is present since Java 5.0.</p>
+<p><strong>extends</strong></p>
+<p>This keyword is used to say than a class extends an other class or an interface extends an other interface.</p>
+<p>[java]public class Actor extends Person{ //Actor IS-A Person
+    //...
+}[/java]</p>
+<p><strong>false</strong></p>
+<p>This keyword is a value of the boolean type, it's the opposite of true.</p>
+<p>[java]boolean var = false;[/java]</p>
+<p><strong>final</strong></p>
+<p>This keyword is a modifier for method, variable or field or class :</p>
+<p>In the declaration of a class, final indicate that this class cannot be extended.</p>
+<p>In the declaration of a method, final indicates that this methods cannot be overriden (if the method is static or private, she's automatically final).</p>
+<p>In the case of variable or field, final indicate that this reference is constant, we cannot change it anymore after declaration. In the case of objects, only the reference is constant, not the object. This is also useful to enable the usage of a variable in a anonymous class.</p>
+<p><strong>finally</strong></p>
+<p>Statement follow by an instructions block. This block must follow a try or try-catch block. Regardless of how we go out of the try block, the finally block is executed. It's often used to close resources after usages.</p>
+<p>[java]try {
+    //Simple instructions
+} finally {
+    //Instructions always done after "Simple instructions"
+}[/java]</p>
+<p><strong>float</strong></p>
+<p>float is a primitive type of Java. It's a floating-point number coded with 32 bits (4 octets). So it can take any value from 1.4E-45 to 3.4028235E38.</p>
+<p>[java]float variable = 4.44f;[/java]</p>
+<p><strong>for</strong></p>
+<p>This keyword introduce a for loop (while condition, we iterate, execute the for instruction). This loop has the particularity to allow instructions in its declaration. This declaration is made of 3 parts, separated by ;. The first is made from declare iteration variables, the second one is a condition and the third one can take any instruction.</p>
+<p>[java]for(int i = 0; i &amp;lt; 10; i++){
+      //Operations
+}</p>
+<p>[/java]</p>
+<p>There is also an other kind of this loop, the foreach loop, introduced with Java 5.0. This extended for loop enabled to iterate on the content of a collection easily :</p>
+<p>[java]SimpleObject[] objects = new SimpleObject[x];</p>
+<p>//...</p>
+<p>for(SimpleObject object : objects){
+    object.doSomething();
+}[/java]</p>
+<p><strong>goto</strong></p>
+<p>This keyword is reserved but not used.</p>
+<p><strong>if</strong></p>
+<p>This operator enabled to define facultative block code. This block of instructions will only be executed if the condition is verified.</p>
+<p>[java]if(i == 1){ //Condition
+    i = 3; //Only execute if (i == 1)
+}[/java]</p>
+<!--nextpage-->
+
+<p><strong>implements</strong></p>
+<p>This keyword is used in the declaration of a class to say that this class implements the functionalities of an interface. When a class implements an interface, she must define all the methods of the interface or be declared abstract.</p>
+<p>[java]public class JavaTester implements Tester{
+    @Override
+    public boolean test(){//Method defined in Tester
+                //Do something
+    }
+}[/java]</p>
+<p><strong>import</strong></p>
+<p>This keyword allow to make a shortcut to the name of the name. So we cannot have to write the complete path to the path, but only the name of the class. It makes the code really clearer.</p>
+<p>[java]import com.test.Tester;</p>
+<p>Tester.test();[/java]</p>
+<p>If we doesn't import the class, we must write the complete path :</p>
+<p>[java]com.test.Tester.test();[/java]</p>
+<p>From Java 5.0, we have also the import static who allow us to import directly the static methods and fields of an other class. This is practical to make the code clearer.</p>
+<p>[java]import static java.lang.Math.*;</p>
+<p>public Class Test {
+   public void calc (int i) {
+      round(cos(i<em>(PI / 2)</em>E);
+   }
+}[/java]</p>
+<p><strong>instanceof</strong></p>
+<p>It's a condition instruction to verify than an object is of a certain type. If this object is of the asked type, the instruction will return true else false.</p>
+<p>[java]if(myObject instanceof Reader){
+    System.out.println("myObject is of type Reader");
+}[/java]</p>
+<p><strong>int</strong></p>
+<p>int is a primitive type of Java. It represent a signed integer of 32 bits (4 octets). So it can take values from -2'147'483'648 to 2'147'483'647.</p>
+<p>[java]int var = 3;[/java]</p>
+<p><strong>interface</strong></p>
+<p>This keyword declare an interface. An interface define a functionality or a behavior who are the same for some classes. An interface has no concrete code, all the methods are abstract. An interface can also have public static final constants.</p>
+<p>[java]public interface Tester(){</p>
+<p>public void test();</p>
+<p>}[/java]</p>
+<p><strong>long</strong></p>
+<p>int is a primitive type of Java. It represent a signed integer of 64 bits (8 octets). So it can take values from -9'223'372'036'854'775'808 to 9'223'372'036'854'775'807.</p>
+<p>[java]long var = 33;[/java]</p>
+<p><strong>native</strong></p>
+<p>This keyword is used in the declaration of a method to indicate than she's not coded in Java, but in a native language in a separated file. So this kind of method has no body because the code is not in Java.</p>
+<p>[java]public native void openCDRomTray();[/java]</p>
+<p><strong>new</strong></p>
+<p>This operator instanciate a new object of a certain class. It will create a new object and class and call the constructor of the class.</p>
+<p>[java]Object objet = new Object();[/java]</p>
+<p><strong>null</strong></p>
+<p>null is a special value indicating that the reference doesn't point on an object but on nothing. We say that this reference is null.</p>
+<p>[java]String str = null;[/java]</p>
+<p><strong>package</strong></p>
+<p>This keyword is used at the top of the class to indicate in which package is this class.</p>
+<p>[java]package com.mypackage;</p>
+<p>public lass MyClass {</p>
+<p>}[/java]</p>
+<p><strong>private</strong></p>
+<p>This keyword is used in the declaration of variabbles, fields, methods or classes. When we declare it private, this attributes are only accessibles by the class in which they are declared.</p>
+<p>[java]private int var = 11;[/java]</p>
+<!--nextpage-->
+
+<p><strong>protected</strong></p>
+<p>This keyword is used in the decleration of field, methods or classes. When we declare it procted, this attributes are only accessibles by the sub classes and the classes of the same package.</p>
+<p>[java]protected int var = 11;[/java]</p>
+<p><strong>public</strong></p>
+<p>This keyword is used in the declaration of fields, methods or classes. When we declare it public, this attributes are acessible by all classes.</p>
+<p>[java]public int var = 11;[/java]</p>
+<p><strong>return</strong></p>
+<p>This method exit of the curren method. We can use it without parameter to go out of a void method or with a value to return something from the method. Of course, in a void method we cannot use return with a value and vice-versa.</p>
+<p>[java]public int getInt(){
+    return 1;
+}</p>
+<p>public void doSomething(){
+    return;
+}[/java]</p>
+<p><strong>short</strong></p>
+<p>short is primitive type of Java. It represent a signed integer of 16 bits (2 octets). So it can take values from -32768 to 32767.</p>
+<p>[java]short var = -22565;[/java]</p>
+<p><strong>static</strong></p>
+<p>This keyword can be used in the declaration of a field, a method, a class or before a code block.</p>
+<p>In a method, field or class declaration, static indicate that this member doesn't need an instance of the bounding class.</p>
+<p>[java]//Access to the static method abs of the Math class.</p>
+<p>Math.abs(-1);[/java]</p>
+<p>Of course, a static being independant of the instance, cannot access to instance variables and methods.</p>
+<p>From a code block, we indicate that this block must be executed at the loading of the class.</p>
+<p>[java]public static ArrayList list = new ArrayList();</p>
+<p>static {
+    list.add(new String("x"));
+    list.add(new String("y"));
+}[/java]</p>
+<p><strong>strictfp</strong></p>
+<p>This keyword can be used in the declaration of a class, interface or method. It force the JVM to make calculation in accordance with the specification of the language so you have the guarantee that your calculation will have the same result regardless of the used VM.</p>
+<p>This keyword is available from Java 1.2.</p>
+<p><strong>super</strong></p>
+<p>This keyword is a reference on the super class, it seems the class we extends.</p>
+<p>[java]public class Child extends Mother(){</p>
+<p>public Child(){
+    super(); //We call the constructor of the super class
+}</p>
+<p>@Override</p>
+<p>public void myMethod(){
+    super.myMethod();//We call the method myMethod of the super class
+}[/java]</p>
+<p><strong>switch</strong></p>
+<p>This keyword introduce a control statement. This instruction test the value of an integer or an enum value and in function of the value execute the corresponding case. So we define some labels with the values we need to treat and the actions to execute in the specified case.</p>
+<p>[java]switch(value){
+    case 1 :
+        //Actions if value equals1
+        break;
+    case 2 :
+        //Actions if value equals 2
+        break;
+    case default :
+        /[/java]ns in the other cases
+}</p>
+<p><strong>synchronized</strong></p>
+<p>This keyword is used in concurrent programming in the declaration of a method or an instruction block to indicate that only one thread can access at the same time at this bloc or method.</p>
+<p>[java]public void synchronized method(){
+    System.out.println("Two threads cannot acess this method at the same time");
+}[/java]</p>
+<p>This is almost equivalent to :</p>
+<p>[java]public void methode(){
+    synchronized(this){
+        System.out.println("Two threads cannot call this method at the same time");
+    }
+}[/java]</p>
+<p>If the method is static, you can do like that :</p>
+<p>[java]public class MaClass {
+    public static void methode() {
+        synchronized(MaClass.class) {
+            // code
+        }
+    }
+}[/java]</p>
+<p>You can also use an object as lock :</p>
+<p>[java]synchronized(monObjet) {
+    // code
+}[/java]</p>
+<p><strong>this</strong></p>
+<p>This keyword is a reference to the current object.</p>
+<p>[java]public MyClass(String attribute){
+    super();
+    this.attribute = attribute; //We take the attribute field of the class
+    this.refreshAttributes();   //We class the refreshAttributes methods on the current object
+}</p>
+<p>// We can also call the constructors of the current class</p>
+<p>public MyClass(){
+    this("une valeur par défaut");
+    //We call the constructor defined at the top of the code
+}[/java]</p>
+<!--nextpage-->
+
+<p><strong>throw</strong></p>
+<p>This instruction throw a new exception. The class of the exception must be in the hierarchy of Throwable. When an exception is launched, we go to the calling method or to the bouding catch block if there is one.</p>
+<p>[java]if(error)throw new Exception("There is an error");[/java]</p>
+<p><strong>throws</strong></p>
+<p>This keyword is used int the declaration of methods to indicate that this one can throw exceptions who are not caught.</p>
+<p>[java]public void read throws IOException {
+    //Code that can throws an IOException
+}[/java]</p>
+<p><strong>transient</strong></p>
+<p>This keyword enable to say than a field must not saved during the serialization of the class.</p>
+<p>[java]protected transient int variable = 2;[/java]</p>
+<p><strong>true</strong></p>
+<p>This keyword is a value of the boolean type, it's the opposite of false.</p>
+<p>[java]boolean variable = true;[/java]</p>
+<p><strong>try</strong></p>
+<p>This keyword introduce an instruction block. It doesn't have any other utility than allow the use of a catch and/or finally block.</p>
+<p>[java]try{
+    //Instruction
+} finally {
+    //Instructions
+}[/java]</p>
+<p><strong>void</strong></p>
+<p>This keyword declare a method with no return type. This method returns nothing.</p>
+<p>[java]public void methodThatReturnsNothing(){
+    //Instructions diverses
+}[/java]</p>
+<p><strong>volatile</strong></p>
+<p>We use this keyword on fields to force the VM to refresh it's value at each use. With that we are sure to tuse the real value and not the cached value. This is only useful in concurrent programming.</p>
+<p>[java]public volatile int var = 5;[/java]</p>
+<p><strong>while</strong></p>
+<p>This last keyword introduce a while loop. This loop will iterate while the condition is verified (true). The condition is verified before entering the loop, so it's possible to not enter in the loop if the condition is the condition is not verified.</p>
+<p>[java]while(condition){
+    //Instructions
+}[/java]</p></div>
+        </div>
+            
+        
+    <p>
+        <a href="posts/2010/02/java-keywords.html#disqus_thread" data-disqus-identifier="cache/posts/2010/02/java-keywords.html">Comments</a>
+
+
+        </p></article>
+    
+        <div>
+        <ul class="pager">
+            <li class="previous">
+                <a href="index-3.html" rel="prev">← Newer posts</a>
+            </li>
+            <li class="next">
+                <a href="index-1.html" rel="next">Older posts →</a>
+            </li>
+        </ul>
+        </div>
+
+    
+        
+       <script>var disqus_shortname="nikolademo";(function(){var a=document.createElement("script");a.async=true;a.src="//"+disqus_shortname+".disqus.com/count.js";(document.getElementsByTagName("head")[0]||document.getElementsByTagName("body")[0]).appendChild(a)}());</script>
+
+
+	
+
+
+        </div>
+        <!--End of body content-->
+
+        <footer>
+            Contents © 2014         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         
+        </footer>
+    </div>
+</div>
+
+
+            <script src="assets/js/all-nocdn.js" type="text/javascript"></script>
+
+
+    
+<!-- Social buttons -->
+<div id="addthisbox" class="addthis_toolbox addthis_peekaboo_style addthis_default_style addthis_label_style addthis_32x32_style">
+<a class="addthis_button_more">Share</a>
+<ul><li><a class="addthis_button_facebook"></a>
+</li><li><a class="addthis_button_google_plusone_share"></a>
+</li><li><a class="addthis_button_linkedin"></a>
+</li><li><a class="addthis_button_twitter"></a>
+</li></ul>
+</div>
+<script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-4f7088a56bb93798"></script>
+<!-- End of social buttons -->
+
+
+    <script type="text/javascript">jQuery("a.image-reference").colorbox({rel:"gal",maxWidth:"100%",maxHeight:"100%",scalePhotos:true});</script>
+    
+
+</body>
+</html>

@@ -1,0 +1,383 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>@Blog("Baptiste Wicht") (Tests)</title><link>http://www.baptiste-wicht.com/</link><description></description><atom:link href="http://www.baptiste-wicht.com/categories/tests.xml" type="application/rss+xml" rel="self"></atom:link><language>en</language><lastBuildDate>Sun, 16 Mar 2014 17:07:38 GMT</lastBuildDate><generator>Nikola &lt;http://getnikola.com/&gt;</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>CMake Testing - Rerun the last failed tests with CTest</title><link>http://www.baptiste-wicht.com/posts/2012/12/cmake-rerun-last-failed-tests-ctest.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;Some time ago, we saw &lt;a href="http://www.baptiste-wicht.com/2012/10/run-boost-test-parallel-cmake/" title="Run your Boost Tests in parallel with CMake"&gt;how to use CMake to run Boost Tests in paralel&lt;/a&gt;, now it is time for another tip. &lt;/p&gt;
+&lt;p&gt;A feature that I think is lacking in CMake/CTest is a way to launch only the last failed tests. As it is not possible to do that directly, I posted &lt;a href="http://stackoverflow.com/q/13547175/802362" title="How to rerun the failed tests with ctest?"&gt;the question on StackOverflow&lt;/a&gt; and got a great answer from &lt;a href="http://stackoverflow.com/users/424459/fraser" title="Fraser"&gt;Fraser&lt;/a&gt;. I wanted to share its answer. &lt;/p&gt;
+&lt;p&gt;CTest has -I option to select a list of tests to run. The idea here is to convert the log of CTest in format readable by CTest. What I think is great in its answer is that the solution is a CMake script: &lt;/p&gt;
+&lt;p&gt;[code]set(FailedFileName FailedTests.log)&lt;/p&gt;
+&lt;p&gt;if(EXISTS "Testing/Temporary/LastTestsFailed.log")
+  file(STRINGS "Testing/Temporary/LastTestsFailed.log" FailedTests)
+  string(REGEX REPLACE "([0-9]+):[^;]*" "\1" FailedTests "${FailedTests}")
+  list(SORT FailedTests)
+  list(GET FailedTests 0 FirstTest)
+  set(FailedTests "${FirstTest};${FirstTest};;${FailedTests};")
+  string(REPLACE ";" "," FailedTests "${FailedTests}")
+  file(WRITE ${FailedFileName} ${FailedTests})
+else()
+  file(WRITE ${FailedFileName} "")
+endif()[/code]&lt;/p&gt;
+&lt;p&gt;This test just transforms one file into another. &lt;/p&gt;
+&lt;p&gt;You can then run the last failing tests using: &lt;/p&gt;
+&lt;p&gt;[bash]cmake -P &amp;lt;the script&amp;gt;&lt;/p&gt;
+&lt;p&gt;ctest -I FailedTests.log[/bash]&lt;/p&gt;
+&lt;p&gt;Very easy, isn't it ? &lt;/p&gt;
+&lt;p&gt;There is a limitation to this solution. It won't work when CTest is running in dashboard mode, but it wouldn't take too long to adapt it for that. &lt;/p&gt;
+&lt;p&gt;Hope you found that tip useful. &lt;/p&gt;&lt;/div&gt;</description><category>C++</category><category>cmake</category><category>Tests</category><category>Tools</category><guid>http://www.baptiste-wicht.com/posts/2012/12/cmake-rerun-last-failed-tests-ctest.html</guid><pubDate>Thu, 06 Dec 2012 08:47:12 GMT</pubDate></item><item><title>Run your Boost Tests in parallel with CMake</title><link>http://www.baptiste-wicht.com/posts/2012/10/run-boost-test-parallel-cmake.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;I was looking for a Test Library to run eddic tests in parallel to replace Boost Test Library. I posted my question on StackOverflow and an awesome solution has been posted. With CMake and a little CMake additional file, it is possible to run the tests written with Boost Test Library in parallel without changing anything in the tests code !&lt;/p&gt;
+&lt;p&gt;CTest is the test runner that is shipped with CMake. This runner can run tests in parallel using the -j X option (X is the numbers of threads). However, it can only run the tests that are declared in the CMakeLists.txt file. In my case, this means only one (the executable with Boost Test Library). If you have T tests, a solution would be create T executable files. Then, they can be run in parallel by ctest. However, this is not very practical. The solution proposed in this article is better. &lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;h3&gt;Integrate Boost Test Library in CMake&lt;/h3&gt;
+&lt;p&gt;Ryan Pavlik provides a series of CMake modules in its Github repository. One of this module is named BoostTestTargets. It automatically generates the CTest commands to run all the tests that you have. The small drawback is that you to list all the tests. &lt;/p&gt;
+&lt;p&gt;To start, you have to download these files: &lt;/p&gt;
+&lt;ul&gt;
+    &lt;li&gt;&lt;a href="https://github.com/rpavlik/cmake-modules/raw/master/BoostTestTargets.cmake" title="BoostTestTargets.cmake"&gt;BoostTestTargets.cmake&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href="https://github.com/rpavlik/cmake-modules/raw/master/GetForceIncludeDefinitions.cmake" title="GetForceIncludeDefinitions.cmake"&gt;GetForceIncludeDefinitions.cmake&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href="https://github.com/rpavlik/cmake-modules/raw/master/CopyResourcesToBuildTree.cmake" title="CopyResourcesToBuildTree.cmake"&gt;CopyResourcesToBuildTree.cmake&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href="https://github.com/rpavlik/cmake-modules/blob/master/BoostTestTargetsStatic.h" title="BoostTestTargetsStatic.h"&gt;BoostTestTargetsStatic.h&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href="https://github.com/rpavlik/cmake-modules/blob/master/BoostTestTargetsDynamic.h" title="BoostTestTargetsDynamic.h"&gt;BoostTestTargetsDynamic.h&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href="https://github.com/rpavlik/cmake-modules/blob/master/BoostTestTargetsIncluded.h" title="BoostTestTargetsIncluded.h"&gt;BoostTestTargetsIncluded.h&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;These files must be placed next to your CMakeLists.txt file. Then, you have to modify your CMakeLists.txt file to enable testing and enable the new module. For example, if you have two test suites and five tests in each:  &lt;/p&gt;
+&lt;p&gt;[code]INCLUDE(CTest)&lt;/p&gt;
+&lt;p&gt;ENABLE_TESTING()&lt;/p&gt;
+&lt;p&gt;file(
+    GLOB_RECURSE
+    test_files
+    test/*
+)&lt;/p&gt;
+&lt;p&gt;include(BoostTestTargets.cmake)&lt;/p&gt;
+&lt;p&gt;add_boost_test(eddic_boost_test
+    SOURCES ${test_files}
+    TESTS 
+    TestSuiteA/test_1
+    TestSuiteA/test_2
+    TestSuiteA/test_3
+    TestSuiteA/test_4
+    TestSuiteA/test_5
+    TestSuiteB/test_1
+    TestSuiteB/test_2
+    TestSuiteB/test_3
+    TestSuiteB/test_4
+    TestSuiteB/test_5
+    )[/code]&lt;/p&gt;
+&lt;p&gt;All the test files are searched in the test directory and used in the SOURCES variable. Then all the tests are declared. &lt;/p&gt;
+&lt;p&gt;The main test file has to include a specific header file:&lt;/p&gt;
+&lt;p&gt;[cpp]#define BOOST_TEST_MODULE eddic_test_suite&lt;/p&gt;
+&lt;h2&gt;include &amp;lt;BoostTestTargetConfig.h&amp;gt;[/cpp]&lt;/h2&gt;
+&lt;p&gt;This file will be automatically detected by BoostTestTargets and configured correctly. And that's it !&lt;/p&gt;
+&lt;p&gt;You can run CMake again in your build directory to use the new test system: &lt;/p&gt;
+&lt;p&gt;[bash]cmake .[/bash]&lt;/p&gt;
+&lt;p&gt;If the configuration has been successful, you will see a message indicating that. For example, I see that: &lt;/p&gt;
+&lt;p&gt;[bash]-- Test 'eddic_boost_test' uses the CMake-configurable form of the boost test framework - congrats! (Including File: /home/wichtounet/dev/eddi/eddic/test/IntegrationTests.cpp)&lt;/p&gt;
+&lt;p&gt;-- Configuring done&lt;/p&gt;
+&lt;p&gt;-- Generating done&lt;/p&gt;
+&lt;p&gt;-- Build files have been written to: /tmp/ramdrive/dev/eddic[/bash]&lt;/p&gt;
+&lt;h3&gt;Run tests in parallel&lt;/h3&gt;
+
+&lt;p&gt;You can then run your tests in parallel with ctest. For instance, with 9 threads: &lt;/p&gt;
+&lt;p&gt;[bash]ctest -j 8[/bash]&lt;/p&gt;
+&lt;p&gt;In my case, my tests are completed 6x faster ! This is very valuable when you often run your tests. &lt;/p&gt;
+&lt;p&gt;For more information on how to integrate your Boost Test Library tests with CMake, you can consult the &lt;a href="https://github.com/rpavlik/cmake-modules/" title="cmake-modules Github repository"&gt;The cmake-modules repository&lt;/a&gt;. &lt;/p&gt;&lt;/div&gt;</description><category>Boost</category><category>C++</category><category>cmake</category><category>Concurrency</category><category>EDDI</category><category>Performances</category><category>Tests</category><guid>http://www.baptiste-wicht.com/posts/2012/10/run-boost-test-parallel-cmake.html</guid><pubDate>Mon, 15 Oct 2012 08:57:43 GMT</pubDate></item><item><title>Links of the Week</title><link>http://www.baptiste-wicht.com/posts/2010/04/links-of-the-week-2.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;Here are some interesting links of this week :&lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;ul&gt;
+    &lt;li&gt;&lt;a href="http://www.codinghorror.com/blog/2010/04/three-monitors-for-every-user.html" target="_blank"&gt;Three Monitors for Every User&lt;/a&gt; : Jeff Atwood explain how to works with three monitors on the same computers and what that give to the user.&lt;/li&gt;
+    &lt;li&gt;&lt;a href="http://www.ibm.com/developerworks/java/library/j-ce/index.html" target="_blank"&gt;Tip: When you can't throw an exception&lt;/a&gt; : Elliotte Rusty Harold explore solutions on how to works with exceptions in public APIs&lt;/li&gt;
+    &lt;li&gt;&lt;a href="http://blogs.sun.com/tor/entry/leak_unit_tests" target="_blank"&gt;How to Write a Memory Leak Unit Test&lt;/a&gt; : Tor Norbye explain how to make unit test to verify for memory leak&lt;/li&gt;
+    &lt;li&gt;&lt;a href="http://agile.dzone.com/news/8-tips-performance-metrics"&gt;8 Tips for Performance Metrics&lt;/a&gt; by Jurgen Appelo&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;I hope you'll find this links interesting. &lt;/p&gt;&lt;/div&gt;</description><category>Hardware</category><category>Java</category><category>Links</category><category>Performances</category><category>Tests</category><guid>http://www.baptiste-wicht.com/posts/2010/04/links-of-the-week-2.html</guid><pubDate>Mon, 12 Apr 2010 06:34:18 GMT</pubDate></item><item><title>Mock objects with EasyMock</title><link>http://www.baptiste-wicht.com/posts/2010/03/mock-objects-easymock.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;h4&gt;1. Introduction&lt;/h4&gt;
+The mock objects allows to make unit tests on objects depending on other objects. We will replace this dependencies with mock objects. With that, we can by example verify than the method xyzzy() has been called 5 times and returned 33. That can be practical in a several cases. By exampe, if the object to mock is slow or undeterministic (depending on time, or why not on the weather). This objects are really difficult to test because we can make a lot of tests but we could never find the special cases. Test cases with mock objects enable us to test this cases.
+&lt;!--more--&gt;
+
+&lt;p&gt;There is several tools to make mock objects. In this article, we will use EasyMock 2.5.2 with JUnit 4.7.&lt;/p&gt;
+&lt;p&gt;Here is the interface to test :&lt;/p&gt;
+&lt;p&gt;[java]public interface ISimpleDao {
+    void save(String title);
+    void remove(String title) throws NotExistingException;
+    int count();
+    void debug();
+    boolean isValid(String title);
+    void insert(String title);
+}[/java]&lt;/p&gt;
+&lt;p&gt;And here is our class to test :&lt;/p&gt;
+&lt;p&gt;[java]public class SimpleService {
+    private ISimpleDao dao;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;setDao&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;ISimpleDao&lt;/span&gt; &lt;span class="n"&gt;dao&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="n"&gt;this&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;dao&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;dao&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;insert&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt; &lt;span class="n"&gt;title&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="k"&gt;if&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;dao&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;isValid&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;title&lt;/span&gt;&lt;span class="p"&gt;)){&lt;/span&gt;
+        &lt;span class="n"&gt;dao&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;insert&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;title&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;save&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="p"&gt;...&lt;/span&gt; &lt;span class="n"&gt;titles&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt; &lt;span class="n"&gt;title&lt;/span&gt; &lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;titles&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+        &lt;span class="n"&gt;dao&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;save&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;title&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="n"&gt;boolean&lt;/span&gt; &lt;span class="nf"&gt;remove&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt; &lt;span class="n"&gt;title&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="n"&gt;try&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="n"&gt;dao&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;remove&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;title&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="n"&gt;catch&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;NotExistingException&lt;/span&gt; &lt;span class="n"&gt;e&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+        &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="nb"&gt;false&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+
+    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="nb"&gt;true&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="nf"&gt;size&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;dao&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;count&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;debug&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+    &lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;out&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Debug informations of SimpleService"&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+    &lt;span class="n"&gt;dao&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;debug&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;[/java]&lt;/p&gt;
+&lt;p&gt;Our mock will implement the ISimpleDao interface and we will give it to SimpleService who's the class to test. This example is really simplistic, but it will be enough to cover the main features of EasyMock.&lt;/p&gt;
+&lt;!--nextpage--&gt;
+
+&lt;h4&gt;2. Verify a behaviour&lt;/h4&gt;
+
+&lt;p&gt;Here is the structure i will use in this article :&lt;/p&gt;
+&lt;p&gt;[java]import org.junit.Before;&lt;/p&gt;
+&lt;p&gt;import org.junit.Test;&lt;/p&gt;
+&lt;p&gt;import static org.junit.Assert.*;&lt;/p&gt;
+&lt;p&gt;import static org.easymock.EasyMock.*;&lt;/p&gt;
+&lt;p&gt;public class SimpleServiceTest {
+    private SimpleService simpleService;
+    private ISimpleDao simpleDaoMock;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="err"&gt;@&lt;/span&gt;&lt;span class="n"&gt;Before&lt;/span&gt;
+&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;setUp&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+    &lt;span class="n"&gt;simpleService&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;new&lt;/span&gt; &lt;span class="n"&gt;SimpleService&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+    &lt;span class="n"&gt;simpleService&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;setDao&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;simpleDaoMock&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="err"&gt;@&lt;/span&gt;&lt;span class="n"&gt;Test&lt;/span&gt;
+&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;insertValid&lt;/span&gt;&lt;span class="p"&gt;(){}&lt;/span&gt;
+
+&lt;span class="err"&gt;@&lt;/span&gt;&lt;span class="n"&gt;Test&lt;/span&gt;
+&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;insertNotValid&lt;/span&gt;&lt;span class="p"&gt;(){}&lt;/span&gt;
+
+&lt;span class="err"&gt;@&lt;/span&gt;&lt;span class="n"&gt;Test&lt;/span&gt;
+&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;save&lt;/span&gt;&lt;span class="p"&gt;(){}&lt;/span&gt;
+
+&lt;span class="err"&gt;@&lt;/span&gt;&lt;span class="n"&gt;Test&lt;/span&gt;
+&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;removeWithoutException&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="n"&gt;throws&lt;/span&gt; &lt;span class="n"&gt;NotExistingException&lt;/span&gt; &lt;span class="p"&gt;{}&lt;/span&gt;
+
+&lt;span class="err"&gt;@&lt;/span&gt;&lt;span class="n"&gt;Test&lt;/span&gt;
+&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;removeWithException&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="n"&gt;throws&lt;/span&gt; &lt;span class="n"&gt;NotExistingException&lt;/span&gt; &lt;span class="p"&gt;{}&lt;/span&gt;
+
+&lt;span class="err"&gt;@&lt;/span&gt;&lt;span class="n"&gt;Test&lt;/span&gt;
+&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;size&lt;/span&gt;&lt;span class="p"&gt;(){}&lt;/span&gt;
+
+&lt;span class="err"&gt;@&lt;/span&gt;&lt;span class="n"&gt;Test&lt;/span&gt;
+&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;debug&lt;/span&gt;&lt;span class="p"&gt;(){}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/java]&lt;/p&gt;
+&lt;p&gt;First of all, we'll start with create a mock object. For that, we've to use the EasyMock class and its method createMock, with the interface in parameter. To improve code readability, we use a static import like what we do in general with JUnit.&lt;/p&gt;
+&lt;p&gt;[java]import org.junit.Before;&lt;/p&gt;
+&lt;p&gt;import org.junit.Test;&lt;/p&gt;
+&lt;p&gt;import static org.junit.Assert.*;&lt;/p&gt;
+&lt;p&gt;import static org.easymock.EasyMock.*;&lt;/p&gt;
+&lt;p&gt;public class SimpleServiceTest {
+    private SimpleService simpleService;
+    private ISimpleDao simpleDaoMock;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="err"&gt;@&lt;/span&gt;&lt;span class="n"&gt;Before&lt;/span&gt;
+&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;setUp&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+    &lt;span class="n"&gt;simpleDaoMock&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;createMock&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;ISimpleDao&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;class&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+    &lt;span class="n"&gt;simpleService&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;new&lt;/span&gt; &lt;span class="n"&gt;SimpleService&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+    &lt;span class="n"&gt;simpleService&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;setDao&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;simpleDaoMock&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/java]&lt;/p&gt;
+&lt;p&gt;This will create a mock objet implementing ISimpleDao interface. The first thing we can do with EasyMock is verify than a method has been called. EasyMock works like a recorder :&lt;/p&gt;
+&lt;ul&gt;
+    &lt;li&gt;We play the desired sequence on the mock object.&lt;/li&gt;
+    &lt;li&gt;We record the played sequence.&lt;/li&gt;
+    &lt;li&gt;We test the object&lt;/li&gt;
+    &lt;li&gt;We verify that the test sequence correspond to the recorded one&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;So, we'll test to start that the debug() method of SimpleService call the debug() method of our Dao :&lt;/p&gt;
+&lt;p&gt;[java]@Test&lt;/p&gt;
+&lt;p&gt;public void debug(){
+    simpleDaoMock.debug();&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;replay&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;simpleDaoMock&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+&lt;span class="n"&gt;simpleService&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;debug&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+
+&lt;span class="n"&gt;verify&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;simpleDaoMock&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/java]&lt;/p&gt;
+&lt;p&gt;The replay method enable to save the record and the verify method compare the two records are equals. If not equals, the verify method will launch AssertionError. If you launch the written test, it will executes fines, but if we comment the dao.debug() statement in SimpleSerivce, the test will fail :&lt;/p&gt;
+&lt;pre&gt;java.lang.AssertionError:
+  Expectation failure on verify:
+    debug(): expected: 1, actual: 0
+    at org.easymock.internal.MocksControl.verify(MocksControl.java:111)
+    at org.easymock.EasyMock.verify(EasyMock.java:1608)
+    at com.dvp.wichtounet.easymock.SimpleServiceTest.debug(SimpleServiceTest.java:45)
+    at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+    at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:57)
+    at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+    at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:44)
+    at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:15)
+    at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:41)
+    at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:20)
+    at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:28)
+    at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:76)
+    at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+    at org.junit.runners.ParentRunner$3.run(ParentRunner.java:193)
+    at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:52)
+    at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:191)
+    at org.junit.runners.ParentRunner.access$000(ParentRunner.java:42)
+    at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:184)
+    at org.junit.runners.ParentRunner.run(ParentRunner.java:236)
+    at org.junit.runner.JUnitCore.run(JUnitCore.java:157)
+    at com.intellij.junit4.JUnit4IdeaTestRunner.startRunnerWithArgs(JUnit4IdeaTestRunner.java:94)
+    at com.intellij.rt.execution.junit.JUnitStarter.prepareStreamsAndStart(JUnitStarter.java:165)
+    at com.intellij.rt.execution.junit.JUnitStarter.main(JUnitStarter.java:60)
+    at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+    at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:57)
+    at com.intellij.rt.execution.application.AppMain.main(AppMain.java:110)&lt;/pre&gt;
+
+&lt;p&gt;So, EasyMock has detected that the method has not bee called and the test fails. If you want to verify that a non-void method has been called , you will have an IllegalStateException because no return behaviour has been specified. We will see that in the next chapter.&lt;/p&gt;
+&lt;!--nextpage--&gt;
+
+&lt;h4&gt;3. Wait for return values&lt;/h4&gt;
+
+&lt;p&gt;We will now work with methods returning values. In this case, we've to define a return behaviour. To do that, we must use the expect() method to encapsulate the call and the andReturn() method to specify a return value. Here is how we can test the size() method :&lt;/p&gt;
+&lt;p&gt;[java]@Test&lt;/p&gt;
+&lt;p&gt;public void size(){
+    expect(simpleDaoMock.count()).andReturn(32);&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;replay&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;simpleDaoMock&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+&lt;span class="n"&gt;assertEquals&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;32&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;simpleService&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;size&lt;/span&gt;&lt;span class="p"&gt;());&lt;/span&gt;
+
+&lt;span class="n"&gt;verify&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;simpleDaoMock&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/java]&lt;/p&gt;
+&lt;p&gt;With that, we make two tests, we verify that the count method has been called and that size() return the same value as count(). That is the case if we launch the test. We can see that it's really simple to specify a return value for a mocked method.&lt;/p&gt;
+&lt;h4&gt;4. Work with exceptions&lt;/h4&gt;
+
+&lt;p&gt;EasyMock can also work with exceptions. We can use again the expect() method, but this times we will use the andThrow method to specify the throwed exception. Here is what we can do with the remove() method test with and without exception :&lt;/p&gt;
+&lt;p&gt;[java]@Test&lt;/p&gt;
+&lt;p&gt;public void removeWithoutException() throws NotExistingException {
+    simpleDaoMock.remove("Mary");&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;replay&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;simpleDaoMock&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+&lt;span class="n"&gt;assertTrue&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;simpleService&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;remove&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Mary"&lt;/span&gt;&lt;span class="p"&gt;));&lt;/span&gt;
+
+&lt;span class="n"&gt;verify&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;simpleDaoMock&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}&lt;/p&gt;
+&lt;p&gt;@Test&lt;/p&gt;
+&lt;p&gt;public void removeWithException() throws NotExistingException {
+    simpleDaoMock.remove("Arthur");&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;expectLastCall&lt;/span&gt;&lt;span class="p"&gt;().&lt;/span&gt;&lt;span class="n"&gt;andThrow&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;new&lt;/span&gt; &lt;span class="n"&gt;NotExistingException&lt;/span&gt;&lt;span class="p"&gt;());&lt;/span&gt;
+
+&lt;span class="n"&gt;replay&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;simpleDaoMock&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+&lt;span class="n"&gt;assertFalse&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;simpleService&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;remove&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Arthur"&lt;/span&gt;&lt;span class="p"&gt;));&lt;/span&gt;
+
+&lt;span class="n"&gt;verify&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;simpleDaoMock&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/java]&lt;/p&gt;
+&lt;p&gt;Once again, only one method call is enough to specify a behaviour. I think it's here that we can see the power of mocks objects.&lt;/p&gt;
+&lt;!--nextpage--&gt;
+
+&lt;h4&gt;5. Miscellaneous&lt;/h4&gt;
+
+&lt;h5&gt;5.1. Verify the number of calls&lt;/h5&gt;
+
+&lt;p&gt;Now we can test the save() method :&lt;/p&gt;
+&lt;p&gt;[java]@Test&lt;/p&gt;
+&lt;p&gt;public void save(){
+    simpleDaoMock.save("xyzzy");
+    simpleDaoMock.save("xyzzy");
+    simpleDaoMock.save("xyzzy");
+    simpleDaoMock.save("xyzzy");
+    simpleDaoMock.save("xyzzy");&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;replay&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;simpleDaoMock&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+&lt;span class="n"&gt;simpleService&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;save&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"xyzzy"&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s"&gt;"xyzzy"&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s"&gt;"xyzzy"&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s"&gt;"xyzzy"&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s"&gt;"xyzzy"&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+&lt;span class="n"&gt;verify&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;simpleDaoMock&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/java]&lt;/p&gt;
+&lt;p&gt;This kind of code is really heavy to write with a high number of calls. We have two solutions. We can do a loop for all the calls or use the times() method of EasyMock :&lt;/p&gt;
+&lt;p&gt;[java]@Test&lt;/p&gt;
+&lt;p&gt;public void save(){
+    simpleDaoMock.save("xyzzy");&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;expectLastCall&lt;/span&gt;&lt;span class="p"&gt;().&lt;/span&gt;&lt;span class="n"&gt;times&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;5&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+&lt;span class="n"&gt;replay&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;simpleDaoMock&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+&lt;span class="n"&gt;simpleService&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;save&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"xyzzy"&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s"&gt;"xyzzy"&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s"&gt;"xyzzy"&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s"&gt;"xyzzy"&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s"&gt;"xyzzy"&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+&lt;span class="n"&gt;verify&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;simpleDaoMock&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/java]&lt;/p&gt;
+&lt;p&gt;A lot clearer, no ? It's also possible to specify that a method must called any times with the anyTimes() method and an interval of times with the times(min,max) method.&lt;/p&gt;
+&lt;h5&gt;5.2. Verify calls order&lt;/h5&gt;
+
+&lt;p&gt;We will now test the insert() method :&lt;/p&gt;
+&lt;p&gt;[java]@Test&lt;/p&gt;
+&lt;p&gt;public void insertValid(){
+    expect(simpleDaoMock.isValid("Arthur")).andReturn(true);&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;simpleDaoMock&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;insert&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Arthur"&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+&lt;span class="n"&gt;replay&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;simpleDaoMock&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+&lt;span class="n"&gt;simpleService&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;insert&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Arthur"&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+&lt;span class="n"&gt;verify&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;simpleDaoMock&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}&lt;/p&gt;
+&lt;p&gt;@Test&lt;/p&gt;
+&lt;p&gt;public void insertNotValid(){
+    expect(simpleDaoMock.isValid("Arthur")).andReturn(false);&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;replay&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;simpleDaoMock&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+&lt;span class="n"&gt;simpleService&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;insert&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Arthur"&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+&lt;span class="n"&gt;verify&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;simpleDaoMock&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/java]&lt;/p&gt;
+&lt;p&gt;You're going to say that we've already seen all that stuff. But in that kind of case, it could be interesting to verify that the calls are in the good order. Indeed, if the method isValid() is called after the insert, that's really useful. With EasyMock, there is two ways to verify calls order. First, you can use the createStrictMock insted of createMock to create your mock or you can use the checkOrder(mock, true) method to specify that the mock is strict. A strict mock is simply a mock who cares about the order of the calls. So we can keep all our tests in the current state and just use one of this two methods and the order will be checked. Of course, we can verify the order only in certain tests methods. That can be done using checkOrder(mock, true) at the start of the test method.&lt;/p&gt;
+&lt;h5&gt;5.3. Mock a class&lt;/h5&gt;
+
+&lt;p&gt;EasyMock has an extension to mock classes and not interfaces. It's EasyMock Class Extesion. All the use is the same, we just have to use this import :&lt;/p&gt;
+&lt;p&gt;[java]import static org.easymock.classextension.EasyMock.*;[/java]&lt;/p&gt;
+&lt;p&gt;Moreover, we can also make a partial mocking with by example only one method :&lt;/p&gt;
+&lt;p&gt;[java]Mocked mock = createMockBuilder(Mocked.class).addMockedMethod("mockedMethod").createMock();[/java]&lt;/p&gt;
+&lt;p&gt;Keep in mind that the final classes are not supported and that the final methods are not mocked.&lt;/p&gt;
+&lt;!--nextpage--&gt;
+
+&lt;h4&gt;6. Conclusion&lt;/h4&gt;
+
+&lt;p&gt;So, we have seen all the features of EasyMock to create mock objects for unit tests. Like you've seen, it's a really simple but powerful way to verify the behaviour of an object depending on an other. There are others libraries for mock objects like JMock, JMockit or Mockito, but personally, i think EasyMock is most comfortable to use and give all the features i need to make my own unit tests. That's why i choose this library to make this article.&lt;/p&gt;
+&lt;p&gt;I hope this article has interested you. Don't hesitate to comment it ;)&lt;/p&gt;&lt;/div&gt;</description><category>Java</category><category>Java</category><category>Libraries</category><category>Tests</category><guid>http://www.baptiste-wicht.com/posts/2010/03/mock-objects-easymock.html</guid><pubDate>Thu, 18 Mar 2010 06:53:54 GMT</pubDate></item></channel></rss>

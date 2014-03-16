@@ -1,0 +1,298 @@
+<p><html><body><p>In this post, we'll develop a simple Hello World application with <strong>OSGi</strong>. We will use <strong>Felix</strong> as <strong>OSGi container</strong>. In the next post, we'll continue with this application and use <strong>Spring Dynamic Modules</strong> to improve it. </p>
+<p>To make the development interesting, we will create two bundles :</p>
+<p></p><ul>
+    <li>A bundle providing a service of HelloWorld</li>
+    <li>A bundle consuming the service to print hello at regular interval time.</li>
+</ul></p>
+<!--more-->
+
+<p>So let's start with the first bundle. What we need first is a very simple service providing a simple print in the console :</p>
+<p>[java]package com.bw.osgi.provider.able;</p>
+<p>public interface HelloWorldService {
+    void hello();
+}[/java]</p>
+<p>[java]package com.bw.osgi.provider.impl;</p>
+<p>import com.bw.osgi.provider.able.HelloWorldService;</p>
+<p>public class HelloWorldServiceImpl implements HelloWorldService {
+    @Override
+    public void hello(){
+        System.out.println("Hello World !");
+    }
+}[/java]</p>
+<p>We cannot make easier. Then, we need to export the Service using an activator : </p>
+<p>[java]package com.bw.osgi.provider;</p>
+<p>import org.osgi.framework.BundleActivator;</p>
+<p>import org.osgi.framework.BundleContext;</p>
+<p>import org.osgi.framework.ServiceRegistration;</p>
+<p>import com.bw.osgi.provider.able.HelloWorldService;</p>
+<p>import com.bw.osgi.provider.impl.HelloWorldServiceImpl;</p>
+<p>public class ProviderActivator implements BundleActivator {
+    private ServiceRegistration registration;</p>
+<div class="code"><pre><span class="err">@</span><span class="n">Override</span>
+<span class="n">public</span> <span class="kt">void</span> <span class="n">start</span><span class="p">(</span><span class="n">BundleContext</span> <span class="n">bundleContext</span><span class="p">)</span> <span class="n">throws</span> <span class="n">Exception</span> <span class="p">{</span>
+    <span class="n">registration</span> <span class="o">=</span> <span class="n">bundleContext</span><span class="p">.</span><span class="n">registerService</span><span class="p">(</span>
+            <span class="n">HelloWorldService</span><span class="p">.</span><span class="n">class</span><span class="p">.</span><span class="n">getName</span><span class="p">(),</span>
+            <span class="n">new</span> <span class="n">HelloWorldServiceImpl</span><span class="p">(),</span>
+            <span class="n">null</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="err">@</span><span class="n">Override</span>
+<span class="n">public</span> <span class="kt">void</span> <span class="n">stop</span><span class="p">(</span><span class="n">BundleContext</span> <span class="n">bundleContext</span><span class="p">)</span> <span class="n">throws</span> <span class="n">Exception</span> <span class="p">{</span>
+    <span class="n">registration</span><span class="p">.</span><span class="n">unregister</span><span class="p">();</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>}[/java]</p>
+<p>A lot more code here. For those who aren't confident with OSGi, some explanations. The start method will be called when the module is started and the stop when it's stopped. In the start method, we register our service in the bundle context using the name of the interface as the name of the exported service. The third parameter, null, indicate that we doesn't give any configuration for this service. In the stop method, we just unregister the service. </p>
+<p>Now, our first bundle is ready. We can build it. For that we'll use Maven and the maven-bundle-plugin to build the OSGi Bundle directly. Here is the pom.xml file for the project. </p>
+<p>[xml]&lt;?xml version="1.0" encoding="UTF-8"?&gt;</p>
+<p>&lt;project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"&gt;
+    &lt;modelVersion&gt;4.0.0&lt;/modelVersion&gt;</p>
+<div class="code"><pre><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">groupId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">OSGiDmHelloWorldProvider</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">groupId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+<span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">artifactId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">OSGiDmHelloWorldProvider</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">artifactId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+<span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">version</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="mf">1.0</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">version</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+
+<span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">dependencies</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+    <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">dependency</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+        <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">groupId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">org</span><span class="p">.</span><span class="n">apache</span><span class="p">.</span><span class="n">felix</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">groupId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+        <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">artifactId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">org</span><span class="p">.</span><span class="n">osgi</span><span class="p">.</span><span class="n">core</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">artifactId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+        <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">version</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="mf">1.4.0</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">version</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+    <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">dependency</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+<span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">dependencies</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+
+<span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">build</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+    <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">plugins</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+        <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">plugin</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+            <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">groupId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">org</span><span class="p">.</span><span class="n">apache</span><span class="p">.</span><span class="n">maven</span><span class="p">.</span><span class="n">plugins</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">groupId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+            <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">artifactId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">maven</span><span class="o">-</span><span class="n">compiler</span><span class="o">-</span><span class="n">plugin</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">artifactId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+            <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">version</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="mf">2.0.2</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">version</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+            <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">configuration</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+                <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">source</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="mf">1.6</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">source</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+                <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">target</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="mf">1.6</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">target</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+            <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">configuration</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+        <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">plugin</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+
+        <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">plugin</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+            <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">groupId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">org</span><span class="p">.</span><span class="n">apache</span><span class="p">.</span><span class="n">felix</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">groupId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+            <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">artifactId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">maven</span><span class="o">-</span><span class="n">bundle</span><span class="o">-</span><span class="n">plugin</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">artifactId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+            <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">extensions</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="nb">true</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">extensions</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+            <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">configuration</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+                <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">instructions</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+                    <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">Bundle</span><span class="o">-</span><span class="n">SymbolicName</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">OSGiDmHelloWorldProvider</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">Bundle</span><span class="o">-</span><span class="n">SymbolicName</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+                    <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">Export</span><span class="o">-</span><span class="n">Package</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">com</span><span class="p">.</span><span class="n">bw</span><span class="p">.</span><span class="n">osgi</span><span class="p">.</span><span class="n">provider</span><span class="p">.</span><span class="n">able</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">Export</span><span class="o">-</span><span class="n">Package</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+                    <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">Bundle</span><span class="o">-</span><span class="n">Activator</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">com</span><span class="p">.</span><span class="n">bw</span><span class="p">.</span><span class="n">osgi</span><span class="p">.</span><span class="n">provider</span><span class="p">.</span><span class="n">ProviderActivator</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">Bundle</span><span class="o">-</span><span class="n">Activator</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+                    <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">Bundle</span><span class="o">-</span><span class="n">Vendor</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">Baptiste</span> <span class="n">Wicht</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">Bundle</span><span class="o">-</span><span class="n">Vendor</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+                <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">instructions</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+            <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">configuration</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+        <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">plugin</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+    <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">plugins</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+<span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">build</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+</pre></div>
+
+
+<p>&lt;/project&gt;[/xml]</p>
+<p>And then, use mvn install to build it. </p>
+<p>We'll work in a folder called osgi, so we'll copy this new bundle in the osgi folder. </p>
+<p>We can already test it in the OSGi container. If you dont' have already Felix, let's download it <a href="http://felix.apache.org/site/downloads.html">here</a>. You have to choose the "Felix Distribution". </p>
+<p>Then extract it to the osgi folder we created before. You must now have this folder structure : </p>
+<pre>osgi
+  - felix 
+  - OSGiDmHelloWorldProvider-1.0.jar</pre>
+
+<p>So we can go in the felix folder and launch Felix : </p>
+<pre>wichtounet@Linux-Desktop:~/Desktop/osgi/felix$ java -jar bin/felix.jar
+
+_______________
+
+Welcome to Apache Felix Gogo
+
+g! </pre>
+
+<p>And install our bundle : </p>
+<pre>g! install file:../OSGiDmHelloWorldProvider-1.0.jar
+
+Bundle ID: 5</pre>
+
+<p>The install is good installed, we can try to start it and see its status : </p>
+<pre>g! start 5
+
+g! bundle 5
+
+Location             file:../OSGiDmHelloWorldProvider-1.0.jar
+
+State                32
+
+Version              1.0.0
+
+LastModified         1279124741320
+
+Headers              [Tool=Bnd-0.0.357, Bundle-Activator=com.bw.osgi.provider.ProviderActivator, Export-Package=com.bw.osgi.provider.able, Build-Jdk=1.6.0_20, Bundle-Version=1.0.0, Created-By=Apache Maven Bundle Plugin, Bundle-ManifestVersion=2, Manifest-Version=1.0, Bundle-Vendor=Baptiste Wicht, Bnd-LastModified=1279124686551, Bundle-Name=Unnamed - OSGiDmHelloWorldProvider:OSGiDmHelloWorldProvider:bundle:1.0, Built-By=wichtounet, Bundle-SymbolicName=OSGiDmHelloWorldProvider, Import-Package=com.bw.osgi.provider.able,org.osgi.framework;version="1.5"]
+
+BundleContext        org.apache.felix.framework.BundleContextImpl@2353f67e
+
+BundleId             5
+
+SymbolicName         OSGiDmHelloWorldProvider
+
+RegisteredServices   [HelloWorldService]
+
+ServicesInUse        null</pre>
+
+<p>All is fine. Our service is good registered :)</p>
+<p>Now we'll try to consume this service in our second bundle. Our consumer class will be very simple : </p>
+<p>[java]package com.bw.osgi.consumer;</p>
+<p>import javax.swing.Timer;</p>
+<p>import java.awt.event.ActionEvent;</p>
+<p>import java.awt.event.ActionListener;</p>
+<p>import com.bw.osgi.provider.able.HelloWorldService;</p>
+<p>public class HelloWorldConsumer implements ActionListener {
+    private final HelloWorldService service;
+    private final Timer timer;</p>
+<div class="code"><pre><span class="n">public</span> <span class="nf">HelloWorldConsumer</span><span class="p">(</span><span class="n">HelloWorldService</span> <span class="n">service</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">super</span><span class="p">();</span>
+
+    <span class="n">this</span><span class="p">.</span><span class="n">service</span> <span class="o">=</span> <span class="n">service</span><span class="p">;</span>
+
+    <span class="n">timer</span> <span class="o">=</span> <span class="n">new</span> <span class="n">Timer</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="n">this</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="n">public</span> <span class="kt">void</span> <span class="nf">startTimer</span><span class="p">(){</span>
+    <span class="n">timer</span><span class="p">.</span><span class="n">start</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="n">public</span> <span class="kt">void</span> <span class="nf">stopTimer</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">timer</span><span class="p">.</span><span class="n">stop</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="err">@</span><span class="n">Override</span>
+<span class="n">public</span> <span class="kt">void</span> <span class="n">actionPerformed</span><span class="p">(</span><span class="n">ActionEvent</span> <span class="n">e</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">service</span><span class="p">.</span><span class="n">hello</span><span class="p">();</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>}[/java]</p>
+<p>And now, we must create the activator to get the service and then give it to the consumer. That will give use something like this : </p>
+<p>[java]package com.bw.osgi.consumer;</p>
+<p>import org.osgi.framework.BundleActivator;</p>
+<p>import org.osgi.framework.BundleContext;</p>
+<p>import org.osgi.framework.ServiceReference;</p>
+<p>import com.bw.osgi.provider.able.HelloWorldService;</p>
+<p>public class HelloWorldActivator implements BundleActivator {
+    private HelloWorldConsumer consumer;</p>
+<div class="code"><pre><span class="err">@</span><span class="n">Override</span>
+<span class="n">public</span> <span class="kt">void</span> <span class="n">start</span><span class="p">(</span><span class="n">BundleContext</span> <span class="n">bundleContext</span><span class="p">)</span> <span class="n">throws</span> <span class="n">Exception</span> <span class="p">{</span>
+    <span class="n">ServiceReference</span> <span class="n">reference</span> <span class="o">=</span> <span class="n">bundleContext</span><span class="p">.</span><span class="n">getServiceReference</span><span class="p">(</span><span class="n">HelloWorldService</span><span class="p">.</span><span class="n">class</span><span class="p">.</span><span class="n">getName</span><span class="p">());</span>
+
+    <span class="n">consumer</span> <span class="o">=</span> <span class="n">new</span> <span class="n">HelloWorldConsumer</span><span class="p">((</span><span class="n">HelloWorldService</span><span class="p">)</span> <span class="n">bundleContext</span><span class="p">.</span><span class="n">getService</span><span class="p">(</span><span class="n">reference</span><span class="p">));</span>
+    <span class="n">consumer</span><span class="p">.</span><span class="n">startTimer</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="err">@</span><span class="n">Override</span>
+<span class="n">public</span> <span class="kt">void</span> <span class="n">stop</span><span class="p">(</span><span class="n">BundleContext</span> <span class="n">bundleContext</span><span class="p">)</span> <span class="n">throws</span> <span class="n">Exception</span> <span class="p">{</span>
+    <span class="n">consumer</span><span class="p">.</span><span class="n">stopTimer</span><span class="p">();</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>}[/java]</p>
+<p>We get a service reference from the bundle context using the name of the class. After that, we get the service instance from the bundle context. </p>
+<p>We create also a little pom.xml file to build the bundle : </p>
+<p>[xml]&lt;?xml version="1.0" encoding="UTF-8"?&gt;</p>
+<p>&lt;project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"&gt;
+    &lt;modelVersion&gt;4.0.0&lt;/modelVersion&gt;
+    &lt;groupId&gt;OSGiDmHelloWorldConsumer&lt;/groupId&gt;
+    &lt;artifactId&gt;OSGiDmHelloWorldConsumer&lt;/artifactId&gt;
+    &lt;version&gt;1.0&lt;/version&gt;
+    &lt;packaging&gt;bundle&lt;/packaging&gt;</p>
+<div class="code"><pre><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">dependencies</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+    <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">dependency</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+        <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">groupId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">org</span><span class="p">.</span><span class="n">apache</span><span class="p">.</span><span class="n">felix</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">groupId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+        <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">artifactId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">org</span><span class="p">.</span><span class="n">osgi</span><span class="p">.</span><span class="n">core</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">artifactId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+        <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">version</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="mf">1.0.0</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">version</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+    <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">dependency</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+
+    <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">dependency</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+        <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">groupId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">OSGiDmHelloWorldProvider</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">groupId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+        <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">artifactId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">OSGiDmHelloWorldProvider</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">artifactId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+        <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">version</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="mf">1.0</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">version</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+    <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">dependency</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+<span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">dependencies</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+
+<span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">build</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+    <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">plugins</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+        <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">plugin</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+            <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">groupId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">org</span><span class="p">.</span><span class="n">apache</span><span class="p">.</span><span class="n">maven</span><span class="p">.</span><span class="n">plugins</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">groupId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+            <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">artifactId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">maven</span><span class="o">-</span><span class="n">compiler</span><span class="o">-</span><span class="n">plugin</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">artifactId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+            <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">version</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="mf">2.0.2</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">version</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+            <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">configuration</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+                <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">source</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="mf">1.6</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">source</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+                <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">target</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="mf">1.6</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">target</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+            <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">configuration</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+        <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">plugin</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+
+        <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">plugin</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+            <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">groupId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">org</span><span class="p">.</span><span class="n">apache</span><span class="p">.</span><span class="n">felix</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">groupId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+            <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">artifactId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">maven</span><span class="o">-</span><span class="n">bundle</span><span class="o">-</span><span class="n">plugin</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">artifactId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+            <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">extensions</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="nb">true</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">extensions</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+            <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">configuration</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+                <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">instructions</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+                    <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">Bundle</span><span class="o">-</span><span class="n">SymbolicName</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">OSGiDmHelloWorldConsumer</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">Bundle</span><span class="o">-</span><span class="n">SymbolicName</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+                    <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">Bundle</span><span class="o">-</span><span class="n">Activator</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">com</span><span class="p">.</span><span class="n">bw</span><span class="p">.</span><span class="n">osgi</span><span class="p">.</span><span class="n">consumer</span><span class="p">.</span><span class="n">HelloWorldActivator</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">Bundle</span><span class="o">-</span><span class="n">Activator</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+                    <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">Bundle</span><span class="o">-</span><span class="n">Vendor</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">Baptiste</span> <span class="n">Wicht</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">Bundle</span><span class="o">-</span><span class="n">Vendor</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+                <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">instructions</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+            <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">configuration</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+        <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">plugin</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+    <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">plugins</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+<span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">build</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+</pre></div>
+
+
+<p>&lt;/project&gt;[/xml]</p>
+<p>Then, we use mvn install to create the bundle and we install it in the container : </p>
+<pre>g! start 6
+
+g! Hello World !
+
+Hello World !
+
+Hello World !
+
+Hello World !
+
+Hello World !
+
+Hello World !
+
+Hello World !
+
+Hello World !
+
+Hello World !
+
+Hello World !
+
+Hello World !
+
+Hello World !
+
+Hello World !
+
+Hello World !
+
+g! stop 6</pre>
+
+<p>And here we are :) We've created our first application using OSGi. With that technology you can build modules really independant. </p>
+<p>In the next post about OSGi, we'll see how to use Spring to make the OSGi development easier and to concentrate our effort on the application not OSGi.  </p>
+<p>The sources of the two bundles are available here : </p>
+<ul>
+    <li><a href="/wp-content/uploads/2010/07/OSGiDmHelloWorldProvider.tar.gz">OSGiDmHelloWorldProvider sources</a></li>
+    <li><a href="/wp-content/uploads/2010/07/OSGiDmHelloWorldConsumer.tar.gz">OSGiDmHelloWorldConsumer</a></li>
+</ul>
+
+<p></body></html></p>

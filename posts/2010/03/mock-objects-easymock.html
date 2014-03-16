@@ -1,0 +1,460 @@
+<!DOCTYPE html><html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Baptiste Wicht">
+    <title>Mock objects with EasyMock | @Blog("Baptiste Wicht")</title>
+    
+            <link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
+      <link rel="canonical" href="http://www.baptiste-wicht.com/posts/2010/03/mock-objects-easymock.html">
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js" type="text/javascript"></script>
+    <![endif]-->
+            <link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
+
+    
+
+
+
+
+
+    
+</head>
+<body>
+<!-- Menubar -->
+
+<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    <div class="container-fluid"><!-- This keeps the margins nice -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="http://www.baptiste-wicht.com/">@Blog("Baptiste Wicht")</a>
+        </div><!-- /.navbar-header -->
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+            <ul class="nav navbar-nav">
+                
+                <li><a href="../../../archive.html">Archives</a>
+                </li><li><a href="../../../categories/index.html">Tags</a>
+                </li><li><a href="../../../rss.xml">RSS</a>
+
+            </li></ul>
+
+            <ul class="nav navbar-nav navbar-right">
+                
+                
+                    
+    <li>
+    <a href="mock-objects-easymock.wp" id="sourcelink">Source</a>
+    </li>
+
+            </ul>
+        </div><!-- /.navbar-collapse -->
+    </div><!-- /.container-fluid -->
+</nav>
+
+<!-- End of Menubar -->
+
+<div class="container">
+    <div class="body-content">
+        <!--Body content-->
+        <div class="row">
+            
+    <article class="postbox post-text">
+    <div class="h-entry" itemscope="itemscope" itemtype="http://schema.org/Article">
+    
+    <h1 class="p-name" itemprop="headline name">Mock objects with EasyMock</h1>
+
+    <hr>
+    <small>
+        Posted: <time class="published dt-published" datetime="2010-03-18T06:53:54+00:00" itemprop="datePublished">2010-03-18 06:53</time>
+        
+
+        
+          |  
+        More posts about 
+    <span itemprop="keywords">
+        <a class="tag p-category" href="../../../categories/java.html"><span class="badge badge-info">Java</span></a>
+        <a class="tag p-category" href="../../../categories/java.html"><span class="badge badge-info">Java</span></a>
+        <a class="tag p-category" href="../../../categories/libraries.html"><span class="badge badge-info">Libraries</span></a>
+        <a class="tag p-category" href="../../../categories/tests.html"><span class="badge badge-info">Tests</span></a>
+    </span>
+
+
+    </small>
+    <hr>
+    <div class="e-content" itemprop="articleBody text">
+    <div><p></p><h4>1. Introduction</h4>
+The mock objects allows to make unit tests on objects depending on other objects. We will replace this dependencies with mock objects. With that, we can by example verify than the method xyzzy() has been called 5 times and returned 33. That can be practical in a several cases. By exampe, if the object to mock is slow or undeterministic (depending on time, or why not on the weather). This objects are really difficult to test because we can make a lot of tests but we could never find the special cases. Test cases with mock objects enable us to test this cases.
+<!--more-->
+
+<p>There is several tools to make mock objects. In this article, we will use EasyMock 2.5.2 with JUnit 4.7.</p>
+<p>Here is the interface to test :</p>
+<p>[java]public interface ISimpleDao {
+    void save(String title);
+    void remove(String title) throws NotExistingException;
+    int count();
+    void debug();
+    boolean isValid(String title);
+    void insert(String title);
+}[/java]</p>
+<p>And here is our class to test :</p>
+<p>[java]public class SimpleService {
+    private ISimpleDao dao;</p>
+<div class="code"><pre><span class="n">public</span> <span class="kt">void</span> <span class="nf">setDao</span><span class="p">(</span><span class="n">ISimpleDao</span> <span class="n">dao</span><span class="p">){</span>
+    <span class="n">this</span><span class="p">.</span><span class="n">dao</span> <span class="o">=</span> <span class="n">dao</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="n">public</span> <span class="kt">void</span> <span class="nf">insert</span><span class="p">(</span><span class="n">String</span> <span class="n">title</span><span class="p">){</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">dao</span><span class="p">.</span><span class="n">isValid</span><span class="p">(</span><span class="n">title</span><span class="p">)){</span>
+        <span class="n">dao</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="n">title</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="n">public</span> <span class="kt">void</span> <span class="nf">save</span><span class="p">(</span><span class="n">String</span><span class="p">...</span> <span class="n">titles</span><span class="p">){</span>
+    <span class="k">for</span><span class="p">(</span><span class="n">String</span> <span class="n">title</span> <span class="o">:</span> <span class="n">titles</span><span class="p">){</span>
+        <span class="n">dao</span><span class="p">.</span><span class="n">save</span><span class="p">(</span><span class="n">title</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="n">public</span> <span class="n">boolean</span> <span class="nf">remove</span><span class="p">(</span><span class="n">String</span> <span class="n">title</span><span class="p">){</span>
+    <span class="n">try</span> <span class="p">{</span>
+        <span class="n">dao</span><span class="p">.</span><span class="n">remove</span><span class="p">(</span><span class="n">title</span><span class="p">);</span>
+    <span class="p">}</span> <span class="n">catch</span> <span class="p">(</span><span class="n">NotExistingException</span> <span class="n">e</span><span class="p">){</span>
+        <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="n">public</span> <span class="kt">int</span> <span class="nf">size</span><span class="p">(){</span>
+    <span class="k">return</span> <span class="n">dao</span><span class="p">.</span><span class="n">count</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="n">public</span> <span class="kt">void</span> <span class="nf">debug</span><span class="p">(){</span>
+    <span class="n">System</span><span class="p">.</span><span class="n">out</span><span class="p">.</span><span class="n">println</span><span class="p">(</span><span class="s">"Debug informations of SimpleService"</span><span class="p">);</span>
+    <span class="n">dao</span><span class="p">.</span><span class="n">debug</span><span class="p">();</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>[/java]</p>
+<p>Our mock will implement the ISimpleDao interface and we will give it to SimpleService who's the class to test. This example is really simplistic, but it will be enough to cover the main features of EasyMock.</p>
+<!--nextpage-->
+
+<h4>2. Verify a behaviour</h4>
+
+<p>Here is the structure i will use in this article :</p>
+<p>[java]import org.junit.Before;</p>
+<p>import org.junit.Test;</p>
+<p>import static org.junit.Assert.*;</p>
+<p>import static org.easymock.EasyMock.*;</p>
+<p>public class SimpleServiceTest {
+    private SimpleService simpleService;
+    private ISimpleDao simpleDaoMock;</p>
+<div class="code"><pre><span class="err">@</span><span class="n">Before</span>
+<span class="n">public</span> <span class="kt">void</span> <span class="n">setUp</span><span class="p">(){</span>
+    <span class="n">simpleService</span> <span class="o">=</span> <span class="n">new</span> <span class="n">SimpleService</span><span class="p">();</span>
+    <span class="n">simpleService</span><span class="p">.</span><span class="n">setDao</span><span class="p">(</span><span class="n">simpleDaoMock</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="err">@</span><span class="n">Test</span>
+<span class="n">public</span> <span class="kt">void</span> <span class="n">insertValid</span><span class="p">(){}</span>
+
+<span class="err">@</span><span class="n">Test</span>
+<span class="n">public</span> <span class="kt">void</span> <span class="n">insertNotValid</span><span class="p">(){}</span>
+
+<span class="err">@</span><span class="n">Test</span>
+<span class="n">public</span> <span class="kt">void</span> <span class="n">save</span><span class="p">(){}</span>
+
+<span class="err">@</span><span class="n">Test</span>
+<span class="n">public</span> <span class="kt">void</span> <span class="n">removeWithoutException</span><span class="p">()</span> <span class="n">throws</span> <span class="n">NotExistingException</span> <span class="p">{}</span>
+
+<span class="err">@</span><span class="n">Test</span>
+<span class="n">public</span> <span class="kt">void</span> <span class="n">removeWithException</span><span class="p">()</span> <span class="n">throws</span> <span class="n">NotExistingException</span> <span class="p">{}</span>
+
+<span class="err">@</span><span class="n">Test</span>
+<span class="n">public</span> <span class="kt">void</span> <span class="n">size</span><span class="p">(){}</span>
+
+<span class="err">@</span><span class="n">Test</span>
+<span class="n">public</span> <span class="kt">void</span> <span class="n">debug</span><span class="p">(){}</span>
+</pre></div>
+
+
+<p>}[/java]</p>
+<p>First of all, we'll start with create a mock object. For that, we've to use the EasyMock class and its method createMock, with the interface in parameter. To improve code readability, we use a static import like what we do in general with JUnit.</p>
+<p>[java]import org.junit.Before;</p>
+<p>import org.junit.Test;</p>
+<p>import static org.junit.Assert.*;</p>
+<p>import static org.easymock.EasyMock.*;</p>
+<p>public class SimpleServiceTest {
+    private SimpleService simpleService;
+    private ISimpleDao simpleDaoMock;</p>
+<div class="code"><pre><span class="err">@</span><span class="n">Before</span>
+<span class="n">public</span> <span class="kt">void</span> <span class="n">setUp</span><span class="p">(){</span>
+    <span class="n">simpleDaoMock</span> <span class="o">=</span> <span class="n">createMock</span><span class="p">(</span><span class="n">ISimpleDao</span><span class="p">.</span><span class="n">class</span><span class="p">);</span>
+
+    <span class="n">simpleService</span> <span class="o">=</span> <span class="n">new</span> <span class="n">SimpleService</span><span class="p">();</span>
+    <span class="n">simpleService</span><span class="p">.</span><span class="n">setDao</span><span class="p">(</span><span class="n">simpleDaoMock</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>}[/java]</p>
+<p>This will create a mock objet implementing ISimpleDao interface. The first thing we can do with EasyMock is verify than a method has been called. EasyMock works like a recorder :</p>
+<ul>
+    <li>We play the desired sequence on the mock object.</li>
+    <li>We record the played sequence.</li>
+    <li>We test the object</li>
+    <li>We verify that the test sequence correspond to the recorded one</li>
+</ul>
+
+<p>So, we'll test to start that the debug() method of SimpleService call the debug() method of our Dao :</p>
+<p>[java]@Test</p>
+<p>public void debug(){
+    simpleDaoMock.debug();</p>
+<div class="code"><pre><span class="n">replay</span><span class="p">(</span><span class="n">simpleDaoMock</span><span class="p">);</span>
+
+<span class="n">simpleService</span><span class="p">.</span><span class="n">debug</span><span class="p">();</span>
+
+<span class="n">verify</span><span class="p">(</span><span class="n">simpleDaoMock</span><span class="p">);</span>
+</pre></div>
+
+
+<p>}[/java]</p>
+<p>The replay method enable to save the record and the verify method compare the two records are equals. If not equals, the verify method will launch AssertionError. If you launch the written test, it will executes fines, but if we comment the dao.debug() statement in SimpleSerivce, the test will fail :</p>
+<pre>java.lang.AssertionError:
+  Expectation failure on verify:
+    debug(): expected: 1, actual: 0
+    at org.easymock.internal.MocksControl.verify(MocksControl.java:111)
+    at org.easymock.EasyMock.verify(EasyMock.java:1608)
+    at com.dvp.wichtounet.easymock.SimpleServiceTest.debug(SimpleServiceTest.java:45)
+    at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+    at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:57)
+    at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+    at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:44)
+    at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:15)
+    at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:41)
+    at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:20)
+    at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:28)
+    at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:76)
+    at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+    at org.junit.runners.ParentRunner$3.run(ParentRunner.java:193)
+    at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:52)
+    at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:191)
+    at org.junit.runners.ParentRunner.access$000(ParentRunner.java:42)
+    at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:184)
+    at org.junit.runners.ParentRunner.run(ParentRunner.java:236)
+    at org.junit.runner.JUnitCore.run(JUnitCore.java:157)
+    at com.intellij.junit4.JUnit4IdeaTestRunner.startRunnerWithArgs(JUnit4IdeaTestRunner.java:94)
+    at com.intellij.rt.execution.junit.JUnitStarter.prepareStreamsAndStart(JUnitStarter.java:165)
+    at com.intellij.rt.execution.junit.JUnitStarter.main(JUnitStarter.java:60)
+    at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+    at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:57)
+    at com.intellij.rt.execution.application.AppMain.main(AppMain.java:110)</pre>
+
+<p>So, EasyMock has detected that the method has not bee called and the test fails. If you want to verify that a non-void method has been called , you will have an IllegalStateException because no return behaviour has been specified. We will see that in the next chapter.</p>
+<!--nextpage-->
+
+<h4>3. Wait for return values</h4>
+
+<p>We will now work with methods returning values. In this case, we've to define a return behaviour. To do that, we must use the expect() method to encapsulate the call and the andReturn() method to specify a return value. Here is how we can test the size() method :</p>
+<p>[java]@Test</p>
+<p>public void size(){
+    expect(simpleDaoMock.count()).andReturn(32);</p>
+<div class="code"><pre><span class="n">replay</span><span class="p">(</span><span class="n">simpleDaoMock</span><span class="p">);</span>
+
+<span class="n">assertEquals</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="n">simpleService</span><span class="p">.</span><span class="n">size</span><span class="p">());</span>
+
+<span class="n">verify</span><span class="p">(</span><span class="n">simpleDaoMock</span><span class="p">);</span>
+</pre></div>
+
+
+<p>}[/java]</p>
+<p>With that, we make two tests, we verify that the count method has been called and that size() return the same value as count(). That is the case if we launch the test. We can see that it's really simple to specify a return value for a mocked method.</p>
+<h4>4. Work with exceptions</h4>
+
+<p>EasyMock can also work with exceptions. We can use again the expect() method, but this times we will use the andThrow method to specify the throwed exception. Here is what we can do with the remove() method test with and without exception :</p>
+<p>[java]@Test</p>
+<p>public void removeWithoutException() throws NotExistingException {
+    simpleDaoMock.remove("Mary");</p>
+<div class="code"><pre><span class="n">replay</span><span class="p">(</span><span class="n">simpleDaoMock</span><span class="p">);</span>
+
+<span class="n">assertTrue</span><span class="p">(</span><span class="n">simpleService</span><span class="p">.</span><span class="n">remove</span><span class="p">(</span><span class="s">"Mary"</span><span class="p">));</span>
+
+<span class="n">verify</span><span class="p">(</span><span class="n">simpleDaoMock</span><span class="p">);</span>
+</pre></div>
+
+
+<p>}</p>
+<p>@Test</p>
+<p>public void removeWithException() throws NotExistingException {
+    simpleDaoMock.remove("Arthur");</p>
+<div class="code"><pre><span class="n">expectLastCall</span><span class="p">().</span><span class="n">andThrow</span><span class="p">(</span><span class="n">new</span> <span class="n">NotExistingException</span><span class="p">());</span>
+
+<span class="n">replay</span><span class="p">(</span><span class="n">simpleDaoMock</span><span class="p">);</span>
+
+<span class="n">assertFalse</span><span class="p">(</span><span class="n">simpleService</span><span class="p">.</span><span class="n">remove</span><span class="p">(</span><span class="s">"Arthur"</span><span class="p">));</span>
+
+<span class="n">verify</span><span class="p">(</span><span class="n">simpleDaoMock</span><span class="p">);</span>
+</pre></div>
+
+
+<p>}[/java]</p>
+<p>Once again, only one method call is enough to specify a behaviour. I think it's here that we can see the power of mocks objects.</p>
+<!--nextpage-->
+
+<h4>5. Miscellaneous</h4>
+
+<h5>5.1. Verify the number of calls</h5>
+
+<p>Now we can test the save() method :</p>
+<p>[java]@Test</p>
+<p>public void save(){
+    simpleDaoMock.save("xyzzy");
+    simpleDaoMock.save("xyzzy");
+    simpleDaoMock.save("xyzzy");
+    simpleDaoMock.save("xyzzy");
+    simpleDaoMock.save("xyzzy");</p>
+<div class="code"><pre><span class="n">replay</span><span class="p">(</span><span class="n">simpleDaoMock</span><span class="p">);</span>
+
+<span class="n">simpleService</span><span class="p">.</span><span class="n">save</span><span class="p">(</span><span class="s">"xyzzy"</span><span class="p">,</span> <span class="s">"xyzzy"</span><span class="p">,</span> <span class="s">"xyzzy"</span><span class="p">,</span> <span class="s">"xyzzy"</span><span class="p">,</span> <span class="s">"xyzzy"</span><span class="p">);</span>
+
+<span class="n">verify</span><span class="p">(</span><span class="n">simpleDaoMock</span><span class="p">);</span>
+</pre></div>
+
+
+<p>}[/java]</p>
+<p>This kind of code is really heavy to write with a high number of calls. We have two solutions. We can do a loop for all the calls or use the times() method of EasyMock :</p>
+<p>[java]@Test</p>
+<p>public void save(){
+    simpleDaoMock.save("xyzzy");</p>
+<div class="code"><pre><span class="n">expectLastCall</span><span class="p">().</span><span class="n">times</span><span class="p">(</span><span class="mi">5</span><span class="p">);</span>
+
+<span class="n">replay</span><span class="p">(</span><span class="n">simpleDaoMock</span><span class="p">);</span>
+
+<span class="n">simpleService</span><span class="p">.</span><span class="n">save</span><span class="p">(</span><span class="s">"xyzzy"</span><span class="p">,</span> <span class="s">"xyzzy"</span><span class="p">,</span> <span class="s">"xyzzy"</span><span class="p">,</span> <span class="s">"xyzzy"</span><span class="p">,</span> <span class="s">"xyzzy"</span><span class="p">);</span>
+
+<span class="n">verify</span><span class="p">(</span><span class="n">simpleDaoMock</span><span class="p">);</span>
+</pre></div>
+
+
+<p>}[/java]</p>
+<p>A lot clearer, no ? It's also possible to specify that a method must called any times with the anyTimes() method and an interval of times with the times(min,max) method.</p>
+<h5>5.2. Verify calls order</h5>
+
+<p>We will now test the insert() method :</p>
+<p>[java]@Test</p>
+<p>public void insertValid(){
+    expect(simpleDaoMock.isValid("Arthur")).andReturn(true);</p>
+<div class="code"><pre><span class="n">simpleDaoMock</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="s">"Arthur"</span><span class="p">);</span>
+
+<span class="n">replay</span><span class="p">(</span><span class="n">simpleDaoMock</span><span class="p">);</span>
+
+<span class="n">simpleService</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="s">"Arthur"</span><span class="p">);</span>
+
+<span class="n">verify</span><span class="p">(</span><span class="n">simpleDaoMock</span><span class="p">);</span>
+</pre></div>
+
+
+<p>}</p>
+<p>@Test</p>
+<p>public void insertNotValid(){
+    expect(simpleDaoMock.isValid("Arthur")).andReturn(false);</p>
+<div class="code"><pre><span class="n">replay</span><span class="p">(</span><span class="n">simpleDaoMock</span><span class="p">);</span>
+
+<span class="n">simpleService</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="s">"Arthur"</span><span class="p">);</span>
+
+<span class="n">verify</span><span class="p">(</span><span class="n">simpleDaoMock</span><span class="p">);</span>
+</pre></div>
+
+
+<p>}[/java]</p>
+<p>You're going to say that we've already seen all that stuff. But in that kind of case, it could be interesting to verify that the calls are in the good order. Indeed, if the method isValid() is called after the insert, that's really useful. With EasyMock, there is two ways to verify calls order. First, you can use the createStrictMock insted of createMock to create your mock or you can use the checkOrder(mock, true) method to specify that the mock is strict. A strict mock is simply a mock who cares about the order of the calls. So we can keep all our tests in the current state and just use one of this two methods and the order will be checked. Of course, we can verify the order only in certain tests methods. That can be done using checkOrder(mock, true) at the start of the test method.</p>
+<h5>5.3. Mock a class</h5>
+
+<p>EasyMock has an extension to mock classes and not interfaces. It's EasyMock Class Extesion. All the use is the same, we just have to use this import :</p>
+<p>[java]import static org.easymock.classextension.EasyMock.*;[/java]</p>
+<p>Moreover, we can also make a partial mocking with by example only one method :</p>
+<p>[java]Mocked mock = createMockBuilder(Mocked.class).addMockedMethod("mockedMethod").createMock();[/java]</p>
+<p>Keep in mind that the final classes are not supported and that the final methods are not mocked.</p>
+<!--nextpage-->
+
+<h4>6. Conclusion</h4>
+
+<p>So, we have seen all the features of EasyMock to create mock objects for unit tests. Like you've seen, it's a really simple but powerful way to verify the behaviour of an object depending on an other. There are others libraries for mock objects like JMock, JMockit or Mockito, but personally, i think EasyMock is most comfortable to use and give all the features i need to make my own unit tests. That's why i choose this library to make this article.</p>
+<p>I hope this article has interested you. Don't hesitate to comment it ;)</p></div>
+    </div>
+    </div>
+    
+        <ul class="pager">
+            <li class="previous">
+                <a href="welcome-to-my-new-website.html" rel="prev">← Previous post</a>
+            </li>
+            <li class="next">
+                <a href="bundle-non-osgi-dependencies-maven.html" rel="next">Next post →</a>
+            </li>
+        </ul>
+
+        
+        
+        <div id="disqus_thread"></div>
+        <script>
+        var disqus_shortname ="nikolademo",
+            disqus_url="http://www.baptiste-wicht.com/posts/2010/03/mock-objects-easymock.html",
+        disqus_title="Mock objects with EasyMock",
+        disqus_identifier="cache/posts/2010/03/mock-objects-easymock.html",
+        disqus_config = function () {
+            this.language = "en";
+        };
+        (function() {
+            var dsq = document.createElement('script'); dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink" rel="nofollow">Comments powered by <span class="logo-disqus">Disqus</span></a>
+
+
+    
+
+    </article>
+
+        </div>
+        <!--End of body content-->
+
+        <footer>
+            Contents © 2014         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         
+        </footer>
+    </div>
+</div>
+
+
+            <script src="../../../assets/js/all-nocdn.js" type="text/javascript"></script>
+
+
+    
+<!-- Social buttons -->
+<div id="addthisbox" class="addthis_toolbox addthis_peekaboo_style addthis_default_style addthis_label_style addthis_32x32_style">
+<a class="addthis_button_more">Share</a>
+<ul><li><a class="addthis_button_facebook"></a>
+</li><li><a class="addthis_button_google_plusone_share"></a>
+</li><li><a class="addthis_button_linkedin"></a>
+</li><li><a class="addthis_button_twitter"></a>
+</li></ul>
+</div>
+<script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-4f7088a56bb93798"></script>
+<!-- End of social buttons -->
+
+
+    <script type="text/javascript">jQuery("a.image-reference").colorbox({rel:"gal",maxWidth:"100%",maxHeight:"100%",scalePhotos:true});</script>
+    
+
+</body>
+</html>

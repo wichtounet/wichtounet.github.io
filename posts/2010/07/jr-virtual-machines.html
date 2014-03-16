@@ -1,0 +1,220 @@
+<!DOCTYPE html><html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Baptiste Wicht">
+    <title>JR Virtual machines | @Blog("Baptiste Wicht")</title>
+    
+            <link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
+      <link rel="canonical" href="http://www.baptiste-wicht.com/posts/2010/07/jr-virtual-machines.html">
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js" type="text/javascript"></script>
+    <![endif]-->
+            <link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
+
+    
+
+
+
+
+
+    
+</head>
+<body>
+<!-- Menubar -->
+
+<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    <div class="container-fluid"><!-- This keeps the margins nice -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="http://www.baptiste-wicht.com/">@Blog("Baptiste Wicht")</a>
+        </div><!-- /.navbar-header -->
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+            <ul class="nav navbar-nav">
+                
+                <li><a href="../../../archive.html">Archives</a>
+                </li><li><a href="../../../categories/index.html">Tags</a>
+                </li><li><a href="../../../rss.xml">RSS</a>
+
+            </li></ul>
+
+            <ul class="nav navbar-nav navbar-right">
+                
+                
+                    
+    <li>
+    <a href="jr-virtual-machines.wp" id="sourcelink">Source</a>
+    </li>
+
+            </ul>
+        </div><!-- /.navbar-collapse -->
+    </div><!-- /.container-fluid -->
+</nav>
+
+<!-- End of Menubar -->
+
+<div class="container">
+    <div class="body-content">
+        <!--Body content-->
+        <div class="row">
+            
+    <article class="postbox post-text">
+    <div class="h-entry" itemscope="itemscope" itemtype="http://schema.org/Article">
+    
+    <h1 class="p-name" itemprop="headline name">JR Virtual machines</h1>
+
+    <hr>
+    <small>
+        Posted: <time class="published dt-published" datetime="2010-07-09T07:00:12+00:00" itemprop="datePublished">2010-07-09 07:00</time>
+        
+
+        
+          |  
+        More posts about 
+    <span itemprop="keywords">
+        <a class="tag p-category" href="../../../categories/concurrency.html"><span class="badge badge-info">Concurrency</span></a>
+        <a class="tag p-category" href="../../../categories/java.html"><span class="badge badge-info">Java</span></a>
+        <a class="tag p-category" href="../../../categories/java.html"><span class="badge badge-info">Java</span></a>
+        <a class="tag p-category" href="../../../categories/jr.html"><span class="badge badge-info">JR</span></a>
+    </span>
+
+
+    </small>
+    <hr>
+    <div class="e-content" itemprop="articleBody text">
+    <div><p></p><p>Until now, we've always had concurrent program working in one virtual machines, but JR provides ways to declare several virtual machines on several different physical machines. A JR Virtual Machine contains a Java Virtual Machine and a layer for the JR language. Once you created some virtual machines, you can specify where an object will be created with a variant of the new operator. After that, almost all the development is transparent. By example,  a send operation on an operation serviced by an other virtual machine is exactly the same as if there is only one virtual machine. You can do exactly the same thing. We'll see that there is some differences, but it's really easy.</p>
+<p>An important thing to remember is that all the virtual machines created contains the static part of the application. So all the static part is local to the virtual machines. This can cause really difficult bug to solve if we don't take care.</p>
+<!--more-->
+
+<p>So, now that we know the basis of the virtual machines, let's create a new virtual machine :</p>
+<p>[java]vm vm1 = new vm();[/java]</p>
+<p>That will create a new virtual machine, named vm1, on the same physical machine where the code is executed. You can also choose to create a virtual machine on an other machine :</p>
+<p>[java]vm vm2 = new wm() on "192.168.1.200"; //IP Adresse of the machine</p>
+<p>vm vm3 = new wm() on "pc12"; //Name of the machine</p>
+<p>vm vm4 = new vm() on vm3; //The machine where vm3 is located[/java]</p>
+<p>To create a virtual machine on an other machine, you need to right to connect to that computer with ssh or csh without any password. For more informations, the best is to read <a href="http://www.cs.ucdavis.edu/~olsson/research/jr/versions/2.00602/install.html">the official installation guide</a>. </p>
+<p>JR provide no way to destroy a virtual machine. Like any other objects, a vm became garbage collected when there is no reference to it and when the virtual machine is idle (all the processes are over or blocked).</p>
+<p>If you want to place an object on a virtual machine, you must define it with the remote keyword :</p>
+<p>[java]remote Person person = new remote Person();[/java]</p>
+<p>By default, the object is created on the same virtual machine where the code is executed, but you can put it in an other virtual machines :</p>
+<p>[java]remote Person person = new remote Person() on vm1;[/java]</p>
+<p>You can also combine the creation of virtual machine and remote objects in one line :</p>
+<p>[java]remote Person person = new remote Person() on new vm() on "localhost";[/java]</p>
+<p>Note that the class of any remote object must be declared public.</p>
+<p>When working with remote objects, you have access to two new predefined fields :</p>
+<p></p><ul>
+    <li><strong>this.remote</strong> : Return the remote reference of the current object</li>
+    <li><strong>vm.thisvm</strong> : Return the vm in which the current object has been created</li>
+</ul>
+<p>When you work with a single virtual machine, the parameter are always passed by value, but when you're working with remote references and several virtual machines, you cannot pass the objects by value, instead, a copy of the object is created and passed to the other virtual machines (JR use RMI and serialization to achieve that). So all the objects you pass to others virtual machines must be declared Serializable to pass through the virtual machines.</p>
+<p>There is also others aspects that is interesting to know about working with several virtual machines. First of all, the System.out and System.int streams are inherited from the initial virtual machine. So you can see that the order is not always deterministic depending on the fact on the synchronization of the different prints. The first virtual machine begin the execution in the execution directory but the other virtual machines begins the execution in the user home directory.</p>
+<p>Let's finish with a little example. By example, if we take the problem of consumer/producer we solved with Asynchronous Message Passing and we create the producer and consumer in different virtual machines, that will give us something like this : </p>
+<p>[java]class ProducerConsumer {
+    private static final int N = 12; //Number of producers and consumers</p>
+<div class="code"><pre><span class="n">private</span> <span class="k">static</span> <span class="n">op</span> <span class="kt">void</span> <span class="nf">deposit</span><span class="p">(</span><span class="n">String</span><span class="p">);</span> <span class="c1">//The channel</span>
+
+<span class="n">public</span> <span class="k">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="p">(</span><span class="n">String</span><span class="p">...</span> <span class="n">args</span><span class="p">){</span>
+    <span class="n">vm</span> <span class="n">vmConsumer</span> <span class="o">=</span> <span class="n">new</span> <span class="n">vm</span><span class="p">();</span>
+    <span class="n">vm</span> <span class="n">vmProducer</span> <span class="o">=</span> <span class="n">new</span> <span class="n">vm</span><span class="p">();</span>
+
+    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="n">N</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">){</span>
+        <span class="n">new</span> <span class="n">remote</span> <span class="n">Consumer</span><span class="p">()</span> <span class="n">on</span> <span class="n">vmConsumer</span><span class="p">;</span>
+        <span class="n">new</span> <span class="n">remote</span> <span class="n">Producer</span><span class="p">()</span> <span class="n">on</span> <span class="n">vmProducer</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="n">public</span> <span class="k">static</span> <span class="n">class</span> <span class="n">Consumer</span> <span class="p">{</span>
+    <span class="n">private</span> <span class="k">static</span> <span class="n">process</span> <span class="n">Consumer</span> <span class="p">{</span>
+        <span class="n">String</span> <span class="n">data</span><span class="p">;</span>
+        <span class="n">receive</span> <span class="nf">deposit</span><span class="p">(</span><span class="n">data</span><span class="p">);</span>
+        <span class="n">System</span><span class="p">.</span><span class="n">out</span><span class="p">.</span><span class="n">println</span><span class="p">(</span><span class="s">"Consumer "</span> <span class="o">+</span> <span class="n">data</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="n">public</span> <span class="k">static</span> <span class="n">class</span> <span class="n">Producer</span> <span class="p">{</span>
+    <span class="n">private</span> <span class="k">static</span> <span class="n">process</span> <span class="n">Producer</span> <span class="p">{</span>
+        <span class="n">send</span> <span class="n">deposit</span><span class="p">(</span><span class="s">"Producer"</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>[/java]</p>
+<p>All the consumer are created on a specified virtual machine and the producer in an other virtual machine. Here I create the two virtual machines in the same computer, but you can distribute them along several computers. </p>
+<p>Here we are !  That post will be the last of the JR set of posts. </p></div>
+    </div>
+    </div>
+    
+        <ul class="pager">
+            <li class="previous">
+                <a href="java-se-6-update-21-released.html" rel="prev">← Previous post</a>
+            </li>
+            <li class="next">
+                <a href="version-control-with-git-book-review.html" rel="next">Next post →</a>
+            </li>
+        </ul>
+
+        
+        
+        <div id="disqus_thread"></div>
+        <script>
+        var disqus_shortname ="nikolademo",
+            disqus_url="http://www.baptiste-wicht.com/posts/2010/07/jr-virtual-machines.html",
+        disqus_title="JR Virtual machines",
+        disqus_identifier="cache/posts/2010/07/jr-virtual-machines.html",
+        disqus_config = function () {
+            this.language = "en";
+        };
+        (function() {
+            var dsq = document.createElement('script'); dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink" rel="nofollow">Comments powered by <span class="logo-disqus">Disqus</span></a>
+
+
+    
+
+    </article>
+
+        </div>
+        <!--End of body content-->
+
+        <footer>
+            Contents © 2014         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         
+        </footer>
+    </div>
+</div>
+
+
+            <script src="../../../assets/js/all-nocdn.js" type="text/javascript"></script>
+
+
+    
+<!-- Social buttons -->
+<div id="addthisbox" class="addthis_toolbox addthis_peekaboo_style addthis_default_style addthis_label_style addthis_32x32_style">
+<a class="addthis_button_more">Share</a>
+<ul><li><a class="addthis_button_facebook"></a>
+</li><li><a class="addthis_button_google_plusone_share"></a>
+</li><li><a class="addthis_button_linkedin"></a>
+</li><li><a class="addthis_button_twitter"></a>
+</li></ul>
+</div>
+<script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-4f7088a56bb93798"></script>
+<!-- End of social buttons -->
+
+
+    <script type="text/javascript">jQuery("a.image-reference").colorbox({rel:"gal",maxWidth:"100%",maxHeight:"100%",scalePhotos:true});</script>
+    
+
+</body>
+</html>

@@ -1,0 +1,312 @@
+<!DOCTYPE html><html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Baptiste Wicht">
+    <title>Java 7 : The new java.util.Objects class | @Blog("Baptiste Wicht")</title>
+    
+            <link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
+      <link rel="canonical" href="http://www.baptiste-wicht.com/posts/2010/04/java-7-the-new-java-util-objects-class.html">
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js" type="text/javascript"></script>
+    <![endif]-->
+            <link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
+
+    
+
+
+
+
+
+    
+</head>
+<body>
+<!-- Menubar -->
+
+<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    <div class="container-fluid"><!-- This keeps the margins nice -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="http://www.baptiste-wicht.com/">@Blog("Baptiste Wicht")</a>
+        </div><!-- /.navbar-header -->
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+            <ul class="nav navbar-nav">
+                
+                <li><a href="../../../archive.html">Archives</a>
+                </li><li><a href="../../../categories/index.html">Tags</a>
+                </li><li><a href="../../../rss.xml">RSS</a>
+
+            </li></ul>
+
+            <ul class="nav navbar-nav navbar-right">
+                
+                
+                    
+    <li>
+    <a href="java-7-the-new-java-util-objects-class.wp" id="sourcelink">Source</a>
+    </li>
+
+            </ul>
+        </div><!-- /.navbar-collapse -->
+    </div><!-- /.container-fluid -->
+</nav>
+
+<!-- End of Menubar -->
+
+<div class="container">
+    <div class="body-content">
+        <!--Body content-->
+        <div class="row">
+            
+    <article class="postbox post-text">
+    <div class="h-entry" itemscope="itemscope" itemtype="http://schema.org/Article">
+    
+    <h1 class="p-name" itemprop="headline name">Java 7 : The new java.util.Objects class</h1>
+
+    <hr>
+    <small>
+        Posted: <time class="published dt-published" datetime="2010-04-02T06:01:28+00:00" itemprop="datePublished">2010-04-02 06:01</time>
+        
+
+        
+          |  
+        More posts about 
+    <span itemprop="keywords">
+        <a class="tag p-category" href="../../../categories/java.html"><span class="badge badge-info">Java</span></a>
+        <a class="tag p-category" href="../../../categories/java.html"><span class="badge badge-info">Java</span></a>
+        <a class="tag p-category" href="../../../categories/java-7.html"><span class="badge badge-info">Java 7</span></a>
+    </span>
+
+
+    </small>
+    <hr>
+    <div class="e-content" itemprop="articleBody text">
+    <div><p></p><p>In Java 7, we'll see a new class : <a href="http://download.java.net/jdk7/docs/api/java/util/Objects.html" target="_blank">java.util.Objects</a>. This class contains 9 static methods to work on Objects. I found these methods really useful.</p>
+<p>First, two really simple methods to assert non-null objects in getter/setter (or other methods, of course) :</p>
+<p></p><ul>
+    <li>&lt;T&gt; T <strong>nonNull</strong>(T obj) : If obj is not null, return obj else throw a NullPointerException.</li>
+    <li>&lt;T&gt; T <strong>nonNull</strong>(T obj, String message) : If obj is not null return obj else throw a customized NullPointerException with the given message</li>
+</ul>
+<!--more-->
+
+<p>Some simple examples :</p>
+<p>[java]public void setFoo(Foo foo){
+    this.foo = Objects.nonNull(foo);
+}</p>
+<p>public void setBar(Bar bar){
+    this.foo = Objects.nonNull(bar, "bar cannot be null");
+}[/java]</p>
+<p>Although simple, these methods can improve the readability of code and avoid having to write the is-null check ourselves.</p>
+<p>Then, we have two methods to compute a toString() value for Object supporting null objects :</p>
+<ul>
+    <li>String <strong>toString</strong>(Object o) : Return the toString() value of a non-null object otherwise "null".</li>
+    <li>String <strong>toString</strong>(Object o, String nullDefault) : Return the toString() value of a non-null object otherwise return nullDefault</li>
+</ul>
+
+<p>Again, this is useful for code readibility :</p>
+<p>[java]public class Bar {
+    private Foo foo;
+    private Bar parent;</p>
+<div class="code"><pre><span class="err">@</span><span class="n">Override</span>
+<span class="n">public</span> <span class="n">String</span> <span class="n">toString</span><span class="p">(){</span>
+    <span class="k">return</span> <span class="s">"Bar {foo = "</span> <span class="o">+</span> <span class="n">Objects</span><span class="p">.</span><span class="n">toString</span><span class="p">(</span><span class="n">foo</span><span class="p">)</span> <span class="o">+</span> <span class="s">", parent = "</span> <span class="o">+</span> <span class="n">Objects</span><span class="p">.</span><span class="n">toString</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="s">"no parent, orphan"</span><span class="p">)</span> <span class="o">+</span> <span class="s">"}"</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>}</p>
+<p>[/java]</p>
+<p>I think, it's a lot better than :</p>
+<p>[java]public class Bar {
+    private Foo foo;
+    private Bar parent;</p>
+<div class="code"><pre><span class="err">@</span><span class="n">Override</span>
+<span class="n">public</span> <span class="n">String</span> <span class="n">toString</span><span class="p">(){</span>
+    <span class="k">return</span> <span class="s">"Bar {foo = "</span> <span class="o">+</span> <span class="p">(</span><span class="n">foo</span> <span class="o">==</span> <span class="n">null</span> <span class="o">?</span> <span class="s">"null"</span> <span class="o">:</span> <span class="n">foo</span><span class="p">.</span><span class="n">toString</span><span class="p">())</span> <span class="o">+</span> <span class="s">", parent = "</span> <span class="o">+</span> <span class="p">(</span><span class="n">parent</span> <span class="o">==</span> <span class="n">null</span> <span class="o">?</span> <span class="s">"o parent, orphan"</span> <span class="o">:</span> <span class="n">parent</span><span class="p">.</span><span class="n">toString</span><span class="p">())</span> <span class="o">+</span> <span class="s">"}"</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>}[/java]</p>
+<p>Isn't it ?</p>
+<p>After that, we also two similar methods for hashing :</p>
+<ul>
+    <li>int <strong>hash</strong>(Object... values) : Compute a hash code for all the given values</li>
+    <li>int <strong>hashCode</strong>(Object o) : If 0 is null return 0 othewise return o.hashCode()</li>
+</ul>
+
+<p>If we take again the exemple of the Bar class. If we have to write the hashCode() method without Objects, we could do that :</p>
+<p>[java]public class Bar {
+    private Foo foo;
+    private Bar parent;</p>
+<div class="code"><pre><span class="err">@</span><span class="n">Override</span>
+<span class="n">public</span> <span class="kt">int</span> <span class="n">hashCode</span><span class="p">(){</span>
+    <span class="kt">int</span> <span class="n">result</span> <span class="o">=</span> <span class="mi">17</span><span class="p">;</span>
+
+    <span class="n">result</span> <span class="o">=</span> <span class="mi">31</span> <span class="o">*</span> <span class="n">result</span> <span class="o">+</span> <span class="p">(</span><span class="n">foo</span> <span class="o">==</span> <span class="n">null</span> <span class="o">?</span> <span class="mi">0</span> <span class="o">:</span> <span class="n">foo</span><span class="p">.</span><span class="n">hashCode</span><span class="p">());</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="mi">31</span> <span class="o">*</span> <span class="n">result</span> <span class="o">+</span> <span class="p">(</span><span class="n">parent</span> <span class="o">==</span> <span class="n">null</span> <span class="o">?</span> <span class="mi">0</span> <span class="o">:</span> <span class="n">parent</span><span class="p">.</span><span class="n">hashCode</span><span class="p">());</span>
+
+    <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>}[/java]</p>
+<p>With Java 7, we only have to do that :</p>
+<p>[java]public class Bar {
+    private Foo foo;
+    private Bar parent;</p>
+<div class="code"><pre><span class="err">@</span><span class="n">Override</span>
+<span class="n">public</span> <span class="kt">int</span> <span class="n">hashCode</span><span class="p">(){</span>
+    <span class="k">return</span> <span class="n">Objects</span><span class="p">.</span><span class="n">hash</span><span class="p">(</span><span class="n">foo</span><span class="p">,</span> <span class="n">parent</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>}[/java]</p>
+<p>And that's it :)</p>
+<p>On the same model, we've also two methods for equality checks :</p>
+<ul>
+    <li>boolean <strong>equals</strong>(Object a, Object b) : Return true if the two arguments are null or they are both not null and a.equals(b) return true, otherwise false.</li>
+    <li>boolean <strong>deepEquals</strong>(Object a, Object b) : Almost the same as the first method except that if both a and b are arrays, the equality is evaluated using Arrays.deepEquals method.</li>
+</ul>
+
+<p>Once again, that can really ease the coding of equals() methods :</p>
+<p>[java]public class Bar {
+    private Foo foo;
+    private Bar parent;</p>
+<div class="code"><pre><span class="err">@</span><span class="n">Override</span>
+<span class="n">public</span> <span class="n">boolean</span> <span class="n">equals</span><span class="p">(</span><span class="n">Object</span> <span class="n">obj</span><span class="p">){</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">obj</span> <span class="o">==</span> <span class="n">this</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">obj</span> <span class="n">instanceof</span> <span class="n">Bar</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">Bar</span> <span class="n">other</span> <span class="o">=</span> <span class="p">(</span><span class="n">Bar</span><span class="p">)</span> <span class="n">obj</span><span class="p">;</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">foo</span> <span class="o">!=</span> <span class="n">other</span><span class="p">.</span><span class="n">foo</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">foo</span> <span class="o">==</span> <span class="n">null</span> <span class="o">||</span> <span class="o">!</span><span class="n">foo</span><span class="p">.</span><span class="n">equals</span><span class="p">(</span><span class="n">other</span><span class="p">.</span><span class="n">foo</span><span class="p">))</span> <span class="p">{</span>
+                <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">parent</span> <span class="o">!=</span> <span class="n">other</span><span class="p">.</span><span class="n">parent</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">parent</span> <span class="o">==</span> <span class="n">null</span> <span class="o">||</span> <span class="o">!</span><span class="n">parent</span><span class="p">.</span><span class="n">equals</span><span class="p">(</span><span class="n">other</span><span class="p">.</span><span class="n">parent</span><span class="p">))</span> <span class="p">{</span>
+                <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>}</p>
+<p>[/java]</p>
+<p>become :</p>
+<p>[java]public class Bar {
+    private Foo foo;
+    private Bar parent;</p>
+<div class="code"><pre><span class="err">@</span><span class="n">Override</span>
+<span class="n">public</span> <span class="n">boolean</span> <span class="n">equals</span><span class="p">(</span><span class="n">Object</span> <span class="n">obj</span><span class="p">){</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">obj</span> <span class="o">==</span> <span class="n">this</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">obj</span> <span class="n">instanceof</span> <span class="n">Bar</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">Bar</span> <span class="n">other</span> <span class="o">=</span> <span class="p">(</span><span class="n">Bar</span><span class="p">)</span> <span class="n">obj</span><span class="p">;</span>
+
+        <span class="k">return</span> <span class="n">Objects</span><span class="p">.</span><span class="n">equals</span><span class="p">(</span><span class="n">foo</span><span class="p">,</span> <span class="n">other</span><span class="p">.</span><span class="n">foo</span><span class="p">)</span> <span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">amp</span><span class="p">;</span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">amp</span><span class="p">;</span> <span class="n">Objects</span><span class="p">.</span><span class="n">equals</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">other</span><span class="p">.</span><span class="n">parent</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>}</p>
+<p>[/java]</p>
+<p>Better, no ?</p>
+<p>And the last one : &lt;T&gt; int <strong>compare</strong>(T a, T b, Comparator&lt;? super T&gt; c). This method returns 0 if a == b or if both are null otherwise c.compare(a, b). The support of null is delegated to the comparator.</p>
+<p>We've covered all the features offered by this new class.</p>
+<p>Of course, there is already some methods like that in librairies like Jarkarta Commons or Google Guava, but it's always better when we doesn't have to include a library for that kind of features.</p>
+<p>I hope you found this post interesting.</p></div>
+    </div>
+    </div>
+    
+        <ul class="pager">
+            <li class="previous">
+                <a href="../03/nio-2-path-api-java-7.html" rel="prev">← Previous post</a>
+            </li>
+            <li class="next">
+                <a href="java-links-of-the-week.html" rel="next">Next post →</a>
+            </li>
+        </ul>
+
+        
+        
+        <div id="disqus_thread"></div>
+        <script>
+        var disqus_shortname ="nikolademo",
+            disqus_url="http://www.baptiste-wicht.com/posts/2010/04/java-7-the-new-java-util-objects-class.html",
+        disqus_title="Java 7 : The new java.util.Objects class",
+        disqus_identifier="cache/posts/2010/04/java-7-the-new-java-util-objects-class.html",
+        disqus_config = function () {
+            this.language = "en";
+        };
+        (function() {
+            var dsq = document.createElement('script'); dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink" rel="nofollow">Comments powered by <span class="logo-disqus">Disqus</span></a>
+
+
+    
+
+    </article>
+
+        </div>
+        <!--End of body content-->
+
+        <footer>
+            Contents © 2014         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         
+        </footer>
+    </div>
+</div>
+
+
+            <script src="../../../assets/js/all-nocdn.js" type="text/javascript"></script>
+
+
+    
+<!-- Social buttons -->
+<div id="addthisbox" class="addthis_toolbox addthis_peekaboo_style addthis_default_style addthis_label_style addthis_32x32_style">
+<a class="addthis_button_more">Share</a>
+<ul><li><a class="addthis_button_facebook"></a>
+</li><li><a class="addthis_button_google_plusone_share"></a>
+</li><li><a class="addthis_button_linkedin"></a>
+</li><li><a class="addthis_button_twitter"></a>
+</li></ul>
+</div>
+<script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-4f7088a56bb93798"></script>
+<!-- End of social buttons -->
+
+
+    <script type="text/javascript">jQuery("a.image-reference").colorbox({rel:"gal",maxWidth:"100%",maxHeight:"100%",scalePhotos:true});</script>
+    
+
+</body>
+</html>

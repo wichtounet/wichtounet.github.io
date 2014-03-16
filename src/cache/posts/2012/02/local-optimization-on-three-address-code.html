@@ -1,0 +1,174 @@
+<p><html><body><p>Some compilers are using Three-Address-Code (TAC) as an intermediate representation. This representation is very simple to understand and write. Moreover, it's easy to run some optimization on this representation.</p>
+<p>Each TAC statement has this general form : result = operand1 operator operand2</p>
+<p>For example, here are some TAC statements:</p>
+<p>[cpp]a = 1</p>
+<p>x = a * 3</p>
+<p>if x &amp;gt; a goto test</p>
+<p>param "dddd"</p>
+<p>call print</p>
+<p>test:</p>
+<p>param "asdf"</p>
+<p>call print[/cpp]</p>
+<p>In this post, we will see some of the local optimizations that can be applied on TAC. A local optimization is an optimization that is applied locally to a basic block. A basic block is a set of TAC statements that has only one entry point and one exit point. Once the first instruction of the basic block is executed, the rest of the instructions are necessarily executed exactly once. These optimizations are easy to design and implement. If you want to run global optimizations (through all the basic blocks of a function) or even Interprocedural Optimization (IPO), you will need a far more complex framework to run optimizations. I will try to write something on global optimization when I will have implemented some of them in EDDI.</p>
+<p>The goal of optimization is of course to replace some statements with more efficient statements. </p>
+<!--more-->
+
+<p>The list presented in this post is not exhaustive, this is only the optimizations that I've implemented in EDDIC, but this represent most of the local optimizations.</p>
+<p>The first three optimization techniques can be applied independently on each statement of the program. </p>
+<p></p><h3>1. Arithmetic Identities</h3></p>
+<p>The first optimization is about arithmetic identities. There are some properties in math that we can use to simplify simple TAC statement.</p>
+<p>Here are all the identities that are simplified in EDDIC:</p>
+<ul>
+    <li><em>x = a + 0</em> or <em>x = 0 + a</em> =&gt; <em>x = a</em></li>
+    <li><em>x = a - 0</em> =&gt; <em>x = a</em></li>
+    <li><em>x = 0 - a</em> =&gt; <em>x = -a</em></li>
+    <li><em>x = a - a</em> =&gt; <em>x = 0</em></li>
+    <li><em>x = a * 1</em> or <em>x = 1 * a</em> =&gt; <em>x = a</em></li>
+    <li><em>x = a * 0</em> or <em>x = 0 * a</em> =&gt; <em>x = 0</em></li>
+    <li><em>x = a * -1</em> or <em>x = -1 * a</em> =&gt; <em>x = -a</em></li>
+    <li><em>x = a / 1</em> =&gt; <em>x = a</em></li>
+    <li><em>x = a / -1</em> =&gt; <em>x = -a</em></li>
+    <li><em>x = 0 / a</em> =&gt; <em>x = 0</em></li>
+    <li><em>x = a / a</em> =&gt; <em>x = 1</em></li>
+</ul>
+
+<p>All the expressions on the right are more efficient to compute than the one on the left. </p>
+<h3>2. Reduce in strength</h3>
+
+<p>Another easy optimization is the reduction of strength of some math operations. For example, an addition is cheaper than multiplication and multiplication is cheaper than division. If your language does not have floating point math, the only reduction that can be done is this one: </p>
+<p>Here are all the identities that are simplified in EDDIC:</p>
+<ul>
+    <li><em>x = 2 * a</em> or <em>x = a * 2</em> =&gt; <em>x = a + a</em></li>
+</ul>
+
+<p>With floating point math, we can do a little better: </p>
+<ul>
+    <li><em>x = a / 2</em> =&gt; <em>x = a * 0.5</em></li>
+    <li><em>x = a / 4</em> =&gt; <em>x = a * 0.25</em></li>
+    <li>etc...</li>
+</ul>
+
+<h3>3. Constant folding</h3>
+
+<p>When both operands on the right side of the TAC statement are integers, we can replace the math operation directly by the result of the computation. </p>
+<p>With a and b being any integer, we can transform these TAC statements: </p>
+<ul>
+    <li><em>x = 1 + 2</em> =&gt; <em>x = 3</em></li>
+    <li><em>x = 3 - 1</em> =&gt; <em>x = 2</em></li>
+    <li><em>x = 3 * 2</em> =&gt; <em>x = 6</em></li>
+    <li><em>x = 5 / 2</em> =&gt; <em>x = 2</em></li>
+    <li><em>x = 5 % 2</em> =&gt; <em>x = 1</em></li>
+</ul>
+
+<p>We can also use this optimization to simplify conditional jumps. For example, <em>if 3 &gt; 2 goto B2</em> can be replaced by <em>goto B2</em>. </p>
+<p>More than being way more efficient statements, it also enables other optimization to be performed on the TAC program. </p>
+<!--nextpage-->
+
+<p>The next two optimizations cannot be made on each statement independently. They have to be made on each basic blocks. They are replacing some variables by other variables or values.  </p>
+<h3>4. Constant propagation</h3>
+
+<p>This optimization consists in replacing a variable by its constant value at each place we know it's constant. For example, this basic block: </p>
+<p>[cpp]a = 2</p>
+<p>b = c * a </p>
+<p>a = 5</p>
+<p>a = a + b</p>
+<p>c = a + 2[/cpp]</p>
+<p>can be optimized into:</p>
+<p>[cpp]a = 2</p>
+<p>b = c * 2</p>
+<p>a = 5</p>
+<p>a = 5 + b</p>
+<p>c = a + 2[/cpp]</p>
+<p>Two use of a variable have been replaced by its value. In this case, we cannot replace the last use of a because we do not know its value there. </p>
+<p>This optimization can be made using a simple algorithm on each statement of a basic block: </p>
+<ol>
+    <li>If the statement is of the form <em>x = constant</em>, c[x] = constant</li>
+    <li>If the statement is of the form <em>x = a + b, c[x] = null</em>
+    </li><li>For each variable appearing in an operand of a statement, if c[x] is not null, replace the variable by c[x]
+</li></ol>
+
+<h3>5. Copy propagation</h3>
+
+<p>Copy propagation is almost the same as constant propagation. We replace a variable by the variable it refers to. For example, we can optimize: </p>
+<p>[cpp]b = a</p>
+<p>c = b + 2[/cpp]</p>
+<p>into:</p>
+<p>[cpp]b = a</p>
+<p>c = a + 2[/cpp]</p>
+<p>The algorithm is the same as the one for constant propagation but we keep track of the variables that are assigned to a variable. </p>
+<p>These two optimizations does not create a more efficient code, but the optimized code can be optimized again. </p>
+<!--nextpage-->
+
+<h3>6. Remove assign</h3>
+
+<p>We can often find some assigns that are useless in a basic blocks. There are three types of assigns that can be removed: </p>
+<ol>
+    <li><em>x = x</em> is never useful</li>
+    <li>An assignment to a temporary variable that is not used after this assignment is not useful. A temporary is a variable created by the compiler to perform some complex expressions. They are not stored and are used only within one basic block, so its value is not useful after the basic block. 
+    </li><li>An assignment to x following another assignment to x, with no use of x between the two assignments, is not useful. 
+</li></ol>
+
+<h3>7. Remove temporaries</h3>
+
+<p>When compiling some expression, we often generate this kind of code: </p>
+<p>[cpp]t1 = a + b</p>
+<p>x = t1[/cpp]</p>
+<p>We can simplify this code into: </p>
+<p>[cpp]x = a + b[/cpp]</p>
+<p>For that optimization, we can apply a more complex propagation. For each assignment to a temporary, we store the right side of the assignment. Then, for each assignment of a temporary to another variable (<em>x = t1</em>) if this use of the temporary is the only one, we replace the right side by the right side of the assignment to the temporary. </p>
+<h3>8. Remove needless jumps</h3>
+
+<p>We can also find some jumps from basic blocks to basic that are not useful. A jump (conditional or not) to the next basic blocks is not useful. If we have two basic blocks: </p>
+<p>[cpp]B1:</p>
+<p>a = 2</p>
+<p>goto B2</p>
+<p>B2: </p>
+<p>b = a[/cpp]</p>
+<p>we can optimize into: </p>
+<p>[cpp]B1:</p>
+<p>a = 2</p>
+<p>B2: </p>
+<p>b = a[/cpp]</p>
+<p>For that optimization, we have to test each jump for the distance of the target block. If the distance is only one, we can remove the jump. This works also for conditional jumps. A conditional has two exit points. If the condition is true, we jump to the specified block, otherwise we jump to the next block. If the target block is the next one, the effect is the same has a non-conditional jump and then can be removed. </p>
+<!--nextpage-->
+
+<p>The last two optimizations are not really local, but are simple versions of global optimizations. There are not as powerful as they are not following a data-flow, but they can be greatly improve the efficiency of some function, even if they don't have the power of the equivalent global optimization.  </p>
+<h3>9. Remove dead basic blocks</h3>
+
+<p>Sometimes after having simplified some conditional jumps into simple jumps or even removed some of them, some basic blocks are not reachable. For example, this set of basic block:</p>
+<p>[cpp]B1:</p>
+<p>a = 2</p>
+<p>goto B3</p>
+<p>B2: </p>
+<p>b = a</p>
+<p>B3:</p>
+<p>b = 33[/cpp]</p>
+<p>can be optimized into:</p>
+<p>[cpp]B1:</p>
+<p>a = 2</p>
+<p>goto B3</p>
+<p>B3:</p>
+<p>b = 33[/cpp]</p>
+<p>There are no general algorithm for applying that. It depends on the instruction set that you TAC language has. </p>
+<h3>10. Merge basic blocks</h3>
+
+<p>Finally, another optimization, not really local again, is to merge some basic blocks. After the basic blocks have been optimized, we often have some blocks that are redundant. For example: </p>
+<p>[cpp]B1:</p>
+<p>a = 2</p>
+<p>B2: </p>
+<p>b = a[/cpp]</p>
+<p>can be optimized into:</p>
+<p>[cpp]B1:</p>
+<p>a = 2</p>
+<p>b = a[/cpp]</p>
+<p>Of course, the second basic block that is merged with the first one must not be referred by a jump. </p>
+<!--nextpage-->
+
+<h3>Optimization passes</h3>
+
+<p>When you have ten optimization techniques, you will have to find a way to make them interact correctly. As you certainly saw on the examples, some of the optimized sample can be optimized again with another optimization. </p>
+<p>There are no general algorithm to make all optimization techniques work together in an optimal way. I chose a simple technique in EDDI. All the techniques are run on the complete code one after another. Then, if one or more techniques have had an effect on the program, we run again all the optimization techniques. So the optimizations run until there are no more changes to the program. </p>
+<h3>Conclusion</h3>
+
+<p>By using all the techniques described in this post, you will be able to have an efficient code. It won't be as good as with local optimization coupled to global optimization, but it's a good start for a simple compiler. </p>
+<p>I hope I will have the time to implement some global optimization techniques into eddic and then write about it on this blog. </body></html></p>

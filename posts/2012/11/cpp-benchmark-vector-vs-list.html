@@ -1,0 +1,348 @@
+<!DOCTYPE html><html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Baptiste Wicht">
+    <title>C++ benchmark - std::vector VS std::list | @Blog("Baptiste Wicht")</title>
+    
+            <link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
+      <link rel="canonical" href="http://www.baptiste-wicht.com/posts/2012/11/cpp-benchmark-vector-vs-list.html">
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js" type="text/javascript"></script>
+    <![endif]-->
+            <link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
+
+    
+
+
+
+
+
+    
+</head>
+<body>
+<!-- Menubar -->
+
+<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    <div class="container-fluid"><!-- This keeps the margins nice -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="http://www.baptiste-wicht.com/">@Blog("Baptiste Wicht")</a>
+        </div><!-- /.navbar-header -->
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+            <ul class="nav navbar-nav">
+                
+                <li><a href="../../../archive.html">Archives</a>
+                </li><li><a href="../../../categories/index.html">Tags</a>
+                </li><li><a href="../../../rss.xml">RSS</a>
+
+            </li></ul>
+
+            <ul class="nav navbar-nav navbar-right">
+                
+                
+                    
+    <li>
+    <a href="cpp-benchmark-vector-vs-list.wp" id="sourcelink">Source</a>
+    </li>
+
+            </ul>
+        </div><!-- /.navbar-collapse -->
+    </div><!-- /.container-fluid -->
+</nav>
+
+<!-- End of Menubar -->
+
+<div class="container">
+    <div class="body-content">
+        <!--Body content-->
+        <div class="row">
+            
+    <article class="postbox post-text">
+    <div class="h-entry" itemscope="itemscope" itemtype="http://schema.org/Article">
+    
+    <h1 class="p-name" itemprop="headline name">C++ benchmark - std::vector VS std::list</h1>
+
+    <hr>
+    <small>
+        Posted: <time class="published dt-published" datetime="2012-11-26T08:47:35+00:00" itemprop="datePublished">2012-11-26 08:47</time>
+        
+
+        
+          |  
+        More posts about 
+    <span itemprop="keywords">
+        <a class="tag p-category" href="../../../categories/benchmarks.html"><span class="badge badge-info">Benchmarks</span></a>
+        <a class="tag p-category" href="../../../categories/c.html"><span class="badge badge-info">C++</span></a>
+        <a class="tag p-category" href="../../../categories/c.html"><span class="badge badge-info">C++</span></a>
+        <a class="tag p-category" href="../../../categories/c11.html"><span class="badge badge-info">C++11</span></a>
+        <a class="tag p-category" href="../../../categories/performances.html"><span class="badge badge-info">Performances</span></a>
+    </span>
+
+
+    </small>
+    <hr>
+    <div class="e-content" itemprop="articleBody text">
+    <div><p></p><strong>A updated version of this article is available: <a title="C++ benchmark – std::vector VS std::list VS std::deque" href="http://www.baptiste-wicht.com/2012/12/cpp-benchmark-vector-list-deque/">C++ benchmark – std::vector VS std::list VS std::deque</a></strong>
+<p>In C++, the two most used data structures are the std::vector and the std::list. In this article, we will compare the performance in practice of these two data structures on several different workloads. In this article, when I talk about a list it is the std::list implementation and vector refers to the std::vector implementation.</p>
+<p>It is generally said that a list should be used when random insert and remove will be performed (performed in O(1) versus O(n) for a vector). If we look only at the complexity, search in both data structures should be roughly equivalent, complexity being in O(n). When random insert/replace operations are performed on a vector, all the subsequent data needs to be moved and so each element will be copied. That is why the size of the data type is an important factor when comparing those two data structures.</p>
+<p>However, in practice, there is a huge difference, the usage of the memory caches. All the data in a vector is contiguous where the std::list allocates separately memory for each element. How does that change the results in practice ?</p>
+<p>Keep in mind that all the tests performed are made on vector and list even if other data structures could be better suited to the given workload.</p>
+<p>In the graphs and in the text, <em>n</em> is used to refer to the number of elements of the collection.</p>
+<p>All the tests performed have been performed on an Intel Core i7 Q 820  @ 1.73GHz. The code has been compiled in 64 bits with GCC 4.7.2 with -02 and -march=native. The code has been compiled with C++11 support (-std=c++11).</p>
+<h3>Fill</h3>
+
+<p>The first test that is performed is to fill the data structures by adding elements to the back of the container. Two variations of vector are used, vector_pre being a std::vector with the size passed in parameters to the constructor, resulting in only one allocation of memory.</p>
+<p>[line_chart title="Fill (8 bytes)" v_title="Milliseconds" width="600px" height="400px" scale_button="true"]</p>
+<p>['x','vector_pre','vector','list'],</p>
+<p>['1000',0,0,1],</p>
+<p>['10000',0,1,10],</p>
+<p>['100000',4,11,100],</p>
+<p>['1000000',7,234,1023]</p>
+<p>[/line_chart]</p>
+<p>[line_chart title="Fill (1024 bytes)" v_title="Milliseconds" width="600px" height="400px" scale_button="true"]</p>
+<p>['x','vector_pre','vector','list'],</p>
+<p>['1000',0,9,1],</p>
+<p>['10000',12,245,18],</p>
+<p>['100000',949,2635,1153],</p>
+<p>['1000000',9138,23654,11270]</p>
+<p>[/line_chart]</p>
+<p>All data structures are impacted the same way when the data size increases, because there will be more memory to allocate. The vector_pre is clearly the winner of this test, being one order of magnitude faster than a list and about twice faster than a vector without pre-allocation. The result are directly linked to the allocations that have to be performed, allocation being slow. Whatever the data size is, push_back to a vector will always be faster than to a list. This is logical becomes vector allocates more memory than necessary and so does not need to allocate memory for each element.</p>
+<p>But this test is not very interesting, generally building the data structure is not critical. What is critical is the operations that are performed on the data structure. That will be tested in the next sections.</p>
+<!--nextpage-->
+
+<h3>Random Find</h3>
+
+<p>The first operation is that is tested is the search. The container is filled with all the numbers in [0, N] and shuffled. Then, each number in [0,N] is searched in the container with std::find that performs a simple linear search.</p>
+<p>[line_chart title="Find (8 bytes)" v_title="Microseconds" width="600px" height="400px" scale_button="true"]</p>
+<p>['x','vector','list'],</p>
+<p>['100',0,11],</p>
+<p>['1000',0,1545],</p>
+<p>['5000',0,35886],</p>
+<p>['10000',0,150865],</p>
+<p>['20000',0,614496]</p>
+<p>[/line_chart]</p>
+<p>Yes, vector is present in the graph, its line is the same as the x line ! Performing a <strong>linear search in a vector is several orders of magnitude faster than in a list</strong>.</p>
+<p>The only reason is the usage of the cache line. When a data is accessed, the data is fetched from the main memory to the cache. Not only the accessed data is accessed, but a whole cacheline is fetched. As the elements in a vector are contiguous, when you access an element, the next element is automatically in the cache. As the main memory is orders of magnitude slower than the cache, this makes a huge difference. In the list case, the processor spends its whole time waiting for data being fetched from memory to the cache.</p>
+<p>If we augment the size of the data type to 1KB, the results remain the same, but slower:</p>
+<p>[line_chart title="Find (1024 bytes)" v_title="Microseconds" width="600px" height="400px" scale_button="true"]</p>
+<p>['x','vector','list'],</p>
+<p>['100', 0, 11],</p>
+<p>['1000', 0, 3551],</p>
+<p>['5000', 0, 195429],</p>
+<p>['10000', 0, 829631],</p>
+<p>['20000', 0, 3356432]</p>
+<p>[/line_chart]</p>
+<!--nextpage-->
+
+<h3>Random Insert</h3>
+
+<p>In the case of random insert, in theory, the list should be much faster, its insert operation being in O(1) versus O(n) for a vector.</p>
+<p>The container is filled with all the numbers in [0, N] and shuffled. Then, 1000 random values are inserted at a random position in the container. The random position is found by linear search. In both cases, the complexity of the search is O(n), the only difference comes from the insert that follow the search.</p>
+<p>[line_chart title="Insert (8 bytes)" v_title="Milliseconds" width="600px" height="400px" scale_button="true"]</p>
+<p>['x','vector','list'],</p>
+<p>['1000', 9, 85],</p>
+<p>['2000', 9, 85],</p>
+<p>['4000', 10, 94],</p>
+<p>['6000', 12, 98],</p>
+<p>['8000', 13, 106],</p>
+<p>['10000', 14, 106]</p>
+<p>[/line_chart]</p>
+<p>When, the vector should be slower than the list, it is almost an order of magnitude faster. Again, this is because finding the position in a list is much slower than copying a lot of small elements.</p>
+<p>If we increase the size:</p>
+<p>[line_chart title="Insert (32 bytes)" v_title="Milliseconds" width="600px" height="400px" scale_button="true"]</p>
+<p>['x','vector','list'],</p>
+<p>['1000', 27, 120],</p>
+<p>['2000', 30, 113],</p>
+<p>['4000', 34, 122],</p>
+<p>['6000', 37, 140],</p>
+<p>['8000', 42, 145],</p>
+<p>['10000', 47, 155]</p>
+<p>[/line_chart]</p>
+<p>The two lines are getting closer, but vector is still faster.</p>
+<p>Increase it to 1KB:</p>
+<p>[line_chart title="Insert (1024 bytes)" v_title="Milliseconds" width="600px" height="400px" scale_button="true"]</p>
+<p>['x','vector','list'],</p>
+<p>['1000', 1821, 167],</p>
+<p>['2000', 1941, 163],</p>
+<p>['4000', 2383, 191],</p>
+<p>['6000', 2679, 207],</p>
+<p>['8000', 2960, 214],</p>
+<p>['10000', 3308, 228]</p>
+<p>[/line_chart]</p>
+<p>This time, list outperforms vector by an order of magnitude ! The performance of random insert in a list are not impacted much by the size of the data type, where vector suffers a lot when big sizes are used. We can also see that list doesn't seem to care about the size of the collection. It is because the size of the collection only impact the search and not the insertion and as few search are performed, it does not change the results a lot.</p>
+<p>If the iterator was already known (no need for linear search), it would be faster to insert into a list than into the vector.</p>
+<h3>Random Remove</h3>
+
+<p>In theory, random remove is the same case than random insert. Now that we've seen the results with random insert, we could expect the same behavior for random remove.</p>
+<p>The container is filled with all the numbers in [0, N] and shuffled. Then, 1000 random values are removed from a random position in the container.</p>
+<p>[line_chart title="Remove (8 bytes)" v_title="Milliseconds" width="600px" height="400px" scale_button="true"]</p>
+<p>['x','vector','list'],</p>
+<p>['1000', 0, 0],</p>
+<p>['2000', 12, 51],</p>
+<p>['4000', 55, 167],</p>
+<p>['6000', 76, 290],</p>
+<p>['8000', 111, 470],</p>
+<p>['10000', 131, 725]</p>
+<p>[/line_chart]</p>
+<p>Again, vector is several times faster and looks to scale better. Again, this is because it is very cheap to copy small elements.</p>
+<p>Let's increase it directly to 1KB element.</p>
+<p>[line_chart title="Remove (1024 bytes)" v_title="Milliseconds" width="600px" height="400px" scale_button="true"]</p>
+<p>['x','vector','list'],</p>
+<p>['1000', 428, 26],</p>
+<p>['2000', 1452, 137],</p>
+<p>['4000', 3469, 403],</p>
+<p>['6000', 5592, 774],</p>
+<p>['8000', 11275, 1107],</p>
+<p>['10000', 20687, 1473]</p>
+<p>[/line_chart]</p>
+<p>The two lines have been reversed !</p>
+<p>The behavior of random remove is the same as the behavior of random insert, for the same reasons.</p>
+<!--nextpage-->
+
+<h3>Push Front</h3>
+
+<p>The next operation that we will compare is inserting elements in front of the collection. This is the worst case for vector, because after each insertion, all the previously inserted will be moved and copied. For a list, it does not make a difference compared to pushing to the back.</p>
+<p>[line_chart title="Push front (8 bytes)" v_title="Milliseconds" width="600px" height="400px" scale_button="true"]</p>
+<p>['x','vector','list'],</p>
+<p>['100', 0, 0],</p>
+<p>['1000', 0, 0],</p>
+<p>['10000', 40, 0],</p>
+<p>['50000', 949, 2],</p>
+<p>['100000', 3937, 4],</p>
+<p>['200000', 16003, 9],</p>
+<p>['300000', 42393, 12]</p>
+<p>[/line_chart]</p>
+<p>The results are crystal-clear and as expected. vector is very bad at inserting elements to the front. This does not need further explanations. There is no need to change the data size, it will only make vector much slower.</p>
+<h3>Sort</h3>
+
+<p>The next operation that is tested is the performance of sorting a vector or a list. For a vector std::sort is used and for a list the member function sort is used.</p>
+<p>[line_chart title="Sort (8 bytes)" v_title="Milliseconds" width="600px" height="400px" scale_button="true"]</p>
+<p>['x','vector','list'],</p>
+<p>['1000', 0, 0],</p>
+<p>['10000', 2, 26],</p>
+<p>['100000', 163, 684],</p>
+<p>['1000000', 2147, 15950],</p>
+<p>[/line_chart]</p>
+<p>We can see that sorting a list is several times slower. It comes from the poor usage of the cache.</p>
+<p>If we increase the size of the element to 1KB:</p>
+<p>[line_chart title="Sort (1024 bytes)" v_title="Milliseconds" width="600px" height="400px" scale_button="true"]</p>
+<p>['x','vector','list'],</p>
+<p>['1000', 2, 0],</p>
+<p>['10000', 224, 50],</p>
+<p>['100000', 4289, 1083],</p>
+<p>['1000000', 50973, 17975],</p>
+<p>[/line_chart]</p>
+<p>This time the list is faster than the vector. It is not very clear on the graph, but the values for the list are almost the same as for the previous results. That is because std::list::sort() does not perform any copy, only pointers to the elements are changed. On the other hand, swapping two elements in a vector involves at least three copies, so the cost of sorting will increase as the cost of copying increases.</p>
+<!--nextpage-->
+
+<h3>Number Crunching</h3>
+
+<p>Finally, we can also test a number crunching operation. Here, random elements are inserted into the container that is kept sorted. It means, that the position where the element has to be inserted is first searched by iterating through elements and the inserted. As we talk about number crunching, only 8 bytes elements are tested.</p>
+<p>[line_chart title="Random Sorted Insert (8 bytes)" v_title="Milliseconds" width="600px" height="400px" scale_button="true"]</p>
+<p>['x','vector','list'],</p>
+<p>['1000', 0, 0],</p>
+<p>['10000', 45, 166],</p>
+<p>['50000', 928, 10665],</p>
+<p>['100000', 3753, 50766],</p>
+<p>['200000', 15185, 231480],</p>
+<p>['300000', 34293, 715892]</p>
+<p>[/line_chart]</p>
+<p>We can clearly see that vector is more than an order of magnitude faster than list and this will only be more as the size of the collection increase. This is because traversing the list is much more expensive than copying the elements of the vector.</p>
+<h3>Conclusion</h3>
+
+<p>To conclude, we can get some facts about each data structure:</p>
+<ul>
+    <li>std::vector is insanely faster than std::list to find an element</li>
+    <li>std::vector performs always faster than std::list with very small data</li>
+    <li>std::vector is always faster to push elements at the back than std::list</li>
+    <li>std::list handles very well large elements, especially for sorting or inserting in the front</li>
+</ul>
+
+<p>This draw simple conclusions on usage of each data structure:</p>
+<ul>
+    <li>Number crunching: use std::vector</li>
+    <li>Linear search: use std::vector</li>
+    <li>Random Insert/Remove: use std::list (if data size very small (&lt; 64B on my computer), use std::vector)</li>
+    <li>Big data size: use std::list (not if intended for searching)</li>
+</ul>
+
+<p>If you have the time, in practice, the best way to decide is always to benchmark both versions, or even to try another data structures.</p>
+<p>I hope that you found this article interesting. If you have any comment or have an idea about an other workload that you would like to test, don't hesitate to post a comment ;) If you have a question on results, don't hesitate as well.</p>
+<p>The code source of the benchmark is available online: <a title="Source code of the benchmark" href="https://github.com/wichtounet/articles/blob/master/src/vector_list/bench.cpp">https://github.com/wichtounet/articles/blob/master/src/vector_list/bench.cpp</a></p></div>
+    </div>
+    </div>
+    
+        <ul class="pager">
+            <li class="previous">
+                <a href="gcc-4-7-clang-3-1-eddic.html" rel="prev">← Previous post</a>
+            </li>
+            <li class="next">
+                <a href="../12/cpp-benchmark-vector-list-deque.html" rel="next">Next post →</a>
+            </li>
+        </ul>
+
+        
+        
+        <div id="disqus_thread"></div>
+        <script>
+        var disqus_shortname ="nikolademo",
+            disqus_url="http://www.baptiste-wicht.com/posts/2012/11/cpp-benchmark-vector-vs-list.html",
+        disqus_title="C++ benchmark - std::vector VS std::list",
+        disqus_identifier="cache/posts/2012/11/cpp-benchmark-vector-vs-list.html",
+        disqus_config = function () {
+            this.language = "en";
+        };
+        (function() {
+            var dsq = document.createElement('script'); dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink" rel="nofollow">Comments powered by <span class="logo-disqus">Disqus</span></a>
+
+
+    
+
+    </article>
+
+        </div>
+        <!--End of body content-->
+
+        <footer>
+            Contents © 2014         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         
+        </footer>
+    </div>
+</div>
+
+
+            <script src="../../../assets/js/all-nocdn.js" type="text/javascript"></script>
+
+
+    
+<!-- Social buttons -->
+<div id="addthisbox" class="addthis_toolbox addthis_peekaboo_style addthis_default_style addthis_label_style addthis_32x32_style">
+<a class="addthis_button_more">Share</a>
+<ul><li><a class="addthis_button_facebook"></a>
+</li><li><a class="addthis_button_google_plusone_share"></a>
+</li><li><a class="addthis_button_linkedin"></a>
+</li><li><a class="addthis_button_twitter"></a>
+</li></ul>
+</div>
+<script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-4f7088a56bb93798"></script>
+<!-- End of social buttons -->
+
+
+    <script type="text/javascript">jQuery("a.image-reference").colorbox({rel:"gal",maxWidth:"100%",maxHeight:"100%",scalePhotos:true});</script>
+    
+
+</body>
+</html>

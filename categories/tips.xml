@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>@Blog("Baptiste Wicht") (Tips)</title><link>http://www.baptiste-wicht.com/</link><description></description><atom:link href="http://www.baptiste-wicht.com/categories/tips.xml" type="application/rss+xml" rel="self"></atom:link><language>en</language><lastBuildDate>Sun, 16 Mar 2014 17:07:37 GMT</lastBuildDate><generator>Nikola &lt;http://getnikola.com/&gt;</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>Gentoo Tips: Avoid Gnome 3.8 from being emerged automatically</title><link>http://www.baptiste-wicht.com/posts/2013/12/gentoo-tips-avoid-gnome-3-8-emerged-automatically.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;Since Gnome 3.8 has been out in the portage tree, a lot of problems arise when you try to emerge something. If it was only when you update the system, it would be OK, but this arises every time you try to install something.&lt;/p&gt;
+&lt;p&gt;For instance, if I try to update vim on my system, it tries to update empathy to version 3.8 and then pulls some other dependencies causing blocks and other USE problems. I personally don't think empathy should be emerged when emerging vim. Fortunately, you can disable this behavior by using emerge in this way:&lt;/p&gt;
+&lt;p&gt;[code]emerge --ignore-built-slot-operator-deps=y ...[/code]&lt;/p&gt;
+&lt;p&gt;With that, when you emerge vim, it doesn't emerge Gnome 3.8. It is very useful if you want to stay with Gnome 3.6 for the moment.&lt;/p&gt;
+&lt;p&gt;I already used this tip several times. I hope that this will be useful to other people.&lt;/p&gt;&lt;/div&gt;</description><category>Gentoo</category><category>Gentoo</category><category>Linux</category><category>Tips</category><guid>http://www.baptiste-wicht.com/posts/2013/12/gentoo-tips-avoid-gnome-3-8-emerged-automatically.html</guid><pubDate>Sat, 07 Dec 2013 06:24:17 GMT</pubDate></item><item><title>Git Tip : Restore a deleted tag</title><link>http://www.baptiste-wicht.com/posts/2011/06/git-tip-restore-a-deleted-tag.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;A little tip that can be very useful, how to restore a deleted Git tag. &lt;/p&gt;
+&lt;p&gt;If you juste deleted a tag by error, you can easily restore it following these steps. First, use&lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;pre&gt;git fsck --unreachable | grep tag&lt;/pre&gt;
+&lt;p&gt;then, you will see the unreachable tag. If you have several tags on the list, use &lt;/p&gt;
+&lt;pre&gt;git show KEY&lt;/pre&gt;
+
+&lt;p&gt;to found the good tag and finally, when you know which tag to restore, use&lt;/p&gt;
+&lt;pre&gt;git update-ref refs/tags/NAME KEY&lt;/pre&gt;
+
+&lt;p&gt;and the previously deleted tag with restore with NAME. &lt;/p&gt;
+&lt;p&gt;Thanks to &lt;a href="http://git.661346.n2.nabble.com/template/NamlServlet.jtp?macro=user_nodes&amp;amp;user=177109"&gt;Shawn Pearce&lt;/a&gt; for the tip.&lt;/p&gt;&lt;/div&gt;</description><category>Git</category><category>Others</category><category>Tips</category><guid>http://www.baptiste-wicht.com/posts/2011/06/git-tip-restore-a-deleted-tag.html</guid><pubDate>Wed, 15 Jun 2011 19:18:13 GMT</pubDate></item><item><title>How to solve scrolling problems in Kile when using Gnome</title><link>http://www.baptiste-wicht.com/posts/2011/05/avoid-scrolling-problems-in-kile-when-using-gnome.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;From this morning, I was encoutering problems when scrolling in Kile editor using Gnome. When I scrolled, not all the lines were moving and the text was only correct when I clicked on them... &lt;/p&gt;
+&lt;p&gt;After some researches, I found that the solution was to use a different graphics system. You can do that in any Qt applicaitions using the graphics-system command line option. You can choose between raster and opengl. opengl is supposed to be the fastest one, but it is still experimental. In my case, I use raster that solve the scrolling problems and it doesn't change anything, which is fine. &lt;/p&gt;
+&lt;p&gt;So you can use this command-line to start Kile : &lt;/p&gt;
+&lt;p&gt;&lt;code&gt;kile --graphicssystem raster&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;And that will solve your scrolling problems if you encounter some. You can also use this tip to improve performances of Kile if you need. If you do, test with opengl and if it's not stable on your system, choose raster, that will improve the performance compared to the default graphics system. &lt;/p&gt;&lt;/div&gt;</description><category>Latex</category><category>Tips</category><category>Ubuntu</category><category>Ubuntu</category><guid>http://www.baptiste-wicht.com/posts/2011/05/avoid-scrolling-problems-in-kile-when-using-gnome.html</guid><pubDate>Tue, 31 May 2011 08:40:05 GMT</pubDate></item><item><title>Swing tip : A better SwingWorker without exception swallowing</title><link>http://www.baptiste-wicht.com/posts/2010/09/a-better-swingworker.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;When we develop Swing applications, SwingWorker are very helpful. But there is a big disadvantage using this class. if you don't call get() in the done method, you will lose all the exceptions that the computation in the doInBackground() has thrown. And you action can stop and you will never see why. In 95% of my actions using SwingWorker, the doInBackground() return nothing.&lt;/p&gt;
+&lt;p&gt;Jonathan Giles has presented on his blog a good solution to solve this exception swallowing. In my side, I've often something to do in the EDT before the doInBackground() run, so I've made the changes on the code presented by Jonathan and it gave me that simple class that I found better than the SwingWorker :&lt;/p&gt;
+&lt;p&gt;[java]public abstract class BetterSwingWorker {
+    private final SwingWorker&amp;lt;Void, Void&amp;gt; worker = new SimpleSwingWorker();&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;execute&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="n"&gt;SwingUtilities&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;invokeLater&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;new&lt;/span&gt; &lt;span class="n"&gt;Runnable&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="err"&gt;@&lt;/span&gt;&lt;span class="n"&gt;Override&lt;/span&gt;
+        &lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;run&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+            &lt;span class="n"&gt;before&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+        &lt;span class="p"&gt;}&lt;/span&gt;
+    &lt;span class="p"&gt;});&lt;/span&gt;
+
+    &lt;span class="n"&gt;worker&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;execute&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="n"&gt;protected&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;before&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="c1"&gt;//Nothing by default&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="n"&gt;protected&lt;/span&gt; &lt;span class="n"&gt;abstract&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;doInBackground&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="n"&gt;throws&lt;/span&gt; &lt;span class="n"&gt;Exception&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+&lt;span class="n"&gt;protected&lt;/span&gt; &lt;span class="n"&gt;abstract&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;done&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+
+&lt;span class="n"&gt;private&lt;/span&gt; &lt;span class="n"&gt;class&lt;/span&gt; &lt;span class="n"&gt;SimpleSwingWorker&lt;/span&gt; &lt;span class="n"&gt;extends&lt;/span&gt; &lt;span class="n"&gt;SwingWorker&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;Void&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;Void&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="err"&gt;@&lt;/span&gt;&lt;span class="n"&gt;Override&lt;/span&gt;
+    &lt;span class="n"&gt;protected&lt;/span&gt; &lt;span class="n"&gt;Void&lt;/span&gt; &lt;span class="n"&gt;doInBackground&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="n"&gt;throws&lt;/span&gt; &lt;span class="n"&gt;Exception&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="n"&gt;BetterSwingWorker&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;this&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;doInBackground&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+
+        &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;null&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+
+    &lt;span class="err"&gt;@&lt;/span&gt;&lt;span class="n"&gt;Override&lt;/span&gt;
+    &lt;span class="n"&gt;protected&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;done&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="n"&gt;try&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+            &lt;span class="n"&gt;get&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+        &lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="n"&gt;catch&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;final&lt;/span&gt; &lt;span class="n"&gt;InterruptedException&lt;/span&gt; &lt;span class="n"&gt;ex&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+            &lt;span class="n"&gt;throw&lt;/span&gt; &lt;span class="n"&gt;new&lt;/span&gt; &lt;span class="n"&gt;RuntimeException&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;ex&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+        &lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="n"&gt;catch&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;final&lt;/span&gt; &lt;span class="n"&gt;ExecutionException&lt;/span&gt; &lt;span class="n"&gt;ex&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+            &lt;span class="n"&gt;throw&lt;/span&gt; &lt;span class="n"&gt;new&lt;/span&gt; &lt;span class="n"&gt;RuntimeException&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;ex&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;getCause&lt;/span&gt;&lt;span class="p"&gt;());&lt;/span&gt;
+        &lt;span class="p"&gt;}&lt;/span&gt;
+
+        &lt;span class="n"&gt;BetterSwingWorker&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;this&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;done&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/java]&lt;/p&gt;
+&lt;p&gt;You can use it as the default SwingWorker. You must implement the doInBackground() and done() methods and you can, only if you want, override the before() method that is invoked in the EDT at the start of the process. And then, you can execute your SwingWorker using execute(). &lt;/p&gt;
+&lt;p&gt;I hope this little class can be useful to somebody. &lt;/p&gt;
+&lt;p&gt;&lt;a title="A SwingWorker that doesn’t swallow exceptions" href="http://jonathangiles.net/blog/?p=341" target="_blank"&gt;Source for the non-swallowing swingworker.&lt;/a&gt;&lt;/p&gt;&lt;/div&gt;</description><category>Java</category><category>Java</category><category>Swing</category><category>Tips</category><guid>http://www.baptiste-wicht.com/posts/2010/09/a-better-swingworker.html</guid><pubDate>Fri, 24 Sep 2010 07:36:55 GMT</pubDate></item><item><title>Tip : Batch resize images on Ubuntu Linux</title><link>http://www.baptiste-wicht.com/posts/2010/09/tip-batch-resize-images-on-ubuntu-linux.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;After needing to &lt;a href="http://www.baptiste-wicht.com/2010/07/tip-optimize-images-on-ubuntu-linux/" target="_blank"&gt;optimize a lot of images at once&lt;/a&gt;, this weekend I needed to resize a lot of images to the same size because they were too big.&lt;/p&gt;
+&lt;p&gt;Like every other thing in Linux, there is a really simple tool to automate that. I used imagemagick to do that. Of course, there is certainly a lot of other things to make that work, but this is the first I've found and it works well.&lt;/p&gt;
+&lt;p&gt;So first, you need to install it if you don't have the tool :&lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;pre&gt;sudo apt-get install imagemagick&lt;/pre&gt;
+&lt;p&gt;And then, you can resize all the JPG images to a width of 640px of the current folder using the single command :&lt;/p&gt;
+&lt;pre&gt;mogrify -resize 640 *.jpg&lt;/pre&gt;
+
+&lt;p&gt;If you want the height, just add a x :&lt;/p&gt;
+&lt;pre&gt;mogrify -resize x640 *.jpg&lt;/pre&gt;
+
+&lt;p&gt;You can also specify maximum width and height, that can be useful if you have big images and you don't want a width larger than x and a height larger than y but you don't want to resize little images in the same folder. Here is an example resizing images if the width is larger than 1280 or height larger than 1024 :&lt;/p&gt;
+&lt;pre&gt;mogrify -resize '1280x1024&amp;gt;' *.jpg&lt;/pre&gt;
+
+&lt;p&gt;With all that commands, the ratio is preserved. If you want more informations on the possible resize options, you can consult the &lt;a href="http://www.imagemagick.org/www/command-line-processing.html#geometry" target="_blank"&gt;documentation of ImageMagick&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;Hope that will help someone.&lt;/p&gt;&lt;/div&gt;</description><category>Linux</category><category>Tips</category><category>Ubuntu</category><category>Ubuntu</category><guid>http://www.baptiste-wicht.com/posts/2010/09/tip-batch-resize-images-on-ubuntu-linux.html</guid><pubDate>Wed, 08 Sep 2010 07:26:01 GMT</pubDate></item><item><title>Do not use relative path with LogBack</title><link>http://www.baptiste-wicht.com/posts/2010/08/do-not-use-relative-path-with-logback.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;A little tip that can be useful and save a lot of time : Do not use relative path with LogBack.&lt;/p&gt;
+&lt;p&gt;I wondered why this little LogBack configuration didn't work :&lt;/p&gt;
+&lt;p&gt;[xml]&amp;lt;?xml version="1.0" encoding="UTF-8" ?&amp;gt;&lt;/p&gt;
+&lt;p&gt;&amp;lt;configuration&amp;gt;
+    &amp;lt;contextName&amp;gt;JTheque&amp;lt;/contextName&amp;gt;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;appender&lt;/span&gt; &lt;span class="n"&gt;name&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s"&gt;"FILE"&lt;/span&gt; &lt;span class="n"&gt;class&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s"&gt;"ch.qos.logback.core.rolling.RollingFileAppender"&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;file&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;logs&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;jtheque&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;log&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;file&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+    &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;rollingPolicy&lt;/span&gt; &lt;span class="n"&gt;class&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s"&gt;"ch.qos.logback.core.rolling.FixedWindowRollingPolicy"&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+        &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;FileNamePattern&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;logs&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;jtheque&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="o"&gt;%&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;log&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;zip&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;FileNamePattern&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+        &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;MinIndex&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;MinIndex&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+        &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;MaxIndex&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="mi"&gt;5&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;MaxIndex&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;rollingPolicy&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+    &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;triggeringPolicy&lt;/span&gt; &lt;span class="n"&gt;class&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s"&gt;"ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy"&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+        &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;MaxFileSize&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="mi"&gt;5&lt;/span&gt;&lt;span class="n"&gt;MB&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;MaxFileSize&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;triggeringPolicy&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+    &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;layout&lt;/span&gt; &lt;span class="n"&gt;class&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s"&gt;"ch.qos.logback.classic.PatternLayout"&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+        &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;Pattern&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;%&lt;/span&gt;&lt;span class="n"&gt;d&lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;&lt;span class="n"&gt;HH&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt;&lt;span class="n"&gt;mm&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt;&lt;span class="n"&gt;ss&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;SSS&lt;/span&gt;&lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="o"&gt;%&lt;/span&gt;&lt;span class="kr"&gt;thread&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;%-&lt;/span&gt;&lt;span class="mi"&gt;5l&lt;/span&gt;&lt;span class="n"&gt;evel&lt;/span&gt; &lt;span class="o"&gt;%&lt;/span&gt;&lt;span class="n"&gt;logger&lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;&lt;span class="mi"&gt;36&lt;/span&gt;&lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="o"&gt;%&lt;/span&gt;&lt;span class="n"&gt;msg&lt;/span&gt;&lt;span class="o"&gt;%&lt;/span&gt;&lt;span class="n"&gt;n&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;Pattern&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;layout&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;appender&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;root&lt;/span&gt; &lt;span class="n"&gt;level&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s"&gt;"DEBUG"&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;appender&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;ref&lt;/span&gt; &lt;span class="n"&gt;ref&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s"&gt;"FILE"&lt;/span&gt;&lt;span class="o"&gt;/&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;root&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;&amp;lt;/configuration&amp;gt;[/xml]&lt;/p&gt;
+&lt;p&gt;No file were written. I searched during a long time and after that tested with an absolute path and it worked really well. But absolute path is not very good. But, you can use system properties in the configuration, so I used user.dir to make the think works : &lt;/p&gt;
+&lt;p&gt;[xml]
+        ...
+        &amp;lt;file&amp;gt;${user.dir}/logs/jtheque.log&amp;lt;/file&amp;gt;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;    &lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy"&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;
+        &lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;FileNamePattern&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;&lt;span class="cp"&gt;${&lt;/span&gt;&lt;span class="n"&gt;user&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;dir&lt;/span&gt;&lt;span class="cp"&gt;}&lt;/span&gt;/logs/jtheque.%i.log.zip&lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;/FileNamePattern&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;
+        &lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;MinIndex&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;1&lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;/MinIndex&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;
+        &lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;MaxIndex&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;5&lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;/MaxIndex&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;
+    &lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;/rollingPolicy&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;
+    ...
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;[/xml]&lt;/p&gt;
+&lt;p&gt;And this time, it works well !&lt;/p&gt;
+&lt;p&gt;Hope this will be useful to somebody. &lt;/p&gt;&lt;/div&gt;</description><category>Java</category><category>Java</category><category>Tips</category><guid>http://www.baptiste-wicht.com/posts/2010/08/do-not-use-relative-path-with-logback.html</guid><pubDate>Thu, 12 Aug 2010 07:53:14 GMT</pubDate></item><item><title>Quick Tip : Launch Java Applications From Java applications with Ant</title><link>http://www.baptiste-wicht.com/posts/2010/08/tip-launch-java-applications-from-java-applications-with-ant.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;One week ago, I searched a way &lt;strong&gt;to launch a Java application&lt;/strong&gt; from an other Java application without loosing portability. And I found a post on StackOverflow explaining how achieve that goal using &lt;strong&gt;Apache Ant&lt;/strong&gt;.&lt;/p&gt;
+&lt;p&gt;It's really easy. It use the Ant classes and simulate a project launching and a build task. In this post, we'll see a simple method to launch an application from Java.&lt;/p&gt;
+&lt;!--more--&gt;
+
+&lt;p&gt;Here is a simple method that launch an application using Ant :&lt;/p&gt;
+&lt;p&gt;[java]package org.jtheque.osgi;&lt;/p&gt;
+&lt;p&gt;import org.apache.tools.ant.BuildException;&lt;/p&gt;
+&lt;p&gt;import org.apache.tools.ant.BuildLogger;&lt;/p&gt;
+&lt;p&gt;import org.apache.tools.ant.DefaultLogger;&lt;/p&gt;
+&lt;p&gt;import org.apache.tools.ant.DemuxOutputStream;&lt;/p&gt;
+&lt;p&gt;import org.apache.tools.ant.Project;&lt;/p&gt;
+&lt;p&gt;import org.apache.tools.ant.taskdefs.Java;&lt;/p&gt;
+&lt;p&gt;import java.io.PrintStream;&lt;/p&gt;
+&lt;p&gt;public class Launcher {
+    private static int launchApplication(Class mainClass, String args) {
+        int returnCode;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;    &lt;span class="n"&gt;Project&lt;/span&gt; &lt;span class="n"&gt;project&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;new&lt;/span&gt; &lt;span class="n"&gt;Project&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+
+    &lt;span class="n"&gt;project&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;setBasedir&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;getProperty&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"user.dir"&lt;/span&gt;&lt;span class="p"&gt;));&lt;/span&gt;
+    &lt;span class="n"&gt;project&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;init&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+
+    &lt;span class="n"&gt;PrintStream&lt;/span&gt; &lt;span class="n"&gt;out&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;out&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="n"&gt;PrintStream&lt;/span&gt; &lt;span class="n"&gt;err&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;err&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+    &lt;span class="n"&gt;BuildLogger&lt;/span&gt; &lt;span class="n"&gt;logger&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;new&lt;/span&gt; &lt;span class="n"&gt;DefaultLogger&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+    &lt;span class="n"&gt;logger&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;setOutputPrintStream&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;out&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+    &lt;span class="n"&gt;logger&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;setErrorPrintStream&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;err&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+    &lt;span class="n"&gt;logger&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;setMessageOutputLevel&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;Project&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;MSG_INFO&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+    &lt;span class="n"&gt;project&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;addBuildListener&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;logger&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+    &lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;setOut&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;new&lt;/span&gt; &lt;span class="n"&gt;PrintStream&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;new&lt;/span&gt; &lt;span class="n"&gt;DemuxOutputStream&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;project&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nb"&gt;false&lt;/span&gt;&lt;span class="p"&gt;)));&lt;/span&gt;
+    &lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;setErr&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;new&lt;/span&gt; &lt;span class="n"&gt;PrintStream&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;new&lt;/span&gt; &lt;span class="n"&gt;DemuxOutputStream&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;project&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nb"&gt;true&lt;/span&gt;&lt;span class="p"&gt;)));&lt;/span&gt;
+
+    &lt;span class="n"&gt;project&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;fireBuildStarted&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+
+    &lt;span class="n"&gt;Throwable&lt;/span&gt; &lt;span class="n"&gt;caught&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;null&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="n"&gt;try&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="n"&gt;project&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;log&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Launch Application"&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+        &lt;span class="n"&gt;Java&lt;/span&gt; &lt;span class="n"&gt;javaTask&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;new&lt;/span&gt; &lt;span class="n"&gt;Java&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+        &lt;span class="n"&gt;javaTask&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;setTaskName&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Application Launcher"&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+        &lt;span class="n"&gt;javaTask&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;setProject&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;project&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+        &lt;span class="n"&gt;javaTask&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;setFork&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nb"&gt;true&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+        &lt;span class="n"&gt;javaTask&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;setFailonerror&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nb"&gt;true&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+        &lt;span class="n"&gt;javaTask&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;setCloneVm&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nb"&gt;true&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+        &lt;span class="n"&gt;javaTask&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;setClassname&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;mainClass&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;getName&lt;/span&gt;&lt;span class="p"&gt;());&lt;/span&gt;
+        &lt;span class="n"&gt;javaTask&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;setArgs&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;args&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+        &lt;span class="n"&gt;javaTask&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;init&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+
+        &lt;span class="n"&gt;returnCode&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;javaTask&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;executeJava&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="n"&gt;catch&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;BuildException&lt;/span&gt; &lt;span class="n"&gt;e&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="n"&gt;caught&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;e&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+        &lt;span class="n"&gt;returnCode&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+
+    &lt;span class="n"&gt;project&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;fireBuildFinished&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;caught&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+    &lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;setOut&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;out&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+    &lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;setErr&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;err&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;returnCode&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/java]&lt;/p&gt;
+&lt;p&gt;Here are some explanations :&lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;ul&gt;
+    &lt;li&gt;First, we create a new Project using the user directory as base directory and init it.&lt;/li&gt;
+    &lt;li&gt;Then, we create a simple logger using the System.out and System.err streams and replace then with demux streams&lt;/li&gt;
+    &lt;li&gt;After that, we create the Java task. By using setCloneVm(true), the new virtual machine will clone the properties of the current virtual machine. We must use a fork virtual machine to get the return code of the application. We set also the name of the class and the args of the launch. Finally we init and execute the task&lt;/li&gt;
+    &lt;li&gt;Once the application is finished, we get the return code and restore the old System.out and System.err streams&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;It's extremely simple and portable and the code is, I think, very clean.&lt;/p&gt;&lt;/div&gt;</description><category>Apache</category><category>Java</category><category>Java</category><category>Libraries</category><category>Tips</category><guid>http://www.baptiste-wicht.com/posts/2010/08/tip-launch-java-applications-from-java-applications-with-ant.html</guid><pubDate>Mon, 09 Aug 2010 07:22:42 GMT</pubDate></item><item><title>Tip : Optimize images on Ubuntu Linux</title><link>http://www.baptiste-wicht.com/posts/2010/07/tip-optimize-images-on-ubuntu-linux.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;When working with a lot of images by example for galleries on a website, it could be really interesting to optimize the images to save a lot of space and directly improve the performances of the website and save some traffic if this is limited by your hosting. &lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;h5&gt;Optimize JPEG images with jpegoptim&lt;/h5&gt;
+&lt;p&gt;A great tool to optimize JPEG images is jpegoptim. It's a simple command line tool available as Ubuntu package. You can install it easily : &lt;/p&gt;
+&lt;pre&gt;sudo apt-get install jpegoptim&lt;/pre&gt;
+
+&lt;p&gt;And it's also really simple to use. First, to optimize an image without loss : &lt;/p&gt;
+&lt;pre&gt;jpegoptim image.jpg&lt;/pre&gt;
+
+&lt;p&gt;Or with a loss of max 25% : &lt;/p&gt;
+&lt;pre&gt;jpegoptim --max=75 image.jpg&lt;/pre&gt;
+
+&lt;p&gt;More informations on &lt;a target="_blank" href="http://freshmeat.net/projects/jpegoptim/"&gt;the official site&lt;/a&gt;.&lt;/p&gt;
+&lt;h5&gt;Optimize PNG, BMP and GIF images with optipng&lt;/h5&gt;
+
+&lt;p&gt;An other tool to optimize other types of images is optipng. Here again you can install it with apt-get : &lt;/p&gt;
+&lt;pre&gt;sudo apt-get install optipng&lt;/pre&gt;
+
+&lt;p&gt;It's as easy as the first tool : &lt;/p&gt;
+&lt;pre&gt;optipng image.png&lt;/pre&gt;
+
+&lt;p&gt;You can also configure the tool to use the best optimization level, but also the slowest : &lt;/p&gt;
+&lt;pre&gt;optipng -o7 image.png&lt;/pre&gt;
+
+&lt;p&gt;So here we are : You have now enough informations to optimize all you images on Ubuntu. I hope this will be useful to somebody. &lt;/p&gt;&lt;/div&gt;</description><category>Linux</category><category>Tips</category><category>Tools</category><category>Ubuntu</category><category>Ubuntu</category><guid>http://www.baptiste-wicht.com/posts/2010/07/tip-optimize-images-on-ubuntu-linux.html</guid><pubDate>Thu, 22 Jul 2010 07:15:16 GMT</pubDate></item><item><title>Tip : Profile an OSGi application with VisualVM</title><link>http://www.baptiste-wicht.com/posts/2010/07/tip-profile-osgi-application-visualvm.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;When you develop applications and you've performance problems, it's really interesting to see what can cause this problems. And it that case, the profilers are the most useful tool. By example, we can use VisualVM, packed by default with the Java Virtual Machine. For more information, you can read &lt;a href="http://www.baptiste-wicht.com/2010/07/profile-applications-java-visualvm/"&gt;this introduction to Java VisualVM&lt;/a&gt;. &lt;/p&gt;
+&lt;p&gt;But, when you work with OSGi application, it's not as simple as a normal application. The profiler needs that its class can be found by the profiled classes, but with OSGi, the classloader are restricted by the framework and the classes of the profiler cannot be found. &lt;/p&gt;
+&lt;!--more--&gt;
+
+&lt;p&gt;But there is a workaround using boot class path and boot delegation. You need to do 2 things. &lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;h5&gt;1. Add the classes to the boot class-path &lt;/h5&gt;
+&lt;p&gt;First of all, the classes of the profiler must be present in the application. For that, we use the boot class-path. You must add this library in the boot class-path : ${VISUALVM_HOME}/profiler3/lib/jfluid-server.jar.  The boot class-path is configured using the -Xbootclasspath option, but if you just add this option : &lt;/p&gt;
+&lt;pre&gt;-Xbootclasspath:${VISUALVM_HOME}/profiler3/lib/jfluid-server.jar&lt;/pre&gt;
+
+&lt;p&gt;The classes of the JRE will not be found and you will get that kind of error : &lt;/p&gt;
+&lt;pre&gt;Error occurred during initialization of VM
+
+java/lang/NoClassDefFoundError: java/lang/Object&lt;/pre&gt;
+
+&lt;p&gt;So we need to keep the default boot class-path. To get this, just launch this program : &lt;/p&gt;
+&lt;p&gt;[java]public class BootClassPath {
+    public static void main(String[] args) {
+        System.out.println(System.getProperty("sun.boot.class.path"));
+    }
+}[/java]&lt;/p&gt;
+&lt;p&gt;And it will give you the default boot class-path. Then, you just have to append it to the jar of VisualVM with ':'. By example, on my computer, it's the option I need : &lt;/p&gt;
+&lt;pre&gt;-Xbootclasspath:/usr/lib/jvm/java-6-sun-1.6.0.20/lib/visualvm/profiler3/lib/jfluid-server.jar:/usr/lib/jvm/java-6-sun-1.6.0.20/jre/lib/resources.jar:/usr/lib/jvm/java-6-sun-1.6.0.20/jre/lib/rt.jar:/usr/lib/jvm/java-6-sun-1.6.0.20/jre/lib/sunrsasign.jar:/usr/lib/jvm/java-6-sun-1.6.0.20/jre/lib/jsse.jar:/usr/lib/jvm/java-6-sun-1.6.0.20/jre/lib/jce.jar:/usr/lib/jvm/java-6-sun-1.6.0.20/jre/lib/charsets.jar:/usr/lib/jvm/java-6-sun-1.6.0.20/jre/classes&lt;/pre&gt;
+
+&lt;h5&gt;2. Add boot delegation to the OSGi framework&lt;/h5&gt;
+
+&lt;p&gt;This is easier. Here you just have to said to the OSGi container, to made the classes of the profiler available to all bundles. For that, you need to add this property : &lt;/p&gt;
+&lt;pre&gt;-Dorg.osgi.framework.bootdelegation=org.netbeans.lib.profiler,org.netbeans.lib.profiler.*&lt;/pre&gt;
+
+&lt;p&gt;And normally, it's enough. But some OSGi containers, like Felix, doesn't take the command line properties in consideration in the framework depending on how you launch it. In my case, I embed the Felix Server in my application, so I need to explicitly add this property to the framework. For that, read the documentation of the containers to know how to add properties to the framework. &lt;/p&gt;
+&lt;p&gt;Here we are. Hope this will be useful to someone. Personally, I lost a lot of time trying several configurations before finding this successful one.  &lt;/p&gt;&lt;/div&gt;</description><category>Java</category><category>OSGi</category><category>Performances</category><category>Tips</category><category>Tools</category><guid>http://www.baptiste-wicht.com/posts/2010/07/tip-profile-osgi-application-visualvm.html</guid><pubDate>Tue, 20 Jul 2010 07:01:28 GMT</pubDate></item><item><title>Tip : Integrate Play Framework in IntelliJ Idea</title><link>http://www.baptiste-wicht.com/posts/2010/07/integrate-play-framework-intellij-idea.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;After &lt;a target="_blank" href="http://www.baptiste-wicht.com/2010/07/getting-started-play-framework/"&gt;created a &lt;strong&gt;Play Framework&lt;/strong&gt; first application&lt;/a&gt;, it's time to integrate it in &lt;strong&gt;IntelliJ Idea&lt;/strong&gt;. &lt;/p&gt;
+&lt;p&gt;This is made really easy because, play provide a command to create the Iml module file for the project. You can use the command play idealize app_name to create a iml module file. &lt;/p&gt;
+&lt;!--more--&gt;
+
+&lt;p&gt;So let's try : &lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;pre&gt;wichtounet@Linux-Desktop:~/dev/play$ play idealize hello/
+&lt;p&gt;~        _            _ &lt;/p&gt;
+&lt;p&gt;~  _ &lt;strong&gt; | | &lt;/strong&gt; _ &lt;em&gt;  &lt;/em&gt;| |&lt;/p&gt;
+&lt;p&gt;~ | '&lt;em&gt; \| |/ &lt;/em&gt;' | || |_|&lt;/p&gt;
+&lt;p&gt;~ |  &lt;strong&gt;/|_|_&lt;/strong&gt;&lt;em&gt;|_&lt;/em&gt; (_)&lt;/p&gt;
+&lt;p&gt;~ |_|            |__/   &lt;/p&gt;
+&lt;p&gt;~&lt;/p&gt;
+&lt;p&gt;~ play! 1.0.3, http://www.playframework.org&lt;/p&gt;
+&lt;p&gt;~&lt;/p&gt;
+&lt;p&gt;~ OK, the application is ready for Intellij Idea&lt;/p&gt;
+&lt;p&gt;~ Use File/New Module/Import Existing module&lt;/p&gt;
+&lt;p&gt;~&lt;/p&gt;
+&lt;p&gt;wichtounet@Linux-Desktop:~/dev/play$ &lt;/p&gt;&lt;/pre&gt;
+&lt;p&gt;If you go on the hello folder, you'll found a "Hello World.iml" file. "Hello World" is the name of the application. So you just have to add it to a IntelliJ Idea project. And it's almost done. &lt;/p&gt;
+&lt;p&gt;&lt;a href="http://www.baptiste-wicht.com/wp-content/uploads/2010/07/Play-Idea-1.png"&gt;&lt;img src="http://www.baptiste-wicht.com/wp-content/uploads/2010/07/Play-Idea-1.png" alt="Play Framework Project in Idea" title="Play Framework Project in Idea" width="834" height="396" class="size-full wp-image-675"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;The libraries are good configured, the test folder is already configured as a test folder. But a thing we can do is to ignore the logs and tmp folders, not really useful during development. &lt;/p&gt;
+&lt;p&gt;&lt;a href="http://www.baptiste-wicht.com/wp-content/uploads/2010/07/Play-Idea-2.png"&gt;&lt;img src="http://www.baptiste-wicht.com/wp-content/uploads/2010/07/Play-Idea-2-300x178.png" alt="Ignore the logs and tmp folders" title="Ignore the logs and tmp folders" width="300" height="178" class="size-medium wp-image-676"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;And last, the sources of the Play Framework aren't linked, so we can add them :&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://www.baptiste-wicht.com/wp-content/uploads/2010/07/Play-Idea-3.png"&gt;&lt;img src="http://www.baptiste-wicht.com/wp-content/uploads/2010/07/Play-Idea-3.png" alt="Add the sources of the framework" title="Add the sources of the framework" width="559" height="470" class="size-full wp-image-677"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;And now we've a fully configured Play Framework Project in our editor : &lt;/p&gt;
+&lt;p&gt;&lt;a href="http://www.baptiste-wicht.com/wp-content/uploads/2010/07/Play-Idea-4.png"&gt;&lt;img src="http://www.baptiste-wicht.com/wp-content/uploads/2010/07/Play-Idea-4.png" alt="Complete Play Framework Integration" title="Complete Play Framework Integration" width="834" height="396" class="size-full wp-image-678"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Great, not ? &lt;/p&gt;&lt;/div&gt;</description><category>IntelliJ Idea</category><category>Java</category><category>Play!</category><category>Tips</category><guid>http://www.baptiste-wicht.com/posts/2010/07/integrate-play-framework-intellij-idea.html</guid><pubDate>Tue, 06 Jul 2010 07:02:49 GMT</pubDate></item></channel></rss>

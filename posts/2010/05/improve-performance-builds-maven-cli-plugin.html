@@ -1,0 +1,203 @@
+<!DOCTYPE html><html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Baptiste Wicht">
+    <title>Improve the performance of your Maven builds with maven-cli-plugin | @Blog("Baptiste Wicht")</title>
+    
+            <link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
+      <link rel="canonical" href="http://www.baptiste-wicht.com/posts/2010/05/improve-performance-builds-maven-cli-plugin.html">
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js" type="text/javascript"></script>
+    <![endif]-->
+            <link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
+
+    
+
+
+
+
+
+    
+</head>
+<body>
+<!-- Menubar -->
+
+<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    <div class="container-fluid"><!-- This keeps the margins nice -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="http://www.baptiste-wicht.com/">@Blog("Baptiste Wicht")</a>
+        </div><!-- /.navbar-header -->
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+            <ul class="nav navbar-nav">
+                
+                <li><a href="../../../archive.html">Archives</a>
+                </li><li><a href="../../../categories/index.html">Tags</a>
+                </li><li><a href="../../../rss.xml">RSS</a>
+
+            </li></ul>
+
+            <ul class="nav navbar-nav navbar-right">
+                
+                
+                    
+    <li>
+    <a href="improve-performance-builds-maven-cli-plugin.wp" id="sourcelink">Source</a>
+    </li>
+
+            </ul>
+        </div><!-- /.navbar-collapse -->
+    </div><!-- /.container-fluid -->
+</nav>
+
+<!-- End of Menubar -->
+
+<div class="container">
+    <div class="body-content">
+        <!--Body content-->
+        <div class="row">
+            
+    <article class="postbox post-text">
+    <div class="h-entry" itemscope="itemscope" itemtype="http://schema.org/Article">
+    
+    <h1 class="p-name" itemprop="headline name">Improve the performance of your Maven builds with maven-cli-plugin</h1>
+
+    <hr>
+    <small>
+        Posted: <time class="published dt-published" datetime="2010-05-26T03:09:22+00:00" itemprop="datePublished">2010-05-26 03:09</time>
+        
+
+        
+          |  
+        More posts about 
+    <span itemprop="keywords">
+        <a class="tag p-category" href="../../../categories/java.html"><span class="badge badge-info">Java</span></a>
+        <a class="tag p-category" href="../../../categories/java.html"><span class="badge badge-info">Java</span></a>
+        <a class="tag p-category" href="../../../categories/maven.html"><span class="badge badge-info">Maven</span></a>
+        <a class="tag p-category" href="../../../categories/tools.html"><span class="badge badge-info">Tools</span></a>
+    </span>
+
+
+    </small>
+    <hr>
+    <div class="e-content" itemprop="articleBody text">
+    <div><p></p><p>When you makes a lot of build using <strong>Maven</strong>, this is quickly a pain to wait for the end of the build. So this is always good to have solutions to improve the <strong>performances</strong> of the builds.</p>
+<p>The better improvement i found until now is the <strong>maven-cli-plugin</strong>. This plugin provides an <strong>interactive command line</strong> interface to launch builds. The improvement is that the first phases of the build are made only once. So multiple builds are really <strong>faster</strong>. We loose a little time at the first build to make some <strong>caching</strong> improvements.</p>
+<p>With these features, I save a lot of time when I made a lot of builds. For example a simple clean takes sometimes 20 seconds on a big multimodule project. When using the cli, it takes 20 seconds including the time to load the shell for the first time and then it takes only 1 second the make the following cleans. The effect is the same on other phases like install, package, compile, ...</p>
+<p>The installation is quite simple. First you must add a plugin group to the settings.xml file :</p>
+<p>[xml]&lt;settings&gt;
+  &lt;pluginGroups&gt;
+    &lt;pluginGroup&gt;org.twdata.maven&lt;/pluginGroup&gt;
+    ...
+  &lt;/pluginGroups&gt;
+  ...
+&lt;/settings&gt;[/xml]</p>
+<p>And then add a new repository for the manve-cli-plugin : </p>
+<p>[xml]&lt;pluginRepositories&gt;
+     &lt;pluginRepository&gt;
+          &lt;id&gt;twdata-m2-repository&lt;/id&gt;
+          &lt;name&gt;twdata.org Maven 2 Repository&lt;/name&gt;
+          &lt;url&gt;http://twdata-m2-repository.googlecode.com/svn/&lt;/url&gt;
+     &lt;/pluginRepository&gt;
+&lt;/pluginRepositories&gt;[/xml]</p>
+<p>And you just have to use the following command on a Maven project : </p>
+<p></p><pre>mvn cli:execute-phase</pre>
+<p>With that the plugin will be downloaded automatically and the next commands will be executed directly. </p>
+<p>The usage is very easy. This plugin has 2 useful goals : </p>
+<ul>
+    <li>execute : Open a shell and allows you to execute goals of plugins. </li>
+    <li>execute-phase : Open a shell and allows you to execute phases of the maven build. </li>
+</ul>
+
+<p>The main difference is that if you launch install from the execute-phase, all the preceding phases will be executed, but that's not the case with execute, only install will be executed. </p>
+<p>Personally, I only execute phases, so I always use the execute-phase of the cli plugin. </p>
+<p>When you're in the shell, you can launch several phases or goals : </p>
+<pre>maven&gt; clean install</pre>
+
+<p>And you can directly add arguments in the command : </p>
+<pre>maven&gt; clean install -Dmaven.test.skip=true</pre>
+
+<p>And when you are building a multimodule projects, you can also execute phases only on several modules : </p>
+<pre>maven&gt; module1 module2 module3 clean install</pre>
+
+<p>You can use the ls command in a multi module project to list all the modules of the project. You can use the "Tab" key to auto complete the goals, phases and modules name. </p>
+<p>When you've finished your builds, you can simply use the "exit" command to exit from the command line. </p>
+<p>I think it's really a great essential plugin for each person who make Maven builds.  </p>
+<p>More information <a href="http://wiki.github.com/mrdon/maven-cli-plugin/" target="_blank">on the official site</a>. </p></div>
+    </div>
+    </div>
+    
+        <ul class="pager">
+            <li class="previous">
+                <a href="evernote-a-very-smart-note-book.html" rel="prev">← Previous post</a>
+            </li>
+            <li class="next">
+                <a href="15-years-birthday-of-java-a-bit-late.html" rel="next">Next post →</a>
+            </li>
+        </ul>
+
+        
+        
+        <div id="disqus_thread"></div>
+        <script>
+        var disqus_shortname ="nikolademo",
+            disqus_url="http://www.baptiste-wicht.com/posts/2010/05/improve-performance-builds-maven-cli-plugin.html",
+        disqus_title="Improve the performance of your Maven builds with maven-cli-plugin",
+        disqus_identifier="cache/posts/2010/05/improve-performance-builds-maven-cli-plugin.html",
+        disqus_config = function () {
+            this.language = "en";
+        };
+        (function() {
+            var dsq = document.createElement('script'); dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink" rel="nofollow">Comments powered by <span class="logo-disqus">Disqus</span></a>
+
+
+    
+
+    </article>
+
+        </div>
+        <!--End of body content-->
+
+        <footer>
+            Contents © 2014         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         
+        </footer>
+    </div>
+</div>
+
+
+            <script src="../../../assets/js/all-nocdn.js" type="text/javascript"></script>
+
+
+    
+<!-- Social buttons -->
+<div id="addthisbox" class="addthis_toolbox addthis_peekaboo_style addthis_default_style addthis_label_style addthis_32x32_style">
+<a class="addthis_button_more">Share</a>
+<ul><li><a class="addthis_button_facebook"></a>
+</li><li><a class="addthis_button_google_plusone_share"></a>
+</li><li><a class="addthis_button_linkedin"></a>
+</li><li><a class="addthis_button_twitter"></a>
+</li></ul>
+</div>
+<script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-4f7088a56bb93798"></script>
+<!-- End of social buttons -->
+
+
+    <script type="text/javascript">jQuery("a.image-reference").colorbox({rel:"gal",maxWidth:"100%",maxHeight:"100%",scalePhotos:true});</script>
+    
+
+</body>
+</html>

@@ -1,0 +1,191 @@
+<!DOCTYPE html><html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Baptiste Wicht">
+    <title>Java Concurrency - Part 4 : Semaphores | @Blog("Baptiste Wicht")</title>
+    
+            <link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
+      <link rel="canonical" href="http://www.baptiste-wicht.com/posts/2010/08/java-concurrency-part-4-semaphores.html">
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js" type="text/javascript"></script>
+    <![endif]-->
+            <link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
+
+    
+
+
+
+
+
+    
+</head>
+<body>
+<!-- Menubar -->
+
+<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    <div class="container-fluid"><!-- This keeps the margins nice -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="http://www.baptiste-wicht.com/">@Blog("Baptiste Wicht")</a>
+        </div><!-- /.navbar-header -->
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+            <ul class="nav navbar-nav">
+                
+                <li><a href="../../../archive.html">Archives</a>
+                </li><li><a href="../../../categories/index.html">Tags</a>
+                </li><li><a href="../../../rss.xml">RSS</a>
+
+            </li></ul>
+
+            <ul class="nav navbar-nav navbar-right">
+                
+                
+                    
+    <li>
+    <a href="java-concurrency-part-4-semaphores.wp" id="sourcelink">Source</a>
+    </li>
+
+            </ul>
+        </div><!-- /.navbar-collapse -->
+    </div><!-- /.container-fluid -->
+</nav>
+
+<!-- End of Menubar -->
+
+<div class="container">
+    <div class="body-content">
+        <!--Body content-->
+        <div class="row">
+            
+    <article class="postbox post-text">
+    <div class="h-entry" itemscope="itemscope" itemtype="http://schema.org/Article">
+    
+    <h1 class="p-name" itemprop="headline name">Java Concurrency - Part 4 : Semaphores</h1>
+
+    <hr>
+    <small>
+        Posted: <time class="published dt-published" datetime="2010-08-30T07:11:55+00:00" itemprop="datePublished">2010-08-30 07:11</time>
+        
+
+        
+          |  
+        More posts about 
+    <span itemprop="keywords">
+        <a class="tag p-category" href="../../../categories/concurrency.html"><span class="badge badge-info">Concurrency</span></a>
+        <a class="tag p-category" href="../../../categories/java.html"><span class="badge badge-info">Java</span></a>
+        <a class="tag p-category" href="../../../categories/java.html"><span class="badge badge-info">Java</span></a>
+        <a class="tag p-category" href="../../../categories/java-concurrency-tutorial.html"><span class="badge badge-info">Java Concurrency Tutorial</span></a>
+    </span>
+
+
+    </small>
+    <hr>
+    <div class="e-content" itemprop="articleBody text">
+    <div><p></p><p>We continue in Java Concurrency with the semaphores. Semaphores is also a way to synchronize threads.</p>
+<p>Semaphores are a really simple concept, invented by the famous Dutch computer scientist Edsger Dijkstra. Basically a semaphore is a counter (integer) that allows a thread to get into a critical region if the value of the counter is greater than 0. If it's the case, the counter is decremented by one otherwise, the thread is waiting until it can go. And when the thread go away from the critical region, the counter is incremented by one to allow one more thread to pass the critical region. A semaphore is created with a certain value for its counter. So, you can execute two actions on a semaphore P and V.</p>
+<p>By example, if you have a critical that cannot be executed concurrently, you can use a semaphore :</p>
+<p>[java]sem mutex = new sem(1)</p>
+<p>P(mutex)</p>
+<p>//Critical region</p>
+<p>V(mutex)[/java]</p>
+<p>So you must always call by yourself the P operation before the critical region and V after it. We call a mutex (mutual exclusion) a semaphore with a value of one. So only one thread can enter the region guarded by the semaphore. This is the most used semaphore. The other use of semaphore is to guard a set of resources like database connections or a data pool.</p>
+<p>In Java, a semaphore is created using the java.util.concurrent.Semaphore class. You can create easily :</p>
+<p>[java]Semaphore mutex = new Semaphore(1);</p>
+<p>Semaphore available = new Semaphore(100);[/java]</p>
+<p>The P and V operations are represented using the acquire and release methods. The method acquire can be interrupted if the thread is interrupted. There is an uninterruptible version with the method acquireUninterruptibly(). There is also a third version with the tryAcquire method. This method acquire a permit only if there is one permit available, otherwise, this method return false directly. All the waiting methods have also an overloaded version with a timeout. You can also acquire several permits at once using the permits argument to the different versions of acquire methods.</p>
+<p>A little example with a mutex using the same example as the previous post on Java concurrency :</p>
+<p>[java]public class Example {
+    private int value = 0;</p>
+<div class="code"><pre><span class="n">private</span> <span class="n">final</span> <span class="n">Semaphore</span> <span class="n">mutex</span> <span class="o">=</span> <span class="n">new</span> <span class="n">Semaphore</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="n">public</span> <span class="kt">int</span> <span class="n">getNextValue</span><span class="p">()</span> <span class="n">throws</span> <span class="n">InterruptedException</span> <span class="p">{</span>
+    <span class="n">try</span> <span class="p">{</span>
+        <span class="n">mutex</span><span class="p">.</span><span class="n">acquire</span><span class="p">();</span>
+        <span class="k">return</span> <span class="n">value</span><span class="o">++</span><span class="p">;</span>
+    <span class="p">}</span> <span class="n">finally</span> <span class="p">{</span>
+        <span class="n">mutex</span><span class="p">.</span><span class="n">release</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>}[/java]</p>
+<p>For more informations about Semaphore in Java, the best is to consult <a href="http://download.oracle.com/javase/6/docs/api/java/util/concurrent/Semaphore.html">the Javadoc of the Semaphore class</a>.</p>
+<p>To conclude, semaphores are a powerful ways to solve concurrency problems, but this is not adapted to all problems. If you need only mutual exclusion, <a title="Java Concurrency – Part 3 : Synchronization with intrinsic locks" href="http://www.baptiste-wicht.com/2010/08/java-concurrrency-synchronization-locks/" target="_blank">synchronized blocks</a> are a better solutions. The problems with semaphores is that you can forget to call the release method and that can cause deadlock sometimes difficult to find.</p></div>
+    </div>
+    </div>
+    
+        <ul class="pager">
+            <li class="previous">
+                <a href="java-concurrrency-synchronization-locks.html" rel="prev">← Previous post</a>
+            </li>
+            <li class="next">
+                <a href="../09/java-synchronization-mutual-exclusion-benchmark.html" rel="next">Next post →</a>
+            </li>
+        </ul>
+
+        
+        
+        <div id="disqus_thread"></div>
+        <script>
+        var disqus_shortname ="nikolademo",
+            disqus_url="http://www.baptiste-wicht.com/posts/2010/08/java-concurrency-part-4-semaphores.html",
+        disqus_title="Java Concurrency - Part 4 : Semaphores",
+        disqus_identifier="cache/posts/2010/08/java-concurrency-part-4-semaphores.html",
+        disqus_config = function () {
+            this.language = "en";
+        };
+        (function() {
+            var dsq = document.createElement('script'); dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink" rel="nofollow">Comments powered by <span class="logo-disqus">Disqus</span></a>
+
+
+    
+
+    </article>
+
+        </div>
+        <!--End of body content-->
+
+        <footer>
+            Contents © 2014         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         
+        </footer>
+    </div>
+</div>
+
+
+            <script src="../../../assets/js/all-nocdn.js" type="text/javascript"></script>
+
+
+    
+<!-- Social buttons -->
+<div id="addthisbox" class="addthis_toolbox addthis_peekaboo_style addthis_default_style addthis_label_style addthis_32x32_style">
+<a class="addthis_button_more">Share</a>
+<ul><li><a class="addthis_button_facebook"></a>
+</li><li><a class="addthis_button_google_plusone_share"></a>
+</li><li><a class="addthis_button_linkedin"></a>
+</li><li><a class="addthis_button_twitter"></a>
+</li></ul>
+</div>
+<script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-4f7088a56bb93798"></script>
+<!-- End of social buttons -->
+
+
+    <script type="text/javascript">jQuery("a.image-reference").colorbox({rel:"gal",maxWidth:"100%",maxHeight:"100%",scalePhotos:true});</script>
+    
+
+</body>
+</html>

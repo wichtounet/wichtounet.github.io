@@ -1,0 +1,236 @@
+<!DOCTYPE html><html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Baptiste Wicht">
+    <title>Manage command-line options with Boost Program Options | @Blog("Baptiste Wicht")</title>
+    
+            <link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
+      <link rel="canonical" href="http://www.baptiste-wicht.com/posts/2012/07/manage-command-line-boost-program-options.html">
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js" type="text/javascript"></script>
+    <![endif]-->
+            <link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
+
+    
+
+
+
+
+
+    
+</head>
+<body>
+<!-- Menubar -->
+
+<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    <div class="container-fluid"><!-- This keeps the margins nice -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="http://www.baptiste-wicht.com/">@Blog("Baptiste Wicht")</a>
+        </div><!-- /.navbar-header -->
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+            <ul class="nav navbar-nav">
+                
+                <li><a href="../../../archive.html">Archives</a>
+                </li><li><a href="../../../categories/index.html">Tags</a>
+                </li><li><a href="../../../rss.xml">RSS</a>
+
+            </li></ul>
+
+            <ul class="nav navbar-nav navbar-right">
+                
+                
+                    
+    <li>
+    <a href="manage-command-line-boost-program-options.wp" id="sourcelink">Source</a>
+    </li>
+
+            </ul>
+        </div><!-- /.navbar-collapse -->
+    </div><!-- /.container-fluid -->
+</nav>
+
+<!-- End of Menubar -->
+
+<div class="container">
+    <div class="body-content">
+        <!--Body content-->
+        <div class="row">
+            
+    <article class="postbox post-text">
+    <div class="h-entry" itemscope="itemscope" itemtype="http://schema.org/Article">
+    
+    <h1 class="p-name" itemprop="headline name">Manage command-line options with Boost Program Options</h1>
+
+    <hr>
+    <small>
+        Posted: <time class="published dt-published" datetime="2012-07-19T08:19:37+00:00" itemprop="datePublished">2012-07-19 08:19</time>
+        
+
+        
+          |  
+        More posts about 
+    <span itemprop="keywords">
+        <a class="tag p-category" href="../../../categories/boost.html"><span class="badge badge-info">Boost</span></a>
+        <a class="tag p-category" href="../../../categories/c.html"><span class="badge badge-info">C++</span></a>
+        <a class="tag p-category" href="../../../categories/c.html"><span class="badge badge-info">C++</span></a>
+    </span>
+
+
+    </small>
+    <hr>
+    <div class="e-content" itemprop="articleBody text">
+    <div><p></p><p>In command-line program, we often faces problems with the management of command-line options. When you have a few options, it's not a problem. But when writing complex programs with tens of options (or hundreds), it starts to be too complicated to manage by hand. That's where <strong>Boost Program Options</strong> enters the game!</p>
+<p>Boost Program Options is one of the Boost C++ Libraries. It is a very powerful library to handle command-line options. You define all the options of the program and then Boost Program Options takes care of all. It parses the command line, handles errors, gets values and even displays help. It is not a perfect library. But it is very complete that will answer most of the common needs. </p>
+<p>This library is not header-only. You will need to build the library and link your program with the library. </p>
+<p></p><h4>Getting started</h4>
+<p>In this article, I will use <em>po</em> as an abbreviation of boost::program_options and all source will contains this namespace alias:</p>
+<p>[cpp]namespace po = boost::program_options;[/cpp]</p>
+<p>First of all, it is necessary to create an instance of po::option_description:</p>
+<p>[cpp]po::options_description description("MyTool Usage");</p>
+<p>description.add_options()
+    ("help", "Display this help message")
+    ("version", "Display the version number");[/cpp]</p>
+<p>The parameter to the constructor is the title of the options. To add options, you use the add_options() function and append all your options, each one surrounded with parenthesis. Here, we declared two options (help and version). They can be set with <em>--help</em> and <em>--version</em>. </p>
+<p>Then, you can parse the command line by declaring a po::variables_map to store the variables and parse the command line into that storage: </p>
+<p>[cpp]po::variables_map vm;</p>
+<p>po::store(po::command_line_parser(argc, argv).options(description).run(), vm);</p>
+<p>po::notify(vm);[/cpp]</p>
+<p>Then, you can easily verify if an option has been set by using the <em>count(const std::string&amp; name)</em> function on the <em>vm</em> object: </p>
+<p>[cpp]if(vm.count("help")){
+    std::cout &lt;&lt; description;
+}[/cpp]</p>
+<p>You can use <em>operator on the description to output all the options of program. </em></p>
+<h4>Short options</h4>
+
+<p>By default, all the options are accessed by using -- in front of them. You can also specify a short version for each option: </p>
+<p>[cpp]description.add_options()
+    ("help,h", "Display this help message")
+    ("version,v", "Display the version number");[/cpp]</p>
+<p>With that, you can display with either --help or -h. Even if you select help with -h, you can still verify if help has been set with count("help"). </p>
+<h4>Option with value</h4>
+
+<p>Boost Program Options can also handle option that need a specific value. Lets add a <i>compression</i> option:</p>
+<p>[cpp]description.add_options()
+    ("help,h", "Display this help message")
+    ("compression,c", po::value&lt;int&gt;(), "Compression level")
+    ("version,v", "Display the version number");[/cpp]</p>
+<p>You can then get the value of option easily: </p>
+<p>[cpp]if(vm.count("compression")){
+    std::cout &lt;&lt; "Compression level " &lt;&lt; vm["compression"].as&lt;int&gt;() &lt;&lt; std::endl;
+}[/cpp]</p>
+<p>For the story, the option value are stored as boost::any. You can get the value of the option by using operator[] on the po::variables_map. You can get the value type with the as function with the type you need. </p>
+<p>On the command line, the value can be set with --compression 10, -c 10 or -c10. </p>
+<p>You can also configure a default value for an option:</p>
+<p>[cpp]description.add_options()
+    ("help,h", "Display this help message")
+    ("compression,c", po::value&lt;int&gt;()-&gt;default_value(5), "Compression level")
+    ("version,v", "Display the version number");[/cpp]</p>
+<p>With that, if the option is not set on the command line, the option has the specified value. With that, the option is always defined. </p>
+<p>Finally, you can also set an implicit value. This is the value of the option is the option is set to the command line without a value (--compression or -c): </p>
+<p>[cpp]description.add_options()
+    ("help,h", "Display this help message")
+    ("compression,c", po::value&lt;int&gt;()-&gt;default_value(5)-&gt;implicit_value(10), "Compression level")
+    ("version,v", "Display the version number");[/cpp]</p>
+<h4>Positional options</h4>
+
+<p>It is often convenient to have a list of files on the command line. These options does not have a name. In Boost Program Options, these options are called positional options. You have to declare them in the describe as any other action. For example, for a list of files: </p>
+<p>[cpp]description.add_options()
+    ("help,h", "Display this help message")
+    ("compression,c", po::value&lt;int&gt;()-&gt;default_value(5)-&gt;implicit_value(10),"Compression level")
+    ("input-files", po::value&lt;std::vector&lt;std::string&gt;&gt;(), "Input files")
+    ("version,v", "Display the version number");[/cpp]</p>
+<p>Then, you have to declare it as positional and then finally specify it when parsing the command-line: </p>
+<p>[cpp]po::positional_options_description p;</p>
+<p>p.add("input-files", -1);</p>
+<p>po::variables_map vm;</p>
+<p>po::store(po::command_line_parser(argc, argv).options(description).positional(p).run(), vm);</p>
+<p>po::notify(vm);[/cpp]</p>
+<p>The positional options values are retrieved the exact same way as other options: </p>
+<p>[cpp]if(vm.count("input-files")){
+    std::vector&lt;std::string&gt; files = vm["input-files"].as&lt;std::vector&lt;std::string&gt;&gt;();
+    for(std::string file : files){
+        std::cout &lt;&lt; "Input file " &lt;&lt; file &lt;&lt; std::endl;
+    }
+}[/cpp]</p>
+<h4>Wrap-Up</h4>
+
+<p>In this article, we saw the most important aspects of Boost Program Options. With these notions, you can start using this great library. If you need more information about the library, you can read <a href="http://www.boost.org/doc/libs/1_50_0/doc/html/program_options.html" title="Boost Program Options documentation">the official documentation</a> that is very well made. </p>
+<p>You can download the final sources of this article on Github: <a href="https://github.com/wichtounet/articles/blob/master/src/boost_po/v1.cpp" title="Source file for this article">v1.cpp</a></p></div>
+    </div>
+    </div>
+    
+        <ul class="pager">
+            <li class="previous">
+                <a href="c11-concurrency-tutorial-part-4-atomic-type.html" rel="prev">← Previous post</a>
+            </li>
+            <li class="next">
+                <a href="eddi-compiler-1-1-0-member-functions.html" rel="next">Next post →</a>
+            </li>
+        </ul>
+
+        
+        
+        <div id="disqus_thread"></div>
+        <script>
+        var disqus_shortname ="nikolademo",
+            disqus_url="http://www.baptiste-wicht.com/posts/2012/07/manage-command-line-boost-program-options.html",
+        disqus_title="Manage command-line options with Boost Program Options",
+        disqus_identifier="cache/posts/2012/07/manage-command-line-boost-program-options.html",
+        disqus_config = function () {
+            this.language = "en";
+        };
+        (function() {
+            var dsq = document.createElement('script'); dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink" rel="nofollow">Comments powered by <span class="logo-disqus">Disqus</span></a>
+
+
+    
+
+    </article>
+
+        </div>
+        <!--End of body content-->
+
+        <footer>
+            Contents © 2014         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         
+        </footer>
+    </div>
+</div>
+
+
+            <script src="../../../assets/js/all-nocdn.js" type="text/javascript"></script>
+
+
+    
+<!-- Social buttons -->
+<div id="addthisbox" class="addthis_toolbox addthis_peekaboo_style addthis_default_style addthis_label_style addthis_32x32_style">
+<a class="addthis_button_more">Share</a>
+<ul><li><a class="addthis_button_facebook"></a>
+</li><li><a class="addthis_button_google_plusone_share"></a>
+</li><li><a class="addthis_button_linkedin"></a>
+</li><li><a class="addthis_button_twitter"></a>
+</li></ul>
+</div>
+<script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-4f7088a56bb93798"></script>
+<!-- End of social buttons -->
+
+
+    <script type="text/javascript">jQuery("a.image-reference").colorbox({rel:"gal",maxWidth:"100%",maxHeight:"100%",scalePhotos:true});</script>
+    
+
+</body>
+</html>

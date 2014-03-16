@@ -1,0 +1,339 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>@Blog("Baptiste Wicht") (Compilers)</title><link>http://www.baptiste-wicht.com/</link><description></description><atom:link href="http://www.baptiste-wicht.com/categories/compilers.xml" type="application/rss+xml" rel="self"></atom:link><language>en</language><lastBuildDate>Sun, 16 Mar 2014 17:07:38 GMT</lastBuildDate><generator>Nikola &lt;http://getnikola.com/&gt;</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>Improving eddic Boost Spirit parser performances</title><link>http://www.baptiste-wicht.com/posts/2013/06/improving-eddic-boost-spirit-parser-performances.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;After the last changes on the data-flow framework, the parsing pass of the eddic compiler became the slowest one. I was sure there was some area of optimizations, so I decided to improve its performances.&lt;/p&gt;
+&lt;p&gt;In this post, I will present the different techniques I applied and their results.&lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;h4&gt;Static grammar&lt;/h4&gt;
+&lt;p&gt;The first optimization that I tried was to make the grammar static, meaning that we can declare it static and it will be constructed only once and will be allocated on the data segment.It is indeed heavy to build the lexer especially but also the grammar. I would like to thank &lt;a title="sehe on github" href="https://github.com/sehe"&gt;sehe&lt;/a&gt; for this optimization, he found it after I posted a question on Stackoverflow.&lt;/p&gt;
+&lt;p&gt;The lexer was very easy to make static (only add static keyword :) ), but the parser was a bit more complicated because it needs the lexer iterator to get the current position in the file. This problem has been resolved by saving the iterator into the qi::locals of the rules.&lt;/p&gt;
+&lt;p&gt;The result of this optimization are amazing. It saved 33% of the time.&lt;/p&gt;
+&lt;h4&gt;Expectation points&lt;/h4&gt;
+
+&lt;p&gt;Expectation points have the interesting point that they disallow backtracking and so can improve performances in some cases. Moreover, they are always interesting because they make the grammar clearer and the error messages much better.&lt;/p&gt;
+&lt;p&gt;I tried adding more expectation points to the grammar. Unfortunately, there weren't a lot of them to add. Moreover, it seems that there are some quite weird behavior with them because some times it is impossible to add them (causes compilation failure) and sometimes it just make the code don't work anymore the same way, though I don't understand why.&lt;/p&gt;
+&lt;p&gt;Anyway, I have been able to add some to the grammar. These changes improve the performance by a bit more than 1%. It is not a lot, but it is still an improvement. Moreover, I'm quite sure that there are more expectation points that can be added to the code. I will take some time again later to try to add more and to understand them better.&lt;/p&gt;
+&lt;h4&gt;Less skips&lt;/h4&gt;
+
+&lt;p&gt;In my grammar, I've a special parser for getting the current position in the file to add "debug information" to the AST. This special parser was skipping over its content, but it has no content, since it is artificial. Removing it improved the performance by about half a percent.&lt;/p&gt;
+&lt;h4&gt;Improve Position (debug information)&lt;/h4&gt;
+
+&lt;p&gt;As said before, there is a special parser to get the current position in the file. This information is then stored into an eddic::ast::Position structure. This structure was holding the line number, the column, the file name and the contents of the line. The first two were ints and the last two were std::string. Each time, a copy of the strings were necessary.&lt;/p&gt;
+&lt;p&gt;I avoided storing the std::string directly by storing only the number of the line as well as the index of the file. Then, the content of the file is stored in the global context and can be accessed if it is necessary to display the line where the error happened.&lt;/p&gt;
+&lt;p&gt;This change gave an increase of 10% of the parsing performance.&lt;/p&gt;
+&lt;h4&gt;Auto Rules&lt;/h4&gt;
+
+&lt;p&gt;Rules in Boost Spirit have an overhead due to the cost of the virtual calls that are necessary. In theory, auto rules can improve the efficiency of the rules by removing the cost of virtual calls. Moreover, auto rules should also avoid code bloat when the rules are compiled. The rules can be inlined and better optimized.&lt;/p&gt;
+&lt;p&gt;I transformed some rules to auto rules to improve performances. Unfortunately, I found that this did not improve the performances. Moreover, transforming some rules to auto rules made the performance worse. I still did let some of the rules as auto rules. I have to say that I was very disappointed by this result, I was really expecting more from this :(&lt;/p&gt;
+&lt;h4&gt;Generated Static Lexer&lt;/h4&gt;
+
+&lt;p&gt;The first time the lexer is used, it has to generate the Deterministic Finite Automaton (DFA) that is used to identify the different tokens. This process takes time. There is way to avoid this by using the static model of Boost Spirit Lex. With that, the code is generated with the complete DFA and then it doesn't have to be initialized again.&lt;/p&gt;
+&lt;p&gt;I was not expecting a lot from this because the lexer was already static and so was initialized only once. Indeed, it resulted in less than half a percent improvement.&lt;/p&gt;
+&lt;h4&gt;Conclusion&lt;/h4&gt;
+
+&lt;p&gt;Even if I've been able to largely reduce the overhead of the parsing by more than 40%, it still has a big overhead. Indeed, it still represents 36 percent of the whole process of compiling a source file. I think it is still too much.&lt;/p&gt;
+&lt;p&gt;Moreover, an interesting fact is that the optimization I would have thought to be very effective (auto rules especially) did not have the expected effect, but making the grammar static, which I would not have thought of, was very effective.&lt;/p&gt;
+&lt;p&gt;When profiled, the final version shows that quite some time is spent in destructing the multi_pass, which is quite odd. And it also seems that transforming the string operators to ast::Operator is not very effective, but I do not know how to improve that at this point.&lt;/p&gt;
+&lt;p&gt;I won't probably work on that again for the version 1.2.4 of eddic, but I will eventually take some time again for the version 1.3.0 to improve it again.&lt;/p&gt;&lt;/div&gt;</description><category>Benchmarks</category><category>Boost</category><category>C++11</category><category>Compilers</category><category>EDDI</category><category>EDDI</category><category>Performances</category><guid>http://www.baptiste-wicht.com/posts/2013/06/improving-eddic-boost-spirit-parser-performances.html</guid><pubDate>Mon, 10 Jun 2013 08:16:42 GMT</pubDate></item><item><title>eddic 1.2.3 - Better data-flow analysis</title><link>http://www.baptiste-wicht.com/posts/2013/03/eddic-1-2-3-better-data-flow-analysis.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;I finally finished the version 1.2.3 of eddic. I have been quite busy finishing my master thesis in february and then taking some vacations in United States, so this version came later than I wanted. &lt;/p&gt;
+&lt;p&gt;The main change is about the speed of the data-flow optimizations. I refactored a lot the data-flow to make it much faster. Some test cases are up to 10 times faster :)&lt;/p&gt;
+&lt;p&gt;There are still some work to do for speed of optimizations, but it is much better now. Dead Code Elimination and Constant Propagation still have to be made faster, but now the main bottleneck. In the next version of eddic, the parsing performance will be improved. &lt;/p&gt;
+&lt;p&gt;Inlining performance has also been greatly improved. The functions are considered in topological order of the call graph. This makes it much faster and moreover the resulting code is more efficient too. &lt;/p&gt;
+&lt;p&gt;There are also some improvements of the language. char and bool types now takes only one byte each. Copy constructors for structures containing field of structure type are now automatically generated. The grammar has been enhanced to support postfix operations in for loops. &lt;/p&gt;
+&lt;p&gt;Other improvements have been made to the optimization engine. A new optimization has been implemented: Loop Unswitching. This optimization transforms a code like that: &lt;/p&gt;
+&lt;p&gt;[cpp]for(int i = 0; i &amp;lt; X; ++i){&lt;/p&gt;
+&lt;p&gt;if(a){
+   //Something
+} else {
+   //Something else
+}&lt;/p&gt;
+&lt;p&gt;}[/cpp]&lt;/p&gt;
+&lt;p&gt;In some code like that: &lt;/p&gt;
+&lt;p&gt;[cpp]if(a){
+   for(int i = 0; i &amp;lt; X; ++i){
+      //Something
+   }
+} else {
+   for(int i = 0; i &amp;lt; X; ++i){
+      //Something else
+   }
+}[/cpp]&lt;/p&gt;
+&lt;p&gt;when a doesn't depend on the loop body. The body of the loops is much faster in the second version. &lt;/p&gt;
+&lt;p&gt;The induction variable analysis is now able to handle loops with induction variable divided in each iteration. With that new feature, the call: &lt;/p&gt;
+&lt;p&gt;[cpp]print(123);[/cpp]&lt;/p&gt;
+&lt;p&gt;is reduced to&lt;/p&gt;
+&lt;p&gt;[cpp]print('1');&lt;/p&gt;
+&lt;p&gt;print('2');&lt;/p&gt;
+&lt;p&gt;print('3');[/cpp]&lt;/p&gt;
+&lt;p&gt;Another small optimization is that variables contributing only to themselves are now correctly identified as dead. &lt;/p&gt;
+&lt;p&gt;On the compiler side, the timing system has been greatly improved to contains almost all part of the compilation process. The timings for the complete compilation is available &lt;a href="https://github.com/wichtounet/eddic/wiki/Performance" title="Performance"&gt;on the wiki&lt;/a&gt;. &lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;h4&gt;Future Work&lt;/h4&gt;
+&lt;p&gt;The next version of the EDDI compiler (eddic) will be the version 1.2.4. &lt;/p&gt;
+&lt;p&gt;Performances will stil be focused for this version. The first change will be to improve the performances of the parsing. Then, I'm gonna try to improve register allocation performances by improving handling of bound registers which I believe is a bottleneck. &lt;/p&gt;
+&lt;p&gt;There are also several refactorings that I think of doing to the code. I will probably also implement new minor language features, but I still don't know what. &lt;/p&gt;
+&lt;p&gt;Moreover, I have to serve in the army the next three weeks, so there won't be any progress these weeks. &lt;/p&gt;
+&lt;h4&gt;Download&lt;/h4&gt;
+
+&lt;p&gt;You can find the EDDI Compiler sources on the Github repository: &lt;a title="Github repository of eddic" href="https://github.com/wichtounet/eddic"&gt;https://github.com/wichtounet/eddic&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;The version is available in the &lt;em&gt;v1.2.3&lt;/em&gt; tag available in the GitHub or directly in the &lt;em&gt;master&lt;/em&gt; branch.&lt;/p&gt;&lt;/div&gt;</description><category>Compilers</category><category>EDDI</category><category>EDDI</category><category>Optimization</category><category>projects</category><category>Releases</category><guid>http://www.baptiste-wicht.com/posts/2013/03/eddic-1-2-3-better-data-flow-analysis.html</guid><pubDate>Sat, 09 Mar 2013 11:50:27 GMT</pubDate></item><item><title>eddic 1.2.0 - Single inheritance, copy construction</title><link>http://www.baptiste-wicht.com/posts/2012/12/eddic-1-2-0-single-inheritance-copy-constructor.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;I'm happy to release the &lt;strong&gt;version 1.2.0 of the EDDI Compiler (eddic)&lt;/strong&gt;.&lt;/p&gt;
+&lt;p&gt;This new version introduces several major changes to the language. &lt;/p&gt;
+&lt;p&gt;First of all, structures can now inherits from another structure. When it is done, the structure can use the members of the parent class. Below is an example of single inheritance in EDDI: &lt;/p&gt;
+&lt;p&gt;[cpp]struct A {
+    float a;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;init_a&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+    &lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mf"&gt;55.2&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;test_a&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+    &lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;+=&lt;/span&gt; &lt;span class="mf"&gt;1.1&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}&lt;/p&gt;
+&lt;p&gt;struct B extends A {
+    char a;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;init_b&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+    &lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="sc"&gt;'B'&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="n"&gt;init_a&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;test_b&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+    &lt;span class="n"&gt;test_a&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/cpp]&lt;/p&gt;
+&lt;p&gt;For now, the support remains basic, but it will be improved over time. I will probably add support for virtual functions in the future. &lt;/p&gt;
+&lt;p&gt;Another major improvement to the language is that variable of a custom type can now be assignment, resulting in a call to the copy constructor. If no copy constructor is defined in a structure, it is automatically generated by the compiler. Another improvement to structures is that structures can now contains arrays. Moreover, the members of a structure (fields, constructors, functions, ...) can now be present in any order. &lt;/p&gt;
+&lt;p&gt;A major change has been made to pointers. The conversions from variables to pointers is no more implicit, it is necessary to use the new &amp;amp; operator to take the address of a variable. I found that this implicit conversions was not really making any sense.&lt;/p&gt;
+&lt;p&gt;A function can now return a structure by value. And, member functions can be called from any valid left value. For instance: &lt;/p&gt;
+&lt;p&gt;[cpp]array[5].function(5).function(9);[/cpp]&lt;/p&gt;
+&lt;p&gt;is now valid code.  &lt;/p&gt;
+&lt;p&gt;Finally, the switch construct can be used with strings too. This uses the str_equals functions to test which case is valid. &lt;/p&gt;
+&lt;p&gt;There are no big changes in the optimization engine. A new optimization pass has been added performing loop unrolling for loop with known iteration count. The pointer propagation has been fixed to handle pointers on structures resulting in much better code for several samples. The last improvement here is that conditions can be propagated into branches when necessary. &lt;/p&gt;
+&lt;p&gt;The loop analysis has been improved to directly calculate the number of iterations of each loop and store this result. The list of induction variables is only calculated once now. &lt;/p&gt;
+&lt;p&gt;The code generation has been slightly improved by saving fewer registers when calling another function. &lt;/p&gt;
+&lt;p&gt;Finally, there are also some internal changes. The template instantiation depth limit can now configured. Before, infinite template recursion would just fail. The time spent in each optimization can now be computed with the new --timing option. There have been great improvements on the side of the Abstract Syntax Tree. A good part of the expression grammar has been rewritten. With these changes, the grammar is much more powerful than before. &lt;/p&gt;
+&lt;p&gt;Don't hesitate to comment or to contact me if you have any suggestion (or other) about this release or for the future versions of eddic. &lt;/p&gt;
+&lt;p&gt;I'd also like to thank &lt;a href="https://github.com/TyRoXx" title="TyRoXx"&gt;TyRoXx&lt;/a&gt; who has made some improvements in the assembly generation module. &lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;h4&gt;Future Work&lt;/h4&gt;
+&lt;p&gt;The next version of the EDDI compiler (eddic) will be the version 1.2.1. This version will specifically focus on two points. First the usage of strings will be improved with a string class adding features to literal string. The second point will be the performances of the compiler. At this point, the optimization engine is clearly too slow. I will try to make it faster. The list of issues is available &lt;a href="https://github.com/wichtounet/eddic/issues?milestone=2&amp;amp;state=open" title="eddic version 1.2.1"&gt;on Github&lt;/a&gt;.  &lt;/p&gt;
+&lt;h4&gt;Download&lt;/h4&gt;
+
+&lt;p&gt;You can find the EDDI Compiler sources on the Github repository: &lt;a title="Github repository of eddic" href="https://github.com/wichtounet/eddic"&gt;https://github.com/wichtounet/eddic&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;The version is available in the &lt;em&gt;v1.2.0&lt;/em&gt; tag available in the GitHub or directly in the &lt;em&gt;master&lt;/em&gt; branch.&lt;/p&gt;&lt;/div&gt;</description><category>C++</category><category>Compilers</category><category>EDDI</category><category>EDDI</category><category>Releases</category><guid>http://www.baptiste-wicht.com/posts/2012/12/eddic-1-2-0-single-inheritance-copy-constructor.html</guid><pubDate>Mon, 17 Dec 2012 09:20:10 GMT</pubDate></item><item><title>GCC 4.7 vs CLang 3.1 on eddic</title><link>http://www.baptiste-wicht.com/posts/2012/11/gcc-4-7-clang-3-1-eddic.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;a href="http://www.baptiste-wicht.com/2012/11/eddic-compiles-with-clang-3-1/" title="eddic compiles with CLang 3.1"&gt;Now that eddic can be compiled with CLang&lt;/a&gt;, I wanted to compare the differences in compilation time and in performance of the generated executable between those two compilers. The tests are done using GCC 4.7.2 and CLang 3.1 on Gentoo.
+&lt;h3&gt;Compilation Time&lt;/h3&gt;
+&lt;p&gt;The first thing that I tested has been the compilation time of the two compilers to compile eddic with different flags. I tested the compilation in debug mode and with -O2 and -O3.&lt;/p&gt;
+&lt;p&gt;[bar_chart width="400px" height="300px" title="Compilation Time - Less is better" h_title="Options" v_title="Seconds" scale_button="true"]
+          ['Options', 'GCC', 'CLang'],
+          ['-g',  234.59,   119.59],
+          ['-O2',  273.02,   178.22],
+          ['-O3',  276.87,   183.78],
+[/bar_chart]&lt;/p&gt;
+&lt;p&gt;The most interesting fact in these results is that CLang is much faster than GCC. It takes twice less times to compile eddic with CLang in debug mode than with GCC. The impact on optimizations on CLang's compilation is also more important than on GCC. For both compilers, -O3 does not seems to add a lot of overhead.&lt;/p&gt;
+&lt;h3&gt;Runtime performance&lt;/h3&gt;
+
+&lt;p&gt;Then, I tested the performance of the generated executable. I tested it on three things, the whole test suite and two test cases that I know are the slowest for the EDDI Compiler. For each case, I took the slowest value of 5 consecutive executions. &lt;/p&gt;
+&lt;p&gt;[bar_chart width="600px" height="400px" title="Runtime Performance - Less is better" h_title="Options" v_title="Seconds" scale_button="true"]
+          ['Compiler', 'testsuite', 'assembly', 'linked_list'],
+          ['GCC -O2',  6.58,   1.2, 0.51],
+          ['GCC -O3',  6.59,   1.2, 0.5],
+          ['CLang -O2',  6.74,   1.2, 0.49],
+          ['CLang -O3',  6.58,   1.2, 0.49],
+[/bar_chart]&lt;/p&gt;
+&lt;p&gt;The difference are very small. In -02, GCC performs a bit better, but in -O3, the performance are equivalent. I was a bit disappointed by the results, because I thought that there would be higher differences. It seems that CLang is not as far from GCC that some people would like to say. It also certainly depends on the program being compiled. &lt;/p&gt;
+&lt;h3&gt;Conclusion&lt;/h3&gt;
+
+&lt;p&gt;It is clear that CLang is much faster than GCC to compile eddic. Moreover, the performance of the generated executable are very similar. &lt;/p&gt;
+&lt;p&gt;I will continue to use CLang as my development compiler and switches between the two when I'm doing performance benchmarking. I will try to update the benchmark once new versions of GCC / CLang are available. &lt;/p&gt;&lt;/div&gt;</description><category>Benchmarks</category><category>CLang</category><category>Compilers</category><category>EDDI</category><category>EDDI</category><category>gcc</category><category>Performances</category><guid>http://www.baptiste-wicht.com/posts/2012/11/gcc-4-7-clang-3-1-eddic.html</guid><pubDate>Mon, 12 Nov 2012 09:28:44 GMT</pubDate></item><item><title>EDDI Compiler 1.1.4 – Graph Coloring Register Allocation</title><link>http://www.baptiste-wicht.com/posts/2012/11/eddic-compiler-1-1-4-graph-coloring-register-allocation.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;I'm proud to announce the release of the &lt;strong&gt;version 1.1.4 of the EDDI Compiler (eddic)&lt;/strong&gt;.&lt;/p&gt;
+&lt;p&gt;This version has taken me much more time than I thought but I also added much more features than I thought too. &lt;/p&gt;
+&lt;p&gt;There are few changes of the language itself, the main changes are in the optimization passes or in the compiler. &lt;/p&gt;
+&lt;p&gt;For the language, it is now possible to use dynamically allocated arrays. The &lt;em&gt;this&lt;/em&gt; pointer is now implicit in member functions. &lt;/p&gt;
+&lt;p&gt;The standard library has been improved by the &lt;strong&gt;addition of a Doubly-Linked List&lt;/strong&gt;. This list uses the templates so that it is generic. It is possible to add elements to the front and the back of the list. The list is iterable using iterators (bidirectional). &lt;/p&gt;
+&lt;p&gt;The template engine has been almost entirely rewritten. The previous version was too limited and there was code to handle the templates almost in the whole front-end. Now, the templates are handled recursively at each point where they can appear. For not the template instantiation depth is not limited, but this will be done in the next version of eddic. &lt;/p&gt;
+&lt;p&gt;The major change of this version is the use of a &lt;strong&gt;Graph Coloring Register Allocator&lt;/strong&gt; ! This allocator is based on a Chaitin-style allocator. This greatly improves the quality of the generated assembly. The LTAC compilation is now made in two phase. In the first one, only pseudo registers are used. This first pass includes a first cleanup pass. Then, the register allocator replaces all the pseudo registers by actual registers. Finally, the LTAC IR is optimized like before. In the future, it will be improved further. The coalescing and renumbering passes are a bit limited for now and Chaitin-Briggs optimistic coloring will be used in the future. &lt;/p&gt;
+&lt;p&gt;The data-flow framework has been improved to support &lt;strong&gt;data-flow analysis of LTAC program&lt;/strong&gt;. For now, the only analysis that does that is Live Registers Analysis. This analysis is used by the Register Allocator by the Dead Code Elimination that is run in LTAC code. &lt;/p&gt;
+&lt;p&gt;The MTAC optimization engine has been greatly improved by the use of a powerful pass manager that runs the optimization in the correct order and that gives them the necessary information. The Control Flow Graph is now updated by the different passes and never invalidated. The CFG is computed only once before the optimizations. &lt;/p&gt;
+&lt;p&gt;The MTAC optimization engine has also new optimization passes regarding to loops: &lt;strong&gt;Loop Invariant Code Motion&lt;/strong&gt;, &lt;strong&gt;Loop Strength Reduction&lt;/strong&gt; and &lt;strong&gt;Complete Loop Peeling&lt;/strong&gt;. The loops are discovered by a dominance analysis implemented using the Lengauer-Tarjan's algorithm. &lt;/p&gt;
+&lt;p&gt;The inliner has also beeen greatly improved. The inlining decision is now taken at the call site level. It means that only some calls to a function can be inlined and not the whole function. The inliner now supports functions with string parameters. Moreover, the inliner heuristic takes the number of constant parameters at the call site into account to take its decision. &lt;/p&gt;
+&lt;p&gt;On the side of the Compiler, there are several improvements. &lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;ul&gt;
+    &lt;li&gt;The whole compilation process has been made thread safe.&lt;/li&gt;
+    &lt;li&gt;&lt;a href="http://www.baptiste-wicht.com/2012/10/run-boost-test-parallel-cmake/" title="Run your Boost Tests in parallel with CMake"&gt;The Test Suite can be run in parallel&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;The Middle-End and Back-Ends have been clearly separated (More information on the &lt;a href="https://github.com/wichtounet/eddic/wiki/Architecture" title="Architecture of the EDDI Compiler"&gt;Wiki&lt;/a&gt;). &lt;/li&gt;
+    &lt;li&gt;The LTAC Intermediate Representation now keeps the Basic Blocks of the MTAC representation.&lt;/li&gt;
+    &lt;li&gt;&lt;a href="http://www.baptiste-wicht.com/2012/11/eddic-compiles-with-clang-3-1/" title="eddic compiles with CLang 3.1"&gt;eddic can be compiled with CLang&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4&gt;Future Work&lt;/h4&gt;
+
+&lt;p&gt;The next version of the EDDI compiler (eddic) will be the version 1.2.0. This version will add support for inheritance at least in a basic way. It will also add support for returning a structure by value. The structures can contains arrays of defined size. This version will also focus on removing the limitations that exists on some features (Function Call Left Values for instance). It will also contains several necessary cleanups to the files. &lt;/p&gt;
+&lt;h4&gt;Download&lt;/h4&gt;
+
+&lt;p&gt;You can find the EDDI Compiler sources on the Github repository: &lt;a title="Github repository of eddic" href="https://github.com/wichtounet/eddic"&gt;https://github.com/wichtounet/eddic&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;The version is available in the &lt;em&gt;v1.1.4&lt;/em&gt; tag available in the GitHub or directly in the &lt;em&gt;master&lt;/em&gt; branch.&lt;/p&gt;&lt;/div&gt;</description><category>C++</category><category>Compilers</category><category>EDDI</category><category>EDDI</category><guid>http://www.baptiste-wicht.com/posts/2012/11/eddic-compiler-1-1-4-graph-coloring-register-allocation.html</guid><pubDate>Thu, 08 Nov 2012 08:25:15 GMT</pubDate></item><item><title>eddic compiles with CLang 3.1</title><link>http://www.baptiste-wicht.com/posts/2012/11/eddic-compiles-with-clang-3-1.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;I finally added support for compiling eddic with LLVM CLang 3.1 !&lt;/p&gt;
+&lt;p&gt;The current development version can be completely compiled with CLang. Starting with the version 1.1.4, all versions of eddic will be support GCC and CLang. &lt;/p&gt;
+&lt;p&gt;The changes have not been as painful as I first thought. &lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;ul&gt;
+    &lt;li&gt;The main problem that I has was about a static const variable of a class that had no user-constructor. GCC allows that, but it is not standard compliant and CLang was complaining. &lt;/li&gt;
+    &lt;li&gt;Another problem that I encountered was about the used of bit flags and Template Meta Programming. I simplified that by the use of a simple type traits and it worked. I don't really know why this does not worked at first. &lt;/li&gt;
+    &lt;li&gt;The remaining effort was to fix the several warnings that CLang had. &lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;CLang also fixed a bug in my code with a warning on a assignment that was not supposed to be an assignment, thanks CLang. &lt;/p&gt;
+&lt;p&gt;The most interesting fact about CLang is that &lt;strong&gt;is it twice faster to build eddic than GCC&lt;/strong&gt;. I think I'm gonna use it during development to fasten the compile time. Moreover, even if I only worked two days with it, it seems that the error messages are indeed better than the GCC's ones. &lt;/p&gt;
+&lt;p&gt;I haven't tried to compare the performances of eddic in both cases, but I will do that in the future, soon after the 1.1.4 version is released. &lt;/p&gt;
+&lt;p&gt;I tried the CLang static analyzer on eddic but it didn't found any bugs. Moreover, it crashed on several of my files. I didn't found why for now, but I will continue to investigate, perhaps I'm not using it correctly. &lt;/p&gt;
+&lt;p&gt;I expect to publish the next version of eddic in the next two weeks. This version has much more improvements that I thought at first and I have less time to work now that &lt;a href="http://www.baptiste-wicht.com/2012/09/back-in-berkeley-california/" title="Back in Berkeley, California" target="_blank"&gt;I'm working on my Master thesis&lt;/a&gt;. &lt;/p&gt;
+&lt;p&gt;More informations on CLang: &lt;a href="http://clang.llvm.org/" title="CLang official site"&gt;The official site&lt;/a&gt;. &lt;/p&gt;&lt;/div&gt;</description><category>CLang</category><category>Compilers</category><category>EDDI</category><category>EDDI</category><category>gcc</category><category>Linux</category><guid>http://www.baptiste-wicht.com/posts/2012/11/eddic-compiles-with-clang-3-1.html</guid><pubDate>Thu, 01 Nov 2012 09:11:05 GMT</pubDate></item><item><title>Back in Berkeley, California</title><link>http://www.baptiste-wicht.com/posts/2012/09/back-in-berkeley-california.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;I arrived yesterday to Berkeley, California.&lt;/p&gt;
+&lt;p&gt;Just like I did my Bachelor thesis in Lawrence Berkeley National Laboratory (LBNL), I will do my Master Thesis there too. The thesis will last a bit less than a semester.&lt;/p&gt;
+&lt;p&gt;During my Master Thesis I will try to use profiling samples from the Linux perf tools in GCC or Clang to optimize processor cache usage (avoid cache and page faults).&lt;/p&gt;
+&lt;p&gt;I will try to publish some posts about that during the semester if I have time.&lt;/p&gt;&lt;/div&gt;</description><category>Compilers</category><category>gcc</category><category>Others</category><category>Personal</category><category>The site</category><guid>http://www.baptiste-wicht.com/posts/2012/09/back-in-berkeley-california.html</guid><pubDate>Thu, 13 Sep 2012 10:35:43 GMT</pubDate></item><item><title>EDDI Compiler 1.1.3 - Templates</title><link>http://www.baptiste-wicht.com/posts/2012/09/eddi-compiler-1-1-3-templates.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;I finished the &lt;strong&gt;version 1.1.3 of the EDDI Compiler (eddic)&lt;/strong&gt;.&lt;/p&gt;
+&lt;p&gt;The main improvement to the language is the support of templates. The syntax is more or less the same as the syntax of C++ templates, but the features are much more limited. In EDDI, you can declare class templates and function templates. Class templates can also includes member function templates.&lt;/p&gt;
+&lt;p&gt;Here is an example of the use of templates in EDDI:&lt;/p&gt;
+&lt;p&gt;[cpp]template&lt;/p&gt;
+&lt;p&gt;struct node {
+    T value;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;this&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;T&lt;/span&gt; &lt;span class="n"&gt;init&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"C1|"&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+    &lt;span class="n"&gt;this&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;init&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="n"&gt;T&lt;/span&gt; &lt;span class="n"&gt;get_value&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;this&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="n"&gt;template&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;type&lt;/span&gt; &lt;span class="n"&gt;U&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;print_value&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;U&lt;/span&gt; &lt;span class="n"&gt;v&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;v&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+    &lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"|"&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}&lt;/p&gt;
+&lt;p&gt;template&amp;lt;type T&amp;gt;&lt;/p&gt;
+&lt;p&gt;void debug(T t){
+    print(t);
+    print("|");
+}&lt;/p&gt;
+&lt;p&gt;template&amp;lt;type T&amp;gt;&lt;/p&gt;
+&lt;p&gt;void test(node&amp;lt;T&amp;gt;* node){
+    debug&amp;lt;T&amp;gt;(node.value);
+    debug&amp;lt;T&amp;gt;(node.get_value());
+}&lt;/p&gt;
+&lt;p&gt;void main(){
+    node&amp;lt;int&amp;gt; first_node(100);
+    node&amp;lt;float&amp;gt; second_node(13.3);&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;test&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;(&lt;/span&gt;&lt;span class="n"&gt;first_node&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="n"&gt;test&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="kt"&gt;float&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;(&lt;/span&gt;&lt;span class="n"&gt;second_node&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+&lt;span class="n"&gt;first_node&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;print_value&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="kt"&gt;float&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;(&lt;/span&gt;&lt;span class="mf"&gt;1.0&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="n"&gt;second_node&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;print_value&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;(&lt;/span&gt;&lt;span class="mi"&gt;10&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}&lt;/p&gt;
+&lt;p&gt;[/cpp]&lt;/p&gt;
+&lt;p&gt;This new feature adds generic programming capabilities to the language.&lt;/p&gt;
+&lt;p&gt;This version also adds other language improvements. The first one is the support of the ! operator for a bool, to test if a bool is false. This version also includes support for iterating through all the chars of a string with a foreach loop. And finally, the this pointer is now implicit to access member fields of a struct from member functions.&lt;/p&gt;
+&lt;p&gt;The optimization engine has been greatly improved. The pointers are much better handled and some regression due to new features have been fixed. The Constant Propagation optimization can take default values of struct and arrays into account. Finally, the functions with char parameters can now be inlined.&lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;div id="LC3"&gt;Finally, the compiler use a new logging system, that can be completely removed at compile-time for release versions.&lt;/div&gt;
+&lt;div&gt;
+
+&lt;h4&gt;Future Work&lt;/h4&gt;
+
+&lt;div&gt;The next version of the EDDI compiler (eddic) will be the version 1.1.4. This version will add support for some basic pointer manipulation. It will also add support for dynamically allocated arrays. Finally, the version will includes several new optimization techniques regarding to loops: Loop Invariant Code Motion, Loop Strength Reduction and perhaps some basic Loop Unrolling.&lt;/div&gt;
+
+&lt;h4&gt;Download&lt;/h4&gt;
+
+&lt;div&gt;You can find the EDDI Compiler sources on the Github repository: &lt;a title="Github repository of eddic" href="https://github.com/wichtounet/eddic"&gt;https://github.com/wichtounet/eddic&lt;/a&gt;&lt;/div&gt;
+
+&lt;div&gt;The exact version I refer to is the v1.1.3 available in the GitHub tags or directly as the release branch.&lt;/div&gt;
+
+&lt;/div&gt;
+
+&lt;p&gt;&lt;/p&gt;&lt;/div&gt;</description><category>C++</category><category>Compilers</category><category>EDDI</category><category>EDDI</category><guid>http://www.baptiste-wicht.com/posts/2012/09/eddi-compiler-1-1-3-templates.html</guid><pubDate>Wed, 05 Sep 2012 07:25:42 GMT</pubDate></item><item><title>EDDI Compiler 1.1.2 – Read command line</title><link>http://www.baptiste-wicht.com/posts/2012/08/eddi-compiler-1-1-2-read-command-line.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;div id="LC1"&gt;I finished the &lt;strong&gt;eddi compiler (eddic) version 1.1.2&lt;/strong&gt;. It took me a long time because of a lot of other things I had to do this month.&lt;/div&gt;
+&lt;div&gt;&lt;/div&gt;
+&lt;div&gt;This version includes two major changes. First, this version adds a new type for characters (char). A char can be declared using a char literal ('b' for instance) or from an int ( (char) 77). This version introduces the [] operator for string to have access to a specific char.&lt;/div&gt;
+
+&lt;div&gt;&lt;/div&gt;
+
+&lt;div&gt;Another major improvement is the support for reading the command line. For now, only characters can be read, one by one with the read_char function.&lt;/div&gt;
+
+&lt;div&gt;&lt;/div&gt;
+
+&lt;div&gt;The standard library includes a new function to compare two strings (&lt;em&gt;str_equals&lt;/em&gt;):&lt;/div&gt;
+
+&lt;div&gt;&lt;/div&gt;
+
+&lt;p&gt;[cpp]bool str_equals(string a, string b){
+    if(length(a) != length(b)){
+        return false;
+    }&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;length&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="k"&gt;if&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;!=&lt;/span&gt; &lt;span class="n"&gt;b&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;]){&lt;/span&gt;
+        &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="nb"&gt;false&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="nb"&gt;true&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/cpp]&lt;/p&gt;
+&lt;div&gt;The other improvements are not relative to the language. The inlining engine can now inline functions that takes arrays as parameters. The symbol table is now represented by the global context. There is no global symbol table. This new version includes several improvements of the code and a cleanup of the AST to remove redundancy.&lt;/div&gt;
+
+&lt;h4&gt;Future Work&lt;/h4&gt;
+
+&lt;div&gt;The next version of the eddi compiler (eddic) will be the version 1.1.3. This version will introduce support for a very basic version of template engine. It will also add support for foreach on string. This version will also add new features and cleanup in the different optimizations passes.&lt;/div&gt;
+
+&lt;h4&gt;Download&lt;/h4&gt;
+
+&lt;div&gt;You can find the EDDI Compiler sources on the Github repository: https://github.com/wichtounet/eddic&lt;/div&gt;
+
+&lt;div&gt;The exact version I refer to is the v1.1.2 available in the GitHub tags or directly as the release branch.&lt;/div&gt;
+
+&lt;p&gt;&lt;/p&gt;&lt;/div&gt;</description><category>C++</category><category>Compilers</category><category>EDDI</category><category>EDDI</category><guid>http://www.baptiste-wicht.com/posts/2012/08/eddi-compiler-1-1-2-read-command-line.html</guid><pubDate>Sat, 25 Aug 2012 06:47:06 GMT</pubDate></item><item><title>EDDI Compiler 1.1.1 – Dynamic Memory Allocation and Constructors/Destructors</title><link>http://www.baptiste-wicht.com/posts/2012/07/eddi-compiler-1-1-1-dynamic-memory-allocation-constructors-destructors.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;As I'm in holiday, the work is going pretty fast. The &lt;strong&gt;version 1.1.1&lt;/strong&gt; of the &lt;strong&gt;EDDI Compiler&lt;/strong&gt; (eddic) is available.&lt;/p&gt;
+&lt;p&gt;This version introduces two major changes. The first is the support of dynamic memory allocation. You can allocate a struct or a standard type in help using the new operator. The memory can be released using the delete operator. Another related improved is the addition of constructors and destructors to the language. The following sample shows what can be done with the new features:&lt;/p&gt;
+&lt;p&gt;[cpp]struct A {
+    int a;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;this&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="n"&gt;this&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+    &lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Constructed"&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="o"&gt;~&lt;/span&gt;&lt;span class="n"&gt;this&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+    &lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Destructed"&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}&lt;/p&gt;
+&lt;p&gt;void main(){
+    A* b = new A(55);
+    delete b;
+}[/cpp]&lt;/p&gt;
+&lt;p&gt;The constructor is called once the memory is allocated. The delete operator calls the destructor and then free the memory. &lt;/p&gt;
+&lt;p&gt;When a structure is allocated on the stack, the constructor is called at the declaration point and the destructor is called when the variable gets out of scope. &lt;/p&gt;
+&lt;p&gt;The memory manager is quite simple for now. Memory is allocated in blocks. Each block has a header indicating the size of the block and its availability. The size of the header is 8 bytes in 32 bits and 16 bytes in 64 bits. The free operation can be done in constant time by just setting the availability flag to false. The disadvantage of this technique is that all the blocks needs to be tested to find a free block. This can be slow in some situations. I will try to make a better version in the future. &lt;/p&gt;
+&lt;p&gt;For that, the memory model has been improved. All the offsets are now increasing and the stack addresses are set at the end of the block. &lt;/p&gt;
+&lt;p&gt;Another interesting improvement of the language is the support of switch. For now, only switch on int is supported. Here is an example of a switch in EDDI:&lt;/p&gt;
+&lt;p&gt;[cpp]switch(a){
+    case 3:
+        print("3");
+    case 4:
+        print("4");
+    case 5:
+        print("5");
+    case 6:
+        print("6");
+    default:
+        print("default");
+}[/cpp]&lt;/p&gt;
+&lt;p&gt;The performances of the optimizer have been improved, by doing live-variable analysis less often. Pointers can now be passed in registers. Some of the variables used as temporary copies are removed &lt;/p&gt;
+&lt;p&gt;The peephole optimizer has been improved to use conditional move when possible. Moreover, the peephole optimizer is now able to perform some local copy propagation. &lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;h4&gt;Future work&lt;/h4&gt;
+&lt;p&gt;The next version of the EDDI Compiler will be the version 1.1.2. This version will add features to read the command-line. Moreover, it will also add support for char type and string comparisons. With that, I think that the language will start to be usable for toy applications. &lt;/p&gt;
+&lt;p&gt;There  will be some improvements to the code that have been left aside for a too long time. &lt;/p&gt;
+&lt;h4&gt;Download&lt;/h4&gt;
+
+&lt;p&gt;You can find the EDDI Compiler sources on the Github repository: https://github.com/wichtounet/eddic&lt;/p&gt;
+&lt;p&gt;The exact version I refer to is the v1.1.1 available in the GitHub tags or directly as the release branch.&lt;/p&gt;&lt;/div&gt;</description><category>C++</category><category>Compilers</category><category>EDDI</category><category>EDDI</category><category>Releases</category><guid>http://www.baptiste-wicht.com/posts/2012/07/eddi-compiler-1-1-1-dynamic-memory-allocation-constructors-destructors.html</guid><pubDate>Mon, 30 Jul 2012 12:18:01 GMT</pubDate></item></channel></rss>

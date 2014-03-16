@@ -1,0 +1,323 @@
+<!DOCTYPE html><html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Baptiste Wicht">
+    <title>Solve Einstein’s Riddle using Prolog | @Blog("Baptiste Wicht")</title>
+    
+            <link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
+      <link rel="canonical" href="http://www.baptiste-wicht.com/posts/2010/09/solve-einsteins-riddle-using-prolog.html">
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js" type="text/javascript"></script>
+    <![endif]-->
+            <link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
+
+    
+
+
+
+
+
+    
+</head>
+<body>
+<!-- Menubar -->
+
+<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    <div class="container-fluid"><!-- This keeps the margins nice -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="http://www.baptiste-wicht.com/">@Blog("Baptiste Wicht")</a>
+        </div><!-- /.navbar-header -->
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+            <ul class="nav navbar-nav">
+                
+                <li><a href="../../../archive.html">Archives</a>
+                </li><li><a href="../../../categories/index.html">Tags</a>
+                </li><li><a href="../../../rss.xml">RSS</a>
+
+            </li></ul>
+
+            <ul class="nav navbar-nav navbar-right">
+                
+                
+                    
+    <li>
+    <a href="solve-einsteins-riddle-using-prolog.wp" id="sourcelink">Source</a>
+    </li>
+
+            </ul>
+        </div><!-- /.navbar-collapse -->
+    </div><!-- /.container-fluid -->
+</nav>
+
+<!-- End of Menubar -->
+
+<div class="container">
+    <div class="body-content">
+        <!--Body content-->
+        <div class="row">
+            
+    <article class="postbox post-text">
+    <div class="h-entry" itemscope="itemscope" itemtype="http://schema.org/Article">
+    
+    <h1 class="p-name" itemprop="headline name">Solve Einstein’s Riddle using Prolog</h1>
+
+    <hr>
+    <small>
+        Posted: <time class="published dt-published" datetime="2010-09-22T07:01:30+00:00" itemprop="datePublished">2010-09-22 07:01</time>
+        
+
+        
+          |  
+        More posts about 
+    <span itemprop="keywords">
+        <a class="tag p-category" href="../../../categories/others.html"><span class="badge badge-info">Others</span></a>
+        <a class="tag p-category" href="../../../categories/prolog.html"><span class="badge badge-info">Prolog</span></a>
+    </span>
+
+
+    </small>
+    <hr>
+    <div class="e-content" itemprop="articleBody text">
+    <div><p></p><p>This week, we started learning Prolog at school. So to exercise, I choose the Einstein's Riddle. Einstein wrote this riddle in the 19th century. He stated that only 2% of the population can solve it by mind. Personnally, I'm not of this two %, I needed paper and pens to solve it. But this is not the them of the post, so let's use Prolog to solve it. I will present my solution, there is certainly other solutions, and certainly better, but it makes only some days that I started learning this language and this new kind of developing, logical programming. </p>
+<p>Here is the riddle as stated by Einstein :</p>
+<p></p><ol>
+    <li>In a street there are five houses, painted five different colours.</li>
+    <li>In each house lives a person of different nationality</li>
+    <li>These five homeowners each drink a different kind of beverage, smoke different brand of cigar and keep a different pet.</li>
+</ol>
+<p>The question is : Who owns the fish ?</p>
+<p>And there are 15 hints :</p>
+<ol>
+    <li>The Brit lives in a red house.</li>
+    <li>The Swede keeps dogs as pets.</li>
+    <li>The Dane drinks tea.</li>
+    <li>The Green house is next to, and on the left of the White house.</li>
+    <li>The owner of the Green house drinks coffee.</li>
+    <li>The person who smokes Pall Mall rears birds.</li>
+    <li>The owner of the Yellow house smokes Dunhill.</li>
+    <li>The man living in the centre house drinks milk.</li>
+    <li>The Norwegian lives in the first house.</li>
+    <li>The man who smokes Blends lives next to the one who keeps cats.</li>
+    <li>The man who keeps horses lives next to the man who smokes Dunhill.</li>
+    <li>The man who smokes Blue Master drinks beer.</li>
+    <li>The German smokes Prince.</li>
+    <li>The Norwegian lives next to the blue house.</li>
+    <li>The man who smokes Blends has a neighbour who drinks water.</li>
+</ol>
+
+<p>So let's start with the code !</p>
+<!--more-->
+
+<p>First of all, we'll create a list of tuple containing all the informations about a men . The position in the list represent the position of the house in the street. So we'll create a predicate to create the list :</p>
+<p>[prolog]persons(0, []) :- !.</p>
+<p>persons(N, [(_Men,_Color,_Drink,_Smoke,_Animal)|T]) :- N1 is N-1, persons(N1,T).[/prolog]</p>
+<p>The first predicate, is to end when the index is 0 and the list is empty. And the second one create a recursive list with N element. Then, I needed a predicate to get the Nth element if corresponding to some informations of the recursive list : </p>
+<p>[prolog]person(1, [H|_], H) :- !.</p>
+<p>person(N, [_|T], R) :- N1 is N-1, person(N1, T, R).[/prolog]</p>
+<p>Again, the first one is used to stop when we are at the good element. And the second predicate iterate until the good element is found. </p>
+<p>Then, I have translated the hints into predicate : </p>
+<p>[prolog]% The Brit lives in a red house</p>
+<p>hint1([(brit,red,<em>, </em>, <em>)|</em>]).</p>
+<p>hint1([_|T]) :- hint1(T).</p>
+<p>% The Swede keeps dogs as pets</p>
+<p>hint2([(swede,<em>,</em>,<em>,dog)|</em>]).</p>
+<p>hint2([_|T]) :- hint2(T).</p>
+<p>% The Dane drinks tea</p>
+<p>hint3([(dane,<em>,tea,</em>,<em>)|</em>]).</p>
+<p>hint3([_|T]) :- hint3(T).</p>
+<p>% The Green house is on the left of the White house</p>
+<p>hint4([(<em>,green,</em>,<em>,</em>),(<em>,white,</em>,<em>,</em>)|_]).</p>
+<p>hint4([_|T]) :- hint4(T).</p>
+<p>% The owner of the Green house drinks coffee. </p>
+<p>hint5([(<em>,green,coffee,</em>,<em>)|</em>]).</p>
+<p>hint5([_|T]) :- hint5(T).</p>
+<p>% The person who smokes Pall Mall rears birds</p>
+<p>hint6([(<em>,</em>,<em>,pallmall,bird)|</em>]).</p>
+<p>hint6([_|T]) :- hint6(T).</p>
+<p>% The owner of the Yellow house smokes Dunhill</p>
+<p>hint7([(<em>,yellow,</em>,dunhill,<em>)|</em>]).</p>
+<p>hint7([_|T]) :- hint7(T).</p>
+<p>% The man living in the centre house drinks milk</p>
+<p>hint8(Persons) :- person(3, Persons, (<em>,</em>,milk,<em>,</em>)).</p>
+<p>% The Norwegian lives in the first house</p>
+<p>hint9(Persons) :- person(1, Persons, (norwegian,<em>,</em>,<em>,</em>)).</p>
+<p>% The man who smokes Blends lives next to the one who keeps cats</p>
+<p>hint10([(<em>,</em>,<em>,blend,</em>),(<em>,</em>,<em>,</em>,cat)|_]).</p>
+<p>hint10([(<em>,</em>,<em>,</em>,cat),(<em>,</em>,<em>,blend,</em>)|_]).</p>
+<p>hint10([_|T]) :- hint10(T).</p>
+<p>% The man who keeps horses lives next to the man who smokes Dunhill</p>
+<p>hint11([(<em>,</em>,<em>,dunhill,</em>),(<em>,</em>,<em>,</em>,horse)|_]).</p>
+<p>hint11([(<em>,</em>,<em>,</em>,horse),(<em>,</em>,<em>,dunhill,</em>)|_]).</p>
+<p>hint11([_|T]) :- hint11(T).</p>
+<p>% The man who smokes Blue Master drinks beer</p>
+<p>hint12([(<em>,</em>,beer,bluemaster,<em>)|</em>]).</p>
+<p>hint12([_|T]) :- hint12(T).</p>
+<p>% The German smokes Prince</p>
+<p>hint13([(german,<em>,</em>,prince,<em>)|</em>]).</p>
+<p>hint13([_|T]) :- hint13(T).</p>
+<p>% The Norwegian lives next to the blue house</p>
+<p>hint14([(norwegian,<em>,</em>,<em>,</em>),(<em>,blue,</em>,<em>,</em>)|_]).</p>
+<p>hint14([(<em>,blue,</em>,<em>,</em>),(norwegian,<em>,</em>,<em>,</em>)|_]).</p>
+<p>hint14([_|T]) :- hint14(T).</p>
+<p>% The man who smokes Blends has a neighbour who drinks water</p>
+<p>hint15([(<em>,</em>,<em>,blend,</em>),(<em>,</em>,water,<em>,</em>)|_]).</p>
+<p>hint15([(<em>,</em>,water,<em>,</em>),(<em>,</em>,<em>,blend,</em>)|_]).</p>
+<p>hint15([_|T]) :- hint15(T).</p>
+<p>% The question : Who owns the fish ?</p>
+<p>question([(<em>,</em>,<em>,</em>,fish)|_]).</p>
+<p>question([_|T]) :- question(T).[/prolog]</p>
+<p>I've used one main way to do the predicates. The first predicate type used for every predicates except 8 and 9 is really  simple. I expressed the valid values and then, I used iteration to iterate over the arrays. With that, the predicate is true when the the list contains the good value (or values when testing for an house next to another). </p>
+<p>The other predicate is that we specify that the Nth contains some values. </p>
+<p>After that, we must specify the question : </p>
+<p>[prolog]question([(<em>,</em>,<em>,</em>,fish)|_]).</p>
+<p>question([_|T]) :- question(T).[/prolog]</p>
+<p>We just iterate the list, specifying that there is a man with a fish. Without the question, we can solve the problem, but we don't know that the last animal is a fish. </p>
+<p>And after all, we can try to solve the riddle : </p>
+<p>[prolog]solution(Persons) :-
+  persons(5, Persons),
+  hint1(Persons),
+  hint2(Persons),
+  hint3(Persons),
+  hint4(Persons),
+  hint5(Persons),
+  hint6(Persons),
+  hint7(Persons),
+  hint8(Persons),
+  hint9(Persons),
+  hint10(Persons),
+  hint11(Persons),
+  hint12(Persons),
+  hint13(Persons),
+  hint14(Persons),
+  hint15(Persons),
+  question(Persons).[/prolog]</p>
+<p>We just say that the solution is the combinaison of all the hints and the question, so that the solution must validate all predicates. </p>
+<p>So let's try our program : </p>
+<pre>wichtounet@wichtounet-laptop:~/Desktop$ gprolog
+
+GNU Prolog 1.3.0
+
+By Daniel Diaz
+
+Copyright (C) 1999-2007 Daniel Diaz
+
+| ?- [einstein.pl].      
+
+uncaught exception: error(syntax_error('user_input:1 (char:10) , | ] or operator expected in list'),read_term/3)
+
+| ?- 
+
+Prolog interruption (h for help) ? e
+
+wichtounet@wichtounet-laptop:~/Desktop$ gprolog
+
+GNU Prolog 1.3.0
+
+By Daniel Diaz
+
+Copyright (C) 1999-2007 Daniel Diaz
+
+| ?- consult('einstein.pl').
+
+compiling /home/wichtounet/Desktop/einstein.pl for byte code...
+
+/home/wichtounet/Desktop/einstein.pl compiled, 100 lines read - 14891 bytes written, 17 ms
+
+yes
+
+| ?- solution(Persons).
+
+Persons = [(norwegian,yellow,water,dunhill,cat),(dane,blue,tea,blend,horse),(brit,red,milk,pallmall,bird),
+
+(german,green,coffee,prince,fish),(swede,white,beer,bluemaster,dog)] ? a
+
+(20 ms) no
+
+| ?- 
+
+Prolog interruption (h for help) ? e
+
+</pre>
+
+<p>With that, we found not only the man who have fish but also all the other informations. The answer is the german. </p>
+<p>That's all we need :)</p>
+<p>I hope you found that post interesting. </p>
+<p>Here is the complete source code : <a href="../../../wp-content/uploads/2010/09/einstein.pl">Einstein's Riddle in Prolog</a></p></div>
+    </div>
+    </div>
+    
+        <ul class="pager">
+            <li class="previous">
+                <a href="jdk-7-features-updated-plan-b-is-apparently-here.html" rel="prev">← Previous post</a>
+            </li>
+            <li class="next">
+                <a href="a-better-swingworker.html" rel="next">Next post →</a>
+            </li>
+        </ul>
+
+        
+        
+        <div id="disqus_thread"></div>
+        <script>
+        var disqus_shortname ="nikolademo",
+            disqus_url="http://www.baptiste-wicht.com/posts/2010/09/solve-einsteins-riddle-using-prolog.html",
+        disqus_title="Solve Einstein\u2019s Riddle using Prolog",
+        disqus_identifier="cache/posts/2010/09/solve-einsteins-riddle-using-prolog.html",
+        disqus_config = function () {
+            this.language = "en";
+        };
+        (function() {
+            var dsq = document.createElement('script'); dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink" rel="nofollow">Comments powered by <span class="logo-disqus">Disqus</span></a>
+
+
+    
+
+    </article>
+
+        </div>
+        <!--End of body content-->
+
+        <footer>
+            Contents © 2014         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         
+        </footer>
+    </div>
+</div>
+
+
+            <script src="../../../assets/js/all-nocdn.js" type="text/javascript"></script>
+
+
+    
+<!-- Social buttons -->
+<div id="addthisbox" class="addthis_toolbox addthis_peekaboo_style addthis_default_style addthis_label_style addthis_32x32_style">
+<a class="addthis_button_more">Share</a>
+<ul><li><a class="addthis_button_facebook"></a>
+</li><li><a class="addthis_button_google_plusone_share"></a>
+</li><li><a class="addthis_button_linkedin"></a>
+</li><li><a class="addthis_button_twitter"></a>
+</li></ul>
+</div>
+<script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-4f7088a56bb93798"></script>
+<!-- End of social buttons -->
+
+
+    <script type="text/javascript">jQuery("a.image-reference").colorbox({rel:"gal",maxWidth:"100%",maxHeight:"100%",scalePhotos:true});</script>
+    
+
+</body>
+</html>

@@ -1,0 +1,253 @@
+<html><body><p>In the previous post about <strong>Play Framework</strong>, we seen <a title="Getting started with Play Framework" href="http://www.baptiste-wicht.com/2010/07/getting-started-play-framework/" target="_blank">how to install Play and create a first simple application</a>. In this post, we'll see how to customize the views and use the template engine of the framework to easily create web pages.
+
+Play has its own template engine to generate HTML web pages. The template engine use Groovy as expression language. You will use Groovy language to create all the dynamic parts of the web pages. But there is no need to learn completely Grooxy, it's really close to Java and if you know already knows Java, there is no problem to use Groovy in your templates. All the templates are located in the app/views folder in your application. All the dynamic part of the web page is resolved during the execution of the template and the result is a part of the HTTP Response.
+
+<!--more-->
+
+So first of all, we'll create a little application for our needs :
+
+</p><pre>wichtounet@wichtounet-laptop:~/dev/play$ /usr/share/play/play new views
+
+~        _            _ 
+
+~  _ __ | | __ _ _  _| |
+
+~ | '_ \| |/ _' | || |_|
+
+~ |  __/|_|\____|\__ (_)
+
+~ |_|            |__/   
+
+~
+
+~ play! 1.0.3, http://www.playframework.org
+
+~
+
+~ The new application will be created in /home/wichtounet/dev/play/views
+
+~ What is the application name? Views
+
+~
+
+~ OK, the application is created.
+
+~ Start it with : play run views
+
+~ Have fun!
+
+~</pre>
+
+So we start to inspect what has been created by Play. If you go in app/views, you will see this structure :
+
+<ul>
+	<li>Application : This folder is to store the templates of the Application controller</li>
+	<li>errors : This folder contains the templates for the HTTP Error pages (404, 500, ...)</li>
+	<li>main.html : This is the main template</li>
+</ul>
+
+If you open Application/index.html, you obtain this kind of code :
+
+[xml]#{extends 'main.html' /}
+
+#{set title:'Home' /}
+
+#{welcome /}[/xml]
+
+The first line indicate that we extend an other template (main.html). The next line use a Play tag (set), to set the title of the page. A set tag has a brother, the get tag who get the value setted by the set tag. The last line use the welcome tag who print the content of the welcome page. 
+
+Now, let's see the main.html template : 
+
+[xml]&lt;!DOCTYPE html&gt;
+
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;title&gt;#{get 'title' /}&lt;/title&gt;
+        &lt;meta http-equiv="Content-Type" content="text/html; charset=utf-8"&gt;
+        &lt;link rel="stylesheet" type="text/css" media="screen" href="@{'/public/stylesheets/main.css'}"&gt;
+        #{get 'moreStyles' /}
+        &lt;link rel="shortcut icon" type="image/png" href="@{'/public/images/favicon.png'}"&gt;
+        &lt;script src="@{'/public/javascripts/jquery-1.4.2.min.js'}" type="text/javascript" charset="utf-8"&gt;&lt;/script&gt;
+        #{get 'moreScripts' /}
+    &lt;/head&gt;
+    &lt;body&gt;
+        #{doLayout /}
+    &lt;/body&gt;
+&lt;/html&gt;[/xml]
+
+There is some interesting things here : 
+
+<ul>
+
+<li>#{get 'title' /} : return the value of the variable title (not a Java variable, only a HTML variable)</li>
+
+<li>@{'/public/stylesheets/main.css'} : resolve the resource to its URL</li>
+
+<li>#{doLayout /} : Indicate where the sub templates (template who extends main.html) will be rendered</li>
+
+</ul> 
+
+<h3>Pass variables to the view</h3>
+
+So let's go further. The first important thing is to know how to pass variables to the view from the controller. With Play Framework, this is really simple. just add the variables you need to the render() method of the controller. By example, to pass a String to the view : 
+
+[java]package controllers;
+
+import play.mvc.*;
+
+public class Application extends Controller {
+    public static void index() {
+        String hello = "Hello World from Controller !";
+
+        render(hello);
+    }
+}[/java]
+
+The variable hello is now accessible from the view on the name "hello". To get it, you have to use ${variable_name} simply to display it : 
+
+[xml]#{extends 'main.html' /}
+
+#{set title:'Home' /}
+
+Hello from the view
+
+&lt;br /&gt;
+
+${hello}[/xml]
+
+Easy, no ? 
+
+Let's try adding a simple class to our model : 
+
+[java]package models;
+
+public class Book {
+    private final String title;
+
+    public Book(String title) {
+        super();
+
+        this.title = title;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+[/java]
+
+And pass it to the view : 
+
+[java]
+    public static void index() {
+        Book book = new Book("Hello Play !");
+
+        render(book);
+    }
+[/java]
+
+And then get it from the view : 
+
+[xml]#{extends 'main.html' /}
+
+#{set title:'Home' /}
+
+Hello from the view
+
+&lt;br /&gt;
+
+I've a book for you "${book.title}". [/xml]
+
+The property is getted using the JavaBeans convention, so you have to create a getTitle() method to get the title of the book. 
+
+All the dynamic content is directly escaped by the template engine to avoid XSS security exploits. If you really want to not escape something, you have to use the raw() method available on all the strings. By example, for our title : 
+
+[xml]${book.title.raw()}[/xml]
+
+But this is not a really good practice, and must be used only when it's necessary. 
+
+You can add comments to your templates if you want : 
+
+[xml]*{Will not be evaluated by the template engine}*[/xml]
+
+<h3>Iterate over a list</h3>
+
+An important thing to do in template and that comes really soon is the iterate over a collection. By example, we can pass a list of books to the view from the controller : 
+
+[java]
+    public static void index() {
+        List&lt;Book&gt; books = new ArrayList&lt;Book&gt;(3);
+
+        books.add(new Book("Hello Play !"));
+        books.add(new Book("Hello Template !"));
+        books.add(new Book("Hello Engine !"));
+
+        render(books);
+  [/java]
+
+And then, you can iterate over the list using the <em>list</em> tag : 
+
+[xml]#{extends 'main.html' /}
+
+#{set title:'Home' /}
+
+I've some books for your :
+
+&lt;ul&gt;
+    #{list items:books, as:'book'}
+        &lt;li&gt;${book.title}&lt;/li&gt;
+    #{/list}
+&lt;/ul&gt;[/xml]
+
+And that will display a single little list in our web page. Not to complicated :)
+
+<h3>Using scripts</h3>
+
+If you have to make complicated things, you can using scripts in Groovy. In scripts, you can declare variables and use all the other variables. By example, you can make the title upper case in a script : 
+
+[xml]#{extends 'main.html' /}
+
+#{set title:'Home' /}
+
+I've some books for your :
+
+&lt;ul&gt;
+    #{list items:books, as:'book'}
+        %{
+           bookTitle = book.title.toUpperCase();
+        }%
+        &lt;li&gt;${bookTitle}&lt;/li&gt;
+    #{/list}
+&lt;/ul&gt;[/xml]
+
+But you can also do iterations, conditions and a lot of other things. But keep in mind that the templates are not the good place to make complicated things, for that you have the controller and the models. The template must be as simple as possible. 
+
+<h3>Define tags</h3>
+
+There is lot of tags in Play Framework, but you can create your own tags. For that, you just have to create a folder tags in your views folder. By example, if you create booklist.html in views/tags and add the following code : 
+
+[xml]&lt;ul&gt;
+    #{list items:_items, as:'book'}
+        %{
+            bookTitle = book.title.toUpperCase();
+        }%
+        &lt;li&gt;${bookTitle}&lt;/li&gt;
+    #{/list}
+&lt;/ul&gt;[/xml]
+
+The arguments are obtained using '_' following by the name of the arguments (_items in our example). 
+
+You can refactor the template index.html using the new tag : 
+
+[xml]#{extends 'main.html' /}
+
+#{set title:'Home' /}
+
+I've some books for your :
+
+#{booklist items:books /}[/xml]
+
+You give arguments like in any other tag. This can help you to make cleaner templates and to avoid to copy/paste some codes. 
+
+So we've now covered the basis of the template engine of Play Framework. With all that we've seen, we can start to create simple Play Applications. 
+
+A really good resources for Play Developer is the <a target="_blank" href="http://download.playframework.org/miscellaneous/play-cheat-sheet.pdf">Play Cheat Sheet</a>. You can also consult the <a target="_blank" href="http://www.playframework.org/documentation/1.0.3/home">official documentation</a> for more complete informations. </body></html>

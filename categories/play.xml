@@ -1,0 +1,420 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>@Blog("Baptiste Wicht") (Play!)</title><link>http://www.baptiste-wicht.com/</link><description></description><atom:link href="http://www.baptiste-wicht.com/categories/play.xml" type="application/rss+xml" rel="self"></atom:link><language>en</language><lastBuildDate>Sun, 16 Mar 2014 17:07:37 GMT</lastBuildDate><generator>Nikola &lt;http://getnikola.com/&gt;</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>Play Framework - The template engine</title><link>http://www.baptiste-wicht.com/posts/2010/07/play-framework-template-engine.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;In the previous post about &lt;strong&gt;Play Framework&lt;/strong&gt;, we seen &lt;a title="Getting started with Play Framework" href="http://www.baptiste-wicht.com/2010/07/getting-started-play-framework/" target="_blank"&gt;how to install Play and create a first simple application&lt;/a&gt;. In this post, we'll see how to customize the views and use the template engine of the framework to easily create web pages.&lt;/p&gt;
+&lt;p&gt;Play has its own template engine to generate HTML web pages. The template engine use Groovy as expression language. You will use Groovy language to create all the dynamic parts of the web pages. But there is no need to learn completely Grooxy, it's really close to Java and if you know already knows Java, there is no problem to use Groovy in your templates. All the templates are located in the app/views folder in your application. All the dynamic part of the web page is resolved during the execution of the template and the result is a part of the HTTP Response.&lt;/p&gt;
+&lt;!--more--&gt;
+
+&lt;p&gt;So first of all, we'll create a little application for our needs :&lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;pre&gt;wichtounet@wichtounet-laptop:~/dev/play$ /usr/share/play/play new views
+&lt;p&gt;~        _            _ &lt;/p&gt;
+&lt;p&gt;~  _ &lt;strong&gt; | | &lt;/strong&gt; _ &lt;em&gt;  &lt;/em&gt;| |&lt;/p&gt;
+&lt;p&gt;~ | '&lt;em&gt; \| |/ &lt;/em&gt;' | || |_|&lt;/p&gt;
+&lt;p&gt;~ |  &lt;strong&gt;/|_|_&lt;/strong&gt;&lt;em&gt;|_&lt;/em&gt; (_)&lt;/p&gt;
+&lt;p&gt;~ |_|            |__/   &lt;/p&gt;
+&lt;p&gt;~&lt;/p&gt;
+&lt;p&gt;~ play! 1.0.3, http://www.playframework.org&lt;/p&gt;
+&lt;p&gt;~&lt;/p&gt;
+&lt;p&gt;~ The new application will be created in /home/wichtounet/dev/play/views&lt;/p&gt;
+&lt;p&gt;~ What is the application name? Views&lt;/p&gt;
+&lt;p&gt;~&lt;/p&gt;
+&lt;p&gt;~ OK, the application is created.&lt;/p&gt;
+&lt;p&gt;~ Start it with : play run views&lt;/p&gt;
+&lt;p&gt;~ Have fun!&lt;/p&gt;
+&lt;p&gt;~&lt;/p&gt;&lt;/pre&gt;
+&lt;p&gt;So we start to inspect what has been created by Play. If you go in app/views, you will see this structure :&lt;/p&gt;
+&lt;ul&gt;
+    &lt;li&gt;Application : This folder is to store the templates of the Application controller&lt;/li&gt;
+    &lt;li&gt;errors : This folder contains the templates for the HTTP Error pages (404, 500, ...)&lt;/li&gt;
+    &lt;li&gt;main.html : This is the main template&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;If you open Application/index.html, you obtain this kind of code :&lt;/p&gt;
+&lt;p&gt;[xml]#{extends 'main.html' /}&lt;/p&gt;
+&lt;h2&gt;{set title:'Home' /}&lt;/h2&gt;
+&lt;h2&gt;{welcome /}[/xml]&lt;/h2&gt;
+&lt;p&gt;The first line indicate that we extend an other template (main.html). The next line use a Play tag (set), to set the title of the page. A set tag has a brother, the get tag who get the value setted by the set tag. The last line use the welcome tag who print the content of the welcome page. &lt;/p&gt;
+&lt;p&gt;Now, let's see the main.html template : &lt;/p&gt;
+&lt;p&gt;[xml]&amp;lt;!DOCTYPE html&amp;gt;&lt;/p&gt;
+&lt;p&gt;&amp;lt;html&amp;gt;
+    &amp;lt;head&amp;gt;
+        &amp;lt;title&amp;gt;#{get 'title' /}&amp;lt;/title&amp;gt;
+        &amp;lt;meta http-equiv="Content-Type" content="text/html; charset=utf-8"&amp;gt;
+        &amp;lt;link rel="stylesheet" type="text/css" media="screen" href="@{'/public/stylesheets/main.css'}"&amp;gt;
+        #{get 'moreStyles' /}
+        &amp;lt;link rel="shortcut icon" type="image/png" href="@{'/public/images/favicon.png'}"&amp;gt;
+        &amp;lt;script src="@{'/public/javascripts/jquery-1.4.2.min.js'}" type="text/javascript" charset="utf-8"&amp;gt;&amp;lt;/script&amp;gt;
+        #{get 'moreScripts' /}
+    &amp;lt;/head&amp;gt;
+    &amp;lt;body&amp;gt;
+        #{doLayout /}
+    &amp;lt;/body&amp;gt;
+&amp;lt;/html&amp;gt;[/xml]&lt;/p&gt;
+&lt;p&gt;There is some interesting things here : &lt;/p&gt;
+&lt;ul&gt;
+
+&lt;li&gt;#{get 'title' /} : return the value of the variable title (not a Java variable, only a HTML variable)&lt;/li&gt;
+
+&lt;li&gt;@{'/public/stylesheets/main.css'} : resolve the resource to its URL&lt;/li&gt;
+
+&lt;li&gt;#{doLayout /} : Indicate where the sub templates (template who extends main.html) will be rendered&lt;/li&gt;
+
+&lt;/ul&gt;
+
+&lt;h4&gt;Pass variables to the view&lt;/h4&gt;
+
+&lt;p&gt;So let's go further. The first important thing is to know how to pass variables to the view from the controller. With Play Framework, this is really simple. just add the variables you need to the render() method of the controller. By example, to pass a String to the view : &lt;/p&gt;
+&lt;p&gt;[java]package controllers;&lt;/p&gt;
+&lt;p&gt;import play.mvc.*;&lt;/p&gt;
+&lt;p&gt;public class Application extends Controller {
+    public static void index() {
+        String hello = "Hello World from Controller !";&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;    &lt;span class="n"&gt;render&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;hello&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/java]&lt;/p&gt;
+&lt;p&gt;The variable hello is now accessible from the view on the name "hello". To get it, you have to use ${variable_name} simply to display it : &lt;/p&gt;
+&lt;p&gt;[xml]#{extends 'main.html' /}&lt;/p&gt;
+&lt;h2&gt;{set title:'Home' /}&lt;/h2&gt;
+&lt;p&gt;Hello from the view&lt;/p&gt;
+&lt;p&gt;&amp;lt;br /&amp;gt;&lt;/p&gt;
+&lt;p&gt;${hello}[/xml]&lt;/p&gt;
+&lt;p&gt;Easy, no ? &lt;/p&gt;
+&lt;p&gt;Let's try adding a simple class to our model : &lt;/p&gt;
+&lt;p&gt;[java]package models;&lt;/p&gt;
+&lt;p&gt;public class Book {
+    private final String title;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="nf"&gt;Book&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt; &lt;span class="n"&gt;title&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="n"&gt;super&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+
+    &lt;span class="n"&gt;this&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;title&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;title&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="n"&gt;String&lt;/span&gt; &lt;span class="nf"&gt;getTitle&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;title&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;[/java]&lt;/p&gt;
+&lt;p&gt;And pass it to the view : &lt;/p&gt;
+&lt;p&gt;[java]
+    public static void index() {
+        Book book = new Book("Hello Play !");&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;    &lt;span class="n"&gt;render&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;book&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;[/java]&lt;/p&gt;
+&lt;p&gt;And then get it from the view : &lt;/p&gt;
+&lt;p&gt;[xml]#{extends 'main.html' /}&lt;/p&gt;
+&lt;h2&gt;{set title:'Home' /}&lt;/h2&gt;
+&lt;p&gt;Hello from the view&lt;/p&gt;
+&lt;p&gt;&amp;lt;br /&amp;gt;&lt;/p&gt;
+&lt;p&gt;I've a book for you "${book.title}". [/xml]&lt;/p&gt;
+&lt;p&gt;The property is getted using the JavaBeans convention, so you have to create a getTitle() method to get the title of the book. &lt;/p&gt;
+&lt;p&gt;All the dynamic content is directly escaped by the template engine to avoid XSS security exploits. If you really want to not escape something, you have to use the raw() method available on all the strings. By example, for our title : &lt;/p&gt;
+&lt;p&gt;[xml]${book.title.raw()}[/xml]&lt;/p&gt;
+&lt;p&gt;But this is not a really good practice, and must be used only when it's necessary. &lt;/p&gt;
+&lt;p&gt;You can add comments to your templates if you want : &lt;/p&gt;
+&lt;p&gt;[xml]&lt;em&gt;{Will not be evaluated by the template engine}&lt;/em&gt;[/xml]&lt;/p&gt;
+&lt;h4&gt;Iterate over a list&lt;/h4&gt;
+
+&lt;p&gt;An important thing to do in template and that comes really soon is the iterate over a collection. By example, we can pass a list of books to the view from the controller : &lt;/p&gt;
+&lt;p&gt;[java]
+    public static void index() {
+        List&amp;lt;Book&amp;gt; books = new ArrayList&amp;lt;Book&amp;gt;(3);&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;    &lt;span class="n"&gt;books&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;add&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;new&lt;/span&gt; &lt;span class="n"&gt;Book&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Hello Play !"&lt;/span&gt;&lt;span class="p"&gt;));&lt;/span&gt;
+    &lt;span class="n"&gt;books&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;add&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;new&lt;/span&gt; &lt;span class="n"&gt;Book&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Hello Template !"&lt;/span&gt;&lt;span class="p"&gt;));&lt;/span&gt;
+    &lt;span class="n"&gt;books&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;add&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;new&lt;/span&gt; &lt;span class="n"&gt;Book&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Hello Engine !"&lt;/span&gt;&lt;span class="p"&gt;));&lt;/span&gt;
+
+    &lt;span class="n"&gt;render&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;books&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;[/java]&lt;/p&gt;
+&lt;p&gt;And then, you can iterate over the list using the &lt;em&gt;list&lt;/em&gt; tag : &lt;/p&gt;
+&lt;p&gt;[xml]#{extends 'main.html' /}&lt;/p&gt;
+&lt;h2&gt;{set title:'Home' /}&lt;/h2&gt;
+&lt;p&gt;I've some books for your :&lt;/p&gt;
+&lt;p&gt;&amp;lt;ul&amp;gt;
+    #{list items:books, as:'book'}
+        &amp;lt;li&amp;gt;${book.title}&amp;lt;/li&amp;gt;
+    #{/list}
+&amp;lt;/ul&amp;gt;[/xml]&lt;/p&gt;
+&lt;p&gt;And that will display a single little list in our web page. Not to complicated :)&lt;/p&gt;
+&lt;h4&gt;Using scripts&lt;/h4&gt;
+
+&lt;p&gt;If you have to make complicated things, you can using scripts in Groovy. In scripts, you can declare variables and use all the other variables. By example, you can make the title upper case in a script : &lt;/p&gt;
+&lt;p&gt;[xml]#{extends 'main.html' /}&lt;/p&gt;
+&lt;h2&gt;{set title:'Home' /}&lt;/h2&gt;
+&lt;p&gt;I've some books for your :&lt;/p&gt;
+&lt;p&gt;&amp;lt;ul&amp;gt;
+    #{list items:books, as:'book'}
+        %{
+           bookTitle = book.title.toUpperCase();
+        }%
+        &amp;lt;li&amp;gt;${bookTitle}&amp;lt;/li&amp;gt;
+    #{/list}
+&amp;lt;/ul&amp;gt;[/xml]&lt;/p&gt;
+&lt;p&gt;But you can also do iterations, conditions and a lot of other things. But keep in mind that the templates are not the good place to make complicated things, for that you have the controller and the models. The template must be as simple as possible. &lt;/p&gt;
+&lt;h4&gt;Define tags&lt;/h4&gt;
+
+&lt;p&gt;There is lot of tags in Play Framework, but you can create your own tags. For that, you just have to create a folder tags in your views folder. By example, if you create booklist.html in views/tags and add the following code : &lt;/p&gt;
+&lt;p&gt;[xml]&amp;lt;ul&amp;gt;
+    #{list items:_items, as:'book'}
+        %{
+            bookTitle = book.title.toUpperCase();
+        }%
+        &amp;lt;li&amp;gt;${bookTitle}&amp;lt;/li&amp;gt;
+    #{/list}
+&amp;lt;/ul&amp;gt;[/xml]&lt;/p&gt;
+&lt;p&gt;The arguments are obtained using '_' following by the name of the arguments (_items in our example). &lt;/p&gt;
+&lt;p&gt;You can refactor the template index.html using the new tag : &lt;/p&gt;
+&lt;p&gt;[xml]#{extends 'main.html' /}&lt;/p&gt;
+&lt;h2&gt;{set title:'Home' /}&lt;/h2&gt;
+&lt;p&gt;I've some books for your :&lt;/p&gt;
+&lt;h2&gt;{booklist items:books /}[/xml]&lt;/h2&gt;
+&lt;p&gt;You give arguments like in any other tag. This can help you to make cleaner templates and to avoid to copy/paste some codes. &lt;/p&gt;
+&lt;p&gt;So we've now covered the basis of the template engine of Play Framework. With all that we've seen, we can start to create simple Play Applications. &lt;/p&gt;
+&lt;p&gt;A really good resources for Play Developer is the &lt;a target="_blank" href="http://download.playframework.org/miscellaneous/play-cheat-sheet.pdf"&gt;Play Cheat Sheet&lt;/a&gt;. You can also consult the &lt;a target="_blank" href="http://www.playframework.org/documentation/1.0.3/home"&gt;official documentation&lt;/a&gt; for more complete informations. &lt;/p&gt;&lt;/div&gt;</description><category>Java</category><category>Play!</category><category>Web</category><category>Web</category><guid>http://www.baptiste-wicht.com/posts/2010/07/play-framework-template-engine.html</guid><pubDate>Mon, 19 Jul 2010 06:55:51 GMT</pubDate></item><item><title>Tip : Integrate Play Framework in IntelliJ Idea</title><link>http://www.baptiste-wicht.com/posts/2010/07/integrate-play-framework-intellij-idea.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;After &lt;a target="_blank" href="http://www.baptiste-wicht.com/2010/07/getting-started-play-framework/"&gt;created a &lt;strong&gt;Play Framework&lt;/strong&gt; first application&lt;/a&gt;, it's time to integrate it in &lt;strong&gt;IntelliJ Idea&lt;/strong&gt;. &lt;/p&gt;
+&lt;p&gt;This is made really easy because, play provide a command to create the Iml module file for the project. You can use the command play idealize app_name to create a iml module file. &lt;/p&gt;
+&lt;!--more--&gt;
+
+&lt;p&gt;So let's try : &lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;pre&gt;wichtounet@Linux-Desktop:~/dev/play$ play idealize hello/
+&lt;p&gt;~        _            _ &lt;/p&gt;
+&lt;p&gt;~  _ &lt;strong&gt; | | &lt;/strong&gt; _ &lt;em&gt;  &lt;/em&gt;| |&lt;/p&gt;
+&lt;p&gt;~ | '&lt;em&gt; \| |/ &lt;/em&gt;' | || |_|&lt;/p&gt;
+&lt;p&gt;~ |  &lt;strong&gt;/|_|_&lt;/strong&gt;&lt;em&gt;|_&lt;/em&gt; (_)&lt;/p&gt;
+&lt;p&gt;~ |_|            |__/   &lt;/p&gt;
+&lt;p&gt;~&lt;/p&gt;
+&lt;p&gt;~ play! 1.0.3, http://www.playframework.org&lt;/p&gt;
+&lt;p&gt;~&lt;/p&gt;
+&lt;p&gt;~ OK, the application is ready for Intellij Idea&lt;/p&gt;
+&lt;p&gt;~ Use File/New Module/Import Existing module&lt;/p&gt;
+&lt;p&gt;~&lt;/p&gt;
+&lt;p&gt;wichtounet@Linux-Desktop:~/dev/play$ &lt;/p&gt;&lt;/pre&gt;
+&lt;p&gt;If you go on the hello folder, you'll found a "Hello World.iml" file. "Hello World" is the name of the application. So you just have to add it to a IntelliJ Idea project. And it's almost done. &lt;/p&gt;
+&lt;p&gt;&lt;a href="http://www.baptiste-wicht.com/wp-content/uploads/2010/07/Play-Idea-1.png"&gt;&lt;img src="http://www.baptiste-wicht.com/wp-content/uploads/2010/07/Play-Idea-1.png" alt="Play Framework Project in Idea" title="Play Framework Project in Idea" width="834" height="396" class="size-full wp-image-675"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;The libraries are good configured, the test folder is already configured as a test folder. But a thing we can do is to ignore the logs and tmp folders, not really useful during development. &lt;/p&gt;
+&lt;p&gt;&lt;a href="http://www.baptiste-wicht.com/wp-content/uploads/2010/07/Play-Idea-2.png"&gt;&lt;img src="http://www.baptiste-wicht.com/wp-content/uploads/2010/07/Play-Idea-2-300x178.png" alt="Ignore the logs and tmp folders" title="Ignore the logs and tmp folders" width="300" height="178" class="size-medium wp-image-676"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;And last, the sources of the Play Framework aren't linked, so we can add them :&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://www.baptiste-wicht.com/wp-content/uploads/2010/07/Play-Idea-3.png"&gt;&lt;img src="http://www.baptiste-wicht.com/wp-content/uploads/2010/07/Play-Idea-3.png" alt="Add the sources of the framework" title="Add the sources of the framework" width="559" height="470" class="size-full wp-image-677"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;And now we've a fully configured Play Framework Project in our editor : &lt;/p&gt;
+&lt;p&gt;&lt;a href="http://www.baptiste-wicht.com/wp-content/uploads/2010/07/Play-Idea-4.png"&gt;&lt;img src="http://www.baptiste-wicht.com/wp-content/uploads/2010/07/Play-Idea-4.png" alt="Complete Play Framework Integration" title="Complete Play Framework Integration" width="834" height="396" class="size-full wp-image-678"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Great, not ? &lt;/p&gt;&lt;/div&gt;</description><category>IntelliJ Idea</category><category>Java</category><category>Play!</category><category>Tips</category><guid>http://www.baptiste-wicht.com/posts/2010/07/integrate-play-framework-intellij-idea.html</guid><pubDate>Tue, 06 Jul 2010 07:02:49 GMT</pubDate></item><item><title>Getting started with Play Framework</title><link>http://www.baptiste-wicht.com/posts/2010/07/getting-started-play-framework.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;It's time for me to test the &lt;strong&gt;Play Framework&lt;/strong&gt; and I'll try to make some posts during my tests about this web framework. &lt;/p&gt;
+&lt;p&gt;Play Framework is a framework to create web applications in Java. The main goals of this framework are (according to the official site) : &lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;ul&gt;
+    &lt;li&gt;&lt;strong&gt;Hot reload&lt;/strong&gt; : You can edit your java files and html files and you just have to refresh the browser to see the results&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Stateless model&lt;/strong&gt; : Play is ready for REST, it can be scaled running multiple instances of the same applications on several servers&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Efficient Template System&lt;/strong&gt; : The template system is really easy to use, based on Groovy.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Resolve errors quickly&lt;/strong&gt; : When an error occurs, Play displays directly the code source in the browser and the location of the error&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Integration&lt;/strong&gt; : Play provide integration for Hibernate, OpenID, MemCached and others popular frameworks&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Pure Java&lt;/strong&gt; : You make only Java and HTML, no other things to learn and easy integration in IDE. &lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Fast&lt;/strong&gt; : The startup of application is really fast the rendering of the pages also very fast.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;In this post, we'll see how to install the Play Framework and how to write our first Hello World. &lt;/p&gt;
+&lt;!--more--&gt;
+
+&lt;h4&gt;Install Play Framework&lt;/h4&gt;
+
+&lt;p&gt;Before installing Play Framework, you need Java 5.0 or later. Then, you can download a release of Play : http://download.playframework.org/releases/. The latest when I wrote this post is the 1.0.3 version. So let's download this version. After that, just unzip the given archive where you want to install the framework. After that, you just have to add the play command to the path. &lt;/p&gt;
+&lt;p&gt;In Ubuntu 10.04, I had to do the following : &lt;/p&gt;
+&lt;pre&gt;PLAY_HOME=/usr/share/apps/play/
+
+PATH=$PATH:$PLAY_HOME
+
+chmod +x PLAY_HOME/play&lt;/pre&gt;
+
+&lt;p&gt;Depending on your configuration, you perhaps have to use sudo for the chmod command. For other systems (Windows and Mac), you also have to add play (play.bat for Windows) to path using the system configuration. &lt;/p&gt;
+&lt;p&gt;And normally, after that, you can execute the play command : &lt;/p&gt;
+&lt;pre&gt;wichtounet@Linux-Desktop:~$ play
+
+~        _            _ 
+
+~  _ __ | | __ _ _  _| |
+
+~ | '_ \| |/ _' | || |_|
+
+~ |  __/|_|\____|\__ (_)
+
+~ |_|            |__/   
+
+~
+
+~ play! 1.0.3, http://www.playframework.org
+
+~
+
+~ Usage: play cmd [app_path] [--options]
+
+~ 
+
+~ with,  new      Create a new application
+
+~        run      Run the application in the current shell
+
+~        help     Show play help
+
+~
+
+wichtounet@Linux-Desktop:~$ &lt;/pre&gt;
+
+&lt;h4&gt;Creating a new application&lt;/h4&gt;
+
+&lt;p&gt;To create a new application, you just have to use the command  &lt;/p&gt;
+&lt;p&gt;play new app_name&lt;/p&gt;
+&lt;p&gt;You must be in a folder where a folder with the name app_name can be created. For example, let's create a new application "hello" : &lt;/p&gt;
+&lt;pre&gt;wichtounet@Linux-Desktop:~/dev/play$ play new hello
+
+~        _            _ 
+
+~  _ __ | | __ _ _  _| |
+
+~ | '_ \| |/ _' | || |_|
+
+~ |  __/|_|\____|\__ (_)
+
+~ |_|            |__/   
+
+~
+
+~ play! 1.0.3, http://www.playframework.org
+
+~
+
+~ The new application will be created in /home/wichtounet/dev/play/hello
+
+~ What is the application name? Hello World
+
+~
+
+~ OK, the application is created.
+
+~ Start it with : play run hello
+
+~ Have fun!
+
+~
+
+wichtounet@Linux-Desktop:~/dev/play$ &lt;/pre&gt;
+
+&lt;p&gt;During the creation, Play will ask you for the name of the application. Here I put "Hello World" as the name of the application. If you go into the new created application folder, you will see the given folders : &lt;/p&gt;
+&lt;ul&gt;
+    &lt;li&gt;&lt;strong&gt;app&lt;/strong&gt; : The applications itself, Java classes and HTML files&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;conf&lt;/strong&gt; : The configuration of the application&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;lib&lt;/strong&gt; : Contains the Java libraries that the application needs&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;public&lt;/strong&gt; : Contains the public files, images, CSS, JS&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;test&lt;/strong&gt; : Contains the tests (JUnit or Selenium) file&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;You can launch your application, with the command : &lt;/p&gt;
+&lt;pre&gt;wichtounet@Linux-Desktop:~/dev/play$ play run hello
+
+~        _            _ 
+
+~  _ __ | | __ _ _  _| |
+
+~ | '_ \| |/ _' | || |_|
+
+~ |  __/|_|\____|\__ (_)
+
+~ |_|            |__/   
+
+~
+
+~ play! 1.0.3, http://www.playframework.org
+
+~
+
+~ Ctrl+C to stop
+
+~ 
+
+Listening for transport dt_socket at address: 8000
+
+17:49:56,395 INFO  ~ Starting /home/wichtounet/dev/play/hello
+
+17:49:56,889 WARN  ~ You're running Play! in DEV mode
+
+17:49:56,958 INFO  ~ Listening for HTTP on port 9000 (Waiting a first request to start) ...
+
+17:50:01,670 INFO  ~ Application 'Hello World' is now started !&lt;/pre&gt;
+
+&lt;p&gt;And you can browse your application at the URL http://localhost:9000/. You will normally see a sample page : &lt;/p&gt;
+&lt;p&gt;&lt;a href="http://www.baptiste-wicht.com/wp-content/uploads/2010/07/HelloWorld1.png"&gt;&lt;img src="http://www.baptiste-wicht.com/wp-content/uploads/2010/07/HelloWorld1-300x295.png" alt="Play Framework sample page" title="Play Framework sample page" width="300" height="295" class="size-medium wp-image-668"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;h4&gt;How does it works ?&lt;/h4&gt;
+
+&lt;p&gt;So now, let's study why this work. If you open the file conf/routes, you will see that line : &lt;/p&gt;
+&lt;p&gt;GET     /                                       Application.index&lt;/p&gt;
+&lt;p&gt;That indicates that the index of the project will be serviced from the index method of the Application class. And if you open the app/controllers/Application.java file, you will see : &lt;/p&gt;
+&lt;p&gt;[java]package controllers;&lt;/p&gt;
+&lt;p&gt;import play.mvc.*;&lt;/p&gt;
+&lt;p&gt;public class Application extends Controller {
+    public static void index() {
+        render();
+    }
+}[/java]&lt;/p&gt;
+&lt;p&gt;So at this time, the index() only renders the default template. This template is app/views/Application/index.html (like the name of the method and the class) : &lt;/p&gt;
+&lt;p&gt;[html]#{extends 'main.html' /}&lt;/p&gt;
+&lt;h2&gt;{set title:'Home' /}&lt;/h2&gt;
+&lt;h2&gt;{welcome /}[/html]&lt;/h2&gt;
+&lt;p&gt;We can see that this template extends the main.html template. It sets the title to home and display the welcome prompt. These tags are tags from the Play Framework. Lets change this template to : &lt;/p&gt;
+&lt;p&gt;[html]#{extends 'main.html' /}&lt;/p&gt;
+&lt;h2&gt;{set title:'Hello World' /}&lt;/h2&gt;
+&lt;p&gt;&amp;lt;h3&amp;gt;Hello the world !&amp;lt;/h3&amp;gt;[/html]&lt;/p&gt;
+&lt;p&gt;And refresh the application page. You will see now only the message "Hello the world". If you want to see something when the controllers is called, just add a System.out.println in the Application.index : &lt;/p&gt;
+&lt;p&gt;[java]public static void index() {
+    System.out.println("render()");
+    render();
+}[/java]&lt;/p&gt;
+&lt;p&gt;And you will see logs in the console when you refresh the pages : &lt;/p&gt;
+&lt;pre&gt;17:50:01,670 INFO  ~ Application 'Hello World' is now started !
+
+render()
+
+render()
+
+render()
+
+render()
+
+render()&lt;/pre&gt;
+
+&lt;h4&gt;Add a simple new page&lt;/h4&gt;
+
+&lt;p&gt;To do a little more in this post, let's add a new page : http://localhost:9000/bye. Let's start adding a new route in conf/routes : &lt;/p&gt;
+&lt;pre&gt;GET     /bye                                     Application.bye&lt;/pre&gt;
+
+&lt;p&gt;So we have to add a method bye in the Application class : &lt;/p&gt;
+&lt;p&gt;[java]package controllers;&lt;/p&gt;
+&lt;p&gt;import play.mvc.*;&lt;/p&gt;
+&lt;p&gt;public class Application extends Controller {
+    public static void index() {
+        render();
+    }&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;public&lt;/span&gt; &lt;span class="k"&gt;static&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;bye&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="n"&gt;render&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/java]&lt;/p&gt;
+&lt;p&gt;And then, we just need to add a new template bye.html in app/views/Application/ folder : &lt;/p&gt;
+&lt;p&gt;[html]#{extends 'main.html' /}&lt;/p&gt;
+&lt;h2&gt;{set title:'Bye' /}&lt;/h2&gt;
+&lt;p&gt;&amp;lt;h3&amp;gt;Bye bye !&amp;lt;/h3&amp;gt;[/html]&lt;/p&gt;
+&lt;p&gt;And now, if you go to http://localhost:9000/bye you will see our new page : &lt;/p&gt;
+&lt;p&gt;&lt;a href="http://www.baptiste-wicht.com/wp-content/uploads/2010/07/Bye.png"&gt;&lt;img src="http://www.baptiste-wicht.com/wp-content/uploads/2010/07/Bye-300x76.png" alt="A Bye page in Play Framework" title="A Bye page in Play Framework" width="300" height="76" class="size-medium wp-image-670"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;h4&gt;Conclusion&lt;/h4&gt;
+
+&lt;p&gt;Here we are ! With this framework, it's extremely easy to create web applications. And we've only see a very small part of the facilities this framework offers to create web applications. I'll try to write others posts on the subject. &lt;/p&gt;&lt;/div&gt;</description><category>Java</category><category>Java</category><category>Play!</category><category>Web</category><category>Web</category><guid>http://www.baptiste-wicht.com/posts/2010/07/getting-started-play-framework.html</guid><pubDate>Mon, 05 Jul 2010 07:02:34 GMT</pubDate></item><item><title>Links of the week (April 20)</title><link>http://www.baptiste-wicht.com/posts/2010/04/links-of-the-week-3.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;div&gt;Some interesting links of the week :&lt;/div&gt;
+&lt;ul&gt;
+    &lt;li&gt;Poll Results: &lt;a href="http://java.dzone.com/articles/poll-results-there-future-web" target="_blank"&gt;We're Not Quite Ready For Web Based IDEs&lt;/a&gt; : Interesting poll results on how the developers are ready about web based IDEs&lt;/li&gt;
+    &lt;li&gt;&lt;a href="http://www.lunatech-research.com/archives/2010/04/12/how-localise-play-framework-web-application" target="_blank"&gt;How to localise a Play Framework application&lt;/a&gt; : Peter Hilton explain how internationalize a Play! Framework application&lt;/li&gt;
+    &lt;li&gt;&lt;a href="http://sixrevisions.com/tools/the-top-15-google-products-for-people-who-build-websites/" target="_blank"&gt;The Top 15 Google Products for People Who Build Websites &lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href="http://mcoj.wordpress.com/2010/04/18/swinging-task-dialog-part-5/" target="_blank"&gt;Swinging Task Dialog (part 5)&lt;/a&gt; : Eugene Ryzhikov continue its suite on developing a Swing Task Dialog, adding new functionaly. &lt;/li&gt;
+    &lt;li&gt;&lt;a href="http://www.mkyong.com/java/how-to-determine-a-prime-number-in-java/"&gt;How to determine a prime number in Java&lt;/a&gt; : An interesting development on how to determine a prime number in an efficent way&lt;/li&gt; 
+&lt;/ul&gt;&lt;/div&gt;</description><category>Google</category><category>Java</category><category>Links</category><category>Performances</category><category>Play!</category><category>Swing</category><category>Tools</category><category>Web</category><guid>http://www.baptiste-wicht.com/posts/2010/04/links-of-the-week-3.html</guid><pubDate>Tue, 20 Apr 2010 07:20:28 GMT</pubDate></item></channel></rss>

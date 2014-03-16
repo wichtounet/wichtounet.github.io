@@ -1,0 +1,302 @@
+<!DOCTYPE html><html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Baptiste Wicht">
+    <title>Java 7 : New I/O features (Asynchronous operations, multicasting, random access) with JSR 203 (NIO.2) | @Blog("Baptiste Wicht")</title>
+    
+            <link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
+      <link rel="canonical" href="http://www.baptiste-wicht.com/posts/2010/04/java-7-new-io-features-asynchronous-operations-multicasting-random-access-with-jsr-203-nio-2.html">
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js" type="text/javascript"></script>
+    <![endif]-->
+            <link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
+
+    
+
+
+
+
+
+    
+</head>
+<body>
+<!-- Menubar -->
+
+<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    <div class="container-fluid"><!-- This keeps the margins nice -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="http://www.baptiste-wicht.com/">@Blog("Baptiste Wicht")</a>
+        </div><!-- /.navbar-header -->
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+            <ul class="nav navbar-nav">
+                
+                <li><a href="../../../archive.html">Archives</a>
+                </li><li><a href="../../../categories/index.html">Tags</a>
+                </li><li><a href="../../../rss.xml">RSS</a>
+
+            </li></ul>
+
+            <ul class="nav navbar-nav navbar-right">
+                
+                
+                    
+    <li>
+    <a href="java-7-new-io-features-asynchronous-operations-multicasting-random-access-with-jsr-203-nio-2.wp" id="sourcelink">Source</a>
+    </li>
+
+            </ul>
+        </div><!-- /.navbar-collapse -->
+    </div><!-- /.container-fluid -->
+</nav>
+
+<!-- End of Menubar -->
+
+<div class="container">
+    <div class="body-content">
+        <!--Body content-->
+        <div class="row">
+            
+    <article class="postbox post-text">
+    <div class="h-entry" itemscope="itemscope" itemtype="http://schema.org/Article">
+    
+    <h1 class="p-name" itemprop="headline name">Java 7 : New I/O features (Asynchronous operations, multicasting, random access) with JSR 203 (NIO.2)</h1>
+
+    <hr>
+    <small>
+        Posted: <time class="published dt-published" datetime="2010-04-21T06:06:58+00:00" itemprop="datePublished">2010-04-21 06:06</time>
+        
+
+        
+          |  
+        More posts about 
+    <span itemprop="keywords">
+        <a class="tag p-category" href="../../../categories/io.html"><span class="badge badge-info">I/O</span></a>
+        <a class="tag p-category" href="../../../categories/java.html"><span class="badge badge-info">Java</span></a>
+        <a class="tag p-category" href="../../../categories/java.html"><span class="badge badge-info">Java</span></a>
+        <a class="tag p-category" href="../../../categories/java-7.html"><span class="badge badge-info">Java 7</span></a>
+        <a class="tag p-category" href="../../../categories/performances.html"><span class="badge badge-info">Performances</span></a>
+    </span>
+
+
+    </small>
+    <hr>
+    <div class="e-content" itemprop="articleBody text">
+    <div><p></p><div>Like I've said in other post, <a href="http://www.baptiste-wicht.com/2010/03/nio-2-path-api-java-7/">we will have a new API to access File System in Java 7</a>, but we'll have several others new features in NIO.2 that I've not covered</div>
+So I'll try to cover them in that post. Indeed the <strong>JSR 203</strong> (also known as <strong>NIO.2</strong>) add several new classes that improve I/O code.
+<p>In this post I cover the following features :</p>
+<ul>
+    <li>SeekableByteChannel : A random access channel</li>
+    <li>MulticastChannel : A channel that allow for IP multicasting</li>
+    <li>NetworkChannel : The new super interface for the network-oriented channels</li>
+    <li>Asynchronous I/O API : The new API to make I/O operations in an asynchronous way.</li>
+</ul>
+
+<!--more-->
+
+<p><strong>SeekableByteChannel</strong></p>
+<p>First of all, the Java 7 includes a new ByteChannel, the <strong>SeekableByteChannel</strong>. This Channel maintains a current position, so you can read and write from this position. That allows <strong>random access</strong> positions. With that type of Channel, you can even add several threads reading/writing the same threads at different positions.</p>
+<p>[java]SeekableByteChannel channel1 = Paths.get("Path to file").newByteChannel(); //Simply READ</p>
+<p>SeekableByteChannel channel2 = Paths.get("Path to file").newByteChannel(StandardOpenOption.READ, StandardOpenOption.WRITE); //READ and WRITE[/java]</p>
+<p>You can use these methods to manipulate the positions and size of the channel :</p>
+<ul>
+    <li>long position() : Return the current position</li>
+    <li>long size() : Return the current size of the entity this channel is connected to, by example the size of the file the channel is connecting to</li>
+    <li>position(long newPosition) : Move the current position to the given one</li>
+    <li>truncate(long size) : Truncates the entity to the given size.</li>
+</ul>
+
+<p>The position() and truncate() methods simply returns the current Channel to allow chained invocations.</p>
+<p>Now, <strong>FileChannel</strong> implements this new interface, so you can make random access with all FileChannels.</p>
+<p>You can of course read a file with that channel :</p>
+<p>[java]SeekableByteChannel channel = null;</p>
+<p>try {
+    channel = Paths.get("Path to file").newByteChannel(StandardOpenOption.READ);
+    ByteBuffer buffer = ByteBuffer.allocate(4096);</p>
+<div class="code"><pre><span class="n">System</span><span class="p">.</span><span class="n">out</span><span class="p">.</span><span class="n">println</span><span class="p">(</span><span class="s">"File size: "</span> <span class="o">+</span> <span class="n">channel</span><span class="p">.</span><span class="n">size</span><span class="p">());</span>
+
+<span class="k">while</span> <span class="p">(</span><span class="n">channel</span><span class="p">.</span><span class="n">read</span><span class="p">(</span><span class="n">buffer</span><span class="p">)</span> <span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">gt</span><span class="p">;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">buffer</span><span class="p">.</span><span class="n">rewind</span><span class="p">();</span>
+
+    <span class="n">System</span><span class="p">.</span><span class="n">out</span><span class="p">.</span><span class="n">print</span><span class="p">(</span><span class="n">new</span> <span class="n">String</span><span class="p">(</span><span class="n">buffer</span><span class="p">.</span><span class="n">array</span><span class="p">(),</span> <span class="mi">0</span><span class="p">,</span> <span class="n">buffer</span><span class="p">.</span><span class="n">remaining</span><span class="p">()));</span>
+
+    <span class="n">buffer</span><span class="p">.</span><span class="n">flip</span><span class="p">();</span>
+
+    <span class="n">System</span><span class="p">.</span><span class="n">out</span><span class="p">.</span><span class="n">println</span><span class="p">(</span><span class="s">"Current position : "</span> <span class="o">+</span> <span class="n">channel</span><span class="p">.</span><span class="n">position</span><span class="p">());</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>} catch (IOException e) {
+    System.out.println("Expection when reading : " + e.getMessage());
+    e.printStackTrace();
+} finally {
+    if (sbc != null){
+        channel.close();
+    }
+}[/java]</p>
+<h4>MulticastChannel</h4>
+
+<p>This new interface enable to make Internet Protocol (IP) <strong>Multicasting</strong>. So you can send and receive IP datagrams from a complete group. The multicast implementations are directly bind to the native multicast facility. This interface is implement by DatagramChannel and AsynchronousDatagramChannel.</p>
+<p>A simple example taken from the Javadoc to open a DatagramChannel t :</p>
+<p>[java]NetworkInterface networkInterface = NetworkInterface.getByName("hme0");</p>
+<p>DatagramChannel dc = DatagramChannel.open(StandardProtocolFamily.INET)
+         .setOption(StandardSocketOption.SO_REUSEADDR, true)
+         .bind(new InetSocketAddress(5000))
+         .setOption(StandardSocketOption.IP_MULTICAST_IF, networkInterface);</p>
+<p>InetAddress group = InetAddress.getByName("225.4.5.6");</p>
+<p>MembershipKey key = dc.join(group, networkInterface);[/java]</p>
+<p>With that, you can use your DatagramChannel as all others DatagramChannel you used in the past, but the operations are made with multicast, so you receive all the packets of the interface and you send packets to all the group.</p>
+<h4>NetworkChannel</h4>
+
+<p>Now, all the network-oriented channels implements the new <strong>NetworkChannel</strong> interface. With that, you easily bind the channel socket, set and query for socket options. Furthermore, the socket optioins are now extensible, so you can use operating system specific options, that could be interesting for high performances servers.</p>
+<h4>Asynchronous I/O</h4>
+
+<p>And after that little introduction, we go to the main new feature : The new <strong>Asynchronous I/O API</strong>. Its name indicate all the purpose of this new features, indeed enable Asynchronous I/O operations.This new channels provide <strong>asynchronous operations</strong> for both sockets and files.</p>
+<p>Of course, all that operations are non-blocking, but there is also blocking operations that you can do with all the asynchronous channels.</p>
+<p>All the asynchronous I/O operations have one of two forms :</p>
+<ul>
+    <li>The first one returns a java.util.concurrent.Future that represent the pending result. You can use that Future to wait for the I/O operations to finish.</li>
+    <li>The second one is created using  a CompletionHandler. That handler is invoked when the operation is has completed, like callbacks systems.</li>
+</ul>
+
+<p>So here are the examples of the two forms :</p>
+<p>The first form, using Future :</p>
+<p>[java]AsynchronousFileChannel channel = AsynchronousFileChannel.open(Paths.get("Path to file"));</p>
+<p>ByteBuffer buffer = ByteBuffer.allocate(capacity);</p>
+<p>Future result = channel.read(buffer, 100); //Read capacity bytes from the file starting at position 100</p>
+<p>boolean done = result.isDone(); //Indicate if the result is already terminated&lt;/pre&gt;</p>
+<p>You can also wait for completion :</p>
+<p>[java]int bytesRead = result.get();[/java]</p>
+<p>Or wait with a timeout :</p>
+<p>[java]int bytesRead = result.get(10, TimeUnit.SECONDS); //Wait at most 10 seconds on the result[/java]</p>
+<p>The second form, using CompletionHandler :</p>
+<p>[java]Future result = channel.read(buffer, 100, null, new CompletionHandler(){
+    public void completed(Integer result, Object attachement){
+        //Compute the result
+    }</p>
+<div class="code"><pre><span class="n">public</span> <span class="kt">void</span> <span class="nf">failed</span><span class="p">(</span><span class="n">Throwable</span> <span class="n">exception</span><span class="p">,</span> <span class="n">Object</span> <span class="n">attachement</span><span class="p">){</span>
+    <span class="c1">//Answer to the fail</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>}[/java]</p>
+<p>As you can see, you can give an attachement to the operation. This attachement is given to the CompletionHandler at the end of the operation. You can give null as attachement with no problem. But you can pass anything you want, like the Connection for a AsynchronousSocketChannel or the ByteBuffer for our read :</p>
+<p>[java]Future result = channel.read(buffer, 100, buffer, new CompletionHandler(){
+    public void completed(Integer result, ByteBuffer buffer){
+        //Compute the result
+    }</p>
+<div class="code"><pre><span class="n">public</span> <span class="kt">void</span> <span class="nf">failed</span><span class="p">(</span><span class="n">Throwable</span> <span class="n">exception</span><span class="p">,</span> <span class="n">ByteBuffer</span> <span class="n">buffer</span><span class="p">){</span>
+    <span class="c1">//Answer to the fail</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>}[/java]</p>
+<p>And as you can see, the form with the CompletionHandle gives also you a Future element representing the pending result, so you can merge the two forms.</p>
+<p>Here, are all the asynchronous channels available in NIO.2 :</p>
+<ul>
+
+<ul>
+    <li>AsynchronousFileChannel : An asynchronous channel for reading and writing from and to a file. This channel has no global positions, so each read/write operations needs a position to operate. You can access concurrently to different parts of the file using different threads. You have to specify the options (READ, WRITE, but not APPEND) when you open this channel.</li>
+    <li>AsynchronousSocketChannel : A simple asynchronous channel to a Socket. The connect, read/write and scatter/gather methods are all asynchronous. The read/write method supports timeouts.</li>
+    <li>AsynchronousServerSocketChannel : An asynchronous channel to a ServerSocket. The accept() method is asynchronous and the CompletionHandler is called when a connection has been accepted. The result of this kind of connection is an AsynchronousSocketChannel.</li>
+    <li>AsynchronousDatagramChannel :</li>
+</ul>
+
+</ul>
+
+<p>An channel to datagram-oriented socket. The read/write (connected) and receive/send (unconnected) methods are asynchronous.</p>
+<h4>Groups</h4>
+
+<p>When you use AsynchronousChannels, there is of course threads that invoke the completion handlers. These threads are bound to an AsynchronousChannelGroup. This group contains a thread pool and encapsulates the resources shared by all the threads working for the channels. You can greate these groups using thread pool. The AsynchronousFileChannel can be created with its own group, passing an ExecutorService as argument to the open() method. The channels are created using an AsynchronousChannelGroup in the open method, if you don't give it a group or you pass null, the default group is used. The channel is said to be owned by the group, so, if the group is closed, the channel is closed too.</p>
+<p>You can create a group with a ThreadFactory :</p>
+<p>[java]ThreadFactory myThreadFactory = Executors.defaultThreadFactory();</p>
+<p>AsynchronousChannelGroup channelGroup = AsynchronousChannelGroup.withFixedThreadPool(25, myThreadFactory);[/java]</p>
+<p>Or with an ExecutorService :</p>
+<p>ExecutorService service = Executors.newFixedThreadPool(25);</p>
+<p>[java]AsynchronousChannelGroup channelGroup = AsynchronousChannelGroup.withThreadPool(service);[/java]</p>
+<p>And you easily use it :</p>
+<p>[java]AsynchronousSocketChannel socketChannel = AsynchronousSocketChannel.open(channelGroup);[/java]</p>
+<p>You can close the group using the shutdown() method on the group. After that, you cannot create more channels using this group and the group effectively terminates when all the channels are closed, the completion handlers terminated and the resources released.</p>
+<p>You must give attention to a points when you use any type of pools and CompletionHandler : DO NOT USE blocking or long operation inside a CompletionHandler. That can block the entire application if all the threads are blocking. If you've custom or cached thread pool, that can make the queue growing infinitely and cause OutOfMemoryError.</p>
+<p>I think (and I hope), I've covered the main news from this new Asynchronous I/O API. This is not simple stuff of course and that will not be used by every one but that can be useful in several cases and it's a good thing that Java will have this kind of I/O. I therefore apologize if I made some errors in my code or my explanations, is not a easy subject and I tried to explain it for everyone.</p>
+<p>You have also others informations in <a href="http://openjdk.java.net/projects/nio/presentations/TS-4222.pdf">the overview of Asynchronous I/O at JavaOne 2009</a>, by Alan Bateman and Jean-François Arcand.</p></div>
+    </div>
+    </div>
+    
+        <ul class="pager">
+            <li class="previous">
+                <a href="links-of-the-week-3.html" rel="prev">← Previous post</a>
+            </li>
+            <li class="next">
+                <a href="jetbrains-released-intellij-idea-9-0-2.html" rel="next">Next post →</a>
+            </li>
+        </ul>
+
+        
+        
+        <div id="disqus_thread"></div>
+        <script>
+        var disqus_shortname ="nikolademo",
+            disqus_url="http://www.baptiste-wicht.com/posts/2010/04/java-7-new-io-features-asynchronous-operations-multicasting-random-access-with-jsr-203-nio-2.html",
+        disqus_title="Java 7 : New I/O features (Asynchronous operations, multicasting, random access) with JSR 203 (NIO.2)",
+        disqus_identifier="cache/posts/2010/04/java-7-new-io-features-asynchronous-operations-multicasting-random-access-with-jsr-203-nio-2.html",
+        disqus_config = function () {
+            this.language = "en";
+        };
+        (function() {
+            var dsq = document.createElement('script'); dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink" rel="nofollow">Comments powered by <span class="logo-disqus">Disqus</span></a>
+
+
+    
+
+    </article>
+
+        </div>
+        <!--End of body content-->
+
+        <footer>
+            Contents © 2014         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         
+        </footer>
+    </div>
+</div>
+
+
+            <script src="../../../assets/js/all-nocdn.js" type="text/javascript"></script>
+
+
+    
+<!-- Social buttons -->
+<div id="addthisbox" class="addthis_toolbox addthis_peekaboo_style addthis_default_style addthis_label_style addthis_32x32_style">
+<a class="addthis_button_more">Share</a>
+<ul><li><a class="addthis_button_facebook"></a>
+</li><li><a class="addthis_button_google_plusone_share"></a>
+</li><li><a class="addthis_button_linkedin"></a>
+</li><li><a class="addthis_button_twitter"></a>
+</li></ul>
+</div>
+<script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-4f7088a56bb93798"></script>
+<!-- End of social buttons -->
+
+
+    <script type="text/javascript">jQuery("a.image-reference").colorbox({rel:"gal",maxWidth:"100%",maxHeight:"100%",scalePhotos:true});</script>
+    
+
+</body>
+</html>

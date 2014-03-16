@@ -1,0 +1,322 @@
+<!DOCTYPE html><html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Baptiste Wicht">
+    <title>Monitor programming in JR | @Blog("Baptiste Wicht")</title>
+    
+            <link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
+      <link rel="canonical" href="http://www.baptiste-wicht.com/posts/2010/06/monitor-programming-in-jr.html">
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js" type="text/javascript"></script>
+    <![endif]-->
+            <link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
+
+    
+
+
+
+
+
+    
+</head>
+<body>
+<!-- Menubar -->
+
+<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    <div class="container-fluid"><!-- This keeps the margins nice -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="http://www.baptiste-wicht.com/">@Blog("Baptiste Wicht")</a>
+        </div><!-- /.navbar-header -->
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+            <ul class="nav navbar-nav">
+                
+                <li><a href="../../../archive.html">Archives</a>
+                </li><li><a href="../../../categories/index.html">Tags</a>
+                </li><li><a href="../../../rss.xml">RSS</a>
+
+            </li></ul>
+
+            <ul class="nav navbar-nav navbar-right">
+                
+                
+                    
+    <li>
+    <a href="monitor-programming-in-jr.wp" id="sourcelink">Source</a>
+    </li>
+
+            </ul>
+        </div><!-- /.navbar-collapse -->
+    </div><!-- /.container-fluid -->
+</nav>
+
+<!-- End of Menubar -->
+
+<div class="container">
+    <div class="body-content">
+        <!--Body content-->
+        <div class="row">
+            
+    <article class="postbox post-text">
+    <div class="h-entry" itemscope="itemscope" itemtype="http://schema.org/Article">
+    
+    <h1 class="p-name" itemprop="headline name">Monitor programming in JR</h1>
+
+    <hr>
+    <small>
+        Posted: <time class="published dt-published" datetime="2010-06-28T06:30:35+00:00" itemprop="datePublished">2010-06-28 06:30</time>
+        
+
+        
+          |  
+        More posts about 
+    <span itemprop="keywords">
+        <a class="tag p-category" href="../../../categories/concurrency.html"><span class="badge badge-info">Concurrency</span></a>
+        <a class="tag p-category" href="../../../categories/java.html"><span class="badge badge-info">Java</span></a>
+        <a class="tag p-category" href="../../../categories/java.html"><span class="badge badge-info">Java</span></a>
+        <a class="tag p-category" href="../../../categories/jr.html"><span class="badge badge-info">JR</span></a>
+    </span>
+
+
+    </small>
+    <hr>
+    <div class="e-content" itemprop="articleBody text">
+    <div><p></p><p>Like I promised, I will restart to write articles now that the evaluation period is over. </p>
+<p>After seeing <a href="http://www.baptiste-wicht.com/2010/01/jr-introduction/">how to develop using the JR programming language</a>, we'll see now how to use monitors in JR.</p>
+<p>Monitors provide a higher-level abstraction than semaphores and produce a better code with several advantages :</p>
+<p></p><ul>
+    <li>All the synchronization code is centralized in one location and the users of this code doesn't need to know how it's implemented.</li>
+    <li>The code doesn't depends on the number of processes, it works for as much process as you want</li>
+    <li>You doesn't need to release something like a mutex, so you cannot forget to do it</li>
+</ul>
+<p>The mutual exclusion is implicit with monitors. Only one process is allowed in the monitor, so all the method are automatically guarded with synchronization code. The synchronization between threads is made using signaling system, with condition variables. A condition variable is a kind of queue of process who are waiting on the same condition. You have several operations available on a condition, the most important is to signal a process waiting to be awaken and to wait on a condition. There are some similitudes between signal/wait operations and P and V of semaphores, but this is a little different. The signal operation does nothing if the queue is empty and the wait operation put always the thread in the waiting queue. The process queue is served in a first come, first served mode. </p>
+<p>Now we'll see how to use them in JR. </p>
+<!--more-->
+
+<p>In JR, you doesn't have directly the possibility to create monitors, but there is a preprocessor that transform a file with both JR and monitors operations into a plain JR file. This processor is called <em>m2jr</em> (monitor to JR) and is directly available in the JR distribution. So you only have to use the m2jr command to translate a .m file (conventional monitor extension file) into several JR files (one for the monitor and one for the condition variables). This file is normal JR with several comments to make the debugs easier (corresponding between lines in m and JR).</p>
+<p>All the keywords of the m2jr language start with _ (underscore). To declare a monitor, it's as easily as use the _monitor keyword : </p>
+<p>[java]_monitor MonitorTest {
+    //...
+}[/java]</p>
+<p>To add methods to the monitor, you just have to create method prefixed with _proc : </p>
+<p>[java]_monitor MonitorTest {
+    _proc void testA(){
+        //Some code
+    }
+}[/java]</p>
+<p>Only with that the mutual exclusion is guaranteed. Only one process is allowed into the monitor. If you want methods with a return type, you must use _return instead of return : </p>
+<p>[java]_monitor MonitorTest {
+    _proc void testA(){
+        //Some code
+    }</p>
+<div class="code"><pre><span class="n">_proc</span> <span class="kt">int</span> <span class="nf">testB</span><span class="p">(){</span>
+    <span class="n">_return</span> <span class="mi">1</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>}[/java]</p>
+<p>To declare condition variables, the keyword is _condvar. You don't have to initialize them, just declare them : </p>
+<p>[java]_monitor MonitorTest {
+    _condvar condVar1;
+    _condvar condVar2;
+}[/java]</p>
+<p>To use global variables, you must prefix them with _var : </p>
+<p>[java]_monitor MonitorTest {
+    _var var1;
+    _var var2;
+}[/java]</p>
+<p>And to make operations on condition variables, you have to use _signal and _wait methods inside a proc method : </p>
+<p>[java]_monitor MonitorTest {
+    _condvar a;
+    _condvar b;</p>
+<div class="code"><pre><span class="n">_proc</span> <span class="kt">void</span> <span class="nf">test</span><span class="p">(){</span>
+    <span class="n">_wait</span><span class="p">(</span><span class="n">a</span><span class="p">);</span>
+    <span class="c1">//Some computations</span>
+    <span class="n">_signal</span><span class="p">(</span><span class="n">b</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>}[/java]</p>
+<p>And you compile that to JR using the simple commmand : </p>
+<p><code>m2jr MonitorTest.m</code></p>
+<p>That will create two files (MonitorTest.jr and c_m_condvar.jr). Of course, you can use this monitor in a normal JR class, you don't have to compile classes who use monitors with m2jr, only with the JR compiler. There is just a single thing to worry about. m2jr generates a constructor that take a String in every monitors class, you when you instantiate the monitor, you have to provide a String representing its name as the first parameter. And if you want to create a new constructor in a monitor, you just have to call super with a String.  We'll see an example later. </p>
+<p>Before going further, we must have more informations about the signal operations. When writing monitors, you have the choice between several philosophies for the signaling operation : </p>
+<ul>
+    <li><strong>Signal &amp; Continue</strong> (SC) : The process who signal keep the mutual exclusion and the signaled will be awaken but need to acquire the mutual exclusion before going. </li>
+    <li><strong>Signal &amp; Wait</strong> (SW) : The signaler  is blocked and must wait for mutual exclusion to continue and the signaled thread is directly awaken and can start continue its operations. </li>
+    <li><strong>Signal &amp; Urgent Wait</strong> (SU) : Like SW but the signaler thread has the guarantee than it would go just after the signaled thread</li>
+    <li><strong>Signal &amp; Exit</strong> (SX) : The signaler exits from the method directly after the signal and the signaled thread can start directly. This philosophy is not often used. </li>
+</ul>
+
+<p>By default, m2jr make the compilation with SC, but you can configure it to use other philosophies. Just add the abbreviation of the philosophy (lower case) as an option to the m2jr compiler. By example, to compile using Signal &amp; Exit : </p>
+<p><code>m2jr -sx MonitorTest.m</code></p>
+<p>The main differences, is that the SC create a <em>signal stealers</em> problem. You will quickly understand with an example. With what we know now, we can create a monitor to manage a bounded buffer : </p>
+<p>[java]_monitor BoundedBuffer {
+    private static final int N = 5; //Size of the buffer</p>
+<div class="code"><pre><span class="n">_var</span> <span class="n">String</span><span class="p">[]</span> <span class="n">buffer</span> <span class="o">=</span> <span class="n">new</span> <span class="n">String</span><span class="p">[</span><span class="n">N</span><span class="p">];</span>
+<span class="n">_var</span> <span class="kt">int</span> <span class="n">front</span><span class="p">;</span>
+<span class="n">_var</span> <span class="kt">int</span> <span class="n">rear</span><span class="p">;</span>
+<span class="n">_var</span> <span class="kt">int</span> <span class="n">count</span><span class="p">;</span>
+
+<span class="n">_condvar</span> <span class="n">notFull</span><span class="p">;</span>
+<span class="n">_condvar</span> <span class="n">notEmpty</span><span class="p">;</span>
+
+<span class="n">_proc</span> <span class="kt">void</span> <span class="nf">deposit</span><span class="p">(</span><span class="n">String</span> <span class="n">data</span><span class="p">){</span>
+    <span class="k">while</span><span class="p">(</span><span class="n">count</span> <span class="o">==</span> <span class="n">N</span><span class="p">){</span>
+        <span class="n">_wait</span><span class="p">(</span><span class="n">notFull</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="n">buffer</span><span class="p">[</span><span class="n">rear</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">;</span>
+    <span class="n">rear</span> <span class="o">=</span> <span class="p">(</span><span class="n">rear</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="n">N</span><span class="p">;</span>
+    <span class="n">count</span><span class="o">++</span><span class="p">;</span>
+
+    <span class="n">_signal</span><span class="p">(</span><span class="n">notEmpty</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="n">_proc</span> <span class="n">String</span> <span class="nf">fetch</span><span class="p">(){</span>
+    <span class="k">while</span><span class="p">(</span><span class="n">count</span> <span class="o">==</span> <span class="mi">0</span><span class="p">){</span>
+        <span class="n">_wait</span><span class="p">(</span><span class="n">notEmpty</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="n">String</span> <span class="n">result</span> <span class="o">=</span> <span class="n">buffer</span><span class="p">[</span><span class="n">front</span><span class="p">];</span>
+    <span class="n">front</span> <span class="o">=</span> <span class="p">(</span><span class="n">front</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="n">N</span><span class="p">;</span>
+    <span class="n">count</span><span class="o">--</span><span class="p">;</span>
+
+    <span class="n">_signal</span><span class="p">(</span><span class="n">notFull</span><span class="p">);</span>
+
+    <span class="n">_return</span> <span class="n">result</span><span class="p">;</span>
+ <span class="p">}</span>
+</pre></div>
+
+
+<p>}[/java]</p>
+<p>A thing that some of you will certainly find weird is the loop around the wait operation. Is to avoid the signal stealers problem. If there were not while loop, imagine that situation in SC : </p>
+<ol>
+    <li>The thread 1 try to make a fetch(), there is no data, so it wait for the notEmpty condition variable</li>
+    <li>The thread 2 make a deposit(), that awake the thread 1, but it needs to acquire again the mutual exclusion. </li>
+    <li>Before the thread 2 has acquired the mutual exclusion, the thread 3 make a fetch(), there is enough data, so thread 3 make a fetch and get the data. So now, it's empty. </li>
+    <li>The thread 2 acquire the right to go into the monitor and get a data. But wait a minute, there is no data and it will fetch a null data or perhaps an old data still fetched depending on the current state of the buffer </li>
+</ol>
+
+<p>To avoid that situation, you just have to wrap the wait in a while loop instead of a if and that's done ! Or you can also use SW instead of SC. </p>
+<p>With that monitor, we can easily solve the producer and consumer problem : </p>
+<p>[java]public class ProducerConsumer {
+    private static final int N = 12; //Number of producers and consumers</p>
+<div class="code"><pre><span class="n">private</span> <span class="k">static</span> <span class="n">BoundedBuffer</span> <span class="n">bb</span> <span class="o">=</span> <span class="n">new</span> <span class="n">BoundedBuffer</span><span class="p">(</span><span class="s">"Bounded Buffer monitor"</span><span class="p">);</span> <span class="c1">//The monitor</span>
+
+<span class="n">public</span> <span class="k">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="p">(</span><span class="n">String</span><span class="p">...</span> <span class="n">args</span><span class="p">){}</span>
+
+<span class="n">private</span> <span class="k">static</span> <span class="n">process</span> <span class="n">Producer</span><span class="p">((</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="n">N</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)){</span>
+    <span class="n">bb</span><span class="p">.</span><span class="n">deposit</span><span class="p">(</span><span class="s">"Producer"</span> <span class="o">+</span> <span class="n">i</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="n">private</span> <span class="k">static</span> <span class="n">process</span> <span class="n">Consumer</span><span class="p">((</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="n">N</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)){</span>
+    <span class="n">System</span><span class="p">.</span><span class="n">out</span><span class="p">.</span><span class="n">println</span><span class="p">(</span><span class="s">"Consumer"</span> <span class="o">+</span> <span class="n">i</span> <span class="o">+</span> <span class="s">" : "</span> <span class="o">+</span> <span class="n">bb</span><span class="p">.</span><span class="n">fetch</span><span class="p">());</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>}[/java]</p>
+<p>That will provide output like that : </p>
+<p><code>Consumer10 : Producer0</code></p>
+<p>Consumer0 : Producer1</p>
+<p>Consumer1 : Producer2</p>
+<p>Consumer2 : Producer4</p>
+<p>Consumer3 : Producer5</p>
+<p>Consumer4 : Producer3</p>
+<p>Consumer8 : Producer7</p>
+<p>Consumer11 : Producer10</p>
+<p>Consumer6 : Producer8</p>
+<p>Consumer5 : Producer6</p>
+<p>Consumer7 : Producer11</p>
+<p>Consumer9 : Producer9</p>
+<p>So it works well. </p>
+<p>More than signal and wait operations, m2jr provide also others operations on condition variables : </p>
+<ul>
+    <li>_signal_all : Awake all the process of the waiting queue. This operation is only provided in Signal &amp; Continue mode. </li>
+    <li>_empty : Test if the condition variable has any process waiting on it</li>
+    <li>_wait(condvar, int priority) : Enqueue the process with the given priority. If you use that, the queue is now managed as a priority queue. You cannot use both wait without priority and wait with priority on the same condition variable </li>
+    <li>_minrank : Return the min priority on the given condition variable. If the condition variable has no waiters, the returned given number doesn't seem anything. 
+</li></ul>
+
+<p>With all that stuff, you can create monitors to solve almost all concurrency problems like barber shop, philosopher dinner, kwai cross or a lot of others problem. </p>
+<p>I hope you found that post interesting. The next post about JR will be about operations and capabilities. </p></div>
+    </div>
+    </div>
+    
+        <ul class="pager">
+            <li class="previous">
+                <a href="wordpress-3-0-installed.html" rel="prev">← Previous post</a>
+            </li>
+            <li class="next">
+                <a href="jr-operations-and-capabilities.html" rel="next">Next post →</a>
+            </li>
+        </ul>
+
+        
+        
+        <div id="disqus_thread"></div>
+        <script>
+        var disqus_shortname ="nikolademo",
+            disqus_url="http://www.baptiste-wicht.com/posts/2010/06/monitor-programming-in-jr.html",
+        disqus_title="Monitor programming in JR",
+        disqus_identifier="cache/posts/2010/06/monitor-programming-in-jr.html",
+        disqus_config = function () {
+            this.language = "en";
+        };
+        (function() {
+            var dsq = document.createElement('script'); dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink" rel="nofollow">Comments powered by <span class="logo-disqus">Disqus</span></a>
+
+
+    
+
+    </article>
+
+        </div>
+        <!--End of body content-->
+
+        <footer>
+            Contents © 2014         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         
+        </footer>
+    </div>
+</div>
+
+
+            <script src="../../../assets/js/all-nocdn.js" type="text/javascript"></script>
+
+
+    
+<!-- Social buttons -->
+<div id="addthisbox" class="addthis_toolbox addthis_peekaboo_style addthis_default_style addthis_label_style addthis_32x32_style">
+<a class="addthis_button_more">Share</a>
+<ul><li><a class="addthis_button_facebook"></a>
+</li><li><a class="addthis_button_google_plusone_share"></a>
+</li><li><a class="addthis_button_linkedin"></a>
+</li><li><a class="addthis_button_twitter"></a>
+</li></ul>
+</div>
+<script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-4f7088a56bb93798"></script>
+<!-- End of social buttons -->
+
+
+    <script type="text/javascript">jQuery("a.image-reference").colorbox({rel:"gal",maxWidth:"100%",maxHeight:"100%",scalePhotos:true});</script>
+    
+
+</body>
+</html>

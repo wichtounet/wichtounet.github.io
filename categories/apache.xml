@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>@Blog("Baptiste Wicht") (Apache)</title><link>http://www.baptiste-wicht.com/</link><description></description><atom:link href="http://www.baptiste-wicht.com/categories/apache.xml" type="application/rss+xml" rel="self"></atom:link><language>en</language><lastBuildDate>Sun, 16 Mar 2014 17:07:38 GMT</lastBuildDate><generator>Nikola &lt;http://getnikola.com/&gt;</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>Compute command-line arguments with Apache Commons CLI</title><link>http://www.baptiste-wicht.com/posts/2010/10/compute-command-line-arguments-with-apache-commons-cli.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;For a project at school, I needed to refactor an old code parsing almost 30 command line arguments. I needed to add some more arguments and change some old args, but the old code was not maintainable at all. So I decided to use a library to make the parsing. of the args. &lt;/p&gt;
+&lt;p&gt;I chose Apache Commons CLI. This is a really simple library to make that parsing. It's not perfect, but it makes the work I needed and is powerful to do that job. &lt;/p&gt;
+&lt;p&gt;With this API, you have to declare an Options instance. This class is used to describe the command line arguments of the program. Options constructor don't take any arguments. &lt;/p&gt;
+&lt;p&gt;[java]Options options = new Options();[/java]&lt;/p&gt;
+&lt;!--more--&gt;
+
+&lt;p&gt;Then you have to use the addOption methods to add some arguments to the application. There is three versions of the methods : &lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;ul&gt;
+    &lt;li&gt;addOption(Option opt) : Add an option of the class Option. &lt;/li&gt;
+    &lt;li&gt;addOption(String opt, boolean hasArg, String description) : Add a new option to the arguments. This option has only a short name. &lt;/li&gt;
+    &lt;li&gt;addOption(String opt, String longOpt, boolean hasArg, String description) : Add a new option to the arguments.  The option has a short name and a long name. &lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;We need some explanations here. The short opt is used to define an arg with a simple dash (-shortopt) and the long opt is defined with double dash (--longopt). The hasArg indicate if the parameter accepts an argument. The description is, like its name indicates, the description of the option. It's used to print the help of the program.&lt;/p&gt;
+&lt;p&gt;Using Option instances you can configure all the properties of an option using the setters and the constructor. Here is all the setters that can be used to configure the option : &lt;/p&gt;
+&lt;ul&gt;
+    &lt;li&gt; void   setArgName(String argName) : The name of the args&lt;/li&gt;
+    &lt;li&gt; void   setArgs(int num) : The number of args the option takes&lt;/li&gt;
+    &lt;li&gt;void    setDescription(String description) : The description of the option&lt;/li&gt;
+    &lt;li&gt; void   setLongOpt(String longOpt) : The long option name&lt;/li&gt;
+    &lt;li&gt; void   setOptionalArg(boolean optionalArg) : Indicate if the argument of this option is optional&lt;/li&gt;
+    &lt;li&gt; void   setRequired(boolean required) : Indicate if the option is required or not&lt;/li&gt;
+    &lt;li&gt;void    setType(Object type) : Set the type of the Option. Here are the supported type : File.class, Number.class, Class.class, Object.class, Url.class&lt;/li&gt;
+    &lt;li&gt; void   setValueSeparator(char sep) : Set the value separator, it's used to make a system like the property of Java like -Dmaven.test.skip=true, the separator is = &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;There is also an other way to create Option instance, using the OptionBuilder class. It's a little weird because all the methods are static and the method returns a reference to the builder. And then you make a call to the builder instance using the static method. The method are equivalent with the methods of the Option class with different names (withXXX, hasXXX, ...). When you have configured the option, you have to call one of the create methods to create the instance and reset the OptionBuilder. &lt;/p&gt;
+&lt;p&gt;Once you filled the Options instance with the arguments of the program, you can use it. You have to use a CommandLineParser to parse the Options. There is three implementation of this interface : &lt;/p&gt;
+&lt;ul&gt;
+    &lt;li&gt;&lt;strong&gt;BasicParser&lt;/strong&gt; : A very simple parser&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;PosixParser&lt;/strong&gt; : A parser to parse short options&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;GnuParser &lt;/strong&gt;: A parser to parse both long and short options&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;A simple example using the GnuParser : &lt;/p&gt;
+&lt;p&gt;[java]CommandLineParser parser = new GnuParser();&lt;/p&gt;
+&lt;p&gt;CommandLine cmd = parser.parse(options, args);[/java]&lt;/p&gt;
+&lt;p&gt;You receive a CommandLine object representing all the arguments. The parse() method can throw a ParseException if the given arguments are not valid. With that object, you can get the options that have been passed to the application. For that, you can use the given methods : &lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;ul&gt;
+    &lt;li&gt;Object  getOptionObject : Return the option value parsed to the specified type&lt;/li&gt;
+    &lt;li&gt; Properties getOptionProperties(String opt) &lt;/li&gt;
+    &lt;li&gt; String getOptionValue : Return the value of the option&lt;/li&gt;
+    &lt;li&gt; String[]   getOptionValues : Return the values of the option&lt;/li&gt;
+    &lt;li&gt; Object getParsedOptionValue(String opt)  : Return the option value parsed to the specified type&lt;/li&gt;
+    &lt;li&gt; boolean    hasOption : Indicate if the option has been specified or not&lt;/li&gt;
+    &lt;li&gt; List   getArgList()  : Return all the args that are not specified args&lt;/li&gt;
+    &lt;li&gt; String[]   getArgs() : Return all the args that are not specified args&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;With this API, you can also generate the help of the program : &lt;/p&gt;
+&lt;p&gt;[java]HelpFormatter formatter = new HelpFormatter();&lt;/p&gt;
+&lt;p&gt;formatter.printHelp( "program", options);[/java]&lt;/p&gt;
+&lt;p&gt;With that, you display the list of arguments taken by the program. &lt;/p&gt;
+&lt;p&gt;With that example, we've seen the main features of this library. &lt;/p&gt;
+&lt;p&gt;For more information, you consult the &lt;a target="_blank" href="http://commons.apache.org/cli/index.html"&gt;Apache Commons CLI&lt;/a&gt; website. &lt;/p&gt;&lt;/div&gt;</description><category>Apache</category><category>Java</category><category>Java</category><category>Libraries</category><guid>http://www.baptiste-wicht.com/posts/2010/10/compute-command-line-arguments-with-apache-commons-cli.html</guid><pubDate>Thu, 14 Oct 2010 07:22:45 GMT</pubDate></item><item><title>Quick Tip : Launch Java Applications From Java applications with Ant</title><link>http://www.baptiste-wicht.com/posts/2010/08/tip-launch-java-applications-from-java-applications-with-ant.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;One week ago, I searched a way &lt;strong&gt;to launch a Java application&lt;/strong&gt; from an other Java application without loosing portability. And I found a post on StackOverflow explaining how achieve that goal using &lt;strong&gt;Apache Ant&lt;/strong&gt;.&lt;/p&gt;
+&lt;p&gt;It's really easy. It use the Ant classes and simulate a project launching and a build task. In this post, we'll see a simple method to launch an application from Java.&lt;/p&gt;
+&lt;!--more--&gt;
+
+&lt;p&gt;Here is a simple method that launch an application using Ant :&lt;/p&gt;
+&lt;p&gt;[java]package org.jtheque.osgi;&lt;/p&gt;
+&lt;p&gt;import org.apache.tools.ant.BuildException;&lt;/p&gt;
+&lt;p&gt;import org.apache.tools.ant.BuildLogger;&lt;/p&gt;
+&lt;p&gt;import org.apache.tools.ant.DefaultLogger;&lt;/p&gt;
+&lt;p&gt;import org.apache.tools.ant.DemuxOutputStream;&lt;/p&gt;
+&lt;p&gt;import org.apache.tools.ant.Project;&lt;/p&gt;
+&lt;p&gt;import org.apache.tools.ant.taskdefs.Java;&lt;/p&gt;
+&lt;p&gt;import java.io.PrintStream;&lt;/p&gt;
+&lt;p&gt;public class Launcher {
+    private static int launchApplication(Class mainClass, String args) {
+        int returnCode;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;    &lt;span class="n"&gt;Project&lt;/span&gt; &lt;span class="n"&gt;project&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;new&lt;/span&gt; &lt;span class="n"&gt;Project&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+
+    &lt;span class="n"&gt;project&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;setBasedir&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;getProperty&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"user.dir"&lt;/span&gt;&lt;span class="p"&gt;));&lt;/span&gt;
+    &lt;span class="n"&gt;project&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;init&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+
+    &lt;span class="n"&gt;PrintStream&lt;/span&gt; &lt;span class="n"&gt;out&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;out&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="n"&gt;PrintStream&lt;/span&gt; &lt;span class="n"&gt;err&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;err&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+    &lt;span class="n"&gt;BuildLogger&lt;/span&gt; &lt;span class="n"&gt;logger&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;new&lt;/span&gt; &lt;span class="n"&gt;DefaultLogger&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+    &lt;span class="n"&gt;logger&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;setOutputPrintStream&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;out&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+    &lt;span class="n"&gt;logger&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;setErrorPrintStream&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;err&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+    &lt;span class="n"&gt;logger&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;setMessageOutputLevel&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;Project&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;MSG_INFO&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+    &lt;span class="n"&gt;project&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;addBuildListener&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;logger&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+    &lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;setOut&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;new&lt;/span&gt; &lt;span class="n"&gt;PrintStream&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;new&lt;/span&gt; &lt;span class="n"&gt;DemuxOutputStream&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;project&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nb"&gt;false&lt;/span&gt;&lt;span class="p"&gt;)));&lt;/span&gt;
+    &lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;setErr&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;new&lt;/span&gt; &lt;span class="n"&gt;PrintStream&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;new&lt;/span&gt; &lt;span class="n"&gt;DemuxOutputStream&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;project&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nb"&gt;true&lt;/span&gt;&lt;span class="p"&gt;)));&lt;/span&gt;
+
+    &lt;span class="n"&gt;project&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;fireBuildStarted&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+
+    &lt;span class="n"&gt;Throwable&lt;/span&gt; &lt;span class="n"&gt;caught&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;null&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="n"&gt;try&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="n"&gt;project&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;log&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Launch Application"&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+        &lt;span class="n"&gt;Java&lt;/span&gt; &lt;span class="n"&gt;javaTask&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;new&lt;/span&gt; &lt;span class="n"&gt;Java&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+        &lt;span class="n"&gt;javaTask&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;setTaskName&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Application Launcher"&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+        &lt;span class="n"&gt;javaTask&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;setProject&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;project&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+        &lt;span class="n"&gt;javaTask&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;setFork&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nb"&gt;true&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+        &lt;span class="n"&gt;javaTask&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;setFailonerror&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nb"&gt;true&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+        &lt;span class="n"&gt;javaTask&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;setCloneVm&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nb"&gt;true&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+        &lt;span class="n"&gt;javaTask&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;setClassname&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;mainClass&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;getName&lt;/span&gt;&lt;span class="p"&gt;());&lt;/span&gt;
+        &lt;span class="n"&gt;javaTask&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;setArgs&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;args&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+        &lt;span class="n"&gt;javaTask&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;init&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+
+        &lt;span class="n"&gt;returnCode&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;javaTask&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;executeJava&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="n"&gt;catch&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;BuildException&lt;/span&gt; &lt;span class="n"&gt;e&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="n"&gt;caught&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;e&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+        &lt;span class="n"&gt;returnCode&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+
+    &lt;span class="n"&gt;project&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;fireBuildFinished&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;caught&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+    &lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;setOut&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;out&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+    &lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;setErr&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;err&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;returnCode&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;}[/java]&lt;/p&gt;
+&lt;p&gt;Here are some explanations :&lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;ul&gt;
+    &lt;li&gt;First, we create a new Project using the user directory as base directory and init it.&lt;/li&gt;
+    &lt;li&gt;Then, we create a simple logger using the System.out and System.err streams and replace then with demux streams&lt;/li&gt;
+    &lt;li&gt;After that, we create the Java task. By using setCloneVm(true), the new virtual machine will clone the properties of the current virtual machine. We must use a fork virtual machine to get the return code of the application. We set also the name of the class and the args of the launch. Finally we init and execute the task&lt;/li&gt;
+    &lt;li&gt;Once the application is finished, we get the return code and restore the old System.out and System.err streams&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;It's extremely simple and portable and the code is, I think, very clean.&lt;/p&gt;&lt;/div&gt;</description><category>Apache</category><category>Java</category><category>Java</category><category>Libraries</category><category>Tips</category><guid>http://www.baptiste-wicht.com/posts/2010/08/tip-launch-java-applications-from-java-applications-with-ant.html</guid><pubDate>Mon, 09 Aug 2010 07:22:42 GMT</pubDate></item><item><title>JTheque licensed under Apache License 2.0</title><link>http://www.baptiste-wicht.com/posts/2010/05/jtheque-licensed-under-apache-license-2-0.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;I decided to change the licence of all the JTheque Projects (The Core, the Utils and all the applications) to &lt;a href="http://www.apache.org/licenses/LICENSE-2.0.html"&gt;Apache Licence 2.0&lt;/a&gt;. The current license was GNU GPL V3. &lt;/p&gt;
+&lt;p&gt;I wanted to remove the copyleft clause of the GPL License to make the use of JTheque more simple and more open. For me the copyleft is not really important, I need only the copyright clause. &lt;/p&gt;
+&lt;p&gt;So, all the next versions of one of the JTheque Projects will now be made available under the Terms of the Apache License 2.0. &lt;/p&gt;&lt;/div&gt;</description><category>Apache</category><category>JTheque</category><category>Others</category><guid>http://www.baptiste-wicht.com/posts/2010/05/jtheque-licensed-under-apache-license-2-0.html</guid><pubDate>Tue, 04 May 2010 14:49:20 GMT</pubDate></item><item><title>Maven 3.0 Beta 1 is here !</title><link>http://www.baptiste-wicht.com/posts/2010/04/maven-3-0-beta-1-is-here.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;The Maven team has just announced the release of &lt;strong&gt;Maven 3.0-beta-1&lt;/strong&gt;.&lt;/p&gt;
+&lt;p&gt;There is still several things to do for the final releases, but Maven 3 is now ready to go from Alpha to Beta.&lt;/p&gt;
+&lt;p&gt;If you're interested on migrating to this new version, you should have a look at this page from the Maven site : &lt;a href="http://cwiki.apache.org/MAVEN/maven-3x-compatibility-notes.html" target="_blank"&gt;Maven 3 Compatibility Notes&lt;/a&gt;. This page lists all the known differences between Maven 2 and Maven 3 for compatibility purpose.&lt;/p&gt;
+&lt;p&gt;Some news of Maven 3 :&lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;ul&gt;
+    &lt;li&gt;Complete Kernel Rewriting&lt;/li&gt;
+    &lt;li&gt;New languages for POM : YAML and Groovy&lt;/li&gt;
+    &lt;li&gt;POM Composition&lt;/li&gt;
+    &lt;li&gt;Extensibility : Easier to create plugins extending an other plugin&lt;/li&gt;
+    &lt;li&gt;Create the build at start and not step by step&lt;/li&gt;
+    &lt;li&gt;Mercury for repositories and dependencies access&lt;/li&gt;
+    &lt;li&gt;Maven Shell : Shell environment to execute Maven commands&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;You can download it &lt;a href="http://maven.apache.org/download.html" target="_blank"&gt;here&lt;/a&gt;.&lt;/p&gt;&lt;/div&gt;</description><category>Apache</category><category>Java</category><category>Maven</category><category>Releases</category><category>Tools</category><guid>http://www.baptiste-wicht.com/posts/2010/04/maven-3-0-beta-1-is-here.html</guid><pubDate>Sat, 24 Apr 2010 04:16:08 GMT</pubDate></item><item><title>Bundle non-OSGi dependencies with Maven</title><link>http://www.baptiste-wicht.com/posts/2010/03/bundle-non-osgi-dependencies-maven.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;When we work with OSGi, a problem we always have is how to work with dependencies non OSGi Ready.&lt;/p&gt;
+&lt;p&gt;This is not a really great problem because there we can work with. There is essentially two solutions :&lt;/p&gt;
+&lt;p&gt;&lt;/p&gt;&lt;ul&gt;
+    &lt;li&gt;Embed the JAR files within the bundle. That is to say putting the JAR file into the bundle JAR and reference it in the Manifest&lt;/li&gt;
+    &lt;li&gt;Wrap the JAR files with an OSGi Manifest. Namely, transform the JAR into an OSGi bundle.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Personnaly, i doesn't like the first solution, because for me, having a jar into a jar sounds really weird and bad and i prefer to have real OSGi Bundle. With wrapping, if i need this library in an other bundle, i doesn't have to do anything.&lt;/p&gt;
+&lt;!--more--&gt;
+
+&lt;p&gt;But, yes there is a but, wrapping a jar is much complicated than embedding. Because, we much transform the JAR into a real OSGi Bundle. That is to say that we much create a new JAR with a Manifest, importing all the needed packages, exporting all the necessary packages, computing the names and version, ...&lt;/p&gt;
+&lt;p&gt;If we must do that by hand, that could be really long and hard to do.&lt;/p&gt;
+&lt;p&gt;We can do that in a simple way using Maven 2 and the maven-bundle-plugin that can generate an OSGi jar embedding the other using the BND tools. With some configurations, we can simply create a totally valid OSGi Bundle. To make several bundles  easily, i created a simple parent pom (i take the first sources from Spring Blog) and all the modules of this parent project will be simple project to wrap a dependency.&lt;/p&gt;
+&lt;p&gt;Here is the parent pom i use :&lt;/p&gt;
+&lt;p&gt;[xml]&amp;lt;?xml version="1.0" encoding="UTF-8"?&amp;gt;&lt;/p&gt;
+&lt;p&gt;&amp;lt;project
+        xmlns="http://maven.apache.org/POM/4.0.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd"&amp;gt;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;modelVersion&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;4.0.0&lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;/modelVersion&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;
+&lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;groupId&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;org.jtheque&lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;/groupId&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;
+&lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;artifactId&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;jtheque-osgi-wrap&lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;/artifactId&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;
+&lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;name&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;jtheque-osgi-wrap&lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;/name&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;
+&lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;packaging&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;pom&lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;/packaging&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;
+&lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;version&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;1.0&lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;/version&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;
+
+&lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;modules&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;
+    &lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;!-- Modules --&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;
+&lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;/modules&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;
+
+&lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;properties&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;
+    &lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;export.packages&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;&lt;span class="cp"&gt;${&lt;/span&gt;&lt;span class="n"&gt;export&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;package&lt;/span&gt;&lt;span class="cp"&gt;}&lt;/span&gt;*;version=&lt;span class="cp"&gt;${&lt;/span&gt;&lt;span class="n"&gt;unpack&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;version&lt;/span&gt;&lt;span class="cp"&gt;}&lt;/span&gt;&lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;/export.packages&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;
+    &lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;import.packages&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;*&lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;/import.packages&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;
+    &lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;private.packages&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;!*&lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;/private.packages&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;
+    &lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;symbolic.name&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;&lt;span class="cp"&gt;${&lt;/span&gt;&lt;span class="n"&gt;pom&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;groupId&lt;/span&gt;&lt;span class="cp"&gt;}&lt;/span&gt;.&lt;span class="cp"&gt;${&lt;/span&gt;&lt;span class="n"&gt;pom&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;artifactId&lt;/span&gt;&lt;span class="cp"&gt;}&lt;/span&gt;&lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;/symbolic.name&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;
+    &lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;embed-dep&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;*;scope=compile;type=!pom;inline=true&lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;/embed-dep&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;
+    &lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;unpack-bundle&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;false&lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;/unpack-bundle&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;
+&lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;/properties&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;
+
+&lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;build&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;
+    &lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;directory&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;&lt;span class="cp"&gt;${&lt;/span&gt;&lt;span class="n"&gt;env&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;BUILD_HOME&lt;/span&gt;&lt;span class="cp"&gt;}&lt;/span&gt;/dependencies/&lt;span class="cp"&gt;${&lt;/span&gt;&lt;span class="n"&gt;symbolic&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;name&lt;/span&gt;&lt;span class="cp"&gt;}&lt;/span&gt;&lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;/directory&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;
+
+    &lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;plugins&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;
+        &lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;plugin&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;
+            &lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;groupId&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;org.apache.felix&lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;/groupId&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;
+            &lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;artifactId&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;maven-bundle-plugin&lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;/artifactId&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;
+            &lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;version&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;1.2.0&lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;/version&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;
+            &lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;configuration&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;
+                &lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;unpackBundle&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;&lt;span class="cp"&gt;${&lt;/span&gt;&lt;span class="n"&gt;unpack&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;bundle&lt;/span&gt;&lt;span class="cp"&gt;}&lt;/span&gt;&lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;/unpackBundle&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;
+                &lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;instructions&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;
+                    &lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;Bundle-Name&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;&lt;span class="cp"&gt;${&lt;/span&gt;&lt;span class="n"&gt;artifactId&lt;/span&gt;&lt;span class="cp"&gt;}&lt;/span&gt;&lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;/Bundle-Name&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;
+                    &lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;Bundle-SymbolicName&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;&lt;span class="cp"&gt;${&lt;/span&gt;&lt;span class="n"&gt;symbolic&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;name&lt;/span&gt;&lt;span class="cp"&gt;}&lt;/span&gt;&lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;/Bundle-SymbolicName&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;
+                    &lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;Bundle-Description&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;&lt;span class="cp"&gt;${&lt;/span&gt;&lt;span class="n"&gt;pom&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;name&lt;/span&gt;&lt;span class="cp"&gt;}&lt;/span&gt;&lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;/Bundle-Description&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;
+                    &lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;Import-Package&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;&lt;span class="cp"&gt;${&lt;/span&gt;&lt;span class="n"&gt;import&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;packages&lt;/span&gt;&lt;span class="cp"&gt;}&lt;/span&gt;&lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;/Import-Package&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;
+                    &lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;Private-Package&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;&lt;span class="cp"&gt;${&lt;/span&gt;&lt;span class="n"&gt;private&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;packages&lt;/span&gt;&lt;span class="cp"&gt;}&lt;/span&gt;&lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;/Private-Package&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;
+                    &lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;Include-Resource&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;&lt;span class="cp"&gt;${&lt;/span&gt;&lt;span class="n"&gt;include&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;resources&lt;/span&gt;&lt;span class="cp"&gt;}&lt;/span&gt;&lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;/Include-Resource&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;
+                    &lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;Embed-Dependency&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;&lt;span class="cp"&gt;${&lt;/span&gt;&lt;span class="n"&gt;embed&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;dep&lt;/span&gt;&lt;span class="cp"&gt;}&lt;/span&gt;&lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;/Embed-Dependency&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;
+                    &lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;_exportcontents&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;&lt;span class="cp"&gt;${&lt;/span&gt;&lt;span class="n"&gt;export&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;packages&lt;/span&gt;&lt;span class="cp"&gt;}&lt;/span&gt;&lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;/_exportcontents&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;
+                &lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;/instructions&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;
+            &lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;/configuration&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;
+            &lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;extensions&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;true&lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;/extensions&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;
+        &lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;/plugin&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;
+    &lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;/plugins&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;
+&lt;span class="ni"&gt;&amp;amp;lt;&lt;/span&gt;/build&lt;span class="ni"&gt;&amp;amp;gt;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;&amp;lt;/project&amp;gt;[/xml]&lt;/p&gt;
+&lt;p&gt;That really simple, we use some properties to generify the process to have really simple modules. &lt;/p&gt;
+&lt;p&gt;Here is an example to wrap the substance look and feel library : &lt;/p&gt;
+&lt;p&gt;[xml]&amp;lt;?xml version="1.0" encoding="UTF-8"?&amp;gt;&lt;/p&gt;
+&lt;p&gt;&amp;lt;project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"&amp;gt;&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;modelVersion&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="mf"&gt;4.0.0&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;modelVersion&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;groupId&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;org&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;substance&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;groupId&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;packaging&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;bundle&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;packaging&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;artifactId&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;org&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;jtheque&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;substance&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;artifactId&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;name&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;apple&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;extensions&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;name&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;version&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="mf"&gt;6.0.0&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;version&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;parent&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;artifactId&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;jtheque&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;osgi&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;wrap&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;artifactId&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;groupId&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;org&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;jtheque&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;groupId&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;version&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="mf"&gt;1.0&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;version&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;parent&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;properties&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;unpack&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;version&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="mf"&gt;6.0.0&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;unpack&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;version&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;export&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;package&lt;/span&gt;&lt;span class="o"&gt;/&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;properties&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;dependencies&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;dependency&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+        &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;groupId&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;org&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;substance&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;groupId&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+        &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;artifactId&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;substance&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;artifactId&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+        &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;version&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="mf"&gt;6.0&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;version&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;dependency&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;dependencies&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;&amp;lt;/project&amp;gt;[/xml]&lt;/p&gt;
+&lt;p&gt;Like you can see, that's really simple and that generates a great OSGi Bundle. Here i didnt' specify any export package. Doing that all the packages are exported except the ones containing impl or internal. &lt;/p&gt;
+&lt;p&gt;Thats it :)&lt;/p&gt;
+&lt;p&gt;I hope that this post will be useful to some of you. &lt;/p&gt;&lt;/div&gt;</description><category>Apache</category><category>Java</category><category>Maven</category><category>OSGi</category><guid>http://www.baptiste-wicht.com/posts/2010/03/bundle-non-osgi-dependencies-maven.html</guid><pubDate>Fri, 19 Mar 2010 15:41:29 GMT</pubDate></item></channel></rss>

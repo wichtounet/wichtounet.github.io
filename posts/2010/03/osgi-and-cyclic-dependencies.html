@@ -1,0 +1,198 @@
+<!DOCTYPE html><html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Baptiste Wicht">
+    <title>OSGi and cyclic dependencies | @Blog("Baptiste Wicht")</title>
+    
+            <link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
+      <link rel="canonical" href="http://www.baptiste-wicht.com/posts/2010/03/osgi-and-cyclic-dependencies.html">
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js" type="text/javascript"></script>
+    <![endif]-->
+            <link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
+
+    
+
+
+
+
+
+    
+</head>
+<body>
+<!-- Menubar -->
+
+<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    <div class="container-fluid"><!-- This keeps the margins nice -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="http://www.baptiste-wicht.com/">@Blog("Baptiste Wicht")</a>
+        </div><!-- /.navbar-header -->
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+            <ul class="nav navbar-nav">
+                
+                <li><a href="../../../archive.html">Archives</a>
+                </li><li><a href="../../../categories/index.html">Tags</a>
+                </li><li><a href="../../../rss.xml">RSS</a>
+
+            </li></ul>
+
+            <ul class="nav navbar-nav navbar-right">
+                
+                
+                    
+    <li>
+    <a href="osgi-and-cyclic-dependencies.wp" id="sourcelink">Source</a>
+    </li>
+
+            </ul>
+        </div><!-- /.navbar-collapse -->
+    </div><!-- /.container-fluid -->
+</nav>
+
+<!-- End of Menubar -->
+
+<div class="container">
+    <div class="body-content">
+        <!--Body content-->
+        <div class="row">
+            
+    <article class="postbox post-text">
+    <div class="h-entry" itemscope="itemscope" itemtype="http://schema.org/Article">
+    
+    <h1 class="p-name" itemprop="headline name">OSGi and cyclic dependencies</h1>
+
+    <hr>
+    <small>
+        Posted: <time class="published dt-published" datetime="2010-03-15T16:19:54+00:00" itemprop="datePublished">2010-03-15 16:19</time>
+        
+
+        
+          |  
+        More posts about 
+    <span itemprop="keywords">
+        <a class="tag p-category" href="../../../categories/conception.html"><span class="badge badge-info">Conception</span></a>
+        <a class="tag p-category" href="../../../categories/java.html"><span class="badge badge-info">Java</span></a>
+        <a class="tag p-category" href="../../../categories/java.html"><span class="badge badge-info">Java</span></a>
+        <a class="tag p-category" href="../../../categories/jtheque.html"><span class="badge badge-info">JTheque</span></a>
+        <a class="tag p-category" href="../../../categories/osgi.html"><span class="badge badge-info">OSGi</span></a>
+    </span>
+
+
+    </small>
+    <hr>
+    <div class="e-content" itemprop="articleBody text">
+    <div><p></p><p>Hi, </p>
+<p>I'm currently working on the "bundlisation" of the JTheque Core. I choose to cut core into several bundles each one representing a service provided by the core. </p>
+<p>I quickly have experencied problems with </p>
+<p>I quickly realized that the decoupling of my various services was almost nil. I had a huge number of dependencies for each bundle and worse, I had a lot of cyclic dependencies, either direct or indirect.</p>
+<p>For information, a direct cyclic dependency is a situation in which a bundle X depends on a bundle that depends on Y who is also depending itself of X. An indirect dependency cycle is the situation where X depends on Y, Y depends on Z and Z depends on X. I speak here of bundles, but it may relate to projects, classes or packages.</p>
+<p>Note that the different techniques that I will present also apply for dependencies between components non-OSGi, the principles are exactly the same.</p>
+<!--more-->
+
+<p>In the case of packages within the same application, even if we avoid this, it is possible to live with. However, in the case of bundle or projects, it is generally not even possible for the application builder. For me, the bundles are Maven modules. It is impossible to start the build of a bundle in a cycle since the builder must first bundle before the second and the second before the first, which is obviously not possible.</p>
+<p>In addition to be very bad in a system build, cyclic dependencies between components are also a huge design problem. Indeed, we cannot work on a bundle without working on the bundle B and vice versa. In addition to this, the two components are very difficult to evolve in a healthy way.</p>
+<p>The cyclic dependencies at the class level within a component does not pose real problems. It is always in the same component, classes can thus be linked in a cyclical way, even if it would still avoid it as soon as possible (it is not always).</p>
+<p>To return to JTheque so I had to solve the problem of cyclic dependencies before advancing further. There are many techniques to do this. Here are the tracks that I explored to resolve these dependencies. Note that these techiques cannot only solve the problem of cyclic dependencies, but also improves the architecture of its application.</p>
+<ol>
+<li>
+<p><strong>Move the classes to the right location</strong> : In some cases, I had classes in a bundle when they had nothing to do here. In this case, it may suffice to move them to another bundle. Note that this case is the easiest to solve and it's unfortunately not the most common. In addition to this, in case the classes to move depends on another bundles, it is possible that this creates new cyclic dependencies. An example is the collection management module, which was contained in the bundle of graphical interfaces.</p>
+</li>
+<li>
+<p><strong>Move functionalities</strong> : I also found a lot of features, typically methods within a bundle that was not at the right place. For example, the bundle "modules" provided methods for updates while a bundle "update" existed. It was enough to move these features to the bundle update to solve my cycle.</p>
+</li>
+<li>
+<p><strong>Badly cutted features</strong> : Often, a feature, usually a method or a class, do too much things and causes dependencies that are not welcome here. Sometimes, thing again about the functionality and the role of each class / method may be enough to solve the problem. Note that this does not concern only the concepts of dependency, but is a basic principle of object-oriented design. In the case of JTheque I had for example a method allowing to select a collection that returns true if we could open the collection with the login / password entered false otherwise. But besides that, it displays an error in the collection view if there was a problem. But that was clearly not his role. I have updated this method so it does that test if we could open the collection or not and I implemented the display of the error in the Swing Action. </p>
+</li>
+<li>
+<p><strong>Separate functionalities of bundle</strong> : It may happen that the bundle to do too much things or has several distinct aspects. In this case, you should immediately separate the bundle into several others with each one a clear responsibility. Often this will help solve a cyclic dependency, as fewer bundles have dependencies to each new bundles and each new bundles should have fewer dependencies to other bundles. But it can also introduce new cycles. In JTheque, I cut the modules "views" in 2 two bundles: views and ui. The views module contains the implementation of JTheque views and the "ui" module contains utility classes for creating views and generic Swing components that can be used elsewhere.</p>
+</li>
+<li>
+<p><strong>Introduce callback system</strong> : A callback system is a simple listeners system that could solve dependencies. Rather than a bundle directly notify another bundle, the second register as the first listener. Thus the first does not need to know the second. It is immediately obvious that listeners are more powerful than they might initially appear. In the case of JTheque, I implemented this for selecting collections. In fact, the collections manager called directly the view that the collection had been chosen. Using a listener, it is much more flexible and collections manager automatically notifies all listeners. In addition to this, if I need later a second listener, I have nothing to change in the collections bundle.</p>
+</li>
+<li>
+<p><strong>Separate specification and implementation</strong> : As it is not always possible to remove cyclic dependencies directly, we can bypass them by separating the specification part and the  implementation part. This technique can sometimes be useful when it is really difficult to solve the cycle. It therefore separates a bundle in any specific part that is called from the outside and part of implementation which can then have dependencies outside. Note that this is clearly not often feasible in the state because it is not always possible to completely separate the implementation of the specification without cycles. </p>
+</li>
+<li>
+<p><strong>Group to modules in one</strong> : In some cases, we realize that two modules are so intrinsically linked they are in fact only one module. In this case, the best solution is to group them in one bundle.</p>
+</li>
+</ol>
+<p>Well, now I have list the various techniques I used to resolve cyclic dependencies in bundles of JTheque Core. There are certainly many others, but it was enough for me. </p>
+<p>I hope this will be useful to people trying to solve problems of cyclic dependencies.</p></div>
+    </div>
+    </div>
+    
+        <ul class="pager">
+            <li class="previous">
+                <a href="sonar-2-0-released.html" rel="prev">← Previous post</a>
+            </li>
+            <li class="next">
+                <a href="welcome-to-my-new-website.html" rel="next">Next post →</a>
+            </li>
+        </ul>
+
+        
+        
+        <div id="disqus_thread"></div>
+        <script>
+        var disqus_shortname ="nikolademo",
+            disqus_url="http://www.baptiste-wicht.com/posts/2010/03/osgi-and-cyclic-dependencies.html",
+        disqus_title="OSGi and cyclic dependencies",
+        disqus_identifier="cache/posts/2010/03/osgi-and-cyclic-dependencies.html",
+        disqus_config = function () {
+            this.language = "en";
+        };
+        (function() {
+            var dsq = document.createElement('script'); dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink" rel="nofollow">Comments powered by <span class="logo-disqus">Disqus</span></a>
+
+
+    
+
+    </article>
+
+        </div>
+        <!--End of body content-->
+
+        <footer>
+            Contents © 2014         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         
+        </footer>
+    </div>
+</div>
+
+
+            <script src="../../../assets/js/all-nocdn.js" type="text/javascript"></script>
+
+
+    
+<!-- Social buttons -->
+<div id="addthisbox" class="addthis_toolbox addthis_peekaboo_style addthis_default_style addthis_label_style addthis_32x32_style">
+<a class="addthis_button_more">Share</a>
+<ul><li><a class="addthis_button_facebook"></a>
+</li><li><a class="addthis_button_google_plusone_share"></a>
+</li><li><a class="addthis_button_linkedin"></a>
+</li><li><a class="addthis_button_twitter"></a>
+</li></ul>
+</div>
+<script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-4f7088a56bb93798"></script>
+<!-- End of social buttons -->
+
+
+    <script type="text/javascript">jQuery("a.image-reference").colorbox({rel:"gal",maxWidth:"100%",maxHeight:"100%",scalePhotos:true});</script>
+    
+
+</body>
+</html>

@@ -1,0 +1,322 @@
+<!DOCTYPE html><html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Baptiste Wicht">
+    <title>Rendezvous, concurrency method, in JR | @Blog("Baptiste Wicht")</title>
+    
+            <link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
+      <link rel="canonical" href="http://www.baptiste-wicht.com/posts/2010/07/rendezvous-concurrency-jr.html">
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js" type="text/javascript"></script>
+    <![endif]-->
+            <link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
+
+    
+
+
+
+
+
+    
+</head>
+<body>
+<!-- Menubar -->
+
+<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    <div class="container-fluid"><!-- This keeps the margins nice -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="http://www.baptiste-wicht.com/">@Blog("Baptiste Wicht")</a>
+        </div><!-- /.navbar-header -->
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+            <ul class="nav navbar-nav">
+                
+                <li><a href="../../../archive.html">Archives</a>
+                </li><li><a href="../../../categories/index.html">Tags</a>
+                </li><li><a href="../../../rss.xml">RSS</a>
+
+            </li></ul>
+
+            <ul class="nav navbar-nav navbar-right">
+                
+                
+                    
+    <li>
+    <a href="rendezvous-concurrency-jr.wp" id="sourcelink">Source</a>
+    </li>
+
+            </ul>
+        </div><!-- /.navbar-collapse -->
+    </div><!-- /.container-fluid -->
+</nav>
+
+<!-- End of Menubar -->
+
+<div class="container">
+    <div class="body-content">
+        <!--Body content-->
+        <div class="row">
+            
+    <article class="postbox post-text">
+    <div class="h-entry" itemscope="itemscope" itemtype="http://schema.org/Article">
+    
+    <h1 class="p-name" itemprop="headline name">Rendezvous, concurrency method, in JR</h1>
+
+    <hr>
+    <small>
+        Posted: <time class="published dt-published" datetime="2010-07-07T07:05:20+00:00" itemprop="datePublished">2010-07-07 07:05</time>
+        
+
+        
+          |  
+        More posts about 
+    <span itemprop="keywords">
+        <a class="tag p-category" href="../../../categories/concurrency.html"><span class="badge badge-info">Concurrency</span></a>
+        <a class="tag p-category" href="../../../categories/java.html"><span class="badge badge-info">Java</span></a>
+        <a class="tag p-category" href="../../../categories/java.html"><span class="badge badge-info">Java</span></a>
+        <a class="tag p-category" href="../../../categories/jr.html"><span class="badge badge-info">JR</span></a>
+    </span>
+
+
+    </small>
+    <hr>
+    <div class="e-content" itemprop="articleBody text">
+    <div><p></p><p>In this post, we'll see a new feature of JR : the rendezvous.</p>
+<p>Like asynchronous message passing, this synchronization method involves two processes : a caller and a receiver. But this time, the invocation is synchronous, the caller delays until the operation completes. The rendezvous does not create a new thread to the receiver. The receiver must invoke an input statement (the implementation of rendezvous) and wait for the message. Like asynchronous message passing, this is achieved using operations as message queue.</p>
+<!--more-->
+
+<p>The rendezvous can simplify this kind of operations :</p>
+<p>[java]int x;</p>
+<p>int y;</p>
+<p>send op_command(2, 3);</p>
+<p>receive(x, y);[/java]</p>
+<p>To make a rendezvous, we'use the input statement. I think it's the harder (but also most complete) statement of the JR programming language. Here is the general form :</p>
+<p>[java]inni op_command {</p>
+<p>//Code block</p>
+<p>}</p>
+<p>[] op_command {</p>
+<p>//Code block</p>
+<p>}..[/java]</p>
+<p>An op_command specifiy an operation to wait for. An op_command is of this form :</p>
+<p>[java]return_type op_exp(args) st synch by sched[/java]</p>
+<p>Explanations :</p>
+<p></p><ul>
+    <li>return_type : Indicate the return type of the operation we are waiting for</li>
+    <li>op_exp : The name of the operation or the capability</li>
+    <li>args : The arguments of the operation</li>
+    <li>st synch : Add a condition to the operations. This condition indicates which messages are acceptable</li>
+    <li>by sched : Dictate the order of servicing the messages. Must be numerical. The message with the lowest value of scheduling expression will be serviced in first.</li>
+</ul>
+<p>If there is no synchronization expression and no scheduling expression, the first serviced invocation is the oldest. If there is a synchronization expression, the first serviced invocation is the oldest selectable expression and if there is a scheduling expression, the first serviced is the first selectable invocation that minimizes the scheduling expression. If there is no selectable message, the input statement delays until there is one.</p>
+<p>You can also add an else statement to the input statement :</p>
+<p>[java]inni op_command {</p>
+<p>//Code block</p>
+<p>} ...</p>
+<p>[] else {</p>
+<p>//Code block</p>
+<p>}[/java]</p>
+<p>The else block will be executed if there is no selectable message. So an input statement with an else statement will never delays.</p>
+<p>Lets imagine a simple example. The server return the sum of 2 numbers after receiving a message. If we write this simple program using asynchronous message, it'll give us something like that :</p>
+<p>[java]public class Calculator {
+    private static op void request(int x, int y);
+    private static op void response(int sum, int sub);</p>
+<div class="code"><pre><span class="n">public</span> <span class="k">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="p">(</span><span class="n">String</span><span class="p">...</span> <span class="n">args</span><span class="p">){}</span>
+
+<span class="n">private</span> <span class="k">static</span> <span class="n">process</span> <span class="n">Client</span> <span class="p">{</span>
+    <span class="n">send</span> <span class="n">request</span><span class="p">(</span><span class="mi">33</span><span class="p">,</span> <span class="mi">22</span><span class="p">);</span>
+
+    <span class="kt">int</span> <span class="n">sum</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">sub</span><span class="p">;</span>
+    <span class="n">receive</span> <span class="nf">response</span><span class="p">(</span><span class="n">sum</span><span class="p">,</span> <span class="n">sub</span><span class="p">);</span>
+
+    <span class="n">System</span><span class="p">.</span><span class="n">out</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"Sum %d Sub %d"</span><span class="p">,</span> <span class="n">sum</span><span class="p">,</span> <span class="n">sub</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="n">private</span> <span class="k">static</span> <span class="n">process</span> <span class="n">Server</span> <span class="p">{</span>
+    <span class="kt">int</span> <span class="n">x</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">y</span><span class="p">;</span>
+    <span class="n">receive</span> <span class="nf">request</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">);</span>
+    <span class="n">send</span> <span class="nf">response</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">y</span><span class="p">,</span> <span class="n">x</span> <span class="o">-</span> <span class="n">y</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>}[/java]</p>
+<p>It little bit complicated for a thing as simple, isn't it ? Let's rewrite it with input statement :</p>
+<p>[java]public class CalculatorInni {
+    private static op int compute(int x, int y);</p>
+<div class="code"><pre><span class="n">public</span> <span class="k">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="p">(</span><span class="n">String</span><span class="p">...</span> <span class="n">args</span><span class="p">){}</span>
+
+<span class="n">private</span> <span class="k">static</span> <span class="n">process</span> <span class="n">Client</span> <span class="p">{</span>
+    <span class="n">System</span><span class="p">.</span><span class="n">out</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"Sum %d"</span><span class="p">,</span> <span class="n">compute</span><span class="p">(</span><span class="mi">33</span><span class="p">,</span> <span class="mi">22</span><span class="p">));</span>
+<span class="p">}</span>
+
+<span class="n">private</span> <span class="k">static</span> <span class="n">process</span> <span class="n">Server</span> <span class="p">{</span>
+    <span class="n">inni</span> <span class="kt">int</span> <span class="n">compute</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">,</span> <span class="kt">int</span> <span class="n">y</span><span class="p">){</span>
+        <span class="k">return</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>}[/java]</p>
+<p>Easier, shorter and clearer, isn't it ?</p>
+<p>The Client invoke the compute operation and get the return value directly because it's synchronous. If you have an operation with a return value, you doesn't have to use the call statement, it's implicit. If you have a void operation, you can use the call statement (but if you don't, it's the same by default) before the operation :</p>
+<p>[java]call op_command(args);[/java]</p>
+<p>And the Server has only to use the input statement to return the sum of the numbers.</p>
+<p>As you've perhaps seen, the receive is only an abbreviation to the simplest form of input statement. So if you write :</p>
+<p>[java]int x;</p>
+<p>int y;</p>
+<p>receive op_command(x[/java]/pre&gt;</p>
+<p>It's the same as if you write :</p>
+<p>[java]inni void op_command(int a, int b){
+      x = a;
+      y = b;
+}[/java]</p>
+<p>But in this case, it's easier to use the receive statement.</p>
+<p>The input statement can also be used to service a group of operations in an array :</p>
+<p>[java]cap void (int) operations = new cap void (int)[12];</p>
+<p>//Fill the array</p>
+<p>inni ((int i = 0; i &amp;lt; 12; i++)) operations<a href="int%20x">i</a> {
+   //Code b
+}[/java]</p>
+<p>More than return, we could also use two new statements in an input statement :</p>
+<ul>
+    <li>reply : return a value to the caller but doesn't break the input statement, so you can still make operations in the input statement but you cannot return a value anymore.</li>
+    <li>forward : delegate the answer to an other operation. So this is the other operation who will answer to the caller, the input statement continues its execution but cannot return a value anymore.</li>
+</ul>
+
+<p>Now that we know how to use input statement, we can simplify the ResourceAllocator of the next post. We can do a lot more easier, with two operations and input statements :</p>
+<p>[java]import java.util.*;</p>
+<p>public class ResourceAllocator {
+    private static final int N = 25; //Number of clients
+    private static final int I = 25; //Number of iterations</p>
+<div class="code"><pre><span class="n">public</span> <span class="k">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="p">(</span><span class="n">String</span><span class="p">...</span> <span class="n">args</span><span class="p">){}</span>
+
+<span class="n">private</span> <span class="k">static</span> <span class="n">op</span> <span class="n">Resource</span> <span class="nf">request</span><span class="p">();</span>
+<span class="n">private</span> <span class="k">static</span> <span class="n">op</span> <span class="kt">void</span> <span class="nf">release</span><span class="p">(</span><span class="n">Resource</span><span class="p">);</span>
+
+<span class="n">private</span> <span class="k">static</span> <span class="n">process</span> <span class="n">Client</span><span class="p">((</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">lt</span><span class="p">;</span> <span class="n">N</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)){</span>
+    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">a</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">a</span> <span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">lt</span><span class="p">;</span> <span class="n">I</span><span class="p">;</span> <span class="n">a</span><span class="o">++</span><span class="p">){</span>
+        <span class="n">Resource</span> <span class="n">resource</span> <span class="o">=</span> <span class="n">request</span><span class="p">();</span>
+
+        <span class="n">System</span><span class="p">.</span><span class="n">out</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"Client %d use resource %d </span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">resource</span><span class="p">.</span><span class="n">getId</span><span class="p">());</span>
+
+        <span class="n">call</span> <span class="nf">release</span><span class="p">(</span><span class="n">resource</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="n">private</span> <span class="k">static</span> <span class="n">process</span> <span class="n">Server</span><span class="p">{</span>
+    <span class="n">Queue</span> <span class="n">resources</span> <span class="o">=</span> <span class="n">new</span> <span class="n">LinkedList</span><span class="p">();</span>
+
+    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="n">i</span> <span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">lt</span><span class="p">;</span><span class="o">=</span> <span class="mi">5</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">){</span>
+        <span class="n">resources</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="n">new</span> <span class="n">Resource</span><span class="p">(</span><span class="n">i</span><span class="p">));</span>
+    <span class="p">}</span>
+
+    <span class="k">while</span><span class="p">(</span><span class="nb">true</span><span class="p">){</span>
+        <span class="n">inni</span> <span class="n">Resource</span> <span class="n">request</span><span class="p">()</span> <span class="n">st</span> <span class="o">!</span><span class="n">resources</span><span class="p">.</span><span class="n">isEmpty</span><span class="p">()</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="n">resources</span><span class="p">.</span><span class="n">poll</span><span class="p">();</span>
+        <span class="p">}</span>
+        <span class="p">[]</span> <span class="kt">void</span> <span class="n">release</span><span class="p">(</span><span class="n">Resource</span> <span class="n">resource</span><span class="p">){</span>
+            <span class="n">resources</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="n">resource</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="n">private</span> <span class="k">static</span> <span class="n">final</span> <span class="n">class</span> <span class="n">Resource</span> <span class="p">{</span>
+    <span class="n">private</span> <span class="n">final</span> <span class="kt">int</span> <span class="n">id</span><span class="p">;</span>
+
+    <span class="n">private</span> <span class="nf">Resource</span><span class="p">(</span><span class="kt">int</span> <span class="n">id</span><span class="p">){</span>
+        <span class="n">super</span><span class="p">();</span>
+
+        <span class="n">this</span><span class="p">.</span><span class="n">id</span> <span class="o">=</span> <span class="n">id</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="n">private</span> <span class="kt">int</span> <span class="nf">getId</span><span class="p">(){</span>
+        <span class="k">return</span> <span class="n">id</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>}[/java]</p>
+<p>Clearer, not ?</p>
+<p>The last improvement we can do is to use a send instead of a call in the Client. We doesn't need to wait for release in client and the input statement can service send invocations as well as call but the send  invocations cannot return something.</p>
+<p>So we've now covered the rendezvous synchronization system in the JR system. In the next, and last, post about JR programming language, we'll see how to distribute our processes on several virtual machines.</p></div>
+    </div>
+    </div>
+    
+        <ul class="pager">
+            <li class="previous">
+                <a href="integrate-play-framework-intellij-idea.html" rel="prev">← Previous post</a>
+            </li>
+            <li class="next">
+                <a href="modular-java-book-review.html" rel="next">Next post →</a>
+            </li>
+        </ul>
+
+        
+        
+        <div id="disqus_thread"></div>
+        <script>
+        var disqus_shortname ="nikolademo",
+            disqus_url="http://www.baptiste-wicht.com/posts/2010/07/rendezvous-concurrency-jr.html",
+        disqus_title="Rendezvous, concurrency method, in JR",
+        disqus_identifier="cache/posts/2010/07/rendezvous-concurrency-jr.html",
+        disqus_config = function () {
+            this.language = "en";
+        };
+        (function() {
+            var dsq = document.createElement('script'); dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink" rel="nofollow">Comments powered by <span class="logo-disqus">Disqus</span></a>
+
+
+    
+
+    </article>
+
+        </div>
+        <!--End of body content-->
+
+        <footer>
+            Contents © 2014         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         
+        </footer>
+    </div>
+</div>
+
+
+            <script src="../../../assets/js/all-nocdn.js" type="text/javascript"></script>
+
+
+    
+<!-- Social buttons -->
+<div id="addthisbox" class="addthis_toolbox addthis_peekaboo_style addthis_default_style addthis_label_style addthis_32x32_style">
+<a class="addthis_button_more">Share</a>
+<ul><li><a class="addthis_button_facebook"></a>
+</li><li><a class="addthis_button_google_plusone_share"></a>
+</li><li><a class="addthis_button_linkedin"></a>
+</li><li><a class="addthis_button_twitter"></a>
+</li></ul>
+</div>
+<script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-4f7088a56bb93798"></script>
+<!-- End of social buttons -->
+
+
+    <script type="text/javascript">jQuery("a.image-reference").colorbox({rel:"gal",maxWidth:"100%",maxHeight:"100%",scalePhotos:true});</script>
+    
+
+</body>
+</html>

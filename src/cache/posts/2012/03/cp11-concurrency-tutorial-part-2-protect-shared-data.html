@@ -1,0 +1,182 @@
+<p><html><body><p>In the previous article, we saw how to start threads to execute some code in parallel. All the code executed in the threads were independant. In the general case, you often use shared objects between the threads. And when you do it, you will face another problem: synchronization. </p>
+<p>We will see what is this problem in a simple code. </p>
+<p></p><h3>Synchronization issues</h3></p>
+<p>As an example, we will take a simple Counter structure. This structure has a value and methods to increment or decrement the value. Here is the structure:</p>
+<p>[cpp]struct Counter {
+    int value;</p>
+<div class="code"><pre><span class="kt">void</span> <span class="nf">increment</span><span class="p">(){</span>
+    <span class="o">++</span><span class="n">value</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>};[/cpp]</p>
+<p>There is nothing new here. Now, let's start some threads and make some increments: </p>
+<p>[cpp]int main(){
+    Counter counter;</p>
+<div class="code"><pre><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">std</span><span class="o">::</span><span class="kr">thread</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="n">threads</span><span class="p">;</span>
+<span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="mi">5</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">){</span>
+    <span class="n">threads</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="kr">thread</span><span class="p">([</span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">counter</span><span class="p">](){</span>
+        <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="mi">100</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">){</span>
+            <span class="n">counter</span><span class="p">.</span><span class="n">increment</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">}));</span>
+<span class="p">}</span>
+
+<span class="k">for</span><span class="p">(</span><span class="k">auto</span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span> <span class="kr">thread</span> <span class="o">:</span> <span class="n">threads</span><span class="p">){</span>
+    <span class="kr">thread</span><span class="p">.</span><span class="n">join</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="n">counter</span><span class="p">.</span><span class="n">value</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+
+<span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</pre></div>
+
+
+<p>}[/cpp]</p>
+<p>Again, nothing new there. We launch 5 threads and each one increment the counter hundred times. After all thread have finished their work, we print the value of the counter. </p>
+<p>If we launch this program, we should expect that it will print 500. But this is not the case. No one can say what this program will print. Here are some results I obtained on my computer: </p>
+<blockquote>442
+
+500
+
+477
+
+400
+
+422
+
+487</blockquote>
+
+<p>The problem is that the incrementation is not an atomic operation. As a matter of fact, an incrementation is made of three operations: </p>
+<ul>
+    <li>Read the current value of <em>value</em></li>
+    <li>Add one to the current value</li>
+    <li>Write that new value to <em>value</em></li>
+<ul>
+
+When you run that code using a single thread, there are no problems. It will execute each part of the  operation one after another. But when you have several threads, you can start having troubles. Imagine this situation:
+
+</ul>
+
+<p></ul><ol>
+    <li>Thread 1 : read the value, get 0, add 1, so value = 1</li>
+    <li>Thread 2 : read the value, get 0, add 1, so value = 1</li>
+    <li>Thread 1 : write 1 to the field value and return 1</li>
+    <li>Thread 2 : write 1 to the field value and return 1</li>
+</ol></p>
+<p>These situations come from what we call interleaving. Interleaving describe the possible situations of several threads executing some statements. Even for three operations and two threads, there is a lot of possible interleavings. When you have more threads and more operations, it is almost impossible to enumerate the possibles interleavings. The problem can also occurs when a thread gets preempted between instructions of the operation. </p>
+<p>There are several solutions to fix this problem: </p>
+<ul>
+    <li>Semaphores</li>
+    <li>Atomic references</li>
+    <li>Monitors</li>
+    <li>Condition codes</li>
+    <li>Compare and swap</li>
+    <li>etc.</li>
+</ul>
+
+<p>In this blog post we will learn how to use semaphores to fix this problem. As a matter of fact, we will a special kind of semaphores called mutexes. A mutex is a very object. Only one thread can obtain the lock on a mutex at the same time. This simple (and powerful) property of a mutex allow us to use it to fix synchronization problems. </p>
+<h3>Use a mutex to make our Counter thread-safe</h3>
+
+<p>In the C++11 threading library, the mutexes are in the mutex header and the class representing a mutex is the std::mutex class. There are two important methods on a mutex: lock() and unlock(). As their names indicate, the first one enable a thread to obtain the lock and the second releases the lock. The lock() method is blocking. The thread will only return from the lock() method when the lock has been obtained. </p>
+<p>To make our Counter struct thread-safe, we have to add a set::mutex member to it and then to lock()/unlock() the mutex in every function of the object: </p>
+<p>[cpp]struct Counter {
+    std::mutex mutex;
+    int value;</p>
+<div class="code"><pre><span class="n">Counter</span><span class="p">()</span> <span class="o">:</span> <span class="n">value</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="p">{}</span>
+
+<span class="kt">void</span> <span class="n">increment</span><span class="p">(){</span>
+    <span class="n">mutex</span><span class="p">.</span><span class="n">lock</span><span class="p">();</span>
+    <span class="o">++</span><span class="n">value</span><span class="p">;</span>
+    <span class="n">mutex</span><span class="p">.</span><span class="n">unlock</span><span class="p">();</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>};[/cpp]</p>
+<p>If we test now this implementation with the same code as before for starting the threads, the program will always displays 500. </p>
+<h3>Exceptions and locks</h3>
+
+<p>Now, let's see what happens in another case. Imagine that the Counter has a decrement operation that throws an exception if the value is 0: </p>
+<p>[cpp]struct Counter {
+    int value;</p>
+<div class="code"><pre><span class="n">Counter</span><span class="p">()</span> <span class="o">:</span> <span class="n">value</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="p">{}</span>
+
+<span class="kt">void</span> <span class="n">increment</span><span class="p">(){</span>
+    <span class="o">++</span><span class="n">value</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="n">decrement</span><span class="p">(){</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">value</span> <span class="o">==</span> <span class="mi">0</span><span class="p">){</span>
+        <span class="n">throw</span> <span class="s">&quot;Value cannot be less than 0&quot;</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="o">--</span><span class="n">value</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>};[/cpp]</p>
+<p>You want to access this structure concurrently without modifying the class. So you create a wrapper with locks for this class: </p>
+<p>[cpp]struct ConcurrentCounter {
+    std::mutex mutex;
+    Counter counter;</p>
+<div class="code"><pre><span class="kt">void</span> <span class="nf">increment</span><span class="p">(){</span>
+    <span class="n">mutex</span><span class="p">.</span><span class="n">lock</span><span class="p">();</span>
+    <span class="n">counter</span><span class="p">.</span><span class="n">increment</span><span class="p">();</span>
+    <span class="n">mutex</span><span class="p">.</span><span class="n">unlock</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">decrement</span><span class="p">(){</span>
+    <span class="n">mutex</span><span class="p">.</span><span class="n">lock</span><span class="p">();</span>
+    <span class="n">counter</span><span class="p">.</span><span class="n">decrement</span><span class="p">();</span>        
+    <span class="n">mutex</span><span class="p">.</span><span class="n">unlock</span><span class="p">();</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>};[/cpp]</p>
+<p>This wrapper works well in most of the cases, but when an exception occurs in the decrement method, you have a big problem. Indeed, if an exception occurs, the unlock() function is not called and so the lock is not released. As a consequence, you program is completely blocked. To fix this problem, you have to use a try/catch structure to unlock the lock before throwing again the exception:</p>
+<p>[cpp]void decrement(){
+    mutex.lock();
+    try {
+        counter.decrement();
+    } catch (std::string e){
+        mutex.unlock();
+        throw e;
+    } 
+    mutex.unlock();
+}[/cpp]</p>
+<p>The code is not difficult but starts looking ugly. Now imagine you are in a function with 10 different exit points. You will have to call unlock() from each of these points and the probability that you will forget one is big. Even bigger is the risk that you won't add a call to unlock when you add a new exit point to a function. </p>
+<p>The next section gives a very nice solution to this problem.</p>
+<h3>Automatic management of locks</h3>
+
+<p>When you want to protect a whole block of code (a function in our case, but can be inside a loop or another control structure), it exists a good solution to avoid forgetting to release the lock: std::lock_guard. </p>
+<p>This class is a simple smart manager for a lock. When the std::lock_guard is created, it automatically calls lock() on the mutex. When the guard gets destructed, it also releases the lock. You can use it like this: </p>
+<p>[cpp]struct ConcurrentSafeCounter {
+    std::mutex mutex;
+    Counter counter;</p>
+<div class="code"><pre><span class="kt">void</span> <span class="nf">increment</span><span class="p">(){</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="n">guard</span><span class="p">(</span><span class="n">mutex</span><span class="p">);</span>
+    <span class="n">counter</span><span class="p">.</span><span class="n">increment</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">decrement</span><span class="p">(){</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="n">guard</span><span class="p">(</span><span class="n">mutex</span><span class="p">);</span>
+    <span class="n">counter</span><span class="p">.</span><span class="n">decrement</span><span class="p">();</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>};[/cpp]</p>
+<p>Much nicer, isn't it :)</p>
+<p>With that solution, you do not have to handle all the cases of exit of the function, they are all handled by the destructor of the std::lock_guard instance. </p>
+<h3>Conclusion</h3>
+
+<p>We are now done with semaphores. In this article, you learned how to protect shared data using mutexes from the C++ Threads Library. </p>
+<p>Keep in mind that locks are slow. Indeed, when you use locks you make sections of the code sequential. If you want an highly parallel application, there are other solutions than locks that are performing much better but this is out of the scope of this article. </p>
+<h3>Next</h3>
+
+<p>In the next blog post of this serie, I will talk about advanced concepts for mutexes and how to use condition variables to fix little concurrent programming problem. </p>
+<p>The source code for each sample is available <a title="Source code for this blog post" href="https://github.com/wichtounet/articles/tree/master/src/threads/part2/">on Github</a>.</body></html></p>
