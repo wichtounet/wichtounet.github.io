@@ -547,31 +547,31 @@ CONTENT_FOOTER = CONTENT_FOOTER.format(email=BLOG_EMAIL,
 # Also, there is a local search plugin you can use, based on Tipue, but it requires setting several
 # options:
 
-# SEARCH_FORM = """
-# <span class="navbar-form pull-left">
-# <input type="text" id="tipue_search_input">
-# </span>"""
-#
-# BODY_END = """
-# <script type="text/javascript" src="/assets/js/tipuesearch_set.js"></script>
-# <script type="text/javascript" src="/assets/js/tipuesearch.js"></script>
-# <script type="text/javascript">
-# $(document).ready(function() {
-    # $('#tipue_search_input').tipuesearch({
-        # 'mode': 'json',
-        # 'contentLocation': '/assets/js/tipuesearch_content.json',
-        # 'showUrl': false
-    # });
-# });
-# </script>
-# """
+SEARCH_FORM = """
+<span class="navbar-form pull-left">
+<input type="text" id="tipue_search_input">
+</span>"""
 
-# EXTRA_HEAD_DATA = """
-# <link rel="stylesheet" type="text/css" href="/assets/css/tipuesearch.css">
-# <div id="tipue_search_content" style="margin-left: auto; margin-right: auto; padding: 20px;"></div>
-# """
-# ENABLED_EXTRAS = ['local_search']
-#
+BODY_END = """
+<script type="text/javascript" src="/assets/js/tipuesearch_set.js"></script>
+<script type="text/javascript" src="/assets/js/tipuesearch.js"></script>
+<script type="text/javascript">
+$(document).ready(function() {
+  $('#tipue_search_input').tipuesearch({
+      'mode': 'json',
+      'contentLocation': '/assets/js/tipuesearch_content.json',
+      'showUrl': false
+  });
+});
+</script>
+"""
+
+EXTRA_HEAD_DATA = """
+<link rel="stylesheet" type="text/css" href="/assets/css/tipuesearch.css">
+<div id="tipue_search_content" style="margin-left: auto; margin-right: auto; padding: 20px;"></div>
+"""
+ENABLED_EXTRAS = ['local_search']
+
 
 
 # Use content distribution networks for jquery and twitter-bootstrap css and js
