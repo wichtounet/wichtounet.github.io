@@ -323,7 +323,7 @@ OUTPUT_FOLDER = '..'
                              # the main (the newest) index page (index.html)
 
 # Name of the theme to use.
-THEME = "bootstrap3"
+THEME = "wicht"
 
 # Color scheme to be used for code blocks. If your theme provides
 # "assets/css/code.css" this is ignored.
