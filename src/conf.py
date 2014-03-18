@@ -88,6 +88,7 @@ NAVIGATION_LINKS = {
         ('/stories/about.html', 'About'),
         ('/stories/publications.html', 'Publications'),
         ('/stories/donate.html', 'Donate'),
+        ('/stories/contact.html', 'Contact'),
         ('/stories/faq.html', 'FAQ'),
         ('/stories/legal.html', 'Legal'),
         ('/archive.html', 'Archives'),
@@ -343,16 +344,6 @@ THEME = "wicht"
 # date format used to display post dates.
 # (str used by datetime.datetime.strftime)
 # DATE_FORMAT = '%Y-%m-%d %H:%M'
-
-# FAVICONS contains (name, file, size) tuples.
-# Used for create favicon link like this:
-# <link rel="name" href="file" sizes="size"/>
-# For creating favicons, take a look at:
-# http://www.netmagazine.com/features/create-perfect-favicon
-# FAVICONS = {
-#     ("icon", "/favicon.ico", "16x16"),
-#     ("icon", "/icon_128x128.png", "128x128"),
-# }
 
 # Show only teasers in the index pages? Defaults to False.
 # INDEX_TEASERS = False
