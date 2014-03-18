@@ -465,15 +465,14 @@ COMMENT_SYSTEM_ID = "blogwichtounet"
 # Social buttons. This is sample code for AddThis (which was the default for a
 # long time). Insert anything you want here, or even make it empty.
 SOCIAL_BUTTONS_CODE = """
-<!-- AddThis Smart Layers BEGIN -->
-<!-- Go to http://www.addthis.com/get/smart-layers to customize -->
 <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-5327566b264df4ee"></script>
 <script type="text/javascript">
   addthis.layers({
     'theme' : 'dark',
     'share' : {
       'position' : 'right',
-      'numPreferredServices' : 5
+      //'services' : 'google_plusone,facebook_like,tweet',
+      'services' : 'google_plusone_share,facebook,twitter'
     }, 
     'follow' : {
       'services' : [
@@ -483,7 +482,6 @@ SOCIAL_BUTTONS_CODE = """
     }   
   });
 </script>
-<!-- AddThis Smart Layers END -->
 """
 
 # Hide link to source for the posts?
