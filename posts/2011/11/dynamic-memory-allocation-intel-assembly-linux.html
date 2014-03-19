@@ -134,10 +134,11 @@
     </small>
     <hr>
     <div class="e-content" itemprop="articleBody text">
-    <div><p></p><p>For the version 0.6.0 of the EDDI Compiler, I have written a simple dynamic memory allocation function in assembly. I did that to avoid using malloc in my assembly code. As this is not an easy subject, this article will explain the main parts of writing this function.</p>
+    <div><p>For the version 0.6.0 of the EDDI Compiler, I have written a simple dynamic memory allocation function in assembly. I did that to avoid using malloc in my assembly code. As this is not an easy subject, this article will explain the main parts of writing this function.</p>
 <p>As the EDDI Compiler creates program for Linux platform, this article will focus on writing a little memory allocator for Linux in Intel Assembly.</p>
 <p>In this article I will follow the <em>AT&amp;T notation</em>.</p>
-<p></p><h4>Specifications</h4>
+<h4>Specifications</h4>
+
 <p>The function works like malloc but is simpler. The specifications are the following ones:</p>
 <ul>
     <li>We call the function with one argument: the dynamic memory size we need</li>
@@ -161,69 +162,87 @@
 <h4>Implementation</h4>
 
 <p>We need two variables for this function. One to keep track of the remaining size and another one to keep track of the current address of the allocated memory.</p>
-<p>[assembly].data</p>
-<p>.size VIeddi_remaining, 4</p>
-<p>VIeddi_remaining:</p>
-<p>.long 0</p>
-<p>.size VIeddi_current, 4</p>
-<p>VIeddi_current:</p>
-<p>.long 0[/assembly]</p>
+<div class="code"><pre><span class="na">.data</span>
+<span class="na">.size</span> <span class="no">VIeddi_remaining</span><span class="p">,</span> <span class="mi">4</span>
+
+<span class="nl">VIeddi_remaining:</span>
+<span class="na">.long</span> <span class="mi">0</span>
+<span class="na">.size</span> <span class="no">VIeddi_current</span><span class="p">,</span> <span class="mi">4</span>
+
+<span class="nl">VIeddi_current:</span>
+<span class="na">.long</span> <span class="mi">0</span>
+</pre></div>
+
+
 <p>Both variables are initialized to 0.</p>
 <p>And here is the function I've developed :</p>
-<p>[assembly]eddi_alloc:</p>
-<p>pushl %ebp</p>
-<p>movl %esp, %ebp</p>
-<p>movl 8(%ebp), %ecx</p>
-<p>movl VIeddi_remaining, %ebx</p>
-<p>cmpl %ebx, %ecx</p>
-<p>jle alloc_normal</p>
-<p>movl $45, %eax</p>
-<p>xorl %ebx, %ebx</p>
-<p>int  $0x80</p>
-<p>movl %eax, %esi</p>
-<p>movl %eax, %ebx</p>
-<p>addl $16384, %ebx</p>
-<p>movl $45, %eax</p>
-<p>int  $0x80</p>
-<p>movl %esi, %eax</p>
-<p>movl $16384, VIeddi_remaining</p>
-<p>movl %esi, VIeddi_current</p>
-<p>alloc_normal:</p>
-<p>movl VIeddi_current, %eax</p>
-<p>movl VIeddi_current, %ebx</p>
-<p>addl %ecx, %ebx</p>
-<p>movl %ebx, VIeddi_current</p>
-<p>movl VIeddi_remaining, %ebx</p>
-<p>subl %ecx, %ebx</p>
-<p>movl %ebx, VIeddi_remaining</p>
-<p>leave</p>
-<p>ret[/assembly]</p>
+<div class="code"><pre><span class="nl">eddi_alloc:</span>
+<span class="nf">pushl</span> <span class="nv">%ebp</span>
+<span class="nf">movl</span> <span class="nv">%esp</span><span class="p">,</span> <span class="nv">%ebp</span>
+<span class="nf">movl</span> <span class="mi">8</span><span class="p">(</span><span class="nv">%ebp</span><span class="p">),</span> <span class="nv">%ecx</span>
+<span class="nf">movl</span> <span class="no">VIeddi_remaining</span><span class="p">,</span> <span class="nv">%ebx</span>
+<span class="nf">cmpl</span> <span class="nv">%ebx</span><span class="p">,</span> <span class="nv">%ecx</span>
+<span class="nf">jle</span> <span class="no">alloc_normal</span>
+<span class="nf">movl</span> <span class="no">$45</span><span class="p">,</span> <span class="nv">%eax</span>
+<span class="nf">xorl</span> <span class="nv">%ebx</span><span class="p">,</span> <span class="nv">%ebx</span>
+<span class="nf">int</span>  <span class="no">$0x80</span>
+<span class="nf">movl</span> <span class="nv">%eax</span><span class="p">,</span> <span class="nv">%esi</span>
+<span class="nf">movl</span> <span class="nv">%eax</span><span class="p">,</span> <span class="nv">%ebx</span>
+<span class="nf">addl</span> <span class="no">$16384</span><span class="p">,</span> <span class="nv">%ebx</span>
+<span class="nf">movl</span> <span class="no">$45</span><span class="p">,</span> <span class="nv">%eax</span>
+<span class="nf">int</span>  <span class="no">$0x80</span>
+<span class="nf">movl</span> <span class="nv">%esi</span><span class="p">,</span> <span class="nv">%eax</span>
+<span class="nf">movl</span> <span class="no">$16384</span><span class="p">,</span> <span class="no">VIeddi_remaining</span>
+<span class="nf">movl</span> <span class="nv">%esi</span><span class="p">,</span> <span class="no">VIeddi_current</span>
+
+<span class="nl">alloc_normal:</span>
+<span class="nf">movl</span> <span class="no">VIeddi_current</span><span class="p">,</span> <span class="nv">%eax</span>
+<span class="nf">movl</span> <span class="no">VIeddi_current</span><span class="p">,</span> <span class="nv">%ebx</span>
+<span class="nf">addl</span> <span class="nv">%ecx</span><span class="p">,</span> <span class="nv">%ebx</span>
+<span class="nf">movl</span> <span class="nv">%ebx</span><span class="p">,</span> <span class="no">VIeddi_current</span>
+<span class="nf">movl</span> <span class="no">VIeddi_remaining</span><span class="p">,</span> <span class="nv">%ebx</span>
+<span class="nf">subl</span> <span class="nv">%ecx</span><span class="p">,</span> <span class="nv">%ebx</span>
+<span class="nf">movl</span> <span class="nv">%ebx</span><span class="p">,</span> <span class="no">VIeddi_remaining</span>
+<span class="nf">leave</span>
+<span class="nf">ret</span>
+</pre></div>
+
+
 <p>I will describe now each part of the alloc function.</p>
-<p>[assembly]movl 8(%ebp), %ecx</p>
-<p>movl VIeddi_remaining, %ebx</p>
-<p>cmpl %ebx, %ecx</p>
-<p>jle alloc_normal[/assembly]</p>
+<div class="code"><pre><span class="nf">movl</span> <span class="mi">8</span><span class="p">(</span><span class="nv">%ebp</span><span class="p">),</span> <span class="nv">%ecx</span>
+<span class="nf">movl</span> <span class="no">VIeddi_remaining</span><span class="p">,</span> <span class="nv">%ebx</span>
+<span class="nf">cmpl</span> <span class="nv">%ebx</span><span class="p">,</span> <span class="nv">%ecx</span>
+<span class="nf">jle</span> <span class="no">alloc_normal</span>
+</pre></div>
+
+
 <p>In this part we test if there is enough remaining size for the dynamic memory allocation request. It's equivalent to <em>if(remaining &gt;= size)</em>. If there is enough size, we jump to the normal allocation part :</p>
-<p>[assembly]alloc_normal:</p>
-<p>movl VIeddi_current, %eax</p>
-<p>movl VIeddi_current, %ebx</p>
-<p>addl %ecx, %ebx</p>
-<p>movl %ebx, VIeddi_current</p>
-<p>movl VIeddi_remaining, %ebx</p>
-<p>subl %ecx, %ebx</p>
-<p>movl %ebx, VIeddi_remaining[/assembly]</p>
+<div class="code"><pre><span class="nl">alloc_normal:</span>
+<span class="nf">movl</span> <span class="no">VIeddi_current</span><span class="p">,</span> <span class="nv">%eax</span>
+<span class="nf">movl</span> <span class="no">VIeddi_current</span><span class="p">,</span> <span class="nv">%ebx</span>
+<span class="nf">addl</span> <span class="nv">%ecx</span><span class="p">,</span> <span class="nv">%ebx</span>
+<span class="nf">movl</span> <span class="nv">%ebx</span><span class="p">,</span> <span class="no">VIeddi_current</span>
+<span class="nf">movl</span> <span class="no">VIeddi_remaining</span><span class="p">,</span> <span class="nv">%ebx</span>
+<span class="nf">subl</span> <span class="nv">%ecx</span><span class="p">,</span> <span class="nv">%ebx</span>
+<span class="nf">movl</span> <span class="nv">%ebx</span><span class="p">,</span> <span class="no">VIeddi_remaining</span>
+</pre></div>
+
+
 <p>First, we move the current address of memory into the <strong>%eax</strong> register for the return value. Then we add the size of the new allocated block to the current address. Finally we remove the size of the new allocated block from the remaining size. After that, we can leave the function.</p>
 <p>The most interesting part is what we do when we have to allocate more memory :</p>
-<p>[assembly]movl $45, %eax</p>
-<p>xorl %ebx, %ebx</p>
-<p>int  $0x80</p>
-<p>movl %eax, %esi</p>
-<p>movl %eax, %ebx</p>
-<p>addl $16384, %ebx</p>
-<p>movl $45, %eax</p>
-<p>int  $0x80</p>
-<p>movl $16384, VIeddi_remaining</p>
-<p>movl %esi, VIeddi_current[/assembly]</p>
+<div class="code"><pre><span class="nf">movl</span> <span class="no">$45</span><span class="p">,</span> <span class="nv">%eax</span>
+<span class="nf">xorl</span> <span class="nv">%ebx</span><span class="p">,</span> <span class="nv">%ebx</span>
+<span class="nf">int</span>  <span class="no">$0x80</span>
+<span class="nf">movl</span> <span class="nv">%eax</span><span class="p">,</span> <span class="nv">%esi</span>
+<span class="nf">movl</span> <span class="nv">%eax</span><span class="p">,</span> <span class="nv">%ebx</span>
+<span class="nf">addl</span> <span class="no">$16384</span><span class="p">,</span> <span class="nv">%ebx</span>
+<span class="nf">movl</span> <span class="no">$45</span><span class="p">,</span> <span class="nv">%eax</span>
+<span class="nf">int</span>  <span class="no">$0x80</span>
+<span class="nf">movl</span> <span class="no">$16384</span><span class="p">,</span> <span class="no">VIeddi_remaining</span>
+<span class="nf">movl</span> <span class="nv">%esi</span><span class="p">,</span> <span class="no">VIeddi_current</span>
+</pre></div>
+
+
 <p>We start by doing an interruption to execute a system call. The <strong>45</strong> in the <strong>%eax</strong> register indicates a <strong>sys_brk</strong> call. The 0 in the <strong>%ebx</strong> register, indicates that we want the current position of brk space. We save this current position into the <strong>%esi</strong> register. Then we add 16384 bits (4K octets) to this address. We call again the <strong>sys_brk</strong> routine to set the address of the brk space to the calculated address. This is the way to dynamically allocates 4K of memory. Finally, we add 4K to the remaining size in octets and we put the current address (before the add) as the current address.</p>
 <h4>Possible improvements</h4>
 

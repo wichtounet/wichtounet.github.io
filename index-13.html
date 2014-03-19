@@ -129,9 +129,10 @@
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><p>A little tip that can be very useful, how to restore a deleted Git tag. </p>
+        <div><p>A little tip that can be very useful, how to restore a deleted Git tag. </p>
 <p>If you juste deleted a tag by error, you can easily restore it following these steps. First, use</p>
-<p></p><pre>git fsck --unreachable | grep tag</pre>
+<pre>git fsck --unreachable | grep tag</pre>
+
 <p>then, you will see the unreachable tag. If you have several tags on the list, use </p>
 <pre>git show KEY</pre>
 
@@ -155,41 +156,68 @@
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><p>To write the EDDI compiler, I had to write and read binary files. Writing text files is really easy in C++, directly using the &lt;&lt; operator on the stream, but writing binary is a little harder and, I must say, a lot less elegant.</p>
+        <div><p>To write the EDDI compiler, I had to write and read binary files. Writing text files is really easy in C++, directly using the &lt;&lt; operator on the stream, but writing binary is a little harder and, I must say, a lot less elegant.</p>
 <p>First, to write to a binary file, we have to use the binary flag when we create the file :</p>
-<p>[cpp]std::ofstream stream("yourFile", std::ios::binary);[/cpp]</p>
+<div class="code"><pre><span class="n">std</span><span class="o">::</span><span class="n">ofstream</span> <span class="n">stream</span><span class="p">(</span><span class="s">"yourFile"</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">ios</span><span class="o">::</span><span class="n">binary</span><span class="p">);</span>
+</pre></div>
+
+
 <p>and then, we have to use the write method to write to the file. But this function is really basic and takes only a char<em> and the size of the data we wan't to write, so we have to convert our data to char</em>. A good way to do that is using the reinterpret_cast function and the sizeof operator. For example, to write an int, you can make that :</p>
-<p>[cpp]int test = 22;</p>
-<p>outStream.write(reinterpret_cast&lt;const char*&gt;(&amp;test), sizeof(int));[/cpp]</p>
+<div class="code"><pre><span class="kt">int</span> <span class="n">test</span> <span class="o">=</span> <span class="mi">22</span><span class="p">;</span>
+<span class="n">outStream</span><span class="p">.</span><span class="n">write</span><span class="p">(</span><span class="k">reinterpret_cast</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="k">const</span> <span class="kt">char</span><span class="o">*&amp;</span><span class="n">gt</span><span class="p">;(</span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">test</span><span class="p">),</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="p">));</span>
+</pre></div>
+
+
 <p>But your code is quickly polluted if you have of write operations to do.</p>
 <!--more-->
 
 <p>We can simplify that, using a function template like this one :</p>
-<p>[cpp]template</p>
-<p>std::ostream&amp; binary_write(std::ostream&amp; stream, const T&amp; value){
-    return stream.write(reinterpret_cast&lt;const char*&gt;(&amp;value), sizeof(T));
-}[/cpp]</p>
+<div class="code"><pre><span class="k">template</span>
+<span class="n">std</span><span class="o">::</span><span class="n">ostream</span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span> <span class="n">binary_write</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">ostream</span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span> <span class="n">stream</span><span class="p">,</span> <span class="k">const</span> <span class="n">T</span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span> <span class="n">value</span><span class="p">){</span>
+    <span class="k">return</span> <span class="n">stream</span><span class="p">.</span><span class="n">write</span><span class="p">(</span><span class="k">reinterpret_cast</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="k">const</span> <span class="kt">char</span><span class="o">*&amp;</span><span class="n">gt</span><span class="p">;(</span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">value</span><span class="p">),</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">T</span><span class="p">));</span>
+<span class="p">}</span>
+</pre></div>
+
+
 <p>And you use it directly like that :</p>
-<p>[cpp]int test = 22;</p>
-<p>binary_write(stream, test);[/cpp]</p>
+<div class="code"><pre><span class="kt">int</span> <span class="n">test</span> <span class="o">=</span> <span class="mi">22</span><span class="p">;</span>
+<span class="n">binary_write</span><span class="p">(</span><span class="n">stream</span><span class="p">,</span> <span class="n">test</span><span class="p">);</span>
+</pre></div>
+
+
 <p>A little less verbose, isn't it ? You can also pass a class or struct instance directly tot his method. If you have complex objects, it's perhaps not the more proper way to do it, in that case, consider using some serialization API. If you have object with variable length, it will not work because the size cannot be computed with the sizeof operator. For example, this function doesn't work with a std::string because the sizeof operator doesn't represent the real size of the string. We can make another function to write string :</p>
-<p>[cpp]template&lt;&gt;</p>
-<p>std::ostream&amp; binary_write_string(std::ofstream&amp; stream, const std::string&amp; value){
-    return stream-&gt;write(value.c_str(), value.length());
-}[/cpp]</p>
+<div class="code"><pre><span class="k">template</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+<span class="n">std</span><span class="o">::</span><span class="n">ostream</span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span> <span class="n">binary_write_string</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">ofstream</span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span> <span class="n">stream</span><span class="p">,</span> <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span> <span class="n">value</span><span class="p">){</span>
+    <span class="k">return</span> <span class="n">stream</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">write</span><span class="p">(</span><span class="n">value</span><span class="p">.</span><span class="n">c_str</span><span class="p">(),</span> <span class="n">value</span><span class="p">.</span><span class="n">length</span><span class="p">());</span>
+<span class="p">}</span>
+</pre></div>
+
+
 <p>Then, to read a binary, you have also to open it with the binary tag :</p>
-<p>[cpp]std::ifstream inStream("yourFile", std::ios::binary);[/cpp]</p>
+<div class="code"><pre><span class="n">std</span><span class="o">::</span><span class="n">ifstream</span> <span class="n">inStream</span><span class="p">(</span><span class="s">"yourFile"</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">ios</span><span class="o">::</span><span class="n">binary</span><span class="p">);</span>
+</pre></div>
+
+
 <p>And then, you have to use the read method to read your values :</p>
-<p>[cpp]int test;</p>
-<p>inStream.read(reinterpret_cast&lt;char*&gt;(&amp;test), sizeof(int));[/cpp]</p>
+<div class="code"><pre><span class="kt">int</span> <span class="n">test</span><span class="p">;</span>
+<span class="n">inStream</span><span class="p">.</span><span class="n">read</span><span class="p">(</span><span class="k">reinterpret_cast</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="kt">char</span><span class="o">*&amp;</span><span class="n">gt</span><span class="p">;(</span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">test</span><span class="p">),</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="p">));</span>
+</pre></div>
+
+
 <p>Once again, we can create a function template to have a little better code :</p>
-<p>[cpp]template</p>
-<p>std::istream &amp; binary_read(std::istream&amp; stream, T&amp; value){
-    return stream.read(reinterpret_cast&lt;char*&gt;(&amp;value), sizeof(T));
-}[/cpp]</p>
+<div class="code"><pre><span class="k">template</span>
+<span class="n">std</span><span class="o">::</span><span class="n">istream</span> <span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span> <span class="n">binary_read</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">istream</span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span> <span class="n">stream</span><span class="p">,</span> <span class="n">T</span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span> <span class="n">value</span><span class="p">){</span>
+    <span class="k">return</span> <span class="n">stream</span><span class="p">.</span><span class="n">read</span><span class="p">(</span><span class="k">reinterpret_cast</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="kt">char</span><span class="o">*&amp;</span><span class="n">gt</span><span class="p">;(</span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">value</span><span class="p">),</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">T</span><span class="p">));</span>
+<span class="p">}</span>
+</pre></div>
+
+
 <p>and you can use it the same way :</p>
-<p>[cpp]int test;</p>
-<p>binary_read(stream, test);[/cpp]</p>
+<div class="code"><pre><span class="kt">int</span> <span class="n">test</span><span class="p">;</span>
+<span class="n">binary_read</span><span class="p">(</span><span class="n">stream</span><span class="p">,</span> <span class="n">test</span><span class="p">);</span>
+</pre></div>
+
+
 <p>Once again, this function will not work with the class or struct with variable size. Even with strings, there is no way to read them easily. If you want to read them, you'll have to write the size of the string directly in the file and then read the size before and you can read a char<em> using the read method passing the size of the string and create a new string using the char</em>.</p>
 <p>With that, you are able to read and write to and from binary files.</p></div>
         </div>
@@ -207,19 +235,23 @@
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><p>The project I'm working on for my Bachelor thesis is a C++ project. I've never worked on a big C++ project, so I decided to start a personal project in C++. </p>
+        <div><p>The project I'm working on for my Bachelor thesis is a C++ project. I've never worked on a big C++ project, so I decided to start a personal project in C++. </p>
 <p>I wanted to develop my own language for a long time now. So I chose to develop a new language : EDDI</p>
 <p>Because I didn't want to write assembly code, EDDI follows the same model as the Java language. The EDDI source files are first compiled into intermediate byteode file and then this compiled file is executed by a virtual machine. </p>
 <p>I didn't use a generator for the lexer and the structural analysis, because I wanted to write these parts by myself, but perhaps in the future I will consider using it, like lex &amp; yacc. </p>
 <p>Of course, I don't write this language to compete with the other programming languages, it's only a way for me to learn C++ better and to improve my skills in general. </p>
 <p>Now, EDDI is only in version 0.1 and you can almost do nothing with this programming language. The only thing you can do with this language is to print strings to the console, but I will continue to work on the compiler and the virtual machine to add new instructions and to improve the compiler and the vm. </p>
-<p>Here is an example of an EDDI program : </p>
-<p>[cpp]Print("Hello World");[/cpp]</p>
-<p>And this program is compiled like this : </p>
-<p></p><pre>HEADER
-<p>PUSH S13Hello World</p>
-<p>PRINT</p>
-<p>EXIT</p></pre>
+<p>Here is an example of an EDDI program: </p>
+<div class="code"><pre><span class="n">Print</span><span class="p">(</span><span class="s">"Hello World"</span><span class="p">);</span>
+</pre></div>
+
+
+<p>And this program is compiled like this: </p>
+<pre>HEADER
+PUSH S13Hello World
+PRINT
+EXIT</pre>
+
 <p>The result doesn't appear like that in the compiled file because the output is made in binary files but this correspond to the EDDI bytecode instructions. </p>
 <p>As you can see, I used a stack system. The PUSH instruction add something on the stack and the PRINT instruction pop the head of the stack and print it. </p>
 <p>This project is distributed under the Boost Software License 1.0. The sources of the project are available on Github : </p>
@@ -232,7 +264,7 @@
 <p>If you want to see the exact version reffered to in this subject, you can select the tag v0.1. </p>
 <p>I'm open to any kind of comments regarding the project, the source code or anything else related to EDDI. </p>
 <p>I'll try to post some informations about my work on this project on this blog, the decisions made, the technical challenges, ...</p>
-<p>For those who are interested on the origins of the name, it comes from <strong>ED</strong>sger Wybe <strong>DI</strong>jkstra, the famous computer scientist. </p></div>
+<p>For those who are interested on the origins of the name, it comes from <strong>ED</strong>sger Wybe <strong>DI</strong>jkstra, the famous computer scientist.</p></div>
         </div>
             
         
@@ -248,44 +280,47 @@
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><p>This morning, I wanted to automatically update a little website from my computer without using Filezilla. So I searched a little bit and found that there is a very useful tool called <a href="http://www.ncftp.com/">nftp</a>. To install it, you only have to use apt-get : </p>
-<p>[bash]sudo apt-get install ncftp[/bash]</p>
+        <div><p>This morning, I wanted to automatically update a little website from my computer without using Filezilla. So I searched a little bit and found that there is a very useful tool called <a href="http://www.ncftp.com/">nftp</a>. To install it, you only have to use apt-get : </p>
+<pre>sudo apt-get install ncftp</pre>
+
 <p>This tool can be used directly from bash to upload files to FTP (and also to get files of course). </p>
 <p>In my case, I just have to put a complete hierarchy of files into a specific folder of my website. So I wrote a little script that put everything on the FTP server : </p>
-<p>[bash]read -s -p "Enter Password: " mypassword</p>
-<p>ncftp &lt;&lt;EOF</p>
-<p>open -u username -p $mypassword yoursitehost</p>
-<p>cd "folder on the website"</p>
-<p>lcd "folder on the computer"</p>
-<p>put -R *</p>
-<p>bye</p>
-<p>EOF[/bash]</p>
+<pre>read -s -p "Enter Password: " mypassword
+ncftp &lt;&lt;EOF
+open -u username -p $mypassword yoursitehost
+cd "folder on the website"
+lcd "folder on the computer"
+put -R *
+bye
+EOF</pre>
+
 <p>This script asks you your password. With that, you don't have to put it in clear inside your program. The most important command here is the put -R * that make a recursive upload of the current folder in the current remote folder. </p>
 <p>If I launch it from my computer (using the good values of course), it gives me that : </p>
-<p></p><blockquote>$ bash website.sh
-<p>NcFTP 3.2.4 (Apr 07, 2010) by Mike Gleason (http://www.NcFTP.com/contact/).</p>
-<p>Copyright (c) 1992-2009 by Mike Gleason.</p>
-<p>All rights reserved.</p>
-<p>Connecting to 74.208.211.161...                                                 </p>
-<p>FTP Server ready.</p>
-<p>Logging in...                                                                   </p>
-<p>User username logged in</p>
-<p>Logged in to baptiste-wicht.com.                                                </p>
-<p>docs/report.pdf:                                        39.92 kB   79.26 kB/s  </p>
-<p>docs/requirements.pdf:                                  40.60 kB   80.91 kB/s  </p>
-<p>docs/logbook.pdf:                                       32.39 kB   64.34 kB/s  </p>
-<p>docs/week1.pdf:                                         32.13 kB   64.05 kB/s  </p>
-<p>docs/01.06.2011.pdf:                                    34.77 kB   69.26 kB/s  </p>
-<p>documents.php:                                         869.00 B    6.72 kB/s  </p>
-<p>footer.php:                                             99.00 B   45.00 B/s   </p>
-<p>header.php:                                            851.00 B  151.56 B/s   </p>
-<p>index.php:                                             230.00 B   37.11 B/s   </p>
-<p>links.php:                                             188.00 B   37.73 B/s   </p>
-<p>minutes.php:                                           254.00 B    1.96 kB/s  </p>
-<p>styles/default.css:                                      1.00 kB    8.01 kB/s  </p>
-<p>weeks.php:                                             237.00 B   65.24 B/s</p></blockquote>
+<blockquote>$ bash website.sh
+NcFTP 3.2.4 (Apr 07, 2010) by Mike Gleason (http://www.NcFTP.com/contact/).
+Copyright (c) 1992-2009 by Mike Gleason.
+All rights reserved.
+Connecting to 74.208.211.161...                                                 
+FTP Server ready.
+Logging in...                                                                   
+User username logged in
+Logged in to baptiste-wicht.com.                                                
+docs/report.pdf:                                        39.92 kB   79.26 kB/s  
+docs/requirements.pdf:                                  40.60 kB   80.91 kB/s  
+docs/logbook.pdf:                                       32.39 kB   64.34 kB/s  
+docs/week1.pdf:                                         32.13 kB   64.05 kB/s  
+docs/01.06.2011.pdf:                                    34.77 kB   69.26 kB/s  
+documents.php:                                         869.00 B    6.72 kB/s  
+footer.php:                                             99.00 B   45.00 B/s   
+header.php:                                            851.00 B  151.56 B/s   
+index.php:                                             230.00 B   37.11 B/s   
+links.php:                                             188.00 B   37.73 B/s   
+minutes.php:                                           254.00 B    1.96 kB/s  
+styles/default.css:                                      1.00 kB    8.01 kB/s  
+weeks.php:                                             237.00 B   65.24 B/s</blockquote>
+
 <p>You will see the current status of all the files during the upload. The tool is enough smart to detect if a file must be sent or not (so it upload only newer files). </p>
-<p>I hope this can help some of you. </p></div>
+<p>I hope this can help some of you.</p></div>
         </div>
             
         
@@ -301,9 +336,9 @@
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><p>I just made the update of this website to WordPress 3.1.3. </p>
+        <div><p>I just made the update of this website to WordPress 3.1.3. </p>
 <p>I've had no problems with the update. But at the start the automatic updater throws me an Out Of Memory Error. But after disabling all my plugins, the automatic update had no problem to update my entire website without any errors :)</p>
-<p>Don't hesitate to contact me (in the comments or via the contact form) if you found any problem on the website. </p></div>
+<p>Don't hesitate to contact me (in the comments or via the contact form) if you found any problem on the website.</p></div>
         </div>
             
         
@@ -319,10 +354,10 @@
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><p>As you may have seen, my website had not CSS these last days. </p>
+        <div><p>As you may have seen, my website had not CSS these last days. </p>
 <p>This was due to a bug in the W3 Total Cache plugin of Wordpress. The minified CSS file wasn't accessible. When we tried to access it from the site, there was an error : "File param is missing"</p>
 <p>There is an easy solution to solve this problem. You just have to disable the "Rewrite URL structure" option on the Minify tab in the W3 Total Cache options. This will solve the problems. The only issue with this solution, is that you will not have fancy links for your CSS and JS minified files, but I think it's a really little problem comparing to the lack of CSS :)</p>
-<p>Hope this will be helpful to some of you</p></div>
+<p>Hope this will be helpful to some of you.</p></div>
         </div>
             
         
@@ -338,11 +373,12 @@
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><p>From this morning, I was encoutering problems when scrolling in Kile editor using Gnome. When I scrolled, not all the lines were moving and the text was only correct when I clicked on them... </p>
+        <div><p>From this morning, I was encoutering problems when scrolling in Kile editor using Gnome. When I scrolled, not all the lines were moving and the text was only correct when I clicked on them... </p>
 <p>After some researches, I found that the solution was to use a different graphics system. You can do that in any Qt applicaitions using the graphics-system command line option. You can choose between raster and opengl. opengl is supposed to be the fastest one, but it is still experimental. In my case, I use raster that solve the scrolling problems and it doesn't change anything, which is fine. </p>
 <p>So you can use this command-line to start Kile : </p>
-<p><code>kile --graphicssystem raster</code></p>
-<p>And that will solve your scrolling problems if you encounter some. You can also use this tip to improve performances of Kile if you need. If you do, test with opengl and if it's not stable on your system, choose raster, that will improve the performance compared to the default graphics system. </p></div>
+<pre>kile --graphicssystem raster</pre>
+
+<p>And that will solve your scrolling problems if you encounter some. You can also use this tip to improve performances of Kile if you need. If you do, test with opengl and if it's not stable on your system, choose raster, that will improve the performance compared to the default graphics system.</p></div>
         </div>
             
         
@@ -358,10 +394,10 @@
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><p>Hi, </p>
+        <div><p>Hi, </p>
 <p>This message has been written from California, where I'm for 3 months. I'm making my bachelor final project in Berkeley Labs. </p>
 <p>I'll certainly give some informations about the project and my researches during the next months. </p>
-<p>I hope that I'll have the time to write more articles this next months as I've made the last months... I had a lot of work at school and no motivation to write. </p></div>
+<p>I hope that I'll have the time to write more articles this next months as I've made the last months... I had a lot of work at school and no motivation to write.</p></div>
         </div>
             
         
@@ -377,13 +413,14 @@
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><p>When I started using Sharepoint 2010 with .NET, I used the Sharepoint 2010 API to query the Sharepoint Lists, but when I come with lookup column with multiple values, it started to be really difficult to use.</p>
+        <div><p>When I started using Sharepoint 2010 with .NET, I used the Sharepoint 2010 API to query the Sharepoint Lists, but when I come with lookup column with multiple values, it started to be really difficult to use.</p>
 <p>So I found that I can use LINQ to query Sharepoint lists and for what I saw on the internet, it was really simple to use. LINQ provide a complete API to query data and to update them. More than that, LINQ is also able to do mapping object-relational, what is really helpful in code lisibility.</p>
 <p>In this code, I will take as example a Sharepoint site with two lists :</p>
-<p></p><ul>
+<ul>
     <li>departments : only a Title column</li>
     <li>projects : Title, year, nbstudents and department, a lookup column to departments with multiple values</li>
 </ul>
+
 <p>So first of all, you need to create the entities and the data context, but you don't have to do it by hand. There is a tool that make all that for you, SPMetal.</p>
 <!--more-->
 
@@ -391,78 +428,80 @@
 <pre>SPMetal.exe /web:http://localhost/ /code:C:\Projects.cs</pre>
 
 <p>You can use the URL of your Sharepoint site and you can change the name of the C# file. This will generate a long file containing the DataContext and the mapping objects. Here is a part of the code I get in this file :</p>
-<p>[csharp][/csharp]public partial class ProjectsDataContext : Microsoft.SharePoint.Linq.DataContext {</p>
-<div class="code"><pre><span class="vi">#region</span> <span class="nx">Extensibility</span> <span class="nb">Method</span> <span class="nx">Definitions</span>
-<span class="nx">partial</span> <span class="bp">void</span> <span class="nx">OnCreated</span><span class="p">();</span>
-<span class="vi">#endregion</span>
+<div class="code"><pre><span class="k">public</span> <span class="k">partial</span> <span class="k">class</span> <span class="nc">ProjectsDataContext</span> <span class="p">:</span> <span class="n">Microsoft</span><span class="p">.</span><span class="n">SharePoint</span><span class="p">.</span><span class="n">Linq</span><span class="p">.</span><span class="n">DataContext</span> <span class="p">{</span>
 
-<span class="k">public</span> <span class="nf">ProjectsDataContext</span><span class="p">(</span><span class="na">string</span> <span class="nx">requestUrl</span><span class="p">)</span> <span class="p">:</span> <span class="nx">this</span><span class="p">(</span><span class="nx">requestUrl</span><span class="p">,</span> <span class="kc">true</span><span class="p">)</span> <span class="p">{</span>
+    <span class="cp">#region Extensibility Method Definitions</span>
+    <span class="k">partial</span> <span class="k">void</span> <span class="nf">OnCreated</span><span class="p">();</span>
+    <span class="cp">#endregion</span>
 
-<span class="p">}</span>
+    <span class="k">public</span> <span class="nf">ProjectsDataContext</span><span class="p">(</span><span class="kt">string</span> <span class="n">requestUrl</span><span class="p">)</span> <span class="p">:</span> <span class="k">this</span><span class="p">(</span><span class="n">requestUrl</span><span class="p">,</span> <span class="k">true</span><span class="p">)</span> <span class="p">{</span>
 
-<span class="k">public</span> <span class="nf">ProjectsDataContext</span><span class="p">(</span><span class="na">string</span> <span class="nx">requestUrl</span><span class="p">,</span> <span class="na">Boolean</span> <span class="nx">tracking</span><span class="p">)</span> <span class="p">:</span> <span class="nx">base</span><span class="p">(</span><span class="nx">requestUrl</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="nx">this.OnCreated</span><span class="p">();</span>
-    <span class="n">ObjectTrackingEnabled</span> <span class="o">=</span> <span class="nx">tracking</span><span class="p">;</span>
-<span class="p">}</span>
+    <span class="p">}</span>
 
-<span class="err">[</span><span class="nx">Microsoft.SharePoint.Linq.ListAttribute</span><span class="p">(</span><span class="n">Name</span><span class="o">=</span><span class="s2">"departments"</span><span class="p">)</span><span class="cp">]</span>
-public Microsoft.SharePoint.Linq.EntityList<span class="nt">&lt;item&gt;</span> Departments {
-    get {
-        return this.GetList<span class="nt">&lt;item&gt;</span>("departments");
-    }
-}
+    <span class="k">public</span> <span class="nf">ProjectsDataContext</span><span class="p">(</span><span class="kt">string</span> <span class="n">requestUrl</span><span class="p">,</span> <span class="n">Boolean</span> <span class="n">tracking</span><span class="p">)</span> <span class="p">:</span> <span class="k">base</span><span class="p">(</span><span class="n">requestUrl</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">this</span><span class="p">.</span><span class="n">OnCreated</span><span class="p">();</span>
+        <span class="n">ObjectTrackingEnabled</span> <span class="p">=</span> <span class="n">tracking</span><span class="p">;</span>
+    <span class="p">}</span>
 
-    //...
+<span class="na">    [Microsoft.SharePoint.Linq.ListAttribute(Name="departments")]</span>
+    <span class="k">public</span> <span class="n">Microsoft</span><span class="p">.</span><span class="n">SharePoint</span><span class="p">.</span><span class="n">Linq</span><span class="p">.</span><span class="n">EntityList</span><span class="p">&lt;</span><span class="n">item</span><span class="p">&gt;</span> <span class="n">Departments</span> <span class="p">{</span>
+        <span class="k">get</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="n">GetList</span><span class="p">&lt;</span><span class="n">item</span><span class="p">&gt;(</span><span class="s">"departments"</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+        <span class="c1">//...</span>
 </pre></div>
 
 
-<p>[csharp][/csharp]</p>
 <p>Add this file to your Visual Studio Project. You will have some errors because, you must include the reference to LINQ for Sharepoint. Right click the preferences of your project, choose "Add reference" and add the Microsoft.SharePoint.Linq.dll and now you're ready to use LINQ for Sharepoint in your project. </p>
 <h5>Query Data</h5>
 
 <p>First, you can query data using LINQ, by example, getting all the projects : </p>
-<p>[csharp][/csharp]using (ProjectsDataContext context = new ProjectsDataContext(SPContext.Current.Web.Url))</p>
-<p>{
-    var query = from c in context.Projects select c;</p>
-<div class="code"><pre><span class="n">foreach</span> <span class="p">(</span><span class="n">var</span> <span class="n">project</span> <span class="n">in</span> <span class="n">query</span><span class="p">)</span>
+<div class="code"><pre><span class="k">using</span> <span class="p">(</span><span class="n">ProjectsDataContext</span> <span class="n">context</span> <span class="p">=</span> <span class="k">new</span> <span class="n">ProjectsDataContext</span><span class="p">(</span><span class="n">SPContext</span><span class="p">.</span><span class="n">Current</span><span class="p">.</span><span class="n">Web</span><span class="p">.</span><span class="n">Url</span><span class="p">))</span>
 <span class="p">{</span>
-    <span class="n">console</span><span class="p">.</span><span class="n">writeLine</span><span class="p">(</span><span class="s">"Title : "</span> <span class="o">+</span> <span class="n">project</span><span class="p">.</span><span class="n">Title</span><span class="p">.</span><span class="n">ToString</span><span class="p">());</span>
-    <span class="n">console</span><span class="p">.</span><span class="n">writeLine</span><span class="p">(</span><span class="s">"Year: "</span> <span class="o">+</span> <span class="n">project</span><span class="p">.</span><span class="n">Year</span><span class="p">.</span><span class="n">ToString</span><span class="p">());</span>
-    <span class="n">console</span><span class="p">.</span><span class="n">writeLine</span><span class="p">(</span><span class="s">"Nb of students : "</span> <span class="o">+</span> <span class="n">project</span><span class="p">.</span><span class="n">Nbstudents</span><span class="p">.</span><span class="n">ToString</span><span class="p">());</span>
+    <span class="kt">var</span> <span class="n">query</span> <span class="p">=</span> <span class="k">from</span> <span class="n">c</span> <span class="k">in</span> <span class="n">context</span><span class="p">.</span><span class="n">Projects</span> <span class="k">select</span> <span class="n">c</span><span class="p">;</span>
 
-    <span class="n">string</span> <span class="n">str</span> <span class="o">=</span> <span class="s">""</span><span class="p">;</span>
-
-    <span class="kt">int</span> <span class="n">index</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-    <span class="n">foreach</span> <span class="p">(</span><span class="n">Item</span> <span class="n">item</span> <span class="n">in</span> <span class="n">project</span><span class="p">.</span><span class="n">Department</span><span class="p">)</span>
+    <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">project</span> <span class="k">in</span> <span class="n">query</span><span class="p">)</span>
     <span class="p">{</span>
-        <span class="n">str</span> <span class="o">+=</span> <span class="n">index</span><span class="o">++</span> <span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="mi">0</span> <span class="o">?</span> <span class="s">", "</span> <span class="o">+</span> <span class="n">item</span><span class="p">.</span><span class="n">Title</span> <span class="o">:</span> <span class="n">item</span><span class="p">.</span><span class="n">Title</span><span class="p">;</span>
-    <span class="p">}</span>
+        <span class="n">console</span><span class="p">.</span><span class="n">writeLine</span><span class="p">(</span><span class="s">"Title : "</span> <span class="p">+</span> <span class="n">project</span><span class="p">.</span><span class="n">Title</span><span class="p">.</span><span class="n">ToString</span><span class="p">());</span>
+        <span class="n">console</span><span class="p">.</span><span class="n">writeLine</span><span class="p">(</span><span class="s">"Year: "</span> <span class="p">+</span> <span class="n">project</span><span class="p">.</span><span class="n">Year</span><span class="p">.</span><span class="n">ToString</span><span class="p">());</span>
+        <span class="n">console</span><span class="p">.</span><span class="n">writeLine</span><span class="p">(</span><span class="s">"Nb of students : "</span> <span class="p">+</span> <span class="n">project</span><span class="p">.</span><span class="n">Nbstudents</span><span class="p">.</span><span class="n">ToString</span><span class="p">());</span>
 
-    <span class="n">console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">str</span><span class="p">);</span>
+        <span class="kt">string</span> <span class="n">str</span> <span class="p">=</span> <span class="s">""</span><span class="p">;</span>
+
+        <span class="kt">int</span> <span class="n">index</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span>
+        <span class="k">foreach</span> <span class="p">(</span><span class="n">Item</span> <span class="n">item</span> <span class="k">in</span> <span class="n">project</span><span class="p">.</span><span class="n">Department</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">str</span> <span class="p">+=</span> <span class="n">index</span><span class="p">++</span> <span class="p">&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="m">0</span> <span class="p">?</span> <span class="s">", "</span> <span class="p">+</span> <span class="n">item</span><span class="p">.</span><span class="n">Title</span> <span class="p">:</span> <span class="n">item</span><span class="p">.</span><span class="n">Title</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="n">console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">str</span><span class="p">);</span>
+    <span class="p">}</span>
 <span class="p">}</span>
 </pre></div>
 
 
-<p>}[csharp][/csharp]</p>
 <p>You can see that it's really simple and a lot easier than the way with Sharepoint API. More than that, the mapping to Object is just great :)</p>
 <h5>Update Data</h5>
 
 <p>You can also insert data, really easily with LINQ : </p>
-<p>[csharp][/csharp]using (ProjectsDataContext context = new ProjectsDataContext(SPContext.Current.Web.Url))</p>
-<p>{
-    Item department = new Item();
-    department.Title = "New department";</p>
-<div class="code"><pre><span class="n">context</span><span class="p">.</span><span class="n">Departments</span><span class="p">.</span><span class="n">InsertOnSubmit</span><span class="p">(</span><span class="n">department</span><span class="p">);</span>
+<div class="code"><pre><span class="k">using</span> <span class="p">(</span><span class="n">ProjectsDataContext</span> <span class="n">context</span> <span class="p">=</span> <span class="k">new</span> <span class="n">ProjectsDataContext</span><span class="p">(</span><span class="n">SPContext</span><span class="p">.</span><span class="n">Current</span><span class="p">.</span><span class="n">Web</span><span class="p">.</span><span class="n">Url</span><span class="p">))</span>
+<span class="p">{</span>
+    <span class="n">Item</span> <span class="n">department</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Item</span><span class="p">();</span>
+    <span class="n">department</span><span class="p">.</span><span class="n">Title</span> <span class="p">=</span> <span class="s">"New department"</span><span class="p">;</span>
 
-<span class="n">context</span><span class="p">.</span><span class="n">SubmitChanges</span><span class="p">();</span>
+    <span class="n">context</span><span class="p">.</span><span class="n">Departments</span><span class="p">.</span><span class="n">InsertOnSubmit</span><span class="p">(</span><span class="n">department</span><span class="p">);</span>
+
+    <span class="n">context</span><span class="p">.</span><span class="n">SubmitChanges</span><span class="p">();</span>
+<span class="p">}</span>
 </pre></div>
 
 
-<p>}[csharp][/csharp]</p>
 <p>To delete a Data, you can query it and then use DeleteOnSubmit to delete it. To update a data, it's even more simple, you just have to edit the item and then use SubmitChanges() to commit them. </p>
 <p>As you can see, using LINQ allows you to write code simple, readable and all that faster than if you use Sharepoint API. </p>
-<p>I hope this can be useful to someone. </p></div>
+<p>I hope this can be useful to someone.</p></div>
         </div>
             
         
@@ -478,7 +517,7 @@ public Microsoft.SharePoint.Linq.EntityList<span class="nt">&lt;item&gt;</span> 
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><p>Hi,</p>
+        <div><p>Hi,</p>
 <p>From several days, I started developing with Sharepoint 2010 for a School project. It's not as easy as I thought in my first opinion. So I will try to share some solutions I found with you</p>
 <p>In Sharepoint 2007, we used Solution Generator to create a wsp file of the site and then we can use this wsp file in Visual Studio for example.</p>
 <p>But in Sharepoint 2010, you can do it directly in the site administration. Go in Site Settings -&gt; Site action and then choose "Save site as template". Then, you just have to provide a name and description and you can save  the template.</p>

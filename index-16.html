@@ -129,10 +129,11 @@
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><p>For the version 0.6.0 of the EDDI Compiler, I have written a simple dynamic memory allocation function in assembly. I did that to avoid using malloc in my assembly code. As this is not an easy subject, this article will explain the main parts of writing this function.</p>
+        <div><p>For the version 0.6.0 of the EDDI Compiler, I have written a simple dynamic memory allocation function in assembly. I did that to avoid using malloc in my assembly code. As this is not an easy subject, this article will explain the main parts of writing this function.</p>
 <p>As the EDDI Compiler creates program for Linux platform, this article will focus on writing a little memory allocator for Linux in Intel Assembly.</p>
 <p>In this article I will follow the <em>AT&amp;T notation</em>.</p>
-<p></p><h4>Specifications</h4>
+<h4>Specifications</h4>
+
 <p>The function works like malloc but is simpler. The specifications are the following ones:</p>
 <ul>
     <li>We call the function with one argument: the dynamic memory size we need</li>
@@ -156,69 +157,87 @@
 <h4>Implementation</h4>
 
 <p>We need two variables for this function. One to keep track of the remaining size and another one to keep track of the current address of the allocated memory.</p>
-<p>[assembly].data</p>
-<p>.size VIeddi_remaining, 4</p>
-<p>VIeddi_remaining:</p>
-<p>.long 0</p>
-<p>.size VIeddi_current, 4</p>
-<p>VIeddi_current:</p>
-<p>.long 0[/assembly]</p>
+<div class="code"><pre><span class="na">.data</span>
+<span class="na">.size</span> <span class="no">VIeddi_remaining</span><span class="p">,</span> <span class="mi">4</span>
+
+<span class="nl">VIeddi_remaining:</span>
+<span class="na">.long</span> <span class="mi">0</span>
+<span class="na">.size</span> <span class="no">VIeddi_current</span><span class="p">,</span> <span class="mi">4</span>
+
+<span class="nl">VIeddi_current:</span>
+<span class="na">.long</span> <span class="mi">0</span>
+</pre></div>
+
+
 <p>Both variables are initialized to 0.</p>
 <p>And here is the function I've developed :</p>
-<p>[assembly]eddi_alloc:</p>
-<p>pushl %ebp</p>
-<p>movl %esp, %ebp</p>
-<p>movl 8(%ebp), %ecx</p>
-<p>movl VIeddi_remaining, %ebx</p>
-<p>cmpl %ebx, %ecx</p>
-<p>jle alloc_normal</p>
-<p>movl $45, %eax</p>
-<p>xorl %ebx, %ebx</p>
-<p>int  $0x80</p>
-<p>movl %eax, %esi</p>
-<p>movl %eax, %ebx</p>
-<p>addl $16384, %ebx</p>
-<p>movl $45, %eax</p>
-<p>int  $0x80</p>
-<p>movl %esi, %eax</p>
-<p>movl $16384, VIeddi_remaining</p>
-<p>movl %esi, VIeddi_current</p>
-<p>alloc_normal:</p>
-<p>movl VIeddi_current, %eax</p>
-<p>movl VIeddi_current, %ebx</p>
-<p>addl %ecx, %ebx</p>
-<p>movl %ebx, VIeddi_current</p>
-<p>movl VIeddi_remaining, %ebx</p>
-<p>subl %ecx, %ebx</p>
-<p>movl %ebx, VIeddi_remaining</p>
-<p>leave</p>
-<p>ret[/assembly]</p>
+<div class="code"><pre><span class="nl">eddi_alloc:</span>
+<span class="nf">pushl</span> <span class="nv">%ebp</span>
+<span class="nf">movl</span> <span class="nv">%esp</span><span class="p">,</span> <span class="nv">%ebp</span>
+<span class="nf">movl</span> <span class="mi">8</span><span class="p">(</span><span class="nv">%ebp</span><span class="p">),</span> <span class="nv">%ecx</span>
+<span class="nf">movl</span> <span class="no">VIeddi_remaining</span><span class="p">,</span> <span class="nv">%ebx</span>
+<span class="nf">cmpl</span> <span class="nv">%ebx</span><span class="p">,</span> <span class="nv">%ecx</span>
+<span class="nf">jle</span> <span class="no">alloc_normal</span>
+<span class="nf">movl</span> <span class="no">$45</span><span class="p">,</span> <span class="nv">%eax</span>
+<span class="nf">xorl</span> <span class="nv">%ebx</span><span class="p">,</span> <span class="nv">%ebx</span>
+<span class="nf">int</span>  <span class="no">$0x80</span>
+<span class="nf">movl</span> <span class="nv">%eax</span><span class="p">,</span> <span class="nv">%esi</span>
+<span class="nf">movl</span> <span class="nv">%eax</span><span class="p">,</span> <span class="nv">%ebx</span>
+<span class="nf">addl</span> <span class="no">$16384</span><span class="p">,</span> <span class="nv">%ebx</span>
+<span class="nf">movl</span> <span class="no">$45</span><span class="p">,</span> <span class="nv">%eax</span>
+<span class="nf">int</span>  <span class="no">$0x80</span>
+<span class="nf">movl</span> <span class="nv">%esi</span><span class="p">,</span> <span class="nv">%eax</span>
+<span class="nf">movl</span> <span class="no">$16384</span><span class="p">,</span> <span class="no">VIeddi_remaining</span>
+<span class="nf">movl</span> <span class="nv">%esi</span><span class="p">,</span> <span class="no">VIeddi_current</span>
+
+<span class="nl">alloc_normal:</span>
+<span class="nf">movl</span> <span class="no">VIeddi_current</span><span class="p">,</span> <span class="nv">%eax</span>
+<span class="nf">movl</span> <span class="no">VIeddi_current</span><span class="p">,</span> <span class="nv">%ebx</span>
+<span class="nf">addl</span> <span class="nv">%ecx</span><span class="p">,</span> <span class="nv">%ebx</span>
+<span class="nf">movl</span> <span class="nv">%ebx</span><span class="p">,</span> <span class="no">VIeddi_current</span>
+<span class="nf">movl</span> <span class="no">VIeddi_remaining</span><span class="p">,</span> <span class="nv">%ebx</span>
+<span class="nf">subl</span> <span class="nv">%ecx</span><span class="p">,</span> <span class="nv">%ebx</span>
+<span class="nf">movl</span> <span class="nv">%ebx</span><span class="p">,</span> <span class="no">VIeddi_remaining</span>
+<span class="nf">leave</span>
+<span class="nf">ret</span>
+</pre></div>
+
+
 <p>I will describe now each part of the alloc function.</p>
-<p>[assembly]movl 8(%ebp), %ecx</p>
-<p>movl VIeddi_remaining, %ebx</p>
-<p>cmpl %ebx, %ecx</p>
-<p>jle alloc_normal[/assembly]</p>
+<div class="code"><pre><span class="nf">movl</span> <span class="mi">8</span><span class="p">(</span><span class="nv">%ebp</span><span class="p">),</span> <span class="nv">%ecx</span>
+<span class="nf">movl</span> <span class="no">VIeddi_remaining</span><span class="p">,</span> <span class="nv">%ebx</span>
+<span class="nf">cmpl</span> <span class="nv">%ebx</span><span class="p">,</span> <span class="nv">%ecx</span>
+<span class="nf">jle</span> <span class="no">alloc_normal</span>
+</pre></div>
+
+
 <p>In this part we test if there is enough remaining size for the dynamic memory allocation request. It's equivalent to <em>if(remaining &gt;= size)</em>. If there is enough size, we jump to the normal allocation part :</p>
-<p>[assembly]alloc_normal:</p>
-<p>movl VIeddi_current, %eax</p>
-<p>movl VIeddi_current, %ebx</p>
-<p>addl %ecx, %ebx</p>
-<p>movl %ebx, VIeddi_current</p>
-<p>movl VIeddi_remaining, %ebx</p>
-<p>subl %ecx, %ebx</p>
-<p>movl %ebx, VIeddi_remaining[/assembly]</p>
+<div class="code"><pre><span class="nl">alloc_normal:</span>
+<span class="nf">movl</span> <span class="no">VIeddi_current</span><span class="p">,</span> <span class="nv">%eax</span>
+<span class="nf">movl</span> <span class="no">VIeddi_current</span><span class="p">,</span> <span class="nv">%ebx</span>
+<span class="nf">addl</span> <span class="nv">%ecx</span><span class="p">,</span> <span class="nv">%ebx</span>
+<span class="nf">movl</span> <span class="nv">%ebx</span><span class="p">,</span> <span class="no">VIeddi_current</span>
+<span class="nf">movl</span> <span class="no">VIeddi_remaining</span><span class="p">,</span> <span class="nv">%ebx</span>
+<span class="nf">subl</span> <span class="nv">%ecx</span><span class="p">,</span> <span class="nv">%ebx</span>
+<span class="nf">movl</span> <span class="nv">%ebx</span><span class="p">,</span> <span class="no">VIeddi_remaining</span>
+</pre></div>
+
+
 <p>First, we move the current address of memory into the <strong>%eax</strong> register for the return value. Then we add the size of the new allocated block to the current address. Finally we remove the size of the new allocated block from the remaining size. After that, we can leave the function.</p>
 <p>The most interesting part is what we do when we have to allocate more memory :</p>
-<p>[assembly]movl $45, %eax</p>
-<p>xorl %ebx, %ebx</p>
-<p>int  $0x80</p>
-<p>movl %eax, %esi</p>
-<p>movl %eax, %ebx</p>
-<p>addl $16384, %ebx</p>
-<p>movl $45, %eax</p>
-<p>int  $0x80</p>
-<p>movl $16384, VIeddi_remaining</p>
-<p>movl %esi, VIeddi_current[/assembly]</p>
+<div class="code"><pre><span class="nf">movl</span> <span class="no">$45</span><span class="p">,</span> <span class="nv">%eax</span>
+<span class="nf">xorl</span> <span class="nv">%ebx</span><span class="p">,</span> <span class="nv">%ebx</span>
+<span class="nf">int</span>  <span class="no">$0x80</span>
+<span class="nf">movl</span> <span class="nv">%eax</span><span class="p">,</span> <span class="nv">%esi</span>
+<span class="nf">movl</span> <span class="nv">%eax</span><span class="p">,</span> <span class="nv">%ebx</span>
+<span class="nf">addl</span> <span class="no">$16384</span><span class="p">,</span> <span class="nv">%ebx</span>
+<span class="nf">movl</span> <span class="no">$45</span><span class="p">,</span> <span class="nv">%eax</span>
+<span class="nf">int</span>  <span class="no">$0x80</span>
+<span class="nf">movl</span> <span class="no">$16384</span><span class="p">,</span> <span class="no">VIeddi_remaining</span>
+<span class="nf">movl</span> <span class="nv">%esi</span><span class="p">,</span> <span class="no">VIeddi_current</span>
+</pre></div>
+
+
 <p>We start by doing an interruption to execute a system call. The <strong>45</strong> in the <strong>%eax</strong> register indicates a <strong>sys_brk</strong> call. The 0 in the <strong>%ebx</strong> register, indicates that we want the current position of brk space. We save this current position into the <strong>%esi</strong> register. Then we add 16384 bits (4K octets) to this address. We call again the <strong>sys_brk</strong> routine to set the address of the brk space to the calculated address. This is the way to dynamically allocates 4K of memory. Finally, we add 4K to the remaining size in octets and we put the current address (before the add) as the current address.</p>
 <h4>Possible improvements</h4>
 
@@ -244,7 +263,7 @@
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><p>I just released a new version of the EDDI Compiler : eddic 0.6.1</p>
+        <div><p>I just released a new version of the EDDI Compiler : eddic 0.6.1</p>
 <p>This is a minor update with only one change on the language: the functions can now return something. The return values are returned in registers (<strong>%eax</strong> for int and <strong>%eax:%ebx</strong> for strings). At this time, it is not possible to return an array from a function.</p>
 <p>The other changes of this version are on the code base side. All the headers have been cleaned. There are less useless imports and the code is cleaner. Moreover, I also have rewritten the Readme in order to include more useful information in it. The parsing phase should be a little faster now and the assembly has been improved by using the POP instruction. The phases of checking have also been reordered. In the future, it's possible that several phases will be merged together for performance purposes, but for now, it's quite fast on my sample even the 2MB stress file.</p>
 <p>You can now generate the Doxygen generation using make doc. The target is generated with CMake. At this time, the documentation is almost empty, but I will work on it on the next releases.</p>
@@ -266,7 +285,7 @@
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><p>Linux Mint 12 has just been released!</p>
+        <div><p>Linux Mint 12 has just been released!</p>
 <p>This new version includes a Gnome 3 using a specific extension MGSE (Mint Gnome Sheel Extensions) and a Gnome 2 UI (MATE). You will find also a lot of other improvements. </p>
 <p>From several months, Linux Mint is the most used Linux distribution. </p>
 <p>For more informations, you can read <a href="http://blog.linuxmint.com/?p=1889" title="Linux Mint 12 “Lisa” released!" target="_blank">the official announcement</a></p></div>
@@ -285,67 +304,86 @@
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><p>In this post, we'll learn how to print strings and integers to the console on Linux using Intel Assembly. In this post, I'll use the AT&amp;T notation, because it's the notation used in EDDI. </p>
+        <div><p>In this post, we'll learn how to print strings and integers to the console on Linux using Intel Assembly. In this post, I'll use the AT&amp;T notation, because it's the notation used in EDDI. </p>
 <p>In EDDI, I have to print strings and numbers to the console, as this is not an easy exercise, I wanted to share my experience here. </p>
 <p>On Linux, the only way to print something on the console is to use a system call. For that, we have to use the 0x08 interrupt code. </p>
-<p></p><h4>Declare strings</h4>
+<h4>Declare strings</h4>
+
 <p>First, we'll see how to declare strings in an Intel Assembly file. You can use the <strong>.string</strong> instruction to achieve that : </p>
-<p>[assembly]StringToPrint:</p>
-<p>.string "Hello"[/assembly]</p>
+<div class="code"><pre><span class="nl">StringToPrint:</span>
+<span class="na">.string</span> <span class="s">"Hello"</span>
+</pre></div>
+
+
 <h4>Print strings</h4>
 
 <p>Then, to print, we will call the <em>sys_write</em> system call : </p>
-<p>[assembly]movl $4, %eax</p>
-<p>movl $1, %ebx</p>
-<p>movl $StringToPrint, %ecx</p>
-<p>movl $5, %edx</p>
-<p>int $0x80[/assembly]</p>
+<div class="code"><pre><span class="nf">movl</span> <span class="no">$4</span><span class="p">,</span> <span class="nv">%eax</span>
+<span class="nf">movl</span> <span class="no">$1</span><span class="p">,</span> <span class="nv">%ebx</span>
+<span class="nf">movl</span> <span class="no">$StringToPrint</span><span class="p">,</span> <span class="nv">%ecx</span>
+<span class="nf">movl</span> <span class="no">$5</span><span class="p">,</span> <span class="nv">%edx</span>
+<span class="nf">int</span> <span class="no">$0x80</span>
+</pre></div>
+
+
 <p>The value in <strong>%eax</strong> (4) indicates the system call we need (<em>sys_write</em>). The 1 in <strong>%ebx</strong> indicates that we want to write in the console. Finally the two last parameters indicates the string to print and the size of the string. In Intel assembly, the <strong>int</strong> instruction launch an interrupt and the 0x80 in the interrupt table is set to the system call in the Linux Kernel. </p>
 <p>As you can see, this code does use 4 registers and does not save any of them. Ideally, you will save the registers before and restore them. It depends on when you use this routine. </p>
 <h4>Print integers</h4>
 
 <p>Writing an integer is a bit more complicated. If you have the integer in the string, there is no problem, but if you have only a long on your assembly, you'll have to convert the int into a string to print it. We will convert the integer char after char and use the stack as storage for our string. Then every char will be printed to the console using the same system as before. </p>
 <p>So let's say we have our number in the <strong>%eax</strong> register : </p>
-<p>[assembly]movl $9234, %eax[/assembly]</p>
+<div class="code"><pre><span class="nf">movl</span> <span class="no">$9234</span><span class="p">,</span> <span class="nv">%eax</span>
+</pre></div>
+
+
 <p>So let's take a look at the code : </p>
-<p>[assembly]xorl %esi, %esi</p>
-<p>loop:</p>
-<p>movl $0, %edx</p>
-<p>movl $10, %ebx</p>
-<p>divl %ebx</p>
-<p>addl $48, %edx</p>
-<p>pushl %edx</p>
-<p>incl %esi</p>
-<p>cmpl $0, %eax</p>
-<p>jz   next</p>
-<p>jmp loop</p>
-<p>next:</p>
-<p>cmpl $0, %esi</p>
-<p>jz   exit</p>
-<p>decl %esi</p>
-<p>movl $4, %eax</p>
-<p>movl %esp, %ecx</p>
-<p>movl $1, %ebx</p>
-<p>movl $1, %edx</p>
-<p>int  $0x80</p>
-<p>addl $4, %esp</p>
-<p>jmp  next</p>
-<p>exit:[/assembly]</p>
+<div class="code"><pre><span class="nf">xorl</span> <span class="nv">%esi</span><span class="p">,</span> <span class="nv">%esi</span>
+
+<span class="nl">loop:</span>
+<span class="nf">movl</span> <span class="no">$0</span><span class="p">,</span> <span class="nv">%edx</span>
+<span class="nf">movl</span> <span class="no">$10</span><span class="p">,</span> <span class="nv">%ebx</span>
+<span class="nf">divl</span> <span class="nv">%ebx</span>
+<span class="nf">addl</span> <span class="no">$48</span><span class="p">,</span> <span class="nv">%edx</span>
+<span class="nf">pushl</span> <span class="nv">%edx</span>
+<span class="nf">incl</span> <span class="nv">%esi</span>
+<span class="nf">cmpl</span> <span class="no">$0</span><span class="p">,</span> <span class="nv">%eax</span>
+<span class="nf">jz</span>   <span class="no">next</span>
+<span class="nf">jmp</span> <span class="no">loop</span>
+
+<span class="nl">next:</span>
+<span class="nf">cmpl</span> <span class="no">$0</span><span class="p">,</span> <span class="nv">%esi</span>
+<span class="nf">jz</span>   <span class="no">exit</span>
+<span class="nf">decl</span> <span class="nv">%esi</span>
+<span class="nf">movl</span> <span class="no">$4</span><span class="p">,</span> <span class="nv">%eax</span>
+<span class="nf">movl</span> <span class="nv">%esp</span><span class="p">,</span> <span class="nv">%ecx</span>
+<span class="nf">movl</span> <span class="no">$1</span><span class="p">,</span> <span class="nv">%ebx</span>
+<span class="nf">movl</span> <span class="no">$1</span><span class="p">,</span> <span class="nv">%edx</span>
+<span class="nf">int</span>  <span class="no">$0x80</span>
+<span class="nf">addl</span> <span class="no">$4</span><span class="p">,</span> <span class="nv">%esp</span>
+<span class="nf">jmp</span>  <span class="no">next</span>
+
+<span class="nl">exit:</span>
+</pre></div>
+
+
 <p>The first part of the code consists in dividing the value by 10 until we reach zero. The remainder of the division is pushed onto the stack. For example, for our number, after this part, we'll have 4-3-2-9 on the stack. The order is reversed, which is logic because we stack the remainders from the right. During this phase, we count the number of elements using the <strong>%esi</strong> register. </p>
 <p>Once this is done, we print each characters one by one starting with the last that has been pushed. Here we decrement the counter for each char and we use the <strong>sys_write</strong> call with <strong>%esp</strong> as the address of the string of one character. After each character, we incremetn the <strong>%esp</strong> to cancel the push that we used. </p>
 <p>We have to do this in two phases in order to get the characters in the good order and not in reverse order. </p>
 <h4>Handle negative numbers</h4>
 
 <p>As you may have noticed, we do not manage negative numbers in our code. They will be printed, but it will be positive number. Indeed, in Intel Assembly (and in processors in general), negative numbers are handled with two's complement. Handling negative numbers in our code is not a big deal. We can add this code at the beginning : </p>
-<p>[assembly]cmpl $0, %eax</p>
-<p>jge loop</p>
-<p>neg %eax</p>
-<p>pushl %eax</p>
-<p>//Print "-" </p>
-<p>popl %eax[/assembly]</p>
+<div class="code"><pre><span class="nf">cmpl</span> <span class="no">$0</span><span class="p">,</span> <span class="nv">%eax</span>
+<span class="nf">jge</span> <span class="no">loop</span>
+<span class="nf">neg</span> <span class="nv">%eax</span>
+<span class="nf">pushl</span> <span class="nv">%eax</span>
+<span class="err">//</span><span class="nf">Print</span> <span class="err">"</span><span class="p">-</span><span class="err">"</span> 
+<span class="no">popl</span> <span class="nv">%eax</span>
+</pre></div>
+
+
 <p>First of all, we check if the number is smaller than 0, if it's not the case, we directly jump to the code we used before. If it's smaller, we negate the number and print a - before printing the real number. We have to save the <strong>%eax</strong> register before printing the - character because <strong>%eax</strong> is used for printing. </p>
 <p>You'll now have a complete procedure to print an integer on the console in assembly. </p>
-<p>I hope that this could be of some help for somebody. </p></div>
+<p>I hope that this could be of some help for somebody.</p></div>
         </div>
             
         
@@ -361,7 +399,7 @@
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><p>This new version of the EDDI Compiler was faster to finalize than the previous.</p>
+        <div><p>This new version of the EDDI Compiler was faster to finalize than the previous.</p>
 <p>The main feature of this release is the use of arrays. You can now use arrays in the EDDI code. You can declare global or local arrays and pass them as parameters to the function. In the assembly, there is certainly still some optimization to perform, but the code works well for now. A new loop is also available the foreach loop for arrays. The loop iterates through each element of the array. </p>
 <p>I also performed some new improvements in the compiler speed. </p>
 <p>The local and global variables now have default values (0 for int and the empty string for strings). So you can omit the value in the declaration. </p>
@@ -386,11 +424,11 @@
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><p>After a long time with the old F2 theme, I decided to choose a more modern design. I chose the WP Plus design which is based on the Google Plus Design. </p>
+        <div><p>After a long time with the old F2 theme, I decided to choose a more modern design. I chose the WP Plus design which is based on the Google Plus Design. </p>
 <p>I think that this design is more practical and cleaner for the users and more comfortable. </p>
 <p>Moreover, I also took some time to change some of my addons. I replaced All In One SEO with Wordpress SEO plugin from Joost de Valk. I think that this plugin is better than the first one, but more of that, it also replaced one addon generating the XML sitemap and helped me adding a breadcrumb to the site. </p>
 <p>I hope that these changes will improve the user experience on my website. </p>
-<p>If you encounter any kind of problems with the new design, don't hesitate to let a comment or to contact me. </p></div>
+<p>If you encounter any kind of problems with the new design, don't hesitate to let a comment or to contact me.</p></div>
         </div>
             
         
@@ -406,9 +444,9 @@
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><p>A new version of Boost is available : <a href="http://www.boost.org/users/history/version_1_48_0.html" title="Boost 1.48.0 Details">Boost 1.48.0</a></p>
+        <div><p>A new version of Boost is available : <a href="http://www.boost.org/users/history/version_1_48_0.html" title="Boost 1.48.0 Details">Boost 1.48.0</a></p>
 <p>This release includes three new libraries : Locale, Container and Move. </p>
-<p>A lot of bug have been fixed and there are also some changes in the existing libraries. </p></div>
+<p>A lot of bug have been fixed and there are also some changes in the existing libraries.</p></div>
         </div>
             
         
@@ -424,69 +462,84 @@
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><p>This post will present the Boost intrusive_ptr and its usage in C++ programming. </p>
+        <div><p>This post will present the Boost intrusive_ptr and its usage in C++ programming. </p>
 <p>Recently, I took some time to optimize the parsing performances of the EDDI Compiler. The parsing phase creates a lot of nodes to fill the Abstract Syntax Tree. </p>
 <p>One of the way I found was to replace some shared_ptr by some intrusive_ptr of the Boost library. </p>
 <p>It's a faster alternative of shared_ptr. Like its name indicates, it's intrusive. The reference counter is included directely in the managed class, in the contrary of the shared_ptr where the reference counter has to be dynamically allocated to live aside the object. This leads to some performances improvement. Considering memory, the footprint of an intrusive_ptr is the same as the footprint of a raw pointer. This is not the case for the shared_ptr that have a pointer to the object, a pointer to the counter and the counter itself. </p>
-<p>For example, if you have a class X : </p>
-<p>[cpp]class X {
-    std::string name;
-    int age;
-};[/cpp]</p>
+<p>For example, if you have a class X:</p>
+<div class="code"><pre><span class="k">class</span> <span class="nc">X</span> <span class="p">{</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">name</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">age</span><span class="p">;</span>
+<span class="p">};</span>
+</pre></div>
+
+
 <p>And you use it in your code using a shared_ptr : </p>
-<p>[cpp]void test(){
-    std::shared_ptr&lt;X&gt; x(new X);</p>
-<div class="code"><pre><span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="n">x</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">name</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<div class="code"><pre><span class="kt">void</span> <span class="nf">test</span><span class="p">(){</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">X</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="n">x</span><span class="p">(</span><span class="k">new</span> <span class="n">X</span><span class="p">);</span>
+
+    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="n">x</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">name</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="p">}</span>
 </pre></div>
 
 
-<p>}[/cpp]</p>
 <p>and you want to use an intrusive_ptr, you have first to add a reference counter inside the X class : </p>
-<p>[cpp]class X {
-    std::string name;
-    int age;</p>
-<div class="code"><pre><span class="kt">long</span> <span class="n">references</span><span class="p">;</span>
-<span class="n">X</span><span class="p">()</span> <span class="o">:</span> <span class="n">references</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="p">{}</span>
+<div class="code"><pre><span class="k">class</span> <span class="nc">X</span> <span class="p">{</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">name</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">age</span><span class="p">;</span>
+
+    <span class="kt">long</span> <span class="n">references</span><span class="p">;</span>
+    <span class="n">X</span><span class="p">()</span> <span class="o">:</span> <span class="n">references</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="p">{}</span>
+<span class="p">};</span>
 </pre></div>
 
 
-<p>};[/cpp]</p>
 <p>And you have to indicate to the intrusive_ptr where the reference counter can be found for this class : </p>
-<p>[cpp]inline void intrusive_ptr_add_ref(X* x){
-    ++x-&gt;references;
-}</p>
-<p>inline void intrusive_ptr_release(X* x){
-    if(--x-&gt;references == 0) 
-        delete x;
-}[/cpp]</p>
-<p>And finally you can use the intrusive_ptr to replace your shared_ptr : </p>
-<p>[cpp]void test(){
-    boost::intrusive_ptr&lt;X&gt; x(new X);</p>
-<div class="code"><pre><span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="n">x</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">name</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<div class="code"><pre><span class="kr">inline</span> <span class="kt">void</span> <span class="nf">intrusive_ptr_add_ref</span><span class="p">(</span><span class="n">X</span><span class="o">*</span> <span class="n">x</span><span class="p">){</span>
+    <span class="o">++</span><span class="n">x</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">references</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kr">inline</span> <span class="kt">void</span> <span class="nf">intrusive_ptr_release</span><span class="p">(</span><span class="n">X</span><span class="o">*</span> <span class="n">x</span><span class="p">){</span>
+    <span class="k">if</span><span class="p">(</span><span class="o">--</span><span class="n">x</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">references</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> 
+        <span class="k">delete</span> <span class="n">x</span><span class="p">;</span>
+<span class="p">}</span>
 </pre></div>
 
 
-<p>}[/cpp]</p>
+<p>And finally you can use the intrusive_ptr to replace your shared_ptr : </p>
+<div class="code"><pre><span class="kt">void</span> <span class="nf">test</span><span class="p">(){</span>
+    <span class="n">boost</span><span class="o">::</span><span class="n">intrusive_ptr</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">X</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="n">x</span><span class="p">(</span><span class="k">new</span> <span class="n">X</span><span class="p">);</span>
+
+    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="n">x</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">name</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
 <p>The smart pointer itself can be used exactly the same way as a shared_ptr. If you have several classes that are managed using an intrusive_ptr, you can use a function template to tell Boost that all the reference counter are at the same place : </p>
-<p>[cpp]template&lt;typename T&gt;</p>
-<p>inline void intrusive_ptr_add_ref(T* expr){
-    ++expr-&gt;references;
-}</p>
-<p>template&lt;typename T&gt;</p>
-<p>inline void intrusive_ptr_release(T* expr){
-    if(--expr-&gt;references == 0)
-        delete expr;
-}[/cpp]</p>
+<div class="code"><pre><span class="k">template</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+<span class="kr">inline</span> <span class="kt">void</span> <span class="nf">intrusive_ptr_add_ref</span><span class="p">(</span><span class="n">T</span><span class="o">*</span> <span class="n">expr</span><span class="p">){</span>
+    <span class="o">++</span><span class="n">expr</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">references</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">template</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+<span class="kr">inline</span> <span class="kt">void</span> <span class="nf">intrusive_ptr_release</span><span class="p">(</span><span class="n">T</span><span class="o">*</span> <span class="n">expr</span><span class="p">){</span>
+    <span class="k">if</span><span class="p">(</span><span class="o">--</span><span class="n">expr</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">references</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">delete</span> <span class="n">expr</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
 <p>As you can see, the pointer is very intrusive and needs some boilerplate code added to your application, but it can leads to some interesting improvements for classes very often dynamically allocated. </p>
 <p>There is another advantage in using intrusive_ptr. As the reference counter is stored into the object itself, you can create several intrusive_ptr to the same object without any problem. This is not the case when you use a shared_ptr. Indeed, if you create two shared_ptr to the same dynamically allocated object, they will both have a different references counter and at the end, you will end up with an object being deleted twice. </p>
 <p>Of course, there are not only advantages. First of all, you have to declare a field in every classes that you want to manage using an intrusive_ptr and you have to declare functions to manage the reference. Then there are some disadvantages when using this pointer type compared to a shared_ptr : </p>
-<p></p><ul>
+<ul>
     <li>It's impossible to create a weak_ptr from a intrusive_ptr</li>
     <li>Code redundancy, you have to copy the reference counter in every class that you want to use an intrusive_ptr with</li>
     <li>You have to provide a function for every types that has to be used with intrusive_ptr (only two functions if you use the template versions of the two functions)</li>
 </ul>
+
 <p>To conclude, the boost::intrusive_ptr can be a good replacement of std::shared_ptr in a performance critical application, but if you have no performances problem, do not use it because it makes your code less clear. If you are concerned by performances when using std::shared_ptr, consider also using std::make_shared to create your pointers, so that the reference counter and the object itself will be allocated at the same place and at the same time, resulting in better performances. Another case where it's interesting to use an intrusive_ptr is when dealing with libraries using a lot of raw pointers, because you can create several intrusive_ptr to the same raw pointer without any problem.</p>
-<p>For more information, you can consult <a href="http://www.boost.org/doc/libs/1_47_0/libs/smart_ptr/intrusive_ptr.html" title="Boost intrusive_ptr official documentation">the official documentation</a>. </p></div>
+<p>For more information, you can consult <a href="http://www.boost.org/doc/libs/1_47_0/libs/smart_ptr/intrusive_ptr.html" title="Boost intrusive_ptr official documentation">the official documentation</a>.</p></div>
         </div>
             
         
@@ -502,7 +555,7 @@
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><p>I'm very pleased to release the version 0.5.1 of the EDDI Compiler.</p>
+        <div><p>I'm very pleased to release the version 0.5.1 of the EDDI Compiler.</p>
 <p>It makes now a long time since the last version of eddic, but I started again working frequently on it. This version doesn't add any new feature to the language, but there are a lot of improvements in the compiler itself. </p>
 <p>First of all, the generated assembly has been improved a lot. I use now a intermediate representation of assembly and then the compiler is able to make more optimizations in its choice. This optimization is especially visible for integer computations. Before this, all the computations used stack operations and then we use almost only registers when it's possible. It's still not perfect, but it uses way less instructions. Moreover, this can enable me to write a 64 assembly code instead of 32 and provide both versions in the compiler. </p>
 <p>Another improvement is the speed of the parser. I now use Boost Spirit to parse the source file and construct an Abstract Syntax Tree. This parsing is very fast now (with some optimizations). Moreover, it will be easier to add new constructs later. </p>
@@ -526,7 +579,7 @@
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><p>I finished reading the last Effective C++ volume : Effective STL, Scott Meyers.</p>
+        <div><p>I finished reading the last Effective C++ volume : Effective STL, Scott Meyers.</p>
 <p>Again, this book follows the same model as the two others, providing several rules aiming at making you a better (more effective) STL programmer. All the items of this book are centered on the usage of the Standard Template Library (STL).</p>
 <p>The first chapters (Containers) gives you several advices for using STL Containers. The main point of this chapter is about how to choose carefully a container for a specific use case. It also contains several advices on how to use them well regarding to performances and thread safety.</p>
 <p>In the next chapter (<em>vector</em> and <em>string</em>), the author focuses on two specific containers : vector and string. There are some specificities on these two containers that can improve the efficiency of the program.</p>

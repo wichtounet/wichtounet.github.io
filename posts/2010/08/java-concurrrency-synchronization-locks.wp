@@ -1,16 +1,18 @@
-<html><body><p>After learning how to <a title="Java Concurrency - Part 1 : Threads" href="http://www.baptiste-wicht.com/2010/05/java-concurrency-part-1-threads/" target="_blank">create threads</a> and <a title="Java Concurrency - Part 2 : Manipulate threads" href="http://www.baptiste-wicht.com/2010/05/java-concurrency-part-2-manipulate-threads/" target="_blank">manipulate them</a>, it's time to go to most important things : synchronization.
+<After learning how to <a title="Java Concurrency - Part 1 : Threads" href="http://www.baptiste-wicht.com/2010/05/java-concurrency-part-1-threads/" target="_blank">create threads</a> and <a title="Java Concurrency - Part 2 : Manipulate threads" href="http://www.baptiste-wicht.com/2010/05/java-concurrency-part-2-manipulate-threads/" target="_blank">manipulate them</a>, it's time to go to most important things : synchronization.
 
 Synchronization is a way to make some code thread safe. A code that can be accessed by multiple threads must be made thread safe. Thread Safe describe some code that can be called from multiple threads without corrupting the state of the object or simply doing the thing the code must do in right order.
 
 For example, we can take this little class :
 
-[java]public class Example {
+```java
+public class Example {
     private int value = 0;    
 
     public int getNextValue(){
         return value++;
     }
-}[/java]
+}
+```
 
 It's really simple and works well with one thread, but absolutely not with multiple threads. An increment like this is not a simple action, but three actions :
 
@@ -22,29 +24,29 @@ It's really simple and works well with one thread, but absolutely not with multi
 
 Normally, if you have two threads invoking the getNextValue(), you can think that the first will get 1 and the next will get 2, but it is possible that the two threads get the value 1. Imagine this situation :
 
-Thread 1 : read the value, get 0, add 1, so value = 1
-
-Thread 2 : read the value, get 0, add 1, so value = 1
-
-Thread 1 : write 1 to the field value and return 1
-
-Thread 2 : write 1 to the field value and return 1
+* Thread 1 : read the value, get 0, add 1, so value = 1
+* Thread 2 : read the value, get 0, add 1, so value = 1
+* Thread 1 : write 1 to the field value and return 1
+* Thread 2 : write 1 to the field value and return 1
 
 These situations come from what we call interleaving. Interleaving describe the possible situations of several threads executing some statements. Only for three operations and two threads, there is a lot of possible interleavings.
 
 So we must made the operations atomic to works with multiple threads. In Java, the first way to make that is to use a lock. All Java objects contains an intrinsic locks, we'll use that lock to make methods or statement atomic. When a thread has a lock, no other thread can acquire it and must wait for the first thread to release the lock. To acquire the lock, you have to use the synchronized keyword to automatically acquire and release a lock for a code. You can add the synchronized keyword to a method to acquire the lock before invoking the method and release it after the method execution. You can refactor the getNextValue() method using the synchronized keyword :
 
-[java]public class Example {
+```java
+public class Example {
     private int value = 0;    
 
     public synchronized int getNextValue(){
         return value++;
     }
-}[/java]
+}
+```
 
 With that, you have the guarantee that only thread can execute the method at the same time. The used lock is the intrinsic lock of the instance. If the method is static, the used lock is the Class object of Example. If you have two methods with the synchronized keyword, only one method of the two will be executed at the same time because the same lock is used for the two methods. You can also write it using a synchronized block :
 
-[java]public class Example {
+```java
+public class Example {
     private int value = 0;
 
     public int getNextValue() {
@@ -52,11 +54,13 @@ With that, you have the guarantee that only thread can execute the method at the
             return value++;
         }
     }
-}[/java]
+}
+```
 
 This is exactly the same as using the synchronized keyword on the method signature. Using synchronized blocks, you can choose the lock to block on. By example, if you don't want to use the intrinsic lock of the current object but an other object, you can use an other object just as a lock :
 
-[java]public class Example {
+```java
+public class Example {
     private int value = 0;
 
     private final Object lock = new Object();
@@ -66,7 +70,8 @@ This is exactly the same as using the synchronized keyword on the method signatu
             return value++;
         }
     }
-}[/java]
+}
+```
 
 The result is the same but has one difference, the lock is internal to the object so no other code can use the lock. With complex classes, it not rare to use several locks to provide thread safety on the class.
 
@@ -87,4 +92,4 @@ There is several rules that we must keep in mind when using locks :
 	<li>An immutable object is always thread safe</li>
 </ol>
 
-Here we are, I hope that this post helps you to understand thread safety and how to achieve it using intrinsic locks. In the next posts, we'll see another synchronization methods.</body></html>
+Here we are, I hope that this post helps you to understand thread safety and how to achieve it using intrinsic locks. In the next posts, we'll see another synchronization methods.

@@ -654,35 +654,42 @@
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><p>We continue in Java Concurrency with the semaphores. Semaphores is also a way to synchronize threads.</p>
+        <div><p>We continue in Java Concurrency with the semaphores. Semaphores is also a way to synchronize threads.</p>
 <p>Semaphores are a really simple concept, invented by the famous Dutch computer scientist Edsger Dijkstra. Basically a semaphore is a counter (integer) that allows a thread to get into a critical region if the value of the counter is greater than 0. If it's the case, the counter is decremented by one otherwise, the thread is waiting until it can go. And when the thread go away from the critical region, the counter is incremented by one to allow one more thread to pass the critical region. A semaphore is created with a certain value for its counter. So, you can execute two actions on a semaphore P and V.</p>
 <p>By example, if you have a critical that cannot be executed concurrently, you can use a semaphore :</p>
-<p>[java]sem mutex = new sem(1)</p>
-<p>P(mutex)</p>
-<p>//Critical region</p>
-<p>V(mutex)[/java]</p>
-<p>So you must always call by yourself the P operation before the critical region and V after it. We call a mutex (mutual exclusion) a semaphore with a value of one. So only one thread can enter the region guarded by the semaphore. This is the most used semaphore. The other use of semaphore is to guard a set of resources like database connections or a data pool.</p>
-<p>In Java, a semaphore is created using the java.util.concurrent.Semaphore class. You can create easily :</p>
-<p>[java]Semaphore mutex = new Semaphore(1);</p>
-<p>Semaphore available = new Semaphore(100);[/java]</p>
-<p>The P and V operations are represented using the acquire and release methods. The method acquire can be interrupted if the thread is interrupted. There is an uninterruptible version with the method acquireUninterruptibly(). There is also a third version with the tryAcquire method. This method acquire a permit only if there is one permit available, otherwise, this method return false directly. All the waiting methods have also an overloaded version with a timeout. You can also acquire several permits at once using the permits argument to the different versions of acquire methods.</p>
-<p>A little example with a mutex using the same example as the previous post on Java concurrency :</p>
-<p>[java]public class Example {
-    private int value = 0;</p>
-<div class="code"><pre><span class="n">private</span> <span class="n">final</span> <span class="n">Semaphore</span> <span class="n">mutex</span> <span class="o">=</span> <span class="n">new</span> <span class="n">Semaphore</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-
-<span class="n">public</span> <span class="kt">int</span> <span class="n">getNextValue</span><span class="p">()</span> <span class="n">throws</span> <span class="n">InterruptedException</span> <span class="p">{</span>
-    <span class="n">try</span> <span class="p">{</span>
-        <span class="n">mutex</span><span class="p">.</span><span class="n">acquire</span><span class="p">();</span>
-        <span class="k">return</span> <span class="n">value</span><span class="o">++</span><span class="p">;</span>
-    <span class="p">}</span> <span class="n">finally</span> <span class="p">{</span>
-        <span class="n">mutex</span><span class="p">.</span><span class="n">release</span><span class="p">();</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+<div class="code"><pre><span class="n">sem</span> <span class="n">mutex</span> <span class="o">=</span> <span class="k">new</span> <span class="n">sem</span><span class="o">(</span><span class="mi">1</span><span class="o">)</span>
+<span class="n">P</span><span class="o">(</span><span class="n">mutex</span><span class="o">)</span>
+<span class="c1">//Critical region</span>
+<span class="n">V</span><span class="o">(</span><span class="n">mutex</span><span class="o">)</span>
 </pre></div>
 
 
-<p>}[/java]</p>
+<p>So you must always call by yourself the P operation before the critical region and V after it. We call a mutex (mutual exclusion) a semaphore with a value of one. So only one thread can enter the region guarded by the semaphore. This is the most used semaphore. The other use of semaphore is to guard a set of resources like database connections or a data pool.</p>
+<p>In Java, a semaphore is created using the java.util.concurrent.Semaphore class. You can create easily :</p>
+<div class="code"><pre><span class="n">Semaphore</span> <span class="n">mutex</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Semaphore</span><span class="o">(</span><span class="mi">1</span><span class="o">);</span>
+<span class="n">Semaphore</span> <span class="n">available</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Semaphore</span><span class="o">(</span><span class="mi">100</span><span class="o">);</span>
+</pre></div>
+
+
+<p>The P and V operations are represented using the acquire and release methods. The method acquire can be interrupted if the thread is interrupted. There is an uninterruptible version with the method acquireUninterruptibly(). There is also a third version with the tryAcquire method. This method acquire a permit only if there is one permit available, otherwise, this method return false directly. All the waiting methods have also an overloaded version with a timeout. You can also acquire several permits at once using the permits argument to the different versions of acquire methods.</p>
+<p>A little example with a mutex using the same example as the previous post on Java concurrency :</p>
+<div class="code"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Example</span> <span class="o">{</span>
+    <span class="kd">private</span> <span class="kt">int</span> <span class="n">value</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+
+    <span class="kd">private</span> <span class="kd">final</span> <span class="n">Semaphore</span> <span class="n">mutex</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Semaphore</span><span class="o">(</span><span class="mi">1</span><span class="o">)</span>
+
+    <span class="kd">public</span> <span class="kt">int</span> <span class="nf">getNextValue</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">InterruptedException</span> <span class="o">{</span>
+        <span class="k">try</span> <span class="o">{</span>
+            <span class="n">mutex</span><span class="o">.</span><span class="na">acquire</span><span class="o">();</span>
+            <span class="k">return</span> <span class="n">value</span><span class="o">++;</span>
+        <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+            <span class="n">mutex</span><span class="o">.</span><span class="na">release</span><span class="o">();</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+
+
 <p>For more informations about Semaphore in Java, the best is to consult <a href="http://download.oracle.com/javase/6/docs/api/java/util/concurrent/Semaphore.html">the Javadoc of the Semaphore class</a>.</p>
 <p>To conclude, semaphores are a powerful ways to solve concurrency problems, but this is not adapted to all problems. If you need only mutual exclusion, <a title="Java Concurrency – Part 3 : Synchronization with intrinsic locks" href="http://www.baptiste-wicht.com/2010/08/java-concurrrency-synchronization-locks/" target="_blank">synchronized blocks</a> are a better solutions. The problems with semaphores is that you can forget to call the release method and that can cause deadlock sometimes difficult to find.</p></div>
         </div>
@@ -700,18 +707,19 @@
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><p>After learning how to <a title="Java Concurrency - Part 1 : Threads" href="http://www.baptiste-wicht.com/2010/05/java-concurrency-part-1-threads/" target="_blank">create threads</a> and <a title="Java Concurrency - Part 2 : Manipulate threads" href="http://www.baptiste-wicht.com/2010/05/java-concurrency-part-2-manipulate-threads/" target="_blank">manipulate them</a>, it's time to go to most important things : synchronization.</p>
+        <div><p><after learning how to title="Java Concurrency - Part 1 : Threads" href="http://www.baptiste-wicht.com/2010/05/java-concurrency-part-1-threads/" target="_blank">create threads and <a title="Java Concurrency - Part 2 : Manipulate threads" href="http://www.baptiste-wicht.com/2010/05/java-concurrency-part-2-manipulate-threads/" target="_blank">manipulate them</a>, it's time to go to most important things : synchronization.</after></p>
 <p>Synchronization is a way to make some code thread safe. A code that can be accessed by multiple threads must be made thread safe. Thread Safe describe some code that can be called from multiple threads without corrupting the state of the object or simply doing the thing the code must do in right order.</p>
 <p>For example, we can take this little class :</p>
-<p>[java]public class Example {
-    private int value = 0;    </p>
-<div class="code"><pre><span class="n">public</span> <span class="kt">int</span> <span class="nf">getNextValue</span><span class="p">(){</span>
-    <span class="k">return</span> <span class="n">value</span><span class="o">++</span><span class="p">;</span>
-<span class="p">}</span>
+<div class="code"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Example</span> <span class="o">{</span>
+    <span class="kd">private</span> <span class="kt">int</span> <span class="n">value</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>    
+
+    <span class="kd">public</span> <span class="kt">int</span> <span class="nf">getNextValue</span><span class="o">(){</span>
+        <span class="k">return</span> <span class="n">value</span><span class="o">++;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
 </pre></div>
 
 
-<p>}[/java]</p>
 <p>It's really simple and works well with one thread, but absolutely not with multiple threads. An increment like this is not a simple action, but three actions :</p>
 <p></p><ul>
     <li>Read the current value of "value"</li>
@@ -719,47 +727,52 @@
     <li>Write that new value to "value"</li>
 </ul>
 <p>Normally, if you have two threads invoking the getNextValue(), you can think that the first will get 1 and the next will get 2, but it is possible that the two threads get the value 1. Imagine this situation :</p>
-<p>Thread 1 : read the value, get 0, add 1, so value = 1</p>
-<p>Thread 2 : read the value, get 0, add 1, so value = 1</p>
-<p>Thread 1 : write 1 to the field value and return 1</p>
-<p>Thread 2 : write 1 to the field value and return 1</p>
+<ul>
+<li>Thread 1 : read the value, get 0, add 1, so value = 1</li>
+<li>Thread 2 : read the value, get 0, add 1, so value = 1</li>
+<li>Thread 1 : write 1 to the field value and return 1</li>
+<li>Thread 2 : write 1 to the field value and return 1</li>
+</ul>
 <p>These situations come from what we call interleaving. Interleaving describe the possible situations of several threads executing some statements. Only for three operations and two threads, there is a lot of possible interleavings.</p>
 <p>So we must made the operations atomic to works with multiple threads. In Java, the first way to make that is to use a lock. All Java objects contains an intrinsic locks, we'll use that lock to make methods or statement atomic. When a thread has a lock, no other thread can acquire it and must wait for the first thread to release the lock. To acquire the lock, you have to use the synchronized keyword to automatically acquire and release a lock for a code. You can add the synchronized keyword to a method to acquire the lock before invoking the method and release it after the method execution. You can refactor the getNextValue() method using the synchronized keyword :</p>
-<p>[java]public class Example {
-    private int value = 0;    </p>
-<div class="code"><pre><span class="n">public</span> <span class="n">synchronized</span> <span class="kt">int</span> <span class="nf">getNextValue</span><span class="p">(){</span>
-    <span class="k">return</span> <span class="n">value</span><span class="o">++</span><span class="p">;</span>
-<span class="p">}</span>
+<div class="code"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Example</span> <span class="o">{</span>
+    <span class="kd">private</span> <span class="kt">int</span> <span class="n">value</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>    
+
+    <span class="kd">public</span> <span class="kd">synchronized</span> <span class="kt">int</span> <span class="nf">getNextValue</span><span class="o">(){</span>
+        <span class="k">return</span> <span class="n">value</span><span class="o">++;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
 </pre></div>
 
 
-<p>}[/java]</p>
 <p>With that, you have the guarantee that only thread can execute the method at the same time. The used lock is the intrinsic lock of the instance. If the method is static, the used lock is the Class object of Example. If you have two methods with the synchronized keyword, only one method of the two will be executed at the same time because the same lock is used for the two methods. You can also write it using a synchronized block :</p>
-<p>[java]public class Example {
-    private int value = 0;</p>
-<div class="code"><pre><span class="n">public</span> <span class="kt">int</span> <span class="nf">getNextValue</span><span class="p">()</span> <span class="p">{</span>
-    <span class="n">synchronized</span> <span class="p">(</span><span class="n">this</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="n">value</span><span class="o">++</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+<div class="code"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Example</span> <span class="o">{</span>
+    <span class="kd">private</span> <span class="kt">int</span> <span class="n">value</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+
+    <span class="kd">public</span> <span class="kt">int</span> <span class="nf">getNextValue</span><span class="o">()</span> <span class="o">{</span>
+        <span class="kd">synchronized</span> <span class="o">(</span><span class="k">this</span><span class="o">)</span> <span class="o">{</span>
+            <span class="k">return</span> <span class="n">value</span><span class="o">++;</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
 </pre></div>
 
 
-<p>}[/java]</p>
 <p>This is exactly the same as using the synchronized keyword on the method signature. Using synchronized blocks, you can choose the lock to block on. By example, if you don't want to use the intrinsic lock of the current object but an other object, you can use an other object just as a lock :</p>
-<p>[java]public class Example {
-    private int value = 0;</p>
-<div class="code"><pre><span class="n">private</span> <span class="n">final</span> <span class="n">Object</span> <span class="n">lock</span> <span class="o">=</span> <span class="n">new</span> <span class="n">Object</span><span class="p">();</span>
+<div class="code"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Example</span> <span class="o">{</span>
+    <span class="kd">private</span> <span class="kt">int</span> <span class="n">value</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
 
-<span class="n">public</span> <span class="kt">int</span> <span class="nf">getNextValue</span><span class="p">()</span> <span class="p">{</span>
-    <span class="n">synchronized</span> <span class="p">(</span><span class="n">lock</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="n">value</span><span class="o">++</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+    <span class="kd">private</span> <span class="kd">final</span> <span class="n">Object</span> <span class="n">lock</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Object</span><span class="o">();</span>
+
+    <span class="kd">public</span> <span class="kt">int</span> <span class="nf">getNextValue</span><span class="o">()</span> <span class="o">{</span>
+        <span class="kd">synchronized</span> <span class="o">(</span><span class="n">lock</span><span class="o">)</span> <span class="o">{</span>
+            <span class="k">return</span> <span class="n">value</span><span class="o">++;</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
 </pre></div>
 
 
-<p>}[/java]</p>
 <p>The result is the same but has one difference, the lock is internal to the object so no other code can use the lock. With complex classes, it not rare to use several locks to provide thread safety on the class.</p>
 <p>There is an other issue with multiple threads : the visibility of the variables. This seems when a change made by a thread is visible by an other thread. For performance improvements, the Java compiler and virtual machines can made some improvements using registers and cache. By default, you have no guarantee that a change made by a thread is visible to an other thread. To make a change visible to an other thread, you must use synchronized blocks to ensure visibility of the change. You must use synchronized blocks for the read and for the write of the shared values. You must make that for every read/write of a value shared between multiple threads.</p>
 <p>You can also use the volatile keyword on the field to ensure the visibility of read/write between multiple threads. The volatile keyword ensure only visibility, not atomicity. The synchronized blocks ensure visibility and atomicity. So you can use the volatile keyword on fields that doesn't need atomicity (if you make only read and write to the field without depending on the current value of the field by example).</p>
@@ -789,14 +802,15 @@
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><p>I've made another updates to my file copy benchmark.</p>
+        <div><p>I've made another updates to my file copy benchmark.</p>
 <p>First of all, I used my <a title="Utility class to create graphs of benchmark results" href="http://www.baptiste-wicht.com/2010/08/generate-graphs-benchmarks-easily/" target="_blank">little utility class to automatically create the graphs</a>. The graph are a little less clean, but I spare a lot of time not creating them myself.</p>
 <p>Then, I've also made some corrections on the code :</p>
-<p></p><ul>
+<ul>
     <li>I''ve used a buffer size of 8192 instead of 4096</li>
     <li>I've made some corrections using the channels because the old code can forgot to write some portions of the file</li>
     <li>I used allocateDirect() instead of allocate() for the ByteBuffer.</li>
 </ul>
+
 <p>And I've added a new method using Java 7 : Path.copyTo(Path path).</p>
 <p>So the new results are all based on a Java 7 Virtual Machine.</p>
 <p>You'll find all the new informations and result, on the original post : <a title="Java File Copy Benchmark" href="http://www.baptiste-wicht.com/2010/08/file-copy-in-java-benchmark/" target="_self">File Copy in Java - Benchmark</a></p>
@@ -816,61 +830,64 @@
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><p>From the build 105, the compiler and runtime of Java 7 Releases have support for the new form of try : try-with-resources, also called ARM (Automatic Resource Management) blocks. </p>
+        <div><p>From the build 105, the compiler and runtime of Java 7 Releases have support for the new form of try : try-with-resources, also called ARM (Automatic Resource Management) blocks. </p>
 <p>This new statement make working with streams and all kind of closeable resources easier. By example, in Java, you can have this kind of code : </p>
-<p>[java]private static void customBufferStreamCopy(File source, File target) {
-    InputStream fis = null;
-    OutputStream fos = null;
-    try {
-        fis = new FileInputStream(source);
-        fos = new FileOutputStream(target);</p>
-<div class="code"><pre>    <span class="n">byte</span><span class="p">[]</span> <span class="n">buf</span> <span class="o">=</span> <span class="n">new</span> <span class="n">byte</span><span class="p">[</span><span class="mi">8192</span><span class="p">];</span>
+<div class="code"><pre><span class="kd">private</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">customBufferStreamCopy</span><span class="o">(</span><span class="n">File</span> <span class="n">source</span><span class="o">,</span> <span class="n">File</span> <span class="n">target</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">InputStream</span> <span class="n">fis</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+    <span class="n">OutputStream</span> <span class="n">fos</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+    <span class="k">try</span> <span class="o">{</span>
+        <span class="n">fis</span> <span class="o">=</span> <span class="k">new</span> <span class="n">FileInputStream</span><span class="o">(</span><span class="n">source</span><span class="o">);</span>
+        <span class="n">fos</span> <span class="o">=</span> <span class="k">new</span> <span class="n">FileOutputStream</span><span class="o">(</span><span class="n">target</span><span class="o">);</span>
 
-    <span class="kt">int</span> <span class="n">i</span><span class="p">;</span>
-    <span class="k">while</span> <span class="p">((</span><span class="n">i</span> <span class="o">=</span> <span class="n">fis</span><span class="p">.</span><span class="n">read</span><span class="p">(</span><span class="n">buf</span><span class="p">))</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
-        <span class="n">fos</span><span class="p">.</span><span class="n">write</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">i</span><span class="p">);</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-<span class="n">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">e</span><span class="p">)</span> <span class="p">{</span>
-    <span class="n">e</span><span class="p">.</span><span class="n">printStackTrace</span><span class="p">();</span>
-<span class="p">}</span> <span class="n">finally</span> <span class="p">{</span>
-    <span class="n">close</span><span class="p">(</span><span class="n">fis</span><span class="p">);</span>
-    <span class="n">close</span><span class="p">(</span><span class="n">fos</span><span class="p">);</span>
-<span class="p">}</span>
+        <span class="kt">byte</span><span class="o">[]</span> <span class="n">buf</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">byte</span><span class="o">[</span><span class="mi">8192</span><span class="o">];</span>
+
+        <span class="kt">int</span> <span class="n">i</span><span class="o">;</span>
+        <span class="k">while</span> <span class="o">((</span><span class="n">i</span> <span class="o">=</span> <span class="n">fis</span><span class="o">.</span><span class="na">read</span><span class="o">(</span><span class="n">buf</span><span class="o">))</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">fos</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="n">buf</span><span class="o">,</span> <span class="mi">0</span><span class="o">,</span> <span class="n">i</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+    <span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+    <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+        <span class="n">close</span><span class="o">(</span><span class="n">fis</span><span class="o">);</span>
+        <span class="n">close</span><span class="o">(</span><span class="n">fos</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+
+<span class="kd">private</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">close</span><span class="o">(</span><span class="n">Closeable</span> <span class="n">closable</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">closable</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">try</span> <span class="o">{</span>
+            <span class="n">closable</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
+        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
 </pre></div>
 
 
-<p>}</p>
-<p>private static void close(Closeable closable) {
-    if (closable != null) {
-        try {
-            closable.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-}[/java]</p>
 <p>A little bit heavy, isn't it ? This is only an example, here the management of exceptions is not good. </p>
 <p>So let's use try-with-resources statement to simplify this code, who becomes : </p>
-<p>[java]private static void customBufferStreamCopy(File source, File target) {
-    try (InputStream fis = new FileInputStream(source);
-        OutputStream fos = new FileOutputStream(target)){</p>
-<div class="code"><pre>    <span class="n">byte</span><span class="p">[]</span> <span class="n">buf</span> <span class="o">=</span> <span class="n">new</span> <span class="n">byte</span><span class="p">[</span><span class="mi">8192</span><span class="p">];</span>
+<div class="code"><pre><span class="kd">private</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">customBufferStreamCopy</span><span class="o">(</span><span class="n">File</span> <span class="n">source</span><span class="o">,</span> <span class="n">File</span> <span class="n">target</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">try</span> <span class="o">(</span><span class="n">InputStream</span> <span class="n">fis</span> <span class="o">=</span> <span class="k">new</span> <span class="n">FileInputStream</span><span class="o">(</span><span class="n">source</span><span class="o">);</span>
+        <span class="n">OutputStream</span> <span class="n">fos</span> <span class="o">=</span> <span class="k">new</span> <span class="n">FileOutputStream</span><span class="o">(</span><span class="n">target</span><span class="o">)){</span>
 
-    <span class="kt">int</span> <span class="n">i</span><span class="p">;</span>
-    <span class="k">while</span> <span class="p">((</span><span class="n">i</span> <span class="o">=</span> <span class="n">fis</span><span class="p">.</span><span class="n">read</span><span class="p">(</span><span class="n">buf</span><span class="p">))</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
-        <span class="n">fos</span><span class="p">.</span><span class="n">write</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">i</span><span class="p">);</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-<span class="n">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">e</span><span class="p">)</span> <span class="p">{</span>
-    <span class="n">e</span><span class="p">.</span><span class="n">printStackTrace</span><span class="p">();</span>
-<span class="p">}</span>
+        <span class="kt">byte</span><span class="o">[]</span> <span class="n">buf</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">byte</span><span class="o">[</span><span class="mi">8192</span><span class="o">];</span>
+
+        <span class="kt">int</span> <span class="n">i</span><span class="o">;</span>
+        <span class="k">while</span> <span class="o">((</span><span class="n">i</span> <span class="o">=</span> <span class="n">fis</span><span class="o">.</span><span class="na">read</span><span class="o">(</span><span class="n">buf</span><span class="o">))</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">fos</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="n">buf</span><span class="o">,</span> <span class="mi">0</span><span class="o">,</span> <span class="n">i</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+    <span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+    <span class="o">}</span>
+<span class="o">}</span>
 </pre></div>
 
 
-<p>}[/java]</p>
 <p>A lot cleaner, no ? With that code, the resources are automatically closed after the try. In the try resources list, you can declare several resources, but all these resources must implement the java.lang.AutoCloseable interface. </p>
-<p>If you want more informations, about this new statement read <a target="_blank" href="http://blogs.sun.com/darcy/entry/project_coin_updated_arm_spec">try-with-resources specifications</a>. </p></div>
+<p>If you want more informations, about this new statement read <a target="_blank" href="http://blogs.sun.com/darcy/entry/project_coin_updated_arm_spec">try-with-resources specifications</a>.</p></div>
         </div>
             
         
