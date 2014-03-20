@@ -1,4 +1,4 @@
-<html><body><p>We've now covered the basic synchronization systems (<a href="http://www.baptiste-wicht.com/2010/01/jr-introduction/" target="_blank">semaphore</a>, <a href="http://www.baptiste-wicht.com/2010/06/monitor-programming-in-jr/" target="_blank">monitors</a>) and we know how to <a href="http://www.baptiste-wicht.com/2010/06/jr-operations-and-capabilities/" target="_blank">declare operations and capabilities</a> . It's time to go to an other form of synchronization : <strong>Message Passing</strong>. In this post, we'll focus in <strong>Asynchronous Message Passing</strong>, we'll cover later, the synchronous message passing system with RendezVous.
+We've now covered the basic synchronization systems (<a href="http://www.baptiste-wicht.com/2010/01/jr-introduction/" target="_blank">semaphore</a>, <a href="http://www.baptiste-wicht.com/2010/06/monitor-programming-in-jr/" target="_blank">monitors</a>) and we know how to <a href="http://www.baptiste-wicht.com/2010/06/jr-operations-and-capabilities/" target="_blank">declare operations and capabilities</a> . It's time to go to an other form of synchronization : <strong>Message Passing</strong>. In this post, we'll focus in <strong>Asynchronous Message Passing</strong>, we'll cover later, the synchronous message passing system with RendezVous.
 
 When we use message passing, the threads doesn't share datas anymore, they share channels. You can see channels like an abstraction of a network between several processes. The processes will send messages to other and the other will wait for receive a message. Normally, with that form of synchronization, the channels are the only objects shared between the threads. So you doesn't need to share memory. That makes possible to distribute the processes across several virtual machines or computers, of course, this also works on a simple computer, like any other program. In message passing, we often see models with several clients and a server that manage the messages. 
 
@@ -8,23 +8,29 @@ In Java, you will do that with Socket or RMI but in JR, this system is really ea
 
 So we will need that kind of operations :
 
-[java]private static op void channel(int);[/java]
+```java
+private static op void channel(int);
+```
 
 To send a message to a channel, you just have to use the send keyword followed by the name of the operations with the arguments :
 
-[java]send channel(12);[/java]
+```java
+send channel(12);
+```
 
 The send operation does not block, when the same is sended, the send operation is released.
 
 To receive a message, you have to use the receive keyword, followed by the variables name in which put the values of the arguments :
 
-[java]int x;
-
-receive channel(x);[/java]
+```java
+int x;
+receive channel(x);
+```
 
 The variables must have been declared before used in the receive statement. It's a little weird when we start, but it's really practical to assign them in one operation even if we have a lot of parameters. When we the process are on the same virtual machines, the parameters are passed like for any method in Java, by value. If we put all that together in processes :
 
-[java]public class AMP1 {
+```java
+public class AMP1 {
 	private static op void channel(int);
 
 	private static process p1{
@@ -38,29 +44,32 @@ The variables must have been declared before used in the receive statement. It's
 	}
 
 	public static void main(String... args){}
-}[/java]
+}
+```
 
 The messages are received in the order they are sent for each sender. But it's possible that a message sent by Thread 1 before an other message sent by Thread 2 will be received after the one of Thread 2. Normally this would never appears when working in a simple computer, but that could appear often when working with several computers. So don't make any assumptions on the order your messages will be received. 
 
 With all that, we can solve the producer-consumer problem really easily : 
 
-[java]public class ProducerConsumer {
+```java
+public class ProducerConsumer {
 	private static final int N = 12; //Number of producers and consumers
 
 	private static op void deposit(String); //The channel
 
 	public static void main(String... args){}
 
-	private static process Producer((int i = 0; i &lt; N; i++)){
+	private static process Producer((int i = 0; i < N; i++)){
 		send deposit("Producer" + i);
 	}
 
-	private static process Consumer((int i = 0; i &lt; N; i++)){
+	private static process Consumer((int i = 0; i < N; i++)){
 		String data;
 		receive deposit(data);
 		System.out.println("Consumer" + i + " : " + data);
 	}
-}[/java]
+}
+```
 
 No need to great explanations. A Producer send a message with the informations it has produced and doesn't wait for the receive. And a Consumer wait for a deposit (a send) with a receive statement and print the result when it has received the message. 
 
@@ -68,61 +77,50 @@ Like you can invoke operations with capabilities, you can also send messages thr
 
 Let's imagine a simple problem. We have N clients that needs resources shared by all the clients. We need something to manage the resources. So we'll use a kind of server to achieve that. So we can start with something really simple for the clients : 
 
-[java]op void request();
-
+```java
+op void request();
 op void resource(Resource);
-
 op void release(Resource);
-
 send request();
-
 receive resource(resource);
 
 //Use resources
-
 send release(resource);
-
-[/java]
+```
 
 That seems good, but there are some problems : 
 
-</p><ul>
-
+<ul>
 <li>How can the server distinguish the clients ? If it sends a message to resource any client can take it, we need a way to create a channel between one client and the server (also called private channels). For this we'll use a capability as a channel. </li>
-
 <li>If the server wait for request messages, it cannot wait for release messages and vice-versa. A solution is to have two process in the servers, but with that, you must synchronize the two process. A better solution is to create an operation that give informations about the type of request. </li>
-
 </ul>
 
 So here, is the new version of client : 
 
-[java]enum Type {REQUEST, RELEASE};
-
+```java
+enum Type {REQUEST, RELEASE};
 op void request(Type, cap void (Resource), Resource);
-
 cap void (Resource) channel = new op void (Resource);
 
 send request(Type.REQUEST, channel, null);
-
 Resource resource;
-
 receive channel(resource);
-
-send request(Type.RELEASE, noop, resoure); [/java]
+send request(Type.RELEASE, noop, resoure); 
+```
 
 and now the server : 
 
-[java]cap void (Resource) client;
+```java
+cap void (Resource) client;
 
 Type type;
-
 Resource resource;
 
-Queue&lt;Resource&gt; resources = new LinkedQueue&lt;Resource&gt;();
+Queue<Resource> resources = new LinkedQueue<Resource>();
 
 //Fill the queue of resources
 
-Queue&lt;cap void (int)&gt; clients = new LinkedQueue&lt;cap void int&gt;();
+Queue<cap void (int)> clients = new LinkedQueue<cap void int>();
 
 while(true){
 	receive request(type, client, resource);
@@ -140,10 +138,11 @@ while(true){
 			send clients.pop()(resource);
 		}	
 	}
-}[/java]
+}
+```
 
 Really easy no ? And that code can be distributed with only minor changes. And it works for any number of process your want. You will find the complete code of this problem joined to this post. 
 
 We have now covered the complete informations about Asynchronous Message Passing in JR. I hope you found that article interesting. The next post will be about the RendezVous in JR. RendezVous are a very powerful way to achieve synchronization also with message passing, but synchronous. 
 
-<a href="/wp-content/uploads/2010/07/ResourceAllocator.jr_.tar.gz">The complete source</a></body></html>
+<a href="/wp-content/uploads/2010/07/ResourceAllocator.jr_.tar.gz">The complete source</a>

@@ -1,10 +1,10 @@
-<html><body><p>Like I promised, I will restart to write articles now that the evaluation period is over. 
+Like I promised, I will restart to write articles now that the evaluation period is over. 
 
 After seeing <a href="http://www.baptiste-wicht.com/2010/01/jr-introduction/">how to develop using the JR programming language</a>, we'll see now how to use monitors in JR.
 
 Monitors provide a higher-level abstraction than semaphores and produce a better code with several advantages :
 
-</p><ul>
+<ul>
 	<li>All the synchronization code is centralized in one location and the users of this code doesn't need to know how it's implemented.</li>
 	<li>The code doesn't depends on the number of processes, it works for as much process as you want</li>
 	<li>You doesn't need to release something like a mutex, so you cannot forget to do it</li>
@@ -20,21 +20,26 @@ In JR, you doesn't have directly the possibility to create monitors, but there i
 
 All the keywords of the m2jr language start with _ (underscore). To declare a monitor, it's as easily as use the _monitor keyword : 
 
-[java]_monitor MonitorTest {
+```java
+_monitor MonitorTest {
     //...
-}[/java]
+}
+```
 
 To add methods to the monitor, you just have to create method prefixed with _proc : 
 
-[java]_monitor MonitorTest {
+```java
+_monitor MonitorTest {
     _proc void testA(){
         //Some code
     }
-}[/java]
+}
+```
 
 Only with that the mutual exclusion is guaranteed. Only one process is allowed into the monitor. If you want methods with a return type, you must use _return instead of return : 
 
-[java]_monitor MonitorTest {
+```java
+_monitor MonitorTest {
     _proc void testA(){
         //Some code
     }
@@ -42,25 +47,31 @@ Only with that the mutual exclusion is guaranteed. Only one process is allowed i
     _proc int testB(){
         _return 1;
     }
-}[/java]
+}
+```
 
 To declare condition variables, the keyword is _condvar. You don't have to initialize them, just declare them : 
 
-[java]_monitor MonitorTest {
+```java
+_monitor MonitorTest {
     _condvar condVar1;
     _condvar condVar2;
-}[/java]
+}
+```
 
 To use global variables, you must prefix them with _var : 
 
-[java]_monitor MonitorTest {
+```java
+_monitor MonitorTest {
     _var var1;
     _var var2;
-}[/java]
+}
+```
 
 And to make operations on condition variables, you have to use _signal and _wait methods inside a proc method : 
 
-[java]_monitor MonitorTest {
+```java
+_monitor MonitorTest {
     _condvar a;
     _condvar b;
 
@@ -69,7 +80,8 @@ And to make operations on condition variables, you have to use _signal and _wait
         //Some computations
         _signal(b);
     }
-}[/java]
+}
+```
 
 And you compile that to JR using the simple commmand : 
 
@@ -92,7 +104,8 @@ By default, m2jr make the compilation with SC, but you can configure it to use o
 
 The main differences, is that the SC create a <em>signal stealers</em> problem. You will quickly understand with an example. With what we know now, we can create a monitor to manage a bounded buffer : 
 
-[java]_monitor BoundedBuffer {
+```java
+_monitor BoundedBuffer {
     private static final int N = 5; //Size of the buffer
 
     _var String[] buffer = new String[N];
@@ -128,7 +141,8 @@ The main differences, is that the SC create a <em>signal stealers</em> problem. 
 
         _return result;
      }
-}[/java]
+}
+```
 
 A thing that some of you will certainly find weird is the loop around the wait operation. Is to avoid the signal stealers problem. If there were not while loop, imagine that situation in SC : 
 
@@ -143,7 +157,8 @@ To avoid that situation, you just have to wrap the wait in a while loop instead 
 
 With that monitor, we can easily solve the producer and consumer problem : 
 
-[java]public class ProducerConsumer {
+```java
+public class ProducerConsumer {
     private static final int N = 12; //Number of producers and consumers
 
     private static BoundedBuffer bb = new BoundedBuffer("Bounded Buffer monitor"); //The monitor
@@ -157,33 +172,23 @@ With that monitor, we can easily solve the producer and consumer problem :
     private static process Consumer((int i = 0; i &lt; N; i++)){
         System.out.println("Consumer" + i + " : " + bb.fetch());
     }
-}[/java]
+}
+```
 
 That will provide output like that : 
 
-<code>Consumer10 : Producer0
-
+<pre>Consumer10 : Producer0
 Consumer0 : Producer1
-
 Consumer1 : Producer2
-
 Consumer2 : Producer4
-
 Consumer3 : Producer5
-
 Consumer4 : Producer3
-
 Consumer8 : Producer7
-
 Consumer11 : Producer10
-
 Consumer6 : Producer8
-
 Consumer5 : Producer6
-
 Consumer7 : Producer11
-
-Consumer9 : Producer9</code>
+Consumer9 : Producer9</pre>
 
 So it works well. 
 
@@ -194,8 +199,9 @@ More than signal and wait operations, m2jr provide also others operations on con
 	<li>_empty : Test if the condition variable has any process waiting on it</li>
 	<li>_wait(condvar, int priority) : Enqueue the process with the given priority. If you use that, the queue is now managed as a priority queue. You cannot use both wait without priority and wait with priority on the same condition variable </li>
 	<li>_minrank : Return the min priority on the given condition variable. If the condition variable has no waiters, the returned given number doesn't seem anything. 
-</li></ul>
+</li>
+</ul>
 
 With all that stuff, you can create monitors to solve almost all concurrency problems like barber shop, philosopher dinner, kwai cross or a lot of others problem. 
 
-I hope you found that post interesting. The next post about JR will be about operations and capabilities. </body></html>
+I hope you found that post interesting. The next post about JR will be about operations and capabilities.

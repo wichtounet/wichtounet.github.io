@@ -133,124 +133,134 @@
     </small>
     <hr>
     <div class="e-content" itemprop="articleBody text">
-    <div><p></p><p>Now that we've seen <a href="http://www.baptiste-wicht.com/2010/05/develop-a-modular-application-implementation/">how to describe a module in Java</a>, we'll see how to load it dynamically in our application.</p>
+    <div><p>Now that we've seen <a href="http://www.baptiste-wicht.com/2010/05/develop-a-modular-application-implementation/">how to describe a module in Java</a>, we'll see how to load it dynamically in our application.</p>
 <p>In Java, all the classes are loaded using several ClassLoader.In this article, we'll develop a loader for our modules and watch the problems that arrive when working with custom ClassLoaders.</p>
 <!--more-->
 
 <p>Normally, Java use the system ClassLoader to load all the classes of our application. So it contains all the classes of our application and all the classes our application needs to work. But the problem is that we cannot add our modules jar files into classpath because the application doesn't know the modules jar files names.</p>
 <p>Moreover, we cannot theoretically add files to the system ClassLoader. I say theoretically because, we can add files using reflection and call to a private method, but i thing it's not a really good practice.</p>
 <p>So we've to create a new ClassLoader to load our modules. We'll do that in two phases :</p>
-<p></p><ol>
+<ol>
     <li>Browse the module files to get the classes of the modules and the URLs of the modules Jar files</li>
     <li>Load the modules into our ClassLoader using the URLs of the first phase</li>
 </ol>
+
 <p>We'll do all the loading in a new class ModularLoader. so let's create a create a method that return the list of classes to load :</p>
-<p>[java]public class ModuleLoader { 
-  private static List&lt;URL&gt; urls = new ArrayList&lt;URL&gt;(); </p>
-<p>private static List&lt;String&gt; getModuleClasses(){ 
-    List&lt;String&gt; classes = new ArrayList&lt;String&gt;(); </p>
-<div class="code"><pre><span class="c1">//Get all the modules of the modules folder</span>
-<span class="n">File</span><span class="p">[]</span> <span class="n">files</span> <span class="o">=</span> <span class="k">new</span> <span class="n">File</span><span class="p">(</span><span class="s">"folder"</span><span class="p">).</span><span class="n">listFiles</span><span class="p">(</span><span class="k">new</span> <span class="n">ModuleFilter</span><span class="p">());</span>
+<div class="code"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">ModuleLoader</span> <span class="o">{</span> 
+  <span class="kd">private</span> <span class="kd">static</span> <span class="n">List</span><span class="o">&amp;</span><span class="n">lt</span><span class="o">;</span><span class="n">URL</span><span class="o">&amp;</span><span class="n">gt</span><span class="o">;</span> <span class="n">urls</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ArrayList</span><span class="o">&amp;</span><span class="n">lt</span><span class="o">;</span><span class="n">URL</span><span class="o">&amp;</span><span class="n">gt</span><span class="o">;();</span> 
 
-<span class="k">for</span><span class="p">(</span><span class="n">File</span> <span class="n">f</span> <span class="o">:</span> <span class="n">files</span><span class="p">){</span> 
-  <span class="n">JarFile</span> <span class="n">jarFile</span> <span class="o">=</span> <span class="k">null</span><span class="p">;</span>
+  <span class="kd">private</span> <span class="kd">static</span> <span class="n">List</span><span class="o">&amp;</span><span class="n">lt</span><span class="o">;</span><span class="n">String</span><span class="o">&amp;</span><span class="n">gt</span><span class="o">;</span> <span class="n">getModuleClasses</span><span class="o">(){</span> 
+    <span class="n">List</span><span class="o">&amp;</span><span class="n">lt</span><span class="o">;</span><span class="n">String</span><span class="o">&amp;</span><span class="n">gt</span><span class="o">;</span> <span class="n">classes</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ArrayList</span><span class="o">&amp;</span><span class="n">lt</span><span class="o">;</span><span class="n">String</span><span class="o">&amp;</span><span class="n">gt</span><span class="o">;();</span> 
 
-  <span class="n">try</span> <span class="p">{</span> 
-    <span class="c1">//Open the Jar File</span>
-    <span class="n">jarFile</span> <span class="o">=</span> <span class="k">new</span> <span class="n">JarFile</span><span class="p">(</span><span class="n">f</span><span class="p">);</span>
+    <span class="c1">//Get all the modules of the modules folder</span>
+    <span class="n">File</span><span class="o">[]</span> <span class="n">files</span> <span class="o">=</span> <span class="k">new</span> <span class="n">File</span><span class="o">(</span><span class="s">"folder"</span><span class="o">).</span><span class="na">listFiles</span><span class="o">(</span><span class="k">new</span> <span class="n">ModuleFilter</span><span class="o">());</span> 
 
-    <span class="c1">//We get the manifest</span>
-    <span class="n">Manifest</span> <span class="n">manifest</span> <span class="o">=</span> <span class="n">jarFile</span><span class="p">.</span><span class="n">getManifest</span><span class="p">();</span>
+    <span class="k">for</span><span class="o">(</span><span class="n">File</span> <span class="n">f</span> <span class="o">:</span> <span class="n">files</span><span class="o">){</span> 
+      <span class="n">JarFile</span> <span class="n">jarFile</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span> 
 
-    <span class="c1">//We get the class name from the manifest attributes</span>
-    <span class="n">classes</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="n">manifest</span><span class="p">.</span><span class="n">getMainAttributes</span><span class="p">().</span><span class="n">getValue</span><span class="p">(</span><span class="s">"Module-Class"</span><span class="p">));</span>
+      <span class="k">try</span> <span class="o">{</span> 
+        <span class="c1">//Open the Jar File</span>
+        <span class="n">jarFile</span> <span class="o">=</span> <span class="k">new</span> <span class="n">JarFile</span><span class="o">(</span><span class="n">f</span><span class="o">);</span> 
 
-    <span class="n">urls</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="n">f</span><span class="p">.</span><span class="n">toURI</span><span class="p">().</span><span class="n">toURL</span><span class="p">());</span> 
-  <span class="p">}</span> <span class="n">catch</span> <span class="p">(</span><span class="n">IOException</span> <span class="n">e</span><span class="p">)</span> <span class="p">{</span> 
-    <span class="n">e</span><span class="p">.</span><span class="n">printStackTrace</span><span class="p">();</span> 
-  <span class="p">}</span> <span class="n">finally</span> <span class="p">{</span> 
-    <span class="k">if</span><span class="p">(</span><span class="n">jarFile</span> <span class="o">!=</span> <span class="k">null</span><span class="p">){</span> 
-      <span class="n">try</span> <span class="p">{</span> 
-        <span class="n">jarFile</span><span class="p">.</span><span class="n">close</span><span class="p">();</span> 
-      <span class="p">}</span> <span class="n">catch</span> <span class="p">(</span><span class="n">IOException</span> <span class="n">e</span><span class="p">)</span> <span class="p">{</span> 
-        <span class="n">e</span><span class="p">.</span><span class="n">printStackTrace</span><span class="p">();</span> 
-      <span class="p">}</span> 
-    <span class="p">}</span> 
-  <span class="p">}</span> 
-<span class="p">}</span>
+        <span class="c1">//We get the manifest</span>
+        <span class="n">Manifest</span> <span class="n">manifest</span> <span class="o">=</span> <span class="n">jarFile</span><span class="o">.</span><span class="na">getManifest</span><span class="o">();</span> 
 
-<span class="k">return</span> <span class="n">classes</span><span class="p">;</span>
+        <span class="c1">//We get the class name from the manifest attributes</span>
+        <span class="n">classes</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">manifest</span><span class="o">.</span><span class="na">getMainAttributes</span><span class="o">().</span><span class="na">getValue</span><span class="o">(</span><span class="s">"Module-Class"</span><span class="o">));</span> 
+
+        <span class="n">urls</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">f</span><span class="o">.</span><span class="na">toURI</span><span class="o">().</span><span class="na">toURL</span><span class="o">());</span> 
+      <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span> 
+        <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span> 
+      <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span> 
+        <span class="k">if</span><span class="o">(</span><span class="n">jarFile</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">){</span> 
+          <span class="k">try</span> <span class="o">{</span> 
+            <span class="n">jarFile</span><span class="o">.</span><span class="na">close</span><span class="o">();</span> 
+          <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span> 
+            <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span> 
+          <span class="o">}</span> 
+        <span class="o">}</span> 
+      <span class="o">}</span> 
+    <span class="o">}</span> 
+
+    <span class="k">return</span> <span class="n">classes</span><span class="o">;</span> 
+  <span class="o">}</span> 
+
+  <span class="kd">private</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">ModuleFilter</span> <span class="kd">implements</span> <span class="n">FileFilter</span> <span class="o">{</span> 
+    <span class="nd">@Override</span> 
+    <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">accept</span><span class="o">(</span><span class="n">File</span> <span class="n">file</span><span class="o">)</span> <span class="o">{</span> 
+      <span class="k">return</span> <span class="n">file</span><span class="o">.</span><span class="na">isFile</span><span class="o">()</span> <span class="o">&amp;</span><span class="n">amp</span><span class="o">;&amp;</span><span class="n">amp</span><span class="o">;</span> <span class="n">file</span><span class="o">.</span><span class="na">getName</span><span class="o">().</span><span class="na">toLowerCase</span><span class="o">().</span><span class="na">endsWith</span><span class="o">(</span><span class="s">".jar"</span><span class="o">);</span> 
+    <span class="o">}</span> 
+  <span class="o">}</span> 
+<span class="o">}</span>
 </pre></div>
 
 
-<p>} </p>
-<p>private static class ModuleFilter implements FileFilter { 
-    @Override 
-    public boolean accept(File file) { 
-      return file.isFile() &amp;&amp; file.getName().toLowerCase().endsWith(".jar"); 
-    } 
-  } 
-}[/java]</p>
 <p>Like you see, it's not complicated at all. We search all the module files and then for each jar file, we open it, get the manifest et read the class name of the module. And then, for the second phase, we get the URL to the Jar file. </p>
 <p>Of course, this loader is not perfect. We can have modules with no manifest or manifest with no class name and the errors must be correctly treated, but this is not the objective of this post to be perfect. </p>
 <p>Now we can do the second phase, adding a method to create the ClassLoader, instantiate the modules and return them : </p>
-<p>[java]private static ClassLoader classLoader; </p>
-<p>public static List&lt;IModule&gt; loadModules(){ 
-  List&lt;IModule&gt; modules = new ArrayList&lt;IModule&gt;(); </p>
-<p>AccessController.doPrivileged(new PrivilegedAction&lt;Object&gt;(){ 
-    @Override 
-    public Object run() { 
-      classLoader = new URLClassLoader( 
-          urls.toArray(new URL[urls.size()]),<br>
-          ModuleLoader.class.getClassLoader()); </p>
-<div class="code"><pre>  <span class="k">return</span> <span class="n">null</span><span class="p">;</span> 
-<span class="p">}</span>
+<div class="code"><pre><span class="kd">private</span> <span class="kd">static</span> <span class="n">ClassLoader</span> <span class="n">classLoader</span><span class="o">;</span> 
+
+<span class="kd">public</span> <span class="kd">static</span> <span class="n">List</span><span class="o">&amp;</span><span class="n">lt</span><span class="o">;</span><span class="n">IModule</span><span class="o">&amp;</span><span class="n">gt</span><span class="o">;</span> <span class="n">loadModules</span><span class="o">(){</span> 
+  <span class="n">List</span><span class="o">&amp;</span><span class="n">lt</span><span class="o">;</span><span class="n">IModule</span><span class="o">&amp;</span><span class="n">gt</span><span class="o">;</span> <span class="n">modules</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ArrayList</span><span class="o">&amp;</span><span class="n">lt</span><span class="o">;</span><span class="n">IModule</span><span class="o">&amp;</span><span class="n">gt</span><span class="o">;();</span> 
+
+  <span class="n">AccessController</span><span class="o">.</span><span class="na">doPrivileged</span><span class="o">(</span><span class="k">new</span> <span class="n">PrivilegedAction</span><span class="o">&amp;</span><span class="n">lt</span><span class="o">;</span><span class="n">Object</span><span class="o">&amp;</span><span class="n">gt</span><span class="o">;(){</span> 
+    <span class="nd">@Override</span> 
+    <span class="kd">public</span> <span class="n">Object</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span> 
+      <span class="n">classLoader</span> <span class="o">=</span> <span class="k">new</span> <span class="n">URLClassLoader</span><span class="o">(</span> 
+          <span class="n">urls</span><span class="o">.</span><span class="na">toArray</span><span class="o">(</span><span class="k">new</span> <span class="n">URL</span><span class="o">[</span><span class="n">urls</span><span class="o">.</span><span class="na">size</span><span class="o">()]),</span>  
+          <span class="n">ModuleLoader</span><span class="o">.</span><span class="na">class</span><span class="o">.</span><span class="na">getClassLoader</span><span class="o">());</span> 
+
+      <span class="k">return</span> <span class="kc">null</span><span class="o">;</span> 
+    <span class="o">}</span> 
+  <span class="o">});</span> 
+
+  <span class="c1">//Load all the modules</span>
+  <span class="k">for</span><span class="o">(</span><span class="n">String</span> <span class="n">c</span> <span class="o">:</span> <span class="n">getModuleClasses</span><span class="o">()){</span> 
+    <span class="k">try</span> <span class="o">{</span> 
+      <span class="n">Class</span><span class="o">&amp;</span><span class="n">lt</span><span class="o">;?&amp;</span><span class="n">gt</span><span class="o">;</span> <span class="n">moduleClass</span> <span class="o">=</span> <span class="n">Class</span><span class="o">.</span><span class="na">forName</span><span class="o">(</span><span class="n">c</span><span class="o">,</span> <span class="kc">true</span><span class="o">,</span> <span class="n">classLoader</span><span class="o">);</span> 
+
+      <span class="k">if</span><span class="o">(</span><span class="n">IModule</span><span class="o">.</span><span class="na">class</span><span class="o">.</span><span class="na">isAssignableFrom</span><span class="o">(</span><span class="n">moduleClass</span><span class="o">)){</span> 
+        <span class="n">Class</span><span class="o">&amp;</span><span class="n">lt</span><span class="o">;</span><span class="n">IModule</span><span class="o">&amp;</span><span class="n">gt</span><span class="o">;</span> <span class="n">castedClass</span> <span class="o">=</span> <span class="o">(</span><span class="n">Class</span><span class="o">&amp;</span><span class="n">lt</span><span class="o">;</span><span class="n">IModule</span><span class="o">&amp;</span><span class="n">gt</span><span class="o">;)</span> <span class="n">moduleClass</span><span class="o">;</span> 
+
+        <span class="n">IModule</span> <span class="n">module</span> <span class="o">=</span> <span class="n">castedClass</span><span class="o">.</span><span class="na">newInstance</span><span class="o">();</span> 
+
+        <span class="n">modules</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">module</span><span class="o">);</span> 
+      <span class="o">}</span>  
+    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">ClassNotFoundException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span> 
+      <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span> 
+    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">InstantiationException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span> 
+      <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span> 
+    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IllegalAccessException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span> 
+      <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span> 
+    <span class="o">}</span> 
+  <span class="o">}</span> 
+
+  <span class="k">return</span> <span class="n">modules</span><span class="o">;</span> 
+<span class="o">}</span>
 </pre></div>
 
 
-<p>}); </p>
-<p>//Load all the modules
-  for(String c : getModuleClasses()){ 
-    try { 
-      Class&lt;?&gt; moduleClass = Class.forName(c, true, classLoader); </p>
-<div class="code"><pre>  <span class="k">if</span><span class="p">(</span><span class="n">IModule</span><span class="p">.</span><span class="n">class</span><span class="p">.</span><span class="n">isAssignableFrom</span><span class="p">(</span><span class="n">moduleClass</span><span class="p">)){</span> 
-    <span class="n">Class</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">IModule</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="n">castedClass</span> <span class="o">=</span> <span class="p">(</span><span class="n">Class</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">IModule</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;)</span> <span class="n">moduleClass</span><span class="p">;</span>
-
-    <span class="n">IModule</span> <span class="n">module</span> <span class="o">=</span> <span class="n">castedClass</span><span class="p">.</span><span class="n">newInstance</span><span class="p">();</span>
-
-    <span class="n">modules</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="n">module</span><span class="p">);</span> 
-  <span class="p">}</span>  
-<span class="p">}</span> <span class="n">catch</span> <span class="p">(</span><span class="n">ClassNotFoundException</span> <span class="n">e</span><span class="p">)</span> <span class="p">{</span> 
-  <span class="n">e</span><span class="p">.</span><span class="n">printStackTrace</span><span class="p">();</span> 
-<span class="p">}</span> <span class="n">catch</span> <span class="p">(</span><span class="n">InstantiationException</span> <span class="n">e</span><span class="p">)</span> <span class="p">{</span> 
-  <span class="n">e</span><span class="p">.</span><span class="n">printStackTrace</span><span class="p">();</span> 
-<span class="p">}</span> <span class="n">catch</span> <span class="p">(</span><span class="n">IllegalAccessException</span> <span class="n">e</span><span class="p">)</span> <span class="p">{</span> 
-  <span class="n">e</span><span class="p">.</span><span class="n">printStackTrace</span><span class="p">();</span> 
-<span class="p">}</span>
-</pre></div>
-
-
-<p>} </p>
-<p>return modules; 
-}[/java]</p>
 <p>So we start creating a new ClassLoader taking the urls of the Jar files. Then, we use this ClassLoader to load all the module classes and instantiate them. We only verify if the class is of type IModule. </p>
 <p>This is all for our ModuleLoader. We can now test our simple modular application. We create a JAR file for the module of the previous post and then we create a very simple application to test that : </p>
-<p>[java]List&lt;IModule&gt; modules = ModuleLoader.loadModules(); </p>
-<p>for(IModule module : modules){ 
-  System.out.println("Plug : " + module.getName()); 
-  module.plug(); 
-} </p>
-<p>System.out.println("Lot of other things done by the application. "); </p>
-<p>for(IModule module : modules){ 
-  module.unplug(); 
-}[/java]</p>
+<div class="code"><pre><span class="n">List</span><span class="o">&amp;</span><span class="n">lt</span><span class="o">;</span><span class="n">IModule</span><span class="o">&amp;</span><span class="n">gt</span><span class="o">;</span> <span class="n">modules</span> <span class="o">=</span> <span class="n">ModuleLoader</span><span class="o">.</span><span class="na">loadModules</span><span class="o">();</span> 
+
+<span class="k">for</span><span class="o">(</span><span class="n">IModule</span> <span class="n">module</span> <span class="o">:</span> <span class="n">modules</span><span class="o">){</span> 
+  <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Plug : "</span> <span class="o">+</span> <span class="n">module</span><span class="o">.</span><span class="na">getName</span><span class="o">());</span> 
+  <span class="n">module</span><span class="o">.</span><span class="na">plug</span><span class="o">();</span> 
+<span class="o">}</span> 
+
+<span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Lot of other things done by the application. "</span><span class="o">);</span> 
+
+<span class="k">for</span><span class="o">(</span><span class="n">IModule</span> <span class="n">module</span> <span class="o">:</span> <span class="n">modules</span><span class="o">){</span> 
+  <span class="n">module</span><span class="o">.</span><span class="na">unplug</span><span class="o">();</span> 
+<span class="o">}</span>
+</pre></div>
+
+
 <p>And here is the output of the application : </p>
 <pre>Plug : Simple module
-
 Hello kernel !
-
 Lot of other things done by the application. 
-
 Bye kernel !</pre>
 
 <p>Like you can see, we just created a modular applications ! The application doesn't know the modules, but the modules can do things in the application. </p>
@@ -261,7 +271,7 @@ Bye kernel !</pre>
     <li>Using a second ClassLoader may be problematic with libraries loading dynamically the classes like Spring or Hibernate. To make these libraries working with your ClassLoader, you have to look at case by case depending on the library. Often, you achieve specifying the contextClassLoader using the method  Thread.currentThread().setContextClassLoader(ClassLoader cl) with your ClassLoader</li>
 </ul>
 
-<p>So here is the end of this four posts about creating a modular application. I hope you find these posts interesting. </p></div>
+<p>So here is the end of this four posts about creating a modular application. I hope you find these posts interesting.</p></div>
     </div>
     </div>
     

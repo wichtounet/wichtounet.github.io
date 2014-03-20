@@ -1,4 +1,5 @@
-<html><body><h3>1. Introduction</h3>
+<h3>1. Introduction</h3>
+
 The mock objects allows to make unit tests on objects depending on other objects. We will replace this dependencies with mock objects. With that, we can by example verify than the method xyzzy() has been called 5 times and returned 33. That can be practical in a several cases. By exampe, if the object to mock is slow or undeterministic (depending on time, or why not on the weather). This objects are really difficult to test because we can make a lot of tests but we could never find the special cases. Test cases with mock objects enable us to test this cases.
 
 <!--more-->
@@ -7,18 +8,21 @@ There is several tools to make mock objects. In this article, we will use EasyMo
 
 Here is the interface to test :
 
-[java]public interface ISimpleDao {
+```java
+public interface ISimpleDao {
 	void save(String title);
 	void remove(String title) throws NotExistingException;
 	int count();
 	void debug();
 	boolean isValid(String title);
 	void insert(String title);
-}[/java]
+}
+```
 
 And here is our class to test :
 
-[java]public class SimpleService {
+```java
+public class SimpleService {
 	private ISimpleDao dao;
 
 	public void setDao(ISimpleDao dao){
@@ -55,7 +59,8 @@ And here is our class to test :
 		System.out.println("Debug informations of SimpleService");
 		dao.debug();
 	}
-[/java]
+
+```
 
 Our mock will implement the ISimpleDao interface and we will give it to SimpleService who's the class to test. This example is really simplistic, but it will be enough to cover the main features of EasyMock.
 
@@ -65,12 +70,11 @@ Our mock will implement the ISimpleDao interface and we will give it to SimpleSe
 
 Here is the structure i will use in this article :
 
-[java]import org.junit.Before;
+```java
+import org.junit.Before;
 
 import org.junit.Test;
-
 import static org.junit.Assert.*;
-
 import static org.easymock.EasyMock.*;
 
 public class SimpleServiceTest {
@@ -103,16 +107,16 @@ public class SimpleServiceTest {
 
     @Test
     public void debug(){}
-}[/java]
+}
+```
 
 First of all, we'll start with create a mock object. For that, we've to use the EasyMock class and its method createMock, with the interface in parameter. To improve code readability, we use a static import like what we do in general with JUnit.
 
-[java]import org.junit.Before;
+```java
+import org.junit.Before;
 
 import org.junit.Test;
-
 import static org.junit.Assert.*;
-
 import static org.easymock.EasyMock.*;
 
 public class SimpleServiceTest {
@@ -126,7 +130,8 @@ public class SimpleServiceTest {
         simpleService = new SimpleService();
         simpleService.setDao(simpleDaoMock);
     }
-}[/java]
+}
+```
 
 This will create a mock objet implementing ISimpleDao interface. The first thing we can do with EasyMock is verify than a method has been called. EasyMock works like a recorder :
 
@@ -139,17 +144,15 @@ This will create a mock objet implementing ISimpleDao interface. The first thing
 
 So, we'll test to start that the debug() method of SimpleService call the debug() method of our Dao :
 
-[java]@Test
-
+```java
+@Test
 public void debug(){
     simpleDaoMock.debug();
-
     replay(simpleDaoMock);
-
     simpleService.debug();
-
     verify(simpleDaoMock);
-}[/java]
+}
+```
 
 The replay method enable to save the record and the verify method compare the two records are equals. If not equals, the verify method will launch AssertionError. If you launch the written test, it will executes fines, but if we comment the dao.debug() statement in SimpleSerivce, the test will fail :
 
@@ -190,17 +193,15 @@ So, EasyMock has detected that the method has not bee called and the test fails.
 
 We will now work with methods returning values. In this case, we've to define a return behaviour. To do that, we must use the expect() method to encapsulate the call and the andReturn() method to specify a return value. Here is how we can test the size() method :
 
-[java]@Test
-
+```java
+@Test
 public void size(){
     expect(simpleDaoMock.count()).andReturn(32);
-
     replay(simpleDaoMock);
-
     assertEquals(32, simpleService.size());
-
     verify(simpleDaoMock);
-}[/java]
+}
+```
 
 With that, we make two tests, we verify that the count method has been called and that size() return the same value as count(). That is the case if we launch the test. We can see that it's really simple to specify a return value for a mocked method.
 
@@ -208,31 +209,24 @@ With that, we make two tests, we verify that the count method has been called an
 
 EasyMock can also work with exceptions. We can use again the expect() method, but this times we will use the andThrow method to specify the throwed exception. Here is what we can do with the remove() method test with and without exception :
 
-[java]@Test
-
+```java
+@Test
 public void removeWithoutException() throws NotExistingException {
     simpleDaoMock.remove("Mary");
-
     replay(simpleDaoMock);
-
     assertTrue(simpleService.remove("Mary"));
-
     verify(simpleDaoMock);
 }
 
 @Test
-
 public void removeWithException() throws NotExistingException {
     simpleDaoMock.remove("Arthur");
-
     expectLastCall().andThrow(new NotExistingException());
-
     replay(simpleDaoMock);
-
     assertFalse(simpleService.remove("Arthur"));
-
     verify(simpleDaoMock);
-}[/java]
+}
+```
 
 Once again, only one method call is enough to specify a behaviour. I think it's here that we can see the power of mocks objects.
 
@@ -244,8 +238,8 @@ Once again, only one method call is enough to specify a behaviour. I think it's 
 
 Now we can test the save() method :
 
-[java]@Test
-
+```java
+@Test
 public void save(){
     simpleDaoMock.save("xyzzy");
     simpleDaoMock.save("xyzzy");
@@ -258,12 +252,13 @@ public void save(){
     simpleService.save("xyzzy", "xyzzy", "xyzzy", "xyzzy", "xyzzy");
 
     verify(simpleDaoMock);
-}[/java]
+}
+```
 
 This kind of code is really heavy to write with a high number of calls. We have two solutions. We can do a loop for all the calls or use the times() method of EasyMock :
 
-[java]@Test
-
+```java
+@Test
 public void save(){
     simpleDaoMock.save("xyzzy");
 
@@ -274,7 +269,8 @@ public void save(){
     simpleService.save("xyzzy", "xyzzy", "xyzzy", "xyzzy", "xyzzy");
 
     verify(simpleDaoMock);
-}[/java]
+}
+```
 
 A lot clearer, no ? It's also possible to specify that a method must called any times with the anyTimes() method and an interval of times with the times(min,max) method.
 
@@ -282,31 +278,24 @@ A lot clearer, no ? It's also possible to specify that a method must called any 
 
 We will now test the insert() method :
 
-[java]@Test
-
+```java
+@Test
 public void insertValid(){
     expect(simpleDaoMock.isValid("Arthur")).andReturn(true);
-
     simpleDaoMock.insert("Arthur");
-
     replay(simpleDaoMock);
-
     simpleService.insert("Arthur");
-
     verify(simpleDaoMock);
 }
 
 @Test
-
 public void insertNotValid(){
     expect(simpleDaoMock.isValid("Arthur")).andReturn(false);
-
     replay(simpleDaoMock);
-
     simpleService.insert("Arthur");
-
     verify(simpleDaoMock);
-}[/java]
+}
+```
 
 You're going to say that we've already seen all that stuff. But in that kind of case, it could be interesting to verify that the calls are in the good order. Indeed, if the method isValid() is called after the insert, that's really useful. With EasyMock, there is two ways to verify calls order. First, you can use the createStrictMock insted of createMock to create your mock or you can use the checkOrder(mock, true) method to specify that the mock is strict. A strict mock is simply a mock who cares about the order of the calls. So we can keep all our tests in the current state and just use one of this two methods and the order will be checked. Of course, we can verify the order only in certain tests methods. That can be done using checkOrder(mock, true) at the start of the test method.
 
@@ -314,11 +303,15 @@ You're going to say that we've already seen all that stuff. But in that kind of 
 
 EasyMock has an extension to mock classes and not interfaces. It's EasyMock Class Extesion. All the use is the same, we just have to use this import :
 
-[java]import static org.easymock.classextension.EasyMock.*;[/java]
+```java
+import static org.easymock.classextension.EasyMock.*;
+```
 
 Moreover, we can also make a partial mocking with by example only one method :
 
-[java]Mocked mock = createMockBuilder(Mocked.class).addMockedMethod("mockedMethod").createMock();[/java]
+```java
+Mocked mock = createMockBuilder(Mocked.class).addMockedMethod("mockedMethod").createMock();
+```
 
 Keep in mind that the final classes are not supported and that the final methods are not mocked.
 
@@ -328,4 +321,4 @@ Keep in mind that the final classes are not supported and that the final methods
 
 So, we have seen all the features of EasyMock to create mock objects for unit tests. Like you've seen, it's a really simple but powerful way to verify the behaviour of an object depending on an other. There are others libraries for mock objects like JMock, JMockit or Mockito, but personally, i think EasyMock is most comfortable to use and give all the features i need to make my own unit tests. That's why i choose this library to make this article.
 
-I hope this article has interested you. Don't hesitate to comment it ;)</body></html>
+I hope this article has interested you. Don't hesitate to comment it ;)

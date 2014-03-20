@@ -1,4 +1,4 @@
-<html><body><p>In Java 7 we'll see a new API to manipulate file paths. This is part of the NIO.2 API.
+In Java 7 we'll see a new API to manipulate file paths. This is part of the NIO.2 API.
 
 Instead of using the class <strong>java.io.File</strong> to manipulate a file of the file system of the computer we will now use the <strong>java.nio.file.Path</strong> class to manipulate a file in any file system (<strong>FileSystem</strong>). This <strong>FileSystem </strong>can use any storage place (<strong>FileStorage</strong>). To support several implementations, this new API is based on factories. With that, you doesn't have to care about the real implementation.
 
@@ -6,15 +6,21 @@ Instead of using the class <strong>java.io.File</strong> to manipulate a file of
 
 A little example to start : In Java &lt; 7, you do that :
 
-[java]File file = new File("index.html");[/java]
+```java
+File file = new File("index.html");
+```
 
 and with Java 7, you can do that :
 
-[java]Path path = Paths.get("index.html");[/java]
+```java
+Path path = Paths.get("index.html");
+```
 
 To make the migration easier, the File class has a new method toPath() that allows you to transform File to Path :
 
-[java]Path path = new File("index.html").toPath();[/java]
+```java
+Path path = new File("index.html").toPath();
+```
 
 But, it's only useful for migration purpose, we will not use that normally.
 
@@ -26,26 +32,30 @@ If we look at the methods of this new class, we can see that we have almost the 
 
 Now we can have the cause of the Exception, that's far better. Here is a little example to delete a file using File :
 
-[java]if (!file.delete()){
+```java
+if (!file.delete()){
     //What happens ?
-}[/java]
+}
+```
 
 and now using Path :
 
-[java]try {      
+```java
+try {      
     path.delete();    
 } catch (IOException e) {
     // We can know the cause and have a good reaction
-}[/java]
+}
+```
 
 An other enormous difference is the access to the attributes of the denoted file. In the old style, we have only access to the properties available in all the operating system. Now with views we can access the basic views, existing for all the operating systems and more specific views (DOS and POSIX) for properties available only in certain operating systems.
 
 Here is a little example to get the basic attributes of a Path :
 
-[java]BasicFileAttributeView basicView = path.getFileAttributeView(BasicFileAttributeView.class, LinkOption.NOFOLLOW_LINKS); 
+```java
+BasicFileAttributeView basicView = path.getFileAttributeView(BasicFileAttributeView.class, LinkOption.NOFOLLOW_LINKS); 
 
 //This attribute view is perhaps not available in this system
-
 if (basicView != null) {
     BasicFileAttributes basic = basicView.readAttributes(); //Get the attributes of the view
 
@@ -57,12 +67,12 @@ if (basicView != null) {
     System.out.println("Path refers to a file last accessed at : " + basic.lastAccessTime());
     System.out.println("Path refers to a file last modified at  : " + basic.lastModifiedTime());
 }
-
-[/java]
+```
 
 This methods can return null if the attribute is not supported. We can also do that for the DOS attributes :
 
-[java]DosFileAttributeView dosView = path.getFileAttributeView(DosFileAttributeView.class); 
+```java
+DosFileAttributeView dosView = path.getFileAttributeView(DosFileAttributeView.class); 
 
 //This attribute view is perhaps not available in this system
 
@@ -74,8 +84,7 @@ if (dosView != null) {
     System.out.println("Path refers to a system file: " + dos .isSystem());
     System.out.println("Path refers to an archive file : " + dos .isArchive());
 }
-
-[/java]
+```
 
 You're really lucky if that works in Unix ;)
 
@@ -83,13 +92,16 @@ All the DOS and POSIX implementations extends the Basic view, so you can access 
 
 To make easier, there is also static methods in the Attributes class to access the attributes. By example :
 
-[java]BasicFileAttributes basic = Attributes.readBasicFileAttributes(path);[/java]
+```java
+BasicFileAttributes basic = Attributes.readBasicFileAttributes(path);
+```
 
 In the other functionalities, we can note that this new API supports symbolic links (only if the system supports them, of course). Next, the Path class has also flows factories methods like newInputStream() or newByteChannel() to easily create streams to or from the Path. That's also an advantage because the system can choose the good stream implementations to open depending on the system specifications.
 
 An other facility offered by Path, is stream on directories. It seems that you can iterate through a directory with an iterator. That's better than File.listFiles() because not all the File are loaded in memory and that's also a bit clearer in code :
 
-[java]DirectoryStream directory = path.newDirectoryStream(); 
+```java
+DirectoryStream directory = path.newDirectoryStream(); 
 
 try {
     for (Path p : directory) {
@@ -97,11 +109,13 @@ try {
     }
 } finally {
     directory.close();
-}[/java]
+}
+```
 
 And last, but not least, you can now watch for modifications in a directory with WatchService :
 
-[java]WatchService watcher = path.getFileSystem().newWatchService(); 
+```java
+WatchService watcher = path.getFileSystem().newWatchService(); 
 
 path.register(watcher,
       StandardWatchEventKind.ENTRY_CREATE,
@@ -116,10 +130,11 @@ while (true) {
     } 
 
     watchKey .reset();
-}[/java]
+}
+```
 
 That will use the services offered by the operating system (Notification, inotify, FSEvents). This is really easier than writing native code to do that, isn't it ?
 
 Here we are. We've covered the main functionalities of the new Path API in Java 7.
 
-I hope you find this article interesting and that helped you discovering the new features of Java 7.</p></body></html>
+I hope you find this article interesting and that helped you discovering the new features of Java 7.

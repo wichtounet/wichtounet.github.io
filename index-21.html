@@ -129,9 +129,10 @@
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><p>I was looking for a Test Library to run eddic tests in parallel to replace Boost Test Library. I posted my question on StackOverflow and an awesome solution has been posted. With CMake and a little CMake additional file, it is possible to run the tests written with Boost Test Library in parallel without changing anything in the tests code !</p>
+        <div><p>I was looking for a Test Library to run eddic tests in parallel to replace Boost Test Library. I posted my question on StackOverflow and an awesome solution has been posted. With CMake and a little CMake additional file, it is possible to run the tests written with Boost Test Library in parallel without changing anything in the tests code !</p>
 <p>CTest is the test runner that is shipped with CMake. This runner can run tests in parallel using the -j X option (X is the numbers of threads). However, it can only run the tests that are declared in the CMakeLists.txt file. In my case, this means only one (the executable with Boost Test Library). If you have T tests, a solution would be create T executable files. Then, they can be run in parallel by ctest. However, this is not very practical. The solution proposed in this article is better. </p>
-<p></p><h3>Integrate Boost Test Library in CMake</h3>
+<h3>Integrate Boost Test Library in CMake</h3>
+
 <p>Ryan Pavlik provides a series of CMake modules in its Github repository. One of this module is named BoostTestTargets. It automatically generates the CTest commands to run all the tests that you have. The small drawback is that you to list all the tests. </p>
 <p>To start, you have to download these files: </p>
 <ul>
@@ -144,15 +145,19 @@
 </ul>
 
 <p>These files must be placed next to your CMakeLists.txt file. Then, you have to modify your CMakeLists.txt file to enable testing and enable the new module. For example, if you have two test suites and five tests in each:  </p>
-<p>[code]INCLUDE(CTest)</p>
-<p>ENABLE_TESTING()</p>
-<p>file(
+<pre>INCLUDE(CTest)
+
+ENABLE_TESTING()
+
+file(
     GLOB_RECURSE
     test_files
     test/*
-)</p>
-<p>include(BoostTestTargets.cmake)</p>
-<p>add_boost_test(eddic_boost_test
+)
+
+include(BoostTestTargets.cmake)
+
+add_boost_test(eddic_boost_test
     SOURCES ${test_files}
     TESTS 
     TestSuiteA/test_1
@@ -165,25 +170,30 @@
     TestSuiteB/test_3
     TestSuiteB/test_4
     TestSuiteB/test_5
-    )[/code]</p>
+    )</pre>
+
 <p>All the test files are searched in the test directory and used in the SOURCES variable. Then all the tests are declared. </p>
 <p>The main test file has to include a specific header file:</p>
-<p>[cpp]#define BOOST_TEST_MODULE eddic_test_suite</p>
-<h2>include &lt;BoostTestTargetConfig.h&gt;[/cpp]</h2>
+<div class="code"><pre><span class="cp">#define BOOST_TEST_MODULE eddic_test_suite</span>
+<span class="cp">#include &lt;BoostTestTargetConfig.h&gt;</span>
+</pre></div>
+
+
 <p>This file will be automatically detected by BoostTestTargets and configured correctly. And that's it !</p>
 <p>You can run CMake again in your build directory to use the new test system: </p>
 <p>[bash]cmake .[/bash]</p>
 <p>If the configuration has been successful, you will see a message indicating that. For example, I see that: </p>
-<p>[bash]-- Test 'eddic_boost_test' uses the CMake-configurable form of the boost test framework - congrats! (Including File: /home/wichtounet/dev/eddi/eddic/test/IntegrationTests.cpp)</p>
-<p>-- Configuring done</p>
-<p>-- Generating done</p>
-<p>-- Build files have been written to: /tmp/ramdrive/dev/eddic[/bash]</p>
+<pre>-- Test 'eddic_boost_test' uses the CMake-configurable form of the boost test framework - congrats! (Including File: /home/wichtounet/dev/eddi/eddic/test/IntegrationTests.cpp)
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /tmp/ramdrive/dev/eddic</pre>
+
 <h3>Run tests in parallel</h3>
 
 <p>You can then run your tests in parallel with ctest. For instance, with 9 threads: </p>
 <p>[bash]ctest -j 8[/bash]</p>
 <p>In my case, my tests are completed 6x faster ! This is very valuable when you often run your tests. </p>
-<p>For more information on how to integrate your Boost Test Library tests with CMake, you can consult the <a href="https://github.com/rpavlik/cmake-modules/" title="cmake-modules Github repository">The cmake-modules repository</a>. </p></div>
+<p>For more information on how to integrate your Boost Test Library tests with CMake, you can consult the <a href="https://github.com/rpavlik/cmake-modules/" title="cmake-modules Github repository">The cmake-modules repository</a></p></div>
         </div>
             
         
@@ -199,25 +209,30 @@
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><p>Everyone who compiles Latex documents by hand knows that it is not a panacea. You have to compile the file several times to handle the references. Moreover, if you have a glossary or an index, you have to run others commands between Latex commands so that everything is correctly resolved. The better way to handle Latex compilation is to write a MakeFile compiling each part. However, writing a Latex MakeFile by hand is not easy and especially not interesting. </p>
+        <div><p>Everyone who compiles Latex documents by hand knows that it is not a panacea. You have to compile the file several times to handle the references. Moreover, if you have a glossary or an index, you have to run others commands between Latex commands so that everything is correctly resolved. The better way to handle Latex compilation is to write a MakeFile compiling each part. However, writing a Latex MakeFile by hand is not easy and especially not interesting. </p>
 <p>Using CMake for most of my development projects, I tried to find a CMake script to generates a MakeFile easily. I did found a good script for that, but I wanted to add some features and change some things, so I forked it to Github: <a href="https://github.com/wichtounet/CMakeLatex" title="CMakeLatex Github repository">The CMakeLatex repository</a>. </p>
-<p></p><h3>Usage</h3>
+<h3>Usage</h3>
+
 <p>Here is an example using all the features of the script for one of my Latex documents. </p>
-<p>[bash]PROJECT(master_project NONE)</p>
-<p>cmake_minimum_required(VERSION 2.8)</p>
-<p>SET(LATEX_OUTPUT_PATH build)</p>
-<p>INCLUDE(UseLATEX.cmake)</p>
-<p>file(GLOB_RECURSE contents_files RELATIVE ${CMAKE_SOURCE_DIR} contents/*.tex)</p>
-<p>ADD_LATEX_DOCUMENT(
-    master.tex
-    INPUTS ${contents_files}
-    IMAGE_DIRS images
-    BIBFILES bibliography.bib
-    USE_INDEX
-    USE_GLOSSARY
-    FILTER_OUTPUT
-    )
-[/bash]</p>
+<div class="code"><pre><span class="nb">PROJECT</span><span class="p">(</span><span class="s">master_project</span> <span class="s">NONE</span><span class="p">)</span>
+<span class="nb">cmake_minimum_required</span><span class="p">(</span><span class="s">VERSION</span> <span class="s">2.8</span><span class="p">)</span>
+<span class="nb">SET</span><span class="p">(</span><span class="s">LATEX_OUTPUT_PATH</span> <span class="s">build</span><span class="p">)</span>
+<span class="nb">INCLUDE</span><span class="p">(</span><span class="s">UseLATEX.cmake</span><span class="p">)</span>
+
+<span class="nb">file</span><span class="p">(</span><span class="s">GLOB_RECURSE</span> <span class="s">contents_files</span> <span class="s">RELATIVE</span> <span class="o">${</span><span class="nv">CMAKE_SOURCE_DIR</span><span class="o">}</span> <span class="s">contents/*.tex</span><span class="p">)</span>
+
+<span class="nb">ADD_LATEX_DOCUMENT</span><span class="p">(</span>
+    <span class="s">master.tex</span>
+    <span class="s">INPUTS</span> <span class="o">${</span><span class="nv">contents_files</span><span class="o">}</span>
+    <span class="s">IMAGE_DIRS</span> <span class="s">images</span>
+    <span class="s">BIBFILES</span> <span class="s">bibliography.bib</span>
+    <span class="s">USE_INDEX</span>
+    <span class="s">USE_GLOSSARY</span>
+    <span class="s">FILTER_OUTPUT</span>
+    <span class="p">)</span>
+</pre></div>
+
+
 <p>To use it, you have to download the files of the repository and put them aside your Latex files (or just make symlinks to the files in a clone of the repository for easy update). Then, the <em>UseLATEX.cmake</em> file has to be included in your CMakeLists.txt file. </p>
 <p>I think that it is a good practice to generates the Latex files in another directory. This directory can be set using the <em>LATEX_OUTPUT_PATH</em> variable. </p>
 <p>Then, to add a latex document, you can use the <em>ADD_LATEX_DOCUMENT</em> function. The first parameter is the name of the main Latex file. After that, you have to give several parameters: </p>
@@ -254,30 +269,34 @@
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><p>On Linux, it is possible to create <strong>links to existing file</strong>. These links can be either <strong>symbolic links</strong> or <strong>hard links</strong>. Each of them having advantages and drawbacks. In this small post, we will see the differences between the two kinds of links and how to use them.
-</p><h3>Hard Link</h3>
+        <div><p>On Linux, it is possible to create <strong>links to existing file</strong>. These links can be either <strong>symbolic links</strong> or <strong>hard links</strong>. Each of them having advantages and drawbacks. In this small post, we will see the differences between the two kinds of links and how to use them.</p>
+<h3>Hard Link</h3>
+
 <p>An hard link refers directly to the physical location of another file (an inode to be precise).</p>
 <p>A hard link has some limitations: it cannot refer to a directory and cannot cross file system boundaries. It means that you can only create hard links to the same file system where the hard link is located.</p>
 <p>When the source of the link is moved or removed, the hard link still refer to the source.</p>
 <p>Symbolic link are created with the <strong>ln</strong> command. For instance, to create a link to source_file: </p>
-<p>[bash]ln source_file link[/bash]</p>
+<pre>ln source_file link</pre>
+
 <h3>Symbolic Link</h3>
 
 <p>A symbolic link refers to a symbolic path indicating the location of the source file. You can see it as a link to a path (itself refering to an inode).</p>
 <p>A symbolic link is less limited. It can refer to a directory and can cross file system boundaries.</p>
 <p>However, when the source of the link is moved or removed, the symbolic link is not updated.</p>
 <p>Symbolic link are created with the <strong>ln</strong> command. For instance, to create a symbolic link to source_file:</p>
-<p>[bash]ln -s source_file link[/bash]</p>
+<pre>ln -s source_file link</pre>
+
 <h3>Deletion</h3>
 
 <p>The deletion of a link (hard or symbolic) can be achieved with the <strong>rm</strong> or <strong>unlink</strong> commands: </p>
-<p>[bash]rm link</p>
-<p>unlink link[/bash]</p>
+<pre>rm link
+unlink link</pre>
+
 <h3>Conclusion</h3>
 
 <p>And that's it!</p>
 <p>Symbolic and hard links are very useful tools and are very easy to use. </p>
-<p>I hope that this blog post helped you understand a little better the differences between the two types of links and how to use them. </p></div>
+<p>I hope that this blog post helped you understand a little better the differences between the two types of links and how to use them.</p></div>
         </div>
             
         
@@ -293,7 +312,7 @@
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><p>Packt Publishing is about to publish its 1000th title, on the 30th of September, 2012.</p>
+        <div><p>Packt Publishing is about to publish its 1000th title, on the 30th of September, 2012.</p>
 <p>Packt published their first book in April 2004. They now have a lot of books on about every subject from web development to IT architecture, games to e-commerce. Their books are known for their high quality.</p>
 <p>For this occasion, they are offering a surprise gift to all their members. If you want to be part of it, you just have to sign up for a free Packt Publishing account. If you're already registered, you don't have anything to do! You need to be registered before the 30th of September in order to get involved.</p>
 <p>Packt is also known for their support to Open Source. They support Open Source projects through a project royalty donation. They already have contributed over £300,000. For this special occasion, they will allocate 30,000 to share between projects and authors in their own way that will be disclosed on the website soon.</p>
@@ -313,7 +332,7 @@
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><p>I arrived yesterday to Berkeley, California.</p>
+        <div><p>I arrived yesterday to Berkeley, California.</p>
 <p>Just like I did my Bachelor thesis in Lawrence Berkeley National Laboratory (LBNL), I will do my Master Thesis there too. The thesis will last a bit less than a semester.</p>
 <p>During my Master Thesis I will try to use profiling samples from the Linux perf tools in GCC or Clang to optimize processor cache usage (avoid cache and page faults).</p>
 <p>I will try to publish some posts about that during the semester if I have time.</p></div>
@@ -332,72 +351,65 @@
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><p>I finished the <strong>version 1.1.3 of the EDDI Compiler (eddic)</strong>.</p>
+        <div><p>I finished the <strong>version 1.1.3 of the EDDI Compiler (eddic)</strong>.</p>
 <p>The main improvement to the language is the support of templates. The syntax is more or less the same as the syntax of C++ templates, but the features are much more limited. In EDDI, you can declare class templates and function templates. Class templates can also includes member function templates.</p>
 <p>Here is an example of the use of templates in EDDI:</p>
-<p>[cpp]template</p>
-<p>struct node {
-    T value;</p>
-<div class="code"><pre><span class="n">this</span><span class="p">(</span><span class="n">T</span> <span class="n">init</span><span class="p">){</span>
-    <span class="n">print</span><span class="p">(</span><span class="s">"C1|"</span><span class="p">);</span>
-    <span class="n">this</span><span class="p">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">init</span><span class="p">;</span>
+<div class="code"><pre><span class="k">template</span><span class="o">&lt;</span><span class="n">type</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="k">struct</span> <span class="n">node</span> <span class="p">{</span>
+    <span class="n">T</span> <span class="n">value</span><span class="p">;</span>
+
+    <span class="k">this</span><span class="p">(</span><span class="n">T</span> <span class="n">init</span><span class="p">){</span>
+        <span class="n">print</span><span class="p">(</span><span class="s">"C1|"</span><span class="p">);</span>
+        <span class="k">this</span><span class="p">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">init</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="n">T</span> <span class="n">get_value</span><span class="p">(){</span>
+        <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="n">value</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">template</span><span class="o">&lt;</span><span class="n">type</span> <span class="n">U</span><span class="o">&gt;</span>
+    <span class="kt">void</span> <span class="n">print_value</span><span class="p">(</span><span class="n">U</span> <span class="n">v</span><span class="p">){</span>
+        <span class="n">print</span><span class="p">(</span><span class="n">v</span><span class="p">);</span>
+        <span class="n">print</span><span class="p">(</span><span class="s">"|"</span><span class="p">);</span>
+    <span class="p">}</span>
 <span class="p">}</span>
 
-<span class="n">T</span> <span class="n">get_value</span><span class="p">(){</span>
-    <span class="k">return</span> <span class="n">this</span><span class="p">.</span><span class="n">value</span><span class="p">;</span>
-<span class="p">}</span>
-
-<span class="n">template</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">type</span> <span class="n">U</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
-<span class="kt">void</span> <span class="nf">print_value</span><span class="p">(</span><span class="n">U</span> <span class="n">v</span><span class="p">){</span>
-    <span class="n">print</span><span class="p">(</span><span class="n">v</span><span class="p">);</span>
+<span class="k">template</span><span class="o">&lt;</span><span class="n">type</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="kt">void</span> <span class="n">debug</span><span class="p">(</span><span class="n">T</span> <span class="n">t</span><span class="p">){</span>
+    <span class="n">print</span><span class="p">(</span><span class="n">t</span><span class="p">);</span>
     <span class="n">print</span><span class="p">(</span><span class="s">"|"</span><span class="p">);</span>
 <span class="p">}</span>
+
+<span class="k">template</span><span class="o">&lt;</span><span class="n">type</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="kt">void</span> <span class="n">test</span><span class="p">(</span><span class="n">node</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;*</span> <span class="n">node</span><span class="p">){</span>
+    <span class="n">debug</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">node</span><span class="p">.</span><span class="n">value</span><span class="p">);</span>
+    <span class="n">debug</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">node</span><span class="p">.</span><span class="n">get_value</span><span class="p">());</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="n">main</span><span class="p">(){</span>
+    <span class="n">node</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">first_node</span><span class="p">(</span><span class="mi">100</span><span class="p">);</span>
+    <span class="n">node</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span> <span class="n">second_node</span><span class="p">(</span><span class="mf">13.3</span><span class="p">);</span>
+
+    <span class="n">test</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span><span class="n">first_node</span><span class="p">);</span>
+    <span class="n">test</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="p">(</span><span class="n">second_node</span><span class="p">);</span>
+
+    <span class="n">first_node</span><span class="p">.</span><span class="n">print_value</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="p">(</span><span class="mf">1.0</span><span class="p">);</span>
+    <span class="n">second_node</span><span class="p">.</span><span class="n">print_value</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span><span class="mi">10</span><span class="p">);</span>
+<span class="p">}</span>
 </pre></div>
 
 
-<p>}</p>
-<p>template&lt;type T&gt;</p>
-<p>void debug(T t){
-    print(t);
-    print("|");
-}</p>
-<p>template&lt;type T&gt;</p>
-<p>void test(node&lt;T&gt;* node){
-    debug&lt;T&gt;(node.value);
-    debug&lt;T&gt;(node.get_value());
-}</p>
-<p>void main(){
-    node&lt;int&gt; first_node(100);
-    node&lt;float&gt; second_node(13.3);</p>
-<div class="code"><pre><span class="n">test</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="kt">int</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;(</span><span class="n">first_node</span><span class="p">);</span>
-<span class="n">test</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="kt">float</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;(</span><span class="n">second_node</span><span class="p">);</span>
-
-<span class="n">first_node</span><span class="p">.</span><span class="n">print_value</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="kt">float</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;(</span><span class="mf">1.0</span><span class="p">);</span>
-<span class="n">second_node</span><span class="p">.</span><span class="n">print_value</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="kt">int</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;(</span><span class="mi">10</span><span class="p">);</span>
-</pre></div>
-
-
-<p>}</p>
-<p>[/cpp]</p>
 <p>This new feature adds generic programming capabilities to the language.</p>
 <p>This version also adds other language improvements. The first one is the support of the ! operator for a bool, to test if a bool is false. This version also includes support for iterating through all the chars of a string with a foreach loop. And finally, the this pointer is now implicit to access member fields of a struct from member functions.</p>
 <p>The optimization engine has been greatly improved. The pointers are much better handled and some regression due to new features have been fixed. The Constant Propagation optimization can take default values of struct and arrays into account. Finally, the functions with char parameters can now be inlined.</p>
-<p></p><div id="LC3">Finally, the compiler use a new logging system, that can be completely removed at compile-time for release versions.</div>
-<div>
-
+<p>Finally, the compiler use a new logging system, that can be completely removed at compile-time for release versions.</p>
 <h4>Future Work</h4>
 
-<div>The next version of the EDDI compiler (eddic) will be the version 1.1.4. This version will add support for some basic pointer manipulation. It will also add support for dynamically allocated arrays. Finally, the version will includes several new optimization techniques regarding to loops: Loop Invariant Code Motion, Loop Strength Reduction and perhaps some basic Loop Unrolling.</div>
-
+<p>The next version of the EDDI compiler (eddic) will be the version 1.1.4. This version will add support for some basic pointer manipulation. It will also add support for dynamically allocated arrays. Finally, the version will includes several new optimization techniques regarding to loops: Loop Invariant Code Motion, Loop Strength Reduction and perhaps some basic Loop Unrolling.</p>
 <h4>Download</h4>
 
-<div>You can find the EDDI Compiler sources on the Github repository: <a title="Github repository of eddic" href="https://github.com/wichtounet/eddic">https://github.com/wichtounet/eddic</a></div>
-
-<div>The exact version I refer to is the v1.1.3 available in the GitHub tags or directly as the release branch.</div>
-
-</div>
-
-<p></p></div>
+<p>You can find the EDDI Compiler sources on the Github repository: <a title="Github repository of eddic" href="https://github.com/wichtounet/eddic">https://github.com/wichtounet/eddic</a></p>
+<p>The exact version I refer to is the v1.1.3 available in the GitHub tags or directly as the release branch.</p></div>
         </div>
             
         
@@ -413,7 +425,7 @@
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><p>I recently came across an interesting tool. Jelastic is a Platform as a Service (PaaS) provider for Java. Basically, it's a cloud for Java applications.</p>
+        <div><p>I recently came across an interesting tool. Jelastic is a Platform as a Service (PaaS) provider for Java. Basically, it's a cloud for Java applications.</p>
 <p>The most interesting point about Jelastic (in my opinion) is the fact that it can run any Java application. There are no API to use or special change that have to be made: you can take any Java app that you have and run it on Jelastic. Jelastic runs Glassfish, Tomcat and Jetty application servers. It's up to the developer to choose the application server. Because it's only made for Java, you have directly access to the application server where you can deploy to, you don't have access to the machine itself.</p>
 <p>Another great advantage of Jelastic is that it automatically scales vertically. At the beginning, you application is only allowed a very small amount of CPU and memory and when the system detects that it needs more, it automatically gives more resources to the application. And when the application has too much resources, there are released. That has the advantage that you don't need to worry about the resources of your application and that the costs are to the minimum when the application doesn't need a lot of resources. Of course, you can also put limits on the scalability. An application can also be run in several different application servers (horizontal scaling). It supports automatic load balancing for the different instances.</p>
 <p>A Jelastic environment provides also access to a database server of your choice (MySQL, MariaDB, PostgreSQL, MongoDB, CouchDB). It also has several other good features. You can look at the official list if you want a complete list of features.</p>
@@ -426,9 +438,7 @@
 <ul>
     <li>Source : <a title="James Gosling (Father of Java) Loves Jelastic" href="http://blog.jelastic.com/2012/08/23/james-gosling-father-of-java-loves-jelastic/" target="_blank">James Gosling (Father of Java) Loves Jelastic</a></li>
     <li>Official Site : <a title="Official Jelastic site" href="http://jelastic.com/" target="_blank">http://www.jelastic.com</a></li>
-</ul>
-
-<p></p></div>
+</ul></div>
         </div>
             
         
@@ -444,48 +454,34 @@
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><div id="LC1">I finished the <strong>eddi compiler (eddic) version 1.1.2</strong>. It took me a long time because of a lot of other things I had to do this month.</div>
-<div></div>
-<div>This version includes two major changes. First, this version adds a new type for characters (char). A char can be declared using a char literal ('b' for instance) or from an int ( (char) 77). This version introduces the [] operator for string to have access to a specific char.</div>
-
-<div></div>
-
-<div>Another major improvement is the support for reading the command line. For now, only characters can be read, one by one with the read_char function.</div>
-
-<div></div>
-
-<div>The standard library includes a new function to compare two strings (<em>str_equals</em>):</div>
-
-<div></div>
-
-<p>[cpp]bool str_equals(string a, string b){
-    if(length(a) != length(b)){
-        return false;
-    }</p>
-<div class="code"><pre><span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="n">length</span><span class="p">(</span><span class="n">a</span><span class="p">);</span> <span class="o">++</span><span class="n">i</span><span class="p">){</span>
-    <span class="k">if</span><span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">!=</span> <span class="n">b</span><span class="p">[</span><span class="n">i</span><span class="p">]){</span>
+        <div><p>I finished the <strong>eddi compiler (eddic) version 1.1.2</strong>. It took me a long time because of a lot of other things I had to do this month.</p>
+<p>This version includes two major changes. First, this version adds a new type for characters (char). A char can be declared using a char literal ('b' for instance) or from an int ( (char) 77). This version introduces the [] operator for string to have access to a specific char.</p>
+<p>Another major improvement is the support for reading the command line. For now, only characters can be read, one by one with the read_char function.</p>
+<p>The standard library includes a new function to compare two strings (<em>str_equals</em>):</p>
+<div class="code"><pre><span class="kt">bool</span> <span class="nf">str_equals</span><span class="p">(</span><span class="n">string</span> <span class="n">a</span><span class="p">,</span> <span class="n">string</span> <span class="n">b</span><span class="p">){</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">length</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">!=</span> <span class="n">length</span><span class="p">(</span><span class="n">b</span><span class="p">)){</span>
         <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
     <span class="p">}</span>
-<span class="p">}</span>
 
-<span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="n">length</span><span class="p">(</span><span class="n">a</span><span class="p">);</span> <span class="o">++</span><span class="n">i</span><span class="p">){</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">!=</span> <span class="n">b</span><span class="p">[</span><span class="n">i</span><span class="p">]){</span>
+            <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="p">}</span>
 </pre></div>
 
 
-<p>}[/cpp]</p>
-<div>The other improvements are not relative to the language. The inlining engine can now inline functions that takes arrays as parameters. The symbol table is now represented by the global context. There is no global symbol table. This new version includes several improvements of the code and a cleanup of the AST to remove redundancy.</div>
-
+<p>The other improvements are not relative to the language. The inlining engine can now inline functions that takes arrays as parameters. The symbol table is now represented by the global context. There is no global symbol table. This new version includes several improvements of the code and a cleanup of the AST to remove redundancy.</p>
 <h4>Future Work</h4>
 
-<div>The next version of the eddi compiler (eddic) will be the version 1.1.3. This version will introduce support for a very basic version of template engine. It will also add support for foreach on string. This version will also add new features and cleanup in the different optimizations passes.</div>
-
+<p>The next version of the eddi compiler (eddic) will be the version 1.1.3. This version will introduce support for a very basic version of template engine. It will also add support for foreach on string. This version will also add new features and cleanup in the different optimizations passes.</p>
 <h4>Download</h4>
 
-<div>You can find the EDDI Compiler sources on the Github repository: https://github.com/wichtounet/eddic</div>
-
-<div>The exact version I refer to is the v1.1.2 available in the GitHub tags or directly as the release branch.</div>
-
-<p></p></div>
+<p>You can find the EDDI Compiler sources on the Github repository: https://github.com/wichtounet/eddic</p>
+<p>The exact version I refer to is the v1.1.2 available in the GitHub tags or directly as the release branch.</p></div>
         </div>
             
         
@@ -501,13 +497,14 @@
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><p>To be sure to be well prepared for an interview, I decided to read several <strong>Algorithms book</strong>. I also chosen books in order to have information about data structures. I chose these books to read:
-</p><ol>
+        <div><p>To be sure to be well prepared for an interview, I decided to read several <strong>Algorithms book</strong>. I also chosen books in order to have information about data structures. I chose these books to read:</p>
+<ol>
     <li>Data Structures &amp; Algorithm Analysis in C++, Third Edition, by Clifford A. Shaffer</li>
     <li>Algorithms in a Nutshell, by George T. Heineman, Gary Pollice and Stanley Selkow</li>
     <li>Algorithms, Fourth Edition, by Robert Sedgewick and Kevin Wayne</li>
     <li>Introduction to Algorithms, by Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest and Clifford Stein. I have to say that I have only read most of it, not completely, because some chapters were not interesting for me at the current time, but I will certainly read them later.</li>
 </ol>
+
 <p>As some of my comments are about the presentation of the books, it has to be noted that I have read the three first books on my Kindle.</p>
 <p>In this post, you will find my point of view about all these books.</p>
 <h4>Data Structures &amp; Algorithm Analysis in C++</h4>
@@ -559,7 +556,7 @@
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><strong>Architexa</strong> is a tool suite that helps a team to document collaboratively a large Java code base. The tool is made for a whole team to understand a code base. The tool is available as an Eclipse plugin.
+        <div><p><strong>Architexa</strong> is a tool suite that helps a team to document collaboratively a large Java code base. The tool is made for a whole team to understand a code base. The tool is available as an Eclipse plugin.</p>
 <p>When several developers are working on a large application, it is not always simple to have a whole view of the application. Even with some documentation of the application code. It is even harder for a new developer that joins the project to know what the code base is about. In all these cases, Architexa will help your team. It can also be useful when you inherit an application.</p>
 <p>Starting from today, <strong>Architexa is available for free</strong> <strong>for individuals and for teams of up to three developers</strong>. You can read the official announce at the end of the article.</p>
 <h4>My Review of Architexa</h4>

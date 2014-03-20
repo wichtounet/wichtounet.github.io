@@ -129,7 +129,8 @@
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><h4>I. Introduction</h4>
+        <div><h4>I. Introduction</h4>
+
 <p>SLF4J is an abstract layer for logging APIs. The principle is roughly the same as Jakarta Commons Logging. The advantages of the use of such a layer enable to be completely independant of the logging implementation. So it's possible to easily change the logging implementation without modifying the existing code. You only have to change the configuration of the implementation. And finally in the case of the conception of a library, this leaves the user to choose the logging system.</p>
 <p>You gonna tell me : if Commons Logging makes already that, why an other framework of logging abstraction ? Simply, because Commons Logging as his defaults. The first one concern the loading of the logging implementation. Indeed, the search is made dynamically at the execution through a classloader system. And this method can be problematic in several situations by example when the application use custom classloaders or when using OSGi. And finally the implementation of the Commons Logging can cause some memory leaks.</p>
 <p>Furthermore, Commons Logging constrain the user to test if a loging level is enabled or not before making logging containing heavy concatenation.</p>
@@ -154,17 +155,32 @@
 <h4>4. API use</h4>
 
 <p>The API of SLF4J is not really hard to use and is very like the others implementations or abstractions like Log4J or Commons Logging. Here is how to get a logger :</p>
-<p>[java]org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(HelloWorld.class);[/java]</p>
+<div class="code"><pre><span class="n">org</span><span class="o">.</span><span class="na">slf4j</span><span class="o">.</span><span class="na">Logger</span> <span class="n">logger</span> <span class="o">=</span> <span class="n">org</span><span class="o">.</span><span class="na">slf4j</span><span class="o">.</span><span class="na">LoggerFactory</span><span class="o">.</span><span class="na">getLogger</span><span class="o">(</span><span class="n">HelloWorld</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+</pre></div>
+
+
 <p>Then, you can use it like any other implementation with the methods debug(), info(), warn(), trace() et error(). Par exemple :</p>
-<p>[java]logger.info("Hello World");[/java]</p>
+<div class="code"><pre><span class="n">logger</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">"Hello World"</span><span class="o">);</span>
+</pre></div>
+
+
 <p>But this is not the strength of SLF4J. Let's take a simple logging example :</p>
-<p>[java]logger.debug("Info : x = " + info.getX() + ", y = " + info.getY() + ", str = " + infos.getStr());[/java]</p>
+<div class="code"><pre><span class="n">logger</span><span class="o">.</span><span class="na">debug</span><span class="o">(</span><span class="s">"Info : x = "</span> <span class="o">+</span> <span class="n">info</span><span class="o">.</span><span class="na">getX</span><span class="o">()</span> <span class="o">+</span> <span class="s">", y = "</span> <span class="o">+</span> <span class="n">info</span><span class="o">.</span><span class="na">getY</span><span class="o">()</span> <span class="o">+</span> <span class="s">", str = "</span> <span class="o">+</span> <span class="n">infos</span><span class="o">.</span><span class="na">getStr</span><span class="o">());</span>
+</pre></div>
+
+
 <p>That means than all times this line is executed, a concatenation is done. This can quickly be heavy for the performance if the code is executed regularly. It's because we must first test if the level is enabled :</p>
-<p>[java]if(logger.isDebugEnabled()){
-    logger.debug("Info : x = " + info.getX() + ", y = " + info.getY() + ", str = " + infos.getStr());
-}[/java]</p>
+<div class="code"><pre><span class="k">if</span><span class="o">(</span><span class="n">logger</span><span class="o">.</span><span class="na">isDebugEnabled</span><span class="o">()){</span>
+    <span class="n">logger</span><span class="o">.</span><span class="na">debug</span><span class="o">(</span><span class="s">"Info : x = "</span> <span class="o">+</span> <span class="n">info</span><span class="o">.</span><span class="na">getX</span><span class="o">()</span> <span class="o">+</span> <span class="s">", y = "</span> <span class="o">+</span> <span class="n">info</span><span class="o">.</span><span class="na">getY</span><span class="o">()</span> <span class="o">+</span> <span class="s">", str = "</span> <span class="o">+</span> <span class="n">infos</span><span class="o">.</span><span class="na">getStr</span><span class="o">());</span>
+<span class="o">}</span>
+</pre></div>
+
+
 <p>This times the performances are guaranteed, but this kind of code is not esthetical and is quickly heavy. Moreover the test is already done in the debug method who displays nothing if the debug level is not enabled. So why do the work twice ? SLF4J offer a new alternative really interesting :</p>
-<p>[java]logger.debug("Info : x = {}, y = {}, str = {}", new Object[]{info.getX(), info.getY(), infos.getStr()});[/java]</p>
+<div class="code"><pre><span class="n">logger</span><span class="o">.</span><span class="na">debug</span><span class="o">(</span><span class="s">"Info : x = {}, y = {}, str = {}"</span><span class="o">,</span> <span class="k">new</span> <span class="n">Object</span><span class="o">[]{</span><span class="n">info</span><span class="o">.</span><span class="na">getX</span><span class="o">(),</span> <span class="n">info</span><span class="o">.</span><span class="na">getY</span><span class="o">(),</span> <span class="n">infos</span><span class="o">.</span><span class="na">getStr</span><span class="o">()});</span>
+</pre></div>
+
+
 <p>The {} will be replaced by the parameters. The, the concatenation is only done if the logging level is enabled. Furthermore, this code is really cleaner than the two previous.</p>
 <p><strong>Warning</strong> : In the case when the recuperation of the informations is heavy, you must test use the first method and test the level of log before logging the informations. By example we could imagine a getDebugInfos() on an object who mades a lot of informations to get informations. This method must not be executed if the log level is not enabled.</p>
 <h4>5. Marker API</h4>
@@ -172,24 +188,33 @@
 <p>The Marker allow essentially to associate tags to logs. This tags enable the different appenders to take only some logs. Lets imagine an appender who write the log using encryption and that must only be used on logs marked as confidentials. The Marker enable us to implement that.</p>
 <p>This functionaly is only available with the LogBack implementation : it's the only who implements the Marker. Nevertheless, you could use the Marker API with the other implementation, but that will have no effect.</p>
 <p>Imagine by example an appender named CryptAppender who encode the log using some algorithm. We could configure it thus :</p>
-<p>[xml]&lt;appender name="CRYPTED" class="CryptAppender"&gt;
-  &lt;layout class="ch.qos.logback.classic.html.HTMLLayout"&gt;
-    &lt;pattern&gt;%date%-5level%logger%msg&lt;/pattern&gt;
-    &lt;throwableRenderer class="ch.qos.logback.classic.html.DefaultThrowableRenderer" /&gt;
-  &lt;/layout&gt;
-  &lt;evaluator class="ch.qos.logback.classic.boolex.OnMarkerEvaluator"&gt;
-    &lt;marker&gt;CONFIDENTIAL&lt;/marker&gt;
-  &lt;/evaluator&gt;
-&lt;/appender&gt;[/xml]</p>
+<div class="code"><pre><span class="nt">&lt;appender</span> <span class="na">name=</span><span class="s">"CRYPTED"</span> <span class="na">class=</span><span class="s">"CryptAppender"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;layout</span> <span class="na">class=</span><span class="s">"ch.qos.logback.classic.html.HTMLLayout"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;pattern&gt;</span>%date%-5level%logger%msg<span class="nt">&lt;/pattern&gt;</span>
+    <span class="nt">&lt;throwableRenderer</span> <span class="na">class=</span><span class="s">"ch.qos.logback.classic.html.DefaultThrowableRenderer"</span> <span class="nt">/&gt;</span>
+  <span class="nt">&lt;/layout&gt;</span>
+  <span class="nt">&lt;evaluator</span> <span class="na">class=</span><span class="s">"ch.qos.logback.classic.boolex.OnMarkerEvaluator"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;marker&gt;</span>CONFIDENTIAL<span class="nt">&lt;/marker&gt;</span>
+  <span class="nt">&lt;/evaluator&gt;</span>
+<span class="nt">&lt;/appender&gt;</span>
+</pre></div>
+
+
 <p>The OnMarkerEvaluator enable to select only logs than have been marked with some tag. In our case, we have to mark to confidential logs with CONFIDENTIAl. Here is how to do that :</p>
-<p>[java]Marker confidentialMarker = MarkerFactory.getMarker("CONFIDENTIAL");</p>
-<p>logger.error(confidentialMarker, "C'est confidentiel !");[/java]</p>
+<div class="code"><pre><span class="n">Marker</span> <span class="n">confidentialMarker</span> <span class="o">=</span> <span class="n">MarkerFactory</span><span class="o">.</span><span class="na">getMarker</span><span class="o">(</span><span class="s">"CONFIDENTIAL"</span><span class="o">);</span>
+<span class="n">logger</span><span class="o">.</span><span class="na">error</span><span class="o">(</span><span class="n">confidentialMarker</span><span class="o">,</span> <span class="s">"C'est confidentiel !"</span><span class="o">);</span>
+</pre></div>
+
+
 <p>That will not display the log directly but crypted.</p>
 <p>An other use of this functionality could by example be the send by mail of some logs.</p>
 <p>You could of course configure several appenders for the same tag. You could also create a Marker hierarchy :</p>
-<p>[java]Marker parentMarker = MarkerFactory.getMarker(“parent”);</p>
-<p>Marker childMarker = MarkerFactory.getMarker(“child”);</p>
-<p>parentMarker.add(childMarker);[/java]</p>
+<div class="code"><pre><span class="n">Marker</span> <span class="n">parentMarker</span> <span class="o">=</span> <span class="n">MarkerFactory</span><span class="o">.</span><span class="na">getMarker</span><span class="o">(</span><span class="err">“</span><span class="n">parent</span><span class="err">”</span><span class="o">);</span>
+<span class="n">Marker</span> <span class="n">childMarker</span> <span class="o">=</span> <span class="n">MarkerFactory</span><span class="o">.</span><span class="na">getMarker</span><span class="o">(</span><span class="err">“</span><span class="n">child</span><span class="err">”</span><span class="o">);</span>
+<span class="n">parentMarker</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">childMarker</span><span class="o">);</span>
+</pre></div>
+
+
 <p>Doing that, all that is logged with parentMarker or childMarker will be treated in appenders configured for parent and the appenders configured for child will only see what is logged with child.</p>
 <!--nextpage-->
 
@@ -198,26 +223,33 @@
 <p>The "Mapped Diagnostic Context" (MDC) is, in summary, a simple map (key-value set) maintained by the logging framework. In that map, the application can put some key-value couple that could be used to add some informations in the logs.</p>
 <p>Imagine that we treat informations on persons and that we display in logging. The name and the firstname of the person must be displayed in each lines of logging. We could can use MDC to automate the include of the name and the firstname in the logs.</p>
 <p>It is possible to add values in MDC with the put method :</p>
-<p>[java]MDC.put("prenom", "Baptiste");</p>
-<p>MDC.put("nom", "Wicht");[/java]</p>
+<div class="code"><pre><span class="n">MDC</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="s">"prenom"</span><span class="o">,</span> <span class="s">"Baptiste"</span><span class="o">);</span>
+<span class="n">MDC</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="s">"nom"</span><span class="o">,</span> <span class="s">"Wicht"</span><span class="o">);</span>
+</pre></div>
+
+
 <p>Then, we can use them in the layout of logging. This layout can be configured in the implementation. At this time only Log4J, JUL and Logback support MDC. Here is a layout using MDC :</p>
 <pre>%X{prenom} %X{nom} - %m%n</pre>
 
 <p>Then, to display informations, we just have to do :</p>
-<p>[java]logger.info("Age {}", age);</p>
-<p>logger.info("Localisation {}", localisation); [/java]</p>
+<div class="code"><pre><span class="n">logger</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">"Age {}"</span><span class="o">,</span> <span class="n">age</span><span class="o">);</span>
+<span class="n">logger</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">"Localisation {}"</span><span class="o">,</span> <span class="n">localisation</span><span class="o">);</span> 
+</pre></div>
+
+
 <p>That will display :</p>
 <pre>Baptiste Wicht - Age 22
-
 Baptiste Wicht - Localisation Suisse</pre>
 
 <p>And finally if the MDC is configured between to logging instructions, this will directly change the logging :</p>
-<p>[java]logger.info("Age {}", age);</p>
-<p>MDC.put("prenom", "Jacques");</p>
-<p>logger.info("Localisation {}", localisation);[/java]</p>
+<div class="code"><pre><span class="n">logger</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">"Age {}"</span><span class="o">,</span> <span class="n">age</span><span class="o">);</span>
+<span class="n">MDC</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="s">"prenom"</span><span class="o">,</span> <span class="s">"Jacques"</span><span class="o">);</span>
+<span class="n">logger</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">"Localisation {}"</span><span class="o">,</span> <span class="n">localisation</span><span class="o">);</span>
+</pre></div>
+
+
 <p>will display :</p>
 <pre>Baptiste Wicht - Age 22
-
 Jacques Wicht - Localisation Suisse</pre>
 
 <p>That can be very practical to stock and display global informations. For example a login, a session id or any other data.</p>
@@ -241,8 +273,9 @@ Jacques Wicht - Localisation Suisse</pre>
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><h4>1. Language overview</h4>
-JR is a programming language especially created to solve concurrent programming problems. This language is an overview of Java who add to this last the main paradigms of concurrent programming. Moreover JR make easier the concepts still implemented in Java like process or semaphores. There is also several extensions for JR to add more functionalities like monitors and Conditional Critical Region (CCR). JR is the implementation of the SR language for Java.
+        <div><h4>1. Language overview</h4>
+
+<p>JR is a programming language especially created to solve concurrent programming problems. This language is an overview of Java who add to this last the main paradigms of concurrent programming. Moreover JR make easier the concepts still implemented in Java like process or semaphores. There is also several extensions for JR to add more functionalities like monitors and Conditional Critical Region (CCR). JR is the implementation of the SR language for Java.</p>
 <p>JR makes nothing else than add a layer over Java. Once we use the JR compiler, the JR source files are transformed in Java files and are executed by the virtual machine like any other Java class.</p>
 <p>JR is often used as a school support to learn concurrent programming.</p>
 <p>In this article, we will see the bases of the programmation with JR.</p>
@@ -254,11 +287,14 @@ JR is a programming language especially created to solve concurrent programming 
 <h4>2. Hello World</h4>
 
 <p>Like all other languages, we must start with a simple Hello World. Thus we'll create a file Hello.jr. Nothing special here, it's pure Java :</p>
-<p>[java]public class Hello {
-    public static void main(String[] args){
-        System.out.println("Hello World");
-    }
-}[/java]</p>
+<div class="code"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Hello</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">){</span>
+        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Hello World"</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+
+
 <p>Then we can compile it :</p>
 <pre>jrc Hello.jr</pre>
 
@@ -275,80 +311,62 @@ JR is a programming language especially created to solve concurrent programming 
 
 <p>The first thing to see is the declaration of processes. This is done in an easier way than in Java. No need to instanciate some objects, this is done in a declarative way and JR make the rest.</p>
 <p>For the declaration of process, JR introduce a new keyword process who enable to declare a process. Here is the simplest declaration of a process :</p>
-<p>[java]process Hello {
-    System.out.println("Processus");
-[/java]</p>
-<p>Like you can see it, it's easier than in Java. And better, no need to launch it, you just have to instanciate the class. A process can also be declared static. This times, it will not be launched at the instanciation of the class but at the resolution of the class by the virtual machine. By example, we can rewrite an HelloWorld in that way :</p>
-<p>[java]public class HelloProcess {
-    static process Hello {
-        System.out.println("Hello World");
-    }</p>
-<div class="code"><pre><span class="n">public</span> <span class="k">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="p">(</span><span class="n">String</span><span class="p">[]</span> <span class="n">args</span><span class="p">){}</span>
+<div class="code"><pre><span class="n">process</span> <span class="n">Hello</span> <span class="o">{</span>
+    <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Processus"</span><span class="o">);</span>
 </pre></div>
 
 
-<p>[/java]</p>
+<p>Like you can see it, it's easier than in Java. And better, no need to launch it, you just have to instanciate the class. A process can also be declared static. This times, it will not be launched at the instanciation of the class but at the resolution of the class by the virtual machine. By example, we can rewrite an HelloWorld in that way :</p>
+<div class="code"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">HelloProcess</span> <span class="o">{</span>
+    <span class="kd">static</span> <span class="n">process</span> <span class="n">Hello</span> <span class="o">{</span>
+        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Hello World"</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">){}</span>
+</pre></div>
+
+
 <p>who display exactly the same thing as the first version of the Hello World. At the difference that our display is made from a thread.</p>
 <p>Moreover, JR enable to declare a big set of threads in a declaration with the following syntax :</p>
-<p>[java]static process Hello((int id = 0; id &amp;lt; n; id++)){}[/java]</p>
+<div class="code"><pre><span class="kd">static</span> <span class="n">process</span> <span class="nf">Hello</span><span class="o">((</span><span class="kt">int</span> <span class="n">id</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">id</span> <span class="o">&amp;</span><span class="n">amp</span><span class="o">;</span><span class="n">lt</span><span class="o">;</span> <span class="n">n</span><span class="o">;</span> <span class="n">id</span><span class="o">++)){}</span>
+</pre></div>
+
+
 <p>This will declare n threads. The syntax is the same as the for loop. Let's declare 25 threads Hello World :</p>
-<p>[java]public class HelloProcess {
-    static process Hello((int id = 0; id &amp;lt; 25; id++)){
-        System.out.println("Hello World from thread " + id);
-    }</p>
-<div class="code"><pre><span class="n">public</span> <span class="k">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="p">(</span><span class="n">String</span><span class="p">[]</span> <span class="n">args</span><span class="p">){}[</span><span class="o">/</span><span class="n">java</span><span class="p">]</span>
+<div class="code"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">HelloProcess</span> <span class="o">{</span>
+    <span class="kd">static</span> <span class="n">process</span> <span class="nf">Hello</span><span class="o">((</span><span class="kt">int</span> <span class="n">id</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">id</span> <span class="o">&amp;</span><span class="n">amp</span><span class="o">;</span><span class="n">lt</span><span class="o">;</span> <span class="mi">25</span><span class="o">;</span> <span class="n">id</span><span class="o">++)){</span>
+        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Hello World from thread "</span> <span class="o">+</span> <span class="n">id</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">){}</span>
 </pre></div>
 
 
 <p>When we launch that, we could have the following result :</p>
 <pre>Hello World from thread 2
-
 Hello World from thread 24
-
 Hello World from thread 11
-
 Hello World from thread 22
-
 Hello World from thread 0
-
 Hello World from thread 4
-
 Hello World from thread 6
-
 Hello World from thread 8
-
 Hello World from thread 10
-
 Hello World from thread 12
-
 Hello World from thread 14
-
 Hello World from thread 16
-
 Hello World from thread 18
-
 Hello World from thread 20
-
 Hello World from thread 23
-
 Hello World from thread 21
-
 Hello World from thread 19
-
 Hello World from thread 17
-
 Hello World from thread 15
-
 Hello World from thread 13
-
 Hello World from thread 9
-
 Hello World from thread 7
-
 Hello World from thread 5
-
 Hello World from thread 3
-
 Hello World from thread 1</pre>
 
 <p>Like you can see, if you launch several times the program, the display is not same and the message commes in an order completely different order at each launch. Nothing can guarantee the order of the threads launches and still less the order of the execution of the instructions and you must not count on it.</p>
@@ -360,80 +378,59 @@ Hello World from thread 1</pre>
 <p>JR introduce a new concept, really powerful, the quiescence action. It's an action who's executed when the system is quiescent. It seems that all the process are finished or remains in deadlocks.</p>
 <p>Before that, we use to introduce the concept of operations. In our case, an operation is a simple method declared with the op keyword. But in JR an operation is more than a method and could be invoked in different ways and permit other things that methods, but this is beyond the scope of this article.</p>
 <p>Here is a declaration of a simple operation.</p>
-<p>[java]public static op void end(){
-    System.out.println("End")[/java]</p>
-<p>So, this is a simple method with the op prefix. You can invoke it like any other method. But you can also declare it like the action to execute when the system is in quiescence state. If we take our example of the 25 hello world and if we define the quiescence action here is what we get :</p>
-<p>[java]import edu.ucdavis.jr.JR;</p>
-<p>public class QuiescenceProcess {
-    static process Hello((int id = 0; id &amp;lt; 25; id++)){
-        System.out.println("Hello World from thread " + id);
-    }</p>
-<div class="code"><pre><span class="n">public</span> <span class="k">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="p">(</span><span class="n">String</span><span class="p">[]</span> <span class="n">args</span><span class="p">){</span>
-    <span class="n">try</span> <span class="p">{</span>
-        <span class="n">JR</span><span class="p">.</span><span class="n">registerQuiescenceAction</span><span class="p">(</span><span class="n">end</span><span class="p">);</span>
-    <span class="p">}</span> <span class="n">catch</span> <span class="p">(</span><span class="n">edu</span><span class="p">.</span><span class="n">ucdavis</span><span class="p">.</span><span class="n">jr</span><span class="p">.</span><span class="n">QuiescenceRegistrationException</span> <span class="n">e</span><span class="p">){</span>
-        <span class="n">e</span><span class="p">.</span><span class="n">printStackTrace</span><span class="p">();</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-
-<span class="n">public</span> <span class="k">static</span> <span class="n">op</span> <span class="kt">void</span> <span class="nf">end</span><span class="p">(){</span>
-    <span class="n">System</span><span class="p">.</span><span class="n">out</span><span class="p">.</span><span class="n">println</span><span class="p">(</span><span class="s">"End"</span><span class="p">);</span>
+<div class="code"><pre><span class="kd">public</span> <span class="kd">static</span> <span class="n">op</span> <span class="kt">void</span> <span class="nf">end</span><span class="o">(){</span>
+    <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"End"</span><span class="o">)</span>
 </pre></div>
 
 
-<p>[/java]</p>
+<p>So, this is a simple method with the op prefix. You can invoke it like any other method. But you can also declare it like the action to execute when the system is in quiescence state. If we take our example of the 25 hello world and if we define the quiescence action here is what we get :</p>
+<div class="code"><pre><span class="kn">import</span> <span class="nn">edu.ucdavis.jr.JR</span><span class="o">;</span>
+
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">QuiescenceProcess</span> <span class="o">{</span>
+    <span class="kd">static</span> <span class="n">process</span> <span class="nf">Hello</span><span class="o">((</span><span class="kt">int</span> <span class="n">id</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">id</span> <span class="o">&amp;</span><span class="n">amp</span><span class="o">;</span><span class="n">lt</span><span class="o">;</span> <span class="mi">25</span><span class="o">;</span> <span class="n">id</span><span class="o">++)){</span>
+        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Hello World from thread "</span> <span class="o">+</span> <span class="n">id</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">){</span>
+        <span class="k">try</span> <span class="o">{</span>
+            <span class="n">JR</span><span class="o">.</span><span class="na">registerQuiescenceAction</span><span class="o">(</span><span class="n">end</span><span class="o">);</span>
+        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">edu</span><span class="o">.</span><span class="na">ucdavis</span><span class="o">.</span><span class="na">jr</span><span class="o">.</span><span class="na">QuiescenceRegistrationException</span> <span class="n">e</span><span class="o">){</span>
+            <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kd">static</span> <span class="n">op</span> <span class="kt">void</span> <span class="nf">end</span><span class="o">(){</span>
+        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"End"</span><span class="o">);</span>
+</pre></div>
+
+
 <p>We use the registerQuiescenceAction(op) method of the JR class. This class provide some utility methods for the JR programs</p>
 <p>And a launch, we see something like that :</p>
 <pre>Hello World from thread 0
-
 Hello World from thread 22
-
 Hello World from thread 23
-
 Hello World from thread 21
-
 Hello World from thread 24
-
 Hello World from thread 20
-
 Hello World from thread 19
-
 Hello World from thread 18
-
 Hello World from thread 17
-
 Hello World from thread 16
-
 Hello World from thread 15
-
 Hello World from thread 14
-
 Hello World from thread 13
-
 Hello World from thread 12
-
 Hello World from thread 11
-
 Hello World from thread 10
-
 Hello World from thread 9
-
 Hello World from thread 8
-
 Hello World from thread 7
-
 Hello World from thread 6
-
 Hello World from thread 5
-
 Hello World from thread 4
-
 Hello World from thread 3
-
 Hello World from thread 2
-
 Hello World from thread 1
-
 End</pre>
 
 <p>This is really useful to execute an action after the end of the system and verify something on the system. By example, display a message in the case of a deadlock or display debug informations on the executed operations.</p>
@@ -449,18 +446,28 @@ End</pre>
 
 <p>This two operations are atomic. We use the semaphores to protect a critical section who need to be executed in an atomic way. We can also use semaphores to restrain the number of threads that can execute some instructions in parralel.</p>
 <p>The declaration and the use of semaphores is really easy. Here is how you can declare a semaphore with a initial value of 1 :</p>
-<p>[java]sem mutex = 1;[/java]</p>
+<div class="code"><pre><span class="n">sem</span> <span class="n">mutex</span> <span class="o">=</span> <span class="mi">1</span><span class="o">;</span>
+</pre></div>
+
+
 <p>Then, the operations P et V are extremely simple to use :</p>
-<p>[java]P(mutex);</p>
-<p>//Critical section</p>
-<p>V(mutex);[/java]</p>
+<div class="code"><pre><span class="n">P</span><span class="o">(</span><span class="n">mutex</span><span class="o">);</span>
+<span class="c1">//Critical section</span>
+<span class="n">V</span><span class="o">(</span><span class="n">mutex</span><span class="o">);</span>
+</pre></div>
+
+
 <p>The semaphores are principally used to solve the critical section problem. Imagine a simple example, but who show exactly the problem that the semaphore can solve :</p>
-<p>[java]private static int value = 0;</p>
-<p>static process Calculator((int id = 0; id &lt; 50; id++)){
-    for(int i = 0; i &lt; 5; i++){
-        value = value + 2;
-    }
-}[/java]</p>
+<div class="code"><pre><span class="kd">private</span> <span class="kd">static</span> <span class="kt">int</span> <span class="n">value</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+
+<span class="kd">static</span> <span class="n">process</span> <span class="nf">Calculator</span><span class="o">((</span><span class="kt">int</span> <span class="n">id</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">id</span> <span class="o">&amp;</span><span class="n">lt</span><span class="o">;</span> <span class="mi">50</span><span class="o">;</span> <span class="n">id</span><span class="o">++)){</span>
+    <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&amp;</span><span class="n">lt</span><span class="o">;</span> <span class="mi">5</span><span class="o">;</span> <span class="n">i</span><span class="o">++){</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">value</span> <span class="o">+</span> <span class="mi">2</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+
+
 <p>Because this code launch 50 threads who add each one 5 times 2 to value, we could think that value must be 500 at the end of the execution, isnt'it ?</p>
 <p>But nothing guarantee that result. This is known as the interleaving in concurrent programming. This is because the + 2 operation is in reality 3 operations :</p>
 <ul>
@@ -470,62 +477,60 @@ End</pre>
 </ul>
 
 <p>A thread can be put in wait just after 1 and do the incrementation on the old value but other threads have still made the incrementation, but it has the old value when it mades the +2 and write and false value to value. To prove that to you, execute the following code several times :</p>
-<p>[java]import edu.ucdavis.jr.JR;</p>
-<p>public class SemaphoreProcess {
-    private static int value = 0;</p>
-<div class="code"><pre><span class="k">static</span> <span class="n">process</span> <span class="n">Calculator</span><span class="p">((</span><span class="kt">int</span> <span class="n">id</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">id</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="mi">50</span><span class="p">;</span> <span class="n">id</span><span class="o">++</span><span class="p">)){</span>
-    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="mi">5</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">){</span>
-        <span class="n">value</span> <span class="o">=</span> <span class="n">value</span> <span class="o">+</span> <span class="mi">2</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+<div class="code"><pre><span class="kn">import</span> <span class="nn">edu.ucdavis.jr.JR</span><span class="o">;</span>
 
-<span class="n">public</span> <span class="k">static</span> <span class="kt">void</span> <span class="n">main</span><span class="p">(</span><span class="n">String</span><span class="p">[]</span> <span class="n">args</span><span class="p">){</span>
-    <span class="n">try</span> <span class="p">{</span>
-        <span class="n">JR</span><span class="p">.</span><span class="n">registerQuiescenceAction</span><span class="p">(</span><span class="n">end</span><span class="p">);</span>
-    <span class="p">}</span> <span class="n">catch</span> <span class="p">(</span><span class="n">edu</span><span class="p">.</span><span class="n">ucdavis</span><span class="p">.</span><span class="n">jr</span><span class="p">.</span><span class="n">QuiescenceRegistrationException</span> <span class="n">e</span><span class="p">){</span>
-        <span class="n">e</span><span class="p">.</span><span class="n">printStackTrace</span><span class="p">();</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">SemaphoreProcess</span> <span class="o">{</span>
+    <span class="kd">private</span> <span class="kd">static</span> <span class="kt">int</span> <span class="n">value</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
 
-<span class="n">public</span> <span class="k">static</span> <span class="n">op</span> <span class="kt">void</span> <span class="n">end</span><span class="p">(){</span>
-        <span class="n">System</span><span class="p">.</span><span class="n">out</span><span class="p">.</span><span class="n">println</span><span class="p">(</span><span class="n">value</span><span class="p">);</span>
-<span class="p">}</span>
+    <span class="kd">static</span> <span class="n">process</span> <span class="nf">Calculator</span><span class="o">((</span><span class="kt">int</span> <span class="n">id</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">id</span> <span class="o">&amp;</span><span class="n">lt</span><span class="o">;</span> <span class="mi">50</span><span class="o">;</span> <span class="n">id</span><span class="o">++)){</span>
+        <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&amp;</span><span class="n">lt</span><span class="o">;</span> <span class="mi">5</span><span class="o">;</span> <span class="n">i</span><span class="o">++){</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">value</span> <span class="o">+</span> <span class="mi">2</span><span class="o">;</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">){</span>
+        <span class="k">try</span> <span class="o">{</span>
+            <span class="n">JR</span><span class="o">.</span><span class="na">registerQuiescenceAction</span><span class="o">(</span><span class="n">end</span><span class="o">);</span>
+        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">edu</span><span class="o">.</span><span class="na">ucdavis</span><span class="o">.</span><span class="na">jr</span><span class="o">.</span><span class="na">QuiescenceRegistrationException</span> <span class="n">e</span><span class="o">){</span>
+            <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kd">static</span> <span class="n">op</span> <span class="kt">void</span> <span class="nf">end</span><span class="o">(){</span>
+            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">value</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
 </pre></div>
 
 
-<p>}[/java]</p>
 <p>On my computer, i've the following results.</p>
 <pre>498
-
 500
-
 500
-
 500
-
 496</pre>
 
 <p>And if we use greater values, it's even worse. By example, with 100 threads and 100 iterations :</p>
 <pre>20000
-
 19560
-
 19912
-
 19758
-
 20000</pre>
 
 <p>But this problem can be solved with semaphores :</p>
-<p>[java]private static sem mutex = 1;</p>
-<p>private static int value = 0;</p>
-<p>static process Calculator((int id = 0; id &amp;lt; 50; id++)){
-    for(int i = 0; i &amp;lt; 5; i++){
-        P(mutex);
-        value = value + 2;
-        V(mutex)
-        }
-}[/java]</p>
+<div class="code"><pre><span class="kd">private</span> <span class="kd">static</span> <span class="n">sem</span> <span class="n">mutex</span> <span class="o">=</span> <span class="mi">1</span><span class="o">;</span>
+<span class="kd">private</span> <span class="kd">static</span> <span class="kt">int</span> <span class="n">value</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+
+<span class="kd">static</span> <span class="n">process</span> <span class="nf">Calculator</span><span class="o">((</span><span class="kt">int</span> <span class="n">id</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">id</span> <span class="o">&amp;</span><span class="n">amp</span><span class="o">;</span><span class="n">lt</span><span class="o">;</span> <span class="mi">50</span><span class="o">;</span> <span class="n">id</span><span class="o">++)){</span>
+    <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&amp;</span><span class="n">amp</span><span class="o">;</span><span class="n">lt</span><span class="o">;</span> <span class="mi">5</span><span class="o">;</span> <span class="n">i</span><span class="o">++){</span>
+        <span class="n">P</span><span class="o">(</span><span class="n">mutex</span><span class="o">);</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">value</span> <span class="o">+</span> <span class="mi">2</span><span class="o">;</span>
+        <span class="n">V</span><span class="o">(</span><span class="n">mutex</span><span class="o">)</span>
+        <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+
+
 <p>With that, we have the guarantee that only one thread can do the incrementation at a time and make it atomic. Then all the executions will finish with a value of 500. But that of course impact the performances because instead of x threads who made operations in a parralel way, we've now only one thread at a time. The example with 100 threads and 100 iterations is really slow. We can improve performance using the mutex semaphore around the loop. But the performances are to be considered differently in each example. So we must use wisely the synchronization methods of threads.</p>
 <!--nextpage-->
 
@@ -548,8 +553,9 @@ End</pre>
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><h4>1. JR Programming language</h4>
-This article will present you the installation of JR on Windows. It's not an article to learn the JR programming language, this article focus on the installation of JR on Windows.
+        <div><h4>1. JR Programming language</h4>
+
+<p>This article will present you the installation of JR on Windows. It's not an article to learn the JR programming language, this article focus on the installation of JR on Windows.</p>
 <p>JR is a programming language especially created to resolve concurrent programming problems. This language is an overlay of Java who add to this last the main paradigms of the concurrent programming. Moreover, JR make easier some concepts also implemented in Java like the process or the semaphores. There is also extensions to JR to implement other functionalities like monitors and Conditional Critical Region (CCR). JR is the implemenation of the SR language for Java.</p>
 <p>JR is mainly used as a school support to learn concurrent programming.</p>
 <p>In this article, we'll see how to install the JR environment under Windows.</p>
@@ -582,13 +588,9 @@ This article will present you the installation of JR on Windows. It's not an art
 <p>The, you have to configure two constants : JRSH=cmd et JRSHC=/C.</p>
 <p>To resume, here are all the environments variables and their value.</p>
 <pre>JR_HOME=C:\Program Files\JR\
-
 PATH=%PATH%;%JR_HOME%\bin\
-
 CLASSPATH=.;%JR_HOME%\classes\jrt.jar;%JR_HOME%\classes\jrx.jar
-
 JRSH=cmd
-
 JRSHC=/C</pre>
 
 <p>Then, JR must works fine.</p>
@@ -599,68 +601,40 @@ JRSHC=/C</pre>
 
 <p>And then launch this two commands :</p>
 <pre>cd vsuite
-
 ..\jrv\jrv quick</pre>
 
 <p>This should start serveral tests. It will just display some informations about your system. And if all works fine, you should see something like that :</p>
 <pre>C:\Program Files\JR\vsuite&gt;..\jrv\jrv quick
-
 Starting JRV
-
 JR_HOME= C:\Program Files\JR\
-
 JRC=     perl "C:\Program Files\JR\/bin/jrc"
-
 JRRUN=   perl "C:\Program Files\JR\/bin/jrrun"
-
 JAVAC=   "C:\Program Files\Java\jdk1.6.0_17/bin\javac.EXE"
-
 JAVA=    "C:\Program Files\Java\jdk1.6.0_17/bin\java.EXE"
-
 ccr2jr=  perl "C:\Program Files\JR\/bin/ccr2jr"
-
 csp2jr=  perl "C:\Program Files\JR\/bin/csp2jr"
-
 m2jr=    perl "C:\Program Files\JR\/bin/m2jr"
-
 WHICH=   perl "C:\Program Files\JR\/bin/which.pl"
-
 CMP=     perl "C:\Program Files\JR\/bin/cmp.pl"
-
 GREP=    perl "C:\Program Files\JR\/bin/grep.pl"
-
 SORT=    perl "C:\Program Files\JR\/bin/sort.pl"
-
 TAIL=    perl "C:\Program Files\JR\/bin/tail.pl"
-
 jr compiler version "2.00602 (Mon Jun 1 10:59:20 PDT 2009)"
-
 jr rts      version "2.00602 (Mon Jun 1 10:59:25 PDT 2009)"
-
 HOST= DESKTOP-PC
-
 Start Directory= C:\Program Files\JR\/vsuite
-
 JR.JRT = C:\Program Files\JR\/classes/jrt.jar
   -rw-rw-rw-   1 0        0          2090324 Jun  1  2009 C:\Program Files\JR\/classes/jrt.jar
 JR.JRX = C:\Program Files\JR\/classes/jrx.jar
   -rw-rw-rw-   1 0        0           227198 Jun  1  2009 C:\Program Files\JR\/classes/jrx.jar
 Operating System= Windows_NT
-
 original CLASSPATH= .;C:\Program Files\JR\\classes\jrt.jar;C:\Program Files\JR\\classes\jrx.jar
-
 jrv sets CLASSPATH= .;C:\Program Files\JR\/classes/jrt.jar;C:\Program Files\JR\/classes/jrx.jar
-
 DATE= Thu Jan 14 19:01:35 2010
-
 quick/baby:
-
 quick/fact_2:
-
 quick/misc_invocation_count_st_by_0:
-
 DATE= Thu Jan 14 19:01:45 2010
-
 Elapsed time (hh:mm:ss)= 00:00:10</pre>
 
 <p>If you want to launch more tests, you can do it launching this command :</p>
@@ -686,70 +660,69 @@ Elapsed time (hh:mm:ss)= 00:00:10</pre>
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><p>After a post I read on a french forum, i asked myself of the performances using shorts as loop indexes for loop with few iterations (less than 32768).</p>
+        <div><p>After a post I read on a french forum, i asked myself of the performances using shorts as loop indexes for loop with few iterations (less than 32768).</p>
 <p>At first view, it can be tempting because we save 2 octets, so why use an int instead a short ?</p>
 <p>But, when we think of that, we see that the int is more adapted. Indeed, it's more performant.</p>
 <p>Why ?</p>
-<!--more-->
-
 <p>In Java language, all the operations on integers are made in int. Thus, if we use a short as loop index, at each iterations, a typecasting will be made, that's really heavier than a simple affectation to int.</p>
 <p>Here were my first results :</p>
-<p></p><pre>Time for int : 1441 ms
-<p>Time for short : 3015 ms</p></pre>
+<pre>Time for int : 1441 ms
+Time for short : 3015 ms</pre>
+
 <p>The short version is two times slower !</p>
 <p>But like Jean have said, my first test was not correct at all because it doesn't consider some issues that could occurs with micro-benchmarks.</p>
 <p>So I write a new test using a Java Benchmarking framework from Brent Boyer. Here is a little test with that framework :</p>
-<p>[java]package com.wicht;</p>
-<p>import bb.util.Benchmark;</p>
-<p>import java.util.concurrent.Callable;</p>
-<p>public class ShortIndexesLoop {
-    public static void main(String[] args) {
-        Callable callableInt = new Callable(){
-            public Long call() throws Exception {
-                long result = 0;</p>
-<div class="code"><pre>            <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">f</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">f</span> <span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">lt</span><span class="p">;</span> <span class="mi">32760</span><span class="p">;</span> <span class="n">f</span><span class="o">++</span><span class="p">){</span>
-                  <span class="n">result</span> <span class="o">+=</span> <span class="n">f</span><span class="p">;</span>
-              <span class="p">}</span>
+<div class="code"><pre><span class="kn">package</span> <span class="n">com</span><span class="o">.</span><span class="na">wicht</span><span class="o">;</span>
 
-            <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
-        <span class="p">}</span>
-    <span class="p">};</span>
+<span class="kn">import</span> <span class="nn">bb.util.Benchmark</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">java.util.concurrent.Callable</span><span class="o">;</span>
 
-    <span class="n">Callable</span> <span class="n">callableShort</span> <span class="o">=</span> <span class="n">new</span> <span class="n">Callable</span><span class="p">(){</span>
-        <span class="n">public</span> <span class="n">Long</span> <span class="n">call</span><span class="p">()</span> <span class="n">throws</span> <span class="n">Exception</span> <span class="p">{</span>
-            <span class="kt">long</span> <span class="n">result</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">ShortIndexesLoop</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">Callable</span> <span class="n">callableInt</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Callable</span><span class="o">(){</span>
+            <span class="kd">public</span> <span class="n">Long</span> <span class="nf">call</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+                <span class="kt">long</span> <span class="n">result</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
 
-            <span class="k">for</span> <span class="p">(</span><span class="kt">short</span> <span class="n">f</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">f</span> <span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">lt</span><span class="p">;</span> <span class="mi">32760</span><span class="p">;</span> <span class="n">f</span><span class="o">++</span><span class="p">){</span>
-                  <span class="n">result</span> <span class="o">+=</span> <span class="n">f</span><span class="p">;</span>
-              <span class="p">}</span>
+                <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">f</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">f</span> <span class="o">&amp;</span><span class="n">amp</span><span class="o">;</span><span class="n">lt</span><span class="o">;</span> <span class="mi">32760</span><span class="o">;</span> <span class="n">f</span><span class="o">++){</span>
+                      <span class="n">result</span> <span class="o">+=</span> <span class="n">f</span><span class="o">;</span>
+                  <span class="o">}</span>
 
-            <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
-        <span class="p">}</span>
-    <span class="p">};</span>
+                <span class="k">return</span> <span class="n">result</span><span class="o">;</span>
+            <span class="o">}</span>
+        <span class="o">};</span>
 
-    <span class="n">try</span> <span class="p">{</span>
-        <span class="n">System</span><span class="p">.</span><span class="n">out</span><span class="p">.</span><span class="n">println</span><span class="p">(</span><span class="s">"Result with int "</span> <span class="o">+</span> <span class="n">new</span> <span class="n">Benchmark</span><span class="p">(</span><span class="n">callableInt</span><span class="p">));</span>
-        <span class="n">System</span><span class="p">.</span><span class="n">out</span><span class="p">.</span><span class="n">println</span><span class="p">(</span><span class="s">"Result with short "</span> <span class="o">+</span> <span class="n">new</span> <span class="n">Benchmark</span><span class="p">(</span><span class="n">callableShort</span><span class="p">));</span>
-    <span class="p">}</span> <span class="n">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">e</span><span class="p">)</span> <span class="p">{</span>
-        <span class="n">e</span><span class="p">.</span><span class="n">printStackTrace</span><span class="p">();</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+        <span class="n">Callable</span> <span class="n">callableShort</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Callable</span><span class="o">(){</span>
+            <span class="kd">public</span> <span class="n">Long</span> <span class="nf">call</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+                <span class="kt">long</span> <span class="n">result</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+
+                <span class="k">for</span> <span class="o">(</span><span class="kt">short</span> <span class="n">f</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">f</span> <span class="o">&amp;</span><span class="n">amp</span><span class="o">;</span><span class="n">lt</span><span class="o">;</span> <span class="mi">32760</span><span class="o">;</span> <span class="n">f</span><span class="o">++){</span>
+                      <span class="n">result</span> <span class="o">+=</span> <span class="n">f</span><span class="o">;</span>
+                  <span class="o">}</span>
+
+                <span class="k">return</span> <span class="n">result</span><span class="o">;</span>
+            <span class="o">}</span>
+        <span class="o">};</span>
+
+        <span class="k">try</span> <span class="o">{</span>
+            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Result with int "</span> <span class="o">+</span> <span class="k">new</span> <span class="n">Benchmark</span><span class="o">(</span><span class="n">callableInt</span><span class="o">));</span>
+            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Result with short "</span> <span class="o">+</span> <span class="k">new</span> <span class="n">Benchmark</span><span class="o">(</span><span class="n">callableShort</span><span class="o">));</span>
+        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
 </pre></div>
 
 
-<p>}[/java]</p>
 <p>And here are the results :</p>
 <pre>Result with int first = 695.181 us, mean = 43.233 us (CI deltas: -49.358 ns, +74.073 ns), sd = 42.938 us (CI deltas: -11.634 us, +16.426 us)
-
 Result with short first = 733.224 us, mean = 45.679 us (CI deltas: -62.975 ns, +63.932 ns), sd = 45.567 us (CI deltas: -5.877 us, +8.020 us)</pre>
 
 <p>So the results are lower. This time, the short version is 5.657% slower than the int version. Note that this can vary a lot depending on your configuration.</p>
 <p>I talk here of for loops, but the case is the same when you use while loops with indexes.</p>
 <p>Here are also the results with long, double and float versions :</p>
 <pre>Result with long first = 816.555 us, mean = 104.771 us (CI deltas: -236.563 ns, +344.219 ns), sd = 143.295 us (CI deltas: -39.149 us, +63.700 us)
-
 Result with float first = 1.018 ms, mean = 58.055 us (CI deltas: -87.036 ns, +113.537 ns), sd = 70.757 us (CI deltas: -14.269 us, +19.962 us)
-
 Result with double first = 912.115 us, mean = 57.918 us (CI deltas: -66.644 ns, +91.312 ns), sd = 55.185 us (CI deltas: -12.617 us, +25.160 us)</pre>
 
 <p>We can see that the long version is the slowest one and that float and double are equivalent but slower than int and short.</p>
@@ -769,8 +742,7 @@ Result with double first = 912.115 us, mean = 57.918 us (CI deltas: -66.644 ns, 
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><p>Hi,</p>
-<p>I've made a new design for the JTheque web site : <a title="New design for JTheque Web site" href="posts/2010/01/New%20design%20for%20JTheque%20Web%20site" target="_self">http://jtheque.developpez.com/en</a></p>
+        <div><p>I've made a new design for the JTheque web site : <a title="New design for JTheque Web site" href="posts/2010/01/New%20design%20for%20JTheque%20Web%20site" target="_self">http://jtheque.developpez.com/en</a></p>
 <p>I took the same design than for my personal web site. The web site is still generated with Maven 2, but i use a custom maven skin to generate the site.</p></div>
         </div>
             

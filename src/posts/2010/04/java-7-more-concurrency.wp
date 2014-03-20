@@ -1,10 +1,10 @@
-<html><body><p>With <strong>Java 7</strong> (Dolphin), we'll have some <strong>concurrency </strong>and <strong>collections </strong>updates with the <strong>JSR166y</strong>, extension of the JSR166 of Doug Lea.
+With <strong>Java 7</strong> (Dolphin), we'll have some <strong>concurrency </strong>and <strong>collections </strong>updates with the <strong>JSR166y</strong>, extension of the JSR166 of Doug Lea.
 
 In this post, we'll see the most important news :
 
-</p><ul>
+<ul>
 	<li>Fork/Join Framework</li>
-	<li>TrasnferQueue&lt;E&gt;</li>
+	<li>TrasnferQueue<E></li>
 	<li>ThreadLocalRandom</li>
 </ul>
 
@@ -14,7 +14,8 @@ In this post, we'll see the most important news :
 
 The most important improvement is a new <strong>Fork/Join</strong> Framework. Fork/Join is basically the parralel version of the divide-and-conquer algorithm resolution. Here is the typical form of that problems (taken from Doug Lea) :
 
-[java]Result solve(Problem problem) {
+```java
+Result solve(Problem problem) {
     if (problem is small)
         directly solve problem
     else {
@@ -23,13 +24,14 @@ The most important improvement is a new <strong>Fork/Join</strong> Framework. Fo
         join all subtasks
         compose result from subresults
     }
-}[/java]
+}
+```
 
 Java 7 provide a new class <strong>ForkJoinPool </strong>to run <strong>ForkJoinTask</strong>. A ForkJoinTask is lighter than a thread. If you have a lot of ForkJoinTask, you can host them with a smallest number of threads. Two implementations of ForkJoinTask are provided :
 
 <ul>
 	<li><strong>RecursiveAction </strong>: A recursive resultless ForkJoinTask</li>
-	<li><strong>RecursiveTask</strong>&lt;E&gt; : A recursive ForkJoinTask that return an object of type E</li>
+	<li><strong>RecursiveTask</strong><E> : A recursive ForkJoinTask that return an object of type E</li>
 </ul>
 
 Of course, you can also directly use the ForkJoinTask class but the recursive actions are enough in almost all the cases.
@@ -38,7 +40,8 @@ From a ForkJoinTask you can invoke other task (fork them) using <em>invokeAll </
 
 So, now that we have covered the main concepts of this framework, we could start with a little example (directly taken from Javadoc <strong>build 87</strong>). We'll use divide and conquer to increment all the elements of an array. To know if the problem is small enough to solve it directly, we'll use a threshold representing the number of elements that we can increment directly. If we have more elements than the threshold, we will fork in two task otherwise, we'll compute directly the incrementation on the array. So here is our task :
 
-[java]public class IncrementTask extends RecursiveAction {
+```java
+public class IncrementTask extends RecursiveAction {
    private final long[] array;
    private final int low;
    private final int high;
@@ -55,31 +58,33 @@ So, now that we have covered the main concepts of this framework, we could start
 
    @Override
    protected void compute() {
-      if (high - low &lt; THRESHOLD) {
-           for (int i = low; i &lt; high; ++i){
+      if (high - low < THRESHOLD) {
+           for (int i = low; i < high; ++i){
               array[i]++;
            }
         } else {
-           int mid = (low + high) &gt;&gt;&gt; 1;
+           int mid = (low + high) >>> 1;
 
            invokeAll(new IncrementTask(array, low, mid), new IncrementTask(array, mid, high));
       }
    }
-}[/java]
+}
+```
 
 And you can launch that on an array using ForkJoinPool :
 
-[java]RecursiveAction mainTask = new IncrementTask (anArray, 0, anArray.length);
-
+```java
+RecursiveAction mainTask = new IncrementTask (anArray, 0, anArray.length);
 ForkJoinPool mainPool = new ForkJoinPool();
-
-mainPool.invoke(mainTask[/java]e&gt;
+mainPool.invoke(mainTask
+```e>
 
 All the elements of the array will be incremented. Depending on the size of the array and of the threshold, the problem will be divided in several sub problems and all these task will be managed by the ForkJoinPool.
 
 You can also make action that return something. By example, we can compute the sum of all the elements of an array :
 
-[java]public class SumTask extends RecursiveTask {
+```java
+public class SumTask extends RecursiveTask {
    private final long[] array;
    private final int low;
    private final int high;
@@ -96,16 +101,16 @@ You can also make action that return something. By example, we can compute the s
 
    @Override
    protected Long compute() {
-      if (high - low &lt; THRESHOLD) {
+      if (high - low < THRESHOLD) {
           long sum = 0;
 
-          for (int i = low; i &lt; high; ++i){
+          for (int i = low; i < high; ++i){
               sum += array[i];
            }
 
            return sum;
        } else {
-           int mid = (low + high) &gt;&gt;&gt; 1;
+           int mid = (low + high) >>> 1;
 
           RecursiveTask left = new SumTask(array, low, mid);
           RecursiveTask right = new SumTask(array, mid, high);
@@ -115,27 +120,29 @@ You can also make action that return something. By example, we can compute the s
           return left.compute() + right.join();
       }
    }
-}[/java]
+}
+```
 
 And you can use it like that :
 
-[java]RecursiveTask sumTask = new SumTask(anArray, 0, anArray.length);
-
+```java
+RecursiveTask sumTask = new SumTask(anArray, 0, anArray.length);
 ForkJoinPool mainPool = new ForkJoinPool();
-
-Long sum = mainPool.invoke(sumTask);[/java]
+Long sum = mainPool.invoke(sumTask);
+```
 
 I think it's a clean way to solve big problems with divide-and-conquer.
 
 You can also imagine others ways to divide the problems. An example is to compute the <em>THRESOLD</em> left elements in the task and create a new task to compute the right elements. With that, we create less tasks, but it depends on the context and on the problems. In practive, you'll have  normally more complex problems but if you can find a way to divide the problems, you can use that new framework and have a very clean code.
 
-<h3>TransferQueue&lt;E&gt;</h3>
+<h3>TransferQueue<E></h3>
 
 A new interesting collection. This collection is a blocking queue especially made for producers/consumers. With that kind of queue, the producers can await for receipt of by the consumers with a new transfer(E) method or like normal queue without waiting for receipt with the <em>put</em>(E) method. It's also possible to make a transfer with timeout with the tryTransfer method. There is no change in the consumer part, you always use take() to get an element and waiting for an element. You've also access to the number of waiting consumer with the <em>getWaitingConsumerCount</em>().
 
-The implementation to use is the <strong>LinkedTransferQueue&lt;E&gt;</strong> based on linked nodes. The elements are ordered with FIFO. Here are some methods you can use with that new collection :
+The implementation to use is the <strong>LinkedTransferQueue<E></strong> based on linked nodes. The elements are ordered with FIFO. Here are some methods you can use with that new collection :
 
-[java]TransferQueue&lt;String&gt; transfer = new LinkedTransferQueue&lt;String&gt;();
+```java
+TransferQueue<String> transfer = new LinkedTransferQueue<String>();
 
 transfer.transfer("Hello"); //Wait for a consumer
 
@@ -149,7 +156,8 @@ boolean transfered = transfer.tryTransfer("Goodbye", 5, TimeUnit.SECONDS);
 
 while(transfer.hasWaitingConsumer()){
     //There is at least one consumer waiting for a transfer
-}[/java]
+}
+```
 
 It's also an interesting stuff. Useful by example in the case of message passing.
 
@@ -159,12 +167,16 @@ A really simple but useful enhancement is the add of the <strong>ThreadLocalRand
 
 You can use that class like that :
 
-[java]long l = ThreadLocalRandom.current().nextLong(22L);[/java]
+```java
+long l = ThreadLocalRandom.current().nextLong(22L);
+```
 
 If you always use this form, you have the guarantee that the random generator will never be shared between two threads. Moreover, this new class provide  methods to generate a bounded numbers. By example, to generate a pseudo-random number between 10, inclusive and 33, exclusive, you can type :
 
-[java]int i = ThreadLocalRandom.current().nextInt(10, 33);[/java]
+```java
+int i = ThreadLocalRandom.current().nextInt(10, 33);
+```
 
 This is a little improvement but really useful, i think.
 
-So here we are. I've covered the main features added on Java 7 for concurrency. I hope you find that stuff interesting and that discovering this features will help you to make concurrent programming in Java 7.</body></html>
+So here we are. I've covered the main features added on Java 7 for concurrency. I hope you find that stuff interesting and that discovering this features will help you to make concurrent programming in Java 7.

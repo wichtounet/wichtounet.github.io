@@ -134,95 +134,97 @@
     </small>
     <hr>
     <div class="e-content" itemprop="articleBody text">
-    <div><p></p><p>I've created another benchmark. This time, I've benchmarked the different ways of synchronizing a little code using <strong>mutual exclusion</strong> on this code.</p>
+    <div><p>I've created another benchmark. This time, I've benchmarked the different ways of synchronizing a little code using <strong>mutual exclusion</strong> on this code.</p>
 <p>The code to protect will be very simple. It's a simple counter :</p>
-<p>[java]//Init</p>
-<p>int counter = 0; </p>
-<p>//Critical section</p>
-<p>counter++;[/java]</p>
+<div class="code"><pre><span class="c1">//Init</span>
+<span class="kt">int</span> <span class="n">counter</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> 
+<span class="c1">//Critical section</span>
+<span class="n">counter</span><span class="o">++;</span>
+</pre></div>
+
+
 <p>The critical section, if not protected with synchronization system, will not function properly due to possible <strong>interleavings</strong> (read <a href="http://www.baptiste-wicht.com/2010/08/java-concurrrency-synchronization-locks/" target="_blank">the article on synchronization</a> if you don't know what is <strong>interleaving</strong>).</p>
 <!--more-->
 
 <p>I've used 3 different synchronizers to synchronize this increment :</p>
-<p></p><ol>
+<ol>
     <li>synchronized block</li>
     <li>Semaphores (fair and unfair)</li>
     <li>Explicit locks (fair and unfair)</li>
 </ol>
+
 <p>I've also used a third way to solve the problem with AtomicInteger. This is not the same as the other ways because it does not provide mutual exclusion but this is a good way to synchronize simple values, like integers or boolean, but also references. The atomicity of the operations of the AtomicInteger is made using the compare-and-swap operation of the operating system. So there is no waiting operations. So there is less context switches and result in more performing code normally.</p>
 <p>Here is the code of these 4 ways to solve the problems :</p>
-<p>[java]private class SynchronizedRunnable implements Runnable {
-    private int counter = 0;</p>
-<div class="code"><pre><span class="err">@</span><span class="n">Override</span>
-<span class="n">public</span> <span class="n">synchronized</span> <span class="kt">void</span> <span class="n">run</span><span class="p">()</span> <span class="p">{</span>
-    <span class="n">counter</span><span class="o">++</span><span class="p">;</span>
-<span class="p">}</span>
+<div class="code"><pre><span class="kd">private</span> <span class="kd">class</span> <span class="nc">SynchronizedRunnable</span> <span class="kd">implements</span> <span class="n">Runnable</span> <span class="o">{</span>
+    <span class="kd">private</span> <span class="kt">int</span> <span class="n">counter</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="kd">synchronized</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+        <span class="n">counter</span><span class="o">++;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+
+<span class="kd">private</span> <span class="kd">class</span> <span class="nc">ReentrantLockRunnable</span> <span class="kd">implements</span> <span class="n">Runnable</span> <span class="o">{</span>
+    <span class="kd">private</span> <span class="kt">int</span> <span class="n">counter</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+
+    <span class="kd">private</span> <span class="n">Lock</span> <span class="n">lock</span><span class="o">;</span>
+
+    <span class="kd">private</span> <span class="nf">ReentrantLockRunnable</span><span class="o">(</span><span class="kt">boolean</span> <span class="n">fair</span><span class="o">)</span> <span class="o">{</span>
+        <span class="kd">super</span><span class="o">();</span>
+
+        <span class="n">lock</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ReentrantLock</span><span class="o">(</span><span class="n">fair</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+        <span class="n">lock</span><span class="o">.</span><span class="na">lock</span><span class="o">();</span>
+
+        <span class="k">try</span> <span class="o">{</span>
+            <span class="n">counter</span><span class="o">++;</span>
+        <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+            <span class="n">lock</span><span class="o">.</span><span class="na">unlock</span><span class="o">();</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+
+<span class="kd">private</span> <span class="kd">class</span> <span class="nc">SemaphoreRunnable</span> <span class="kd">implements</span> <span class="n">Runnable</span> <span class="o">{</span>
+    <span class="kd">private</span> <span class="kt">int</span> <span class="n">counter</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+
+    <span class="kd">private</span> <span class="kd">final</span> <span class="n">Semaphore</span> <span class="n">semaphore</span><span class="o">;</span>
+
+    <span class="kd">private</span> <span class="nf">SemaphoreRunnable</span><span class="o">(</span><span class="kt">boolean</span> <span class="n">fair</span><span class="o">)</span> <span class="o">{</span>
+        <span class="kd">super</span><span class="o">();</span>
+
+        <span class="n">semaphore</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Semaphore</span><span class="o">(</span><span class="mi">1</span><span class="o">,</span> <span class="n">fair</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">try</span> <span class="o">{</span>
+            <span class="n">semaphore</span><span class="o">.</span><span class="na">acquire</span><span class="o">();</span>
+        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">InterruptedException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+            <span class="k">throw</span> <span class="k">new</span> <span class="nf">RuntimeException</span><span class="o">(</span><span class="n">e</span><span class="o">);</span>
+        <span class="o">}</span>
+
+        <span class="k">try</span> <span class="o">{</span>
+            <span class="n">counter</span><span class="o">++;</span>
+        <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+            <span class="n">semaphore</span><span class="o">.</span><span class="na">release</span><span class="o">();</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+
+<span class="kd">private</span> <span class="kd">class</span> <span class="nc">AtomicIntegerRunnable</span> <span class="kd">implements</span> <span class="n">Runnable</span> <span class="o">{</span>
+    <span class="kd">private</span> <span class="n">AtomicInteger</span> <span class="n">counter</span> <span class="o">=</span> <span class="k">new</span> <span class="n">AtomicInteger</span><span class="o">(</span><span class="mi">0</span><span class="o">);</span>
+
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+        <span class="n">counter</span><span class="o">.</span><span class="na">incrementAndGet</span><span class="o">();</span>
+    <span class="o">}</span>
+<span class="o">}</span>
 </pre></div>
 
 
-<p>}</p>
-<p>private class ReentrantLockRunnable implements Runnable {
-    private int counter = 0;</p>
-<div class="code"><pre><span class="n">private</span> <span class="n">Lock</span> <span class="n">lock</span><span class="p">;</span>
-
-<span class="n">private</span> <span class="nf">ReentrantLockRunnable</span><span class="p">(</span><span class="n">boolean</span> <span class="n">fair</span><span class="p">)</span> <span class="p">{</span>
-    <span class="n">super</span><span class="p">();</span>
-
-    <span class="n">lock</span> <span class="o">=</span> <span class="n">new</span> <span class="n">ReentrantLock</span><span class="p">(</span><span class="n">fair</span><span class="p">);</span>
-<span class="p">}</span>
-
-<span class="err">@</span><span class="n">Override</span>
-<span class="n">public</span> <span class="kt">void</span> <span class="n">run</span><span class="p">()</span> <span class="p">{</span>
-    <span class="n">lock</span><span class="p">.</span><span class="n">lock</span><span class="p">();</span>
-
-    <span class="n">try</span> <span class="p">{</span>
-        <span class="n">counter</span><span class="o">++</span><span class="p">;</span>
-    <span class="p">}</span> <span class="n">finally</span> <span class="p">{</span>
-        <span class="n">lock</span><span class="p">.</span><span class="n">unlock</span><span class="p">();</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-</pre></div>
-
-
-<p>}</p>
-<p>private class SemaphoreRunnable implements Runnable {
-    private int counter = 0;</p>
-<div class="code"><pre><span class="n">private</span> <span class="n">final</span> <span class="n">Semaphore</span> <span class="n">semaphore</span><span class="p">;</span>
-
-<span class="n">private</span> <span class="nf">SemaphoreRunnable</span><span class="p">(</span><span class="n">boolean</span> <span class="n">fair</span><span class="p">)</span> <span class="p">{</span>
-    <span class="n">super</span><span class="p">();</span>
-
-    <span class="n">semaphore</span> <span class="o">=</span> <span class="n">new</span> <span class="n">Semaphore</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">fair</span><span class="p">);</span>
-<span class="p">}</span>
-
-<span class="err">@</span><span class="n">Override</span>
-<span class="n">public</span> <span class="kt">void</span> <span class="n">run</span><span class="p">()</span> <span class="p">{</span>
-    <span class="n">try</span> <span class="p">{</span>
-        <span class="n">semaphore</span><span class="p">.</span><span class="n">acquire</span><span class="p">();</span>
-    <span class="p">}</span> <span class="n">catch</span> <span class="p">(</span><span class="n">InterruptedException</span> <span class="n">e</span><span class="p">)</span> <span class="p">{</span>
-        <span class="n">throw</span> <span class="n">new</span> <span class="n">RuntimeException</span><span class="p">(</span><span class="n">e</span><span class="p">);</span>
-    <span class="p">}</span>
-
-    <span class="n">try</span> <span class="p">{</span>
-        <span class="n">counter</span><span class="o">++</span><span class="p">;</span>
-    <span class="p">}</span> <span class="n">finally</span> <span class="p">{</span>
-        <span class="n">semaphore</span><span class="p">.</span><span class="n">release</span><span class="p">();</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-</pre></div>
-
-
-<p>}</p>
-<p>private class AtomicIntegerRunnable implements Runnable {
-    private AtomicInteger counter = new AtomicInteger(0);</p>
-<div class="code"><pre><span class="err">@</span><span class="n">Override</span>
-<span class="n">public</span> <span class="kt">void</span> <span class="n">run</span><span class="p">()</span> <span class="p">{</span>
-    <span class="n">counter</span><span class="p">.</span><span class="n">incrementAndGet</span><span class="p">();</span>
-<span class="p">}</span>
-</pre></div>
-
-
-<p>}[/java]</p>
 <p>I used Runnable to facilitate the testing and timing of the different mechanisms.</p>
 <p>The test is made in two phases :</p>
 <ol>

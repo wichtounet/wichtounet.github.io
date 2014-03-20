@@ -132,13 +132,14 @@
     </small>
     <hr>
     <div class="e-content" itemprop="articleBody text">
-    <div><p></p><p>This week, we started learning Prolog at school. So to exercise, I choose the Einstein's Riddle. Einstein wrote this riddle in the 19th century. He stated that only 2% of the population can solve it by mind. Personnally, I'm not of this two %, I needed paper and pens to solve it. But this is not the them of the post, so let's use Prolog to solve it. I will present my solution, there is certainly other solutions, and certainly better, but it makes only some days that I started learning this language and this new kind of developing, logical programming. </p>
+    <div><p>This week, we started learning Prolog at school. So to exercise, I choose the Einstein's Riddle. Einstein wrote this riddle in the 19th century. He stated that only 2% of the population can solve it by mind. Personnally, I'm not of this two %, I needed paper and pens to solve it. But this is not the them of the post, so let's use Prolog to solve it. I will present my solution, there is certainly other solutions, and certainly better, but it makes only some days that I started learning this language and this new kind of developing, logical programming. </p>
 <p>Here is the riddle as stated by Einstein :</p>
-<p></p><ol>
+<ol>
     <li>In a street there are five houses, painted five different colours.</li>
     <li>In each house lives a person of different nationality</li>
     <li>These five homeowners each drink a different kind of beverage, smoke different brand of cigar and keep a different pet.</li>
 </ol>
+
 <p>The question is : Who owns the fish ?</p>
 <p>And there are 15 hints :</p>
 <ol>
@@ -163,134 +164,127 @@
 <!--more-->
 
 <p>First of all, we'll create a list of tuple containing all the informations about a men . The position in the list represent the position of the house in the street. So we'll create a predicate to create the list :</p>
-<p>[prolog]persons(0, []) :- !.</p>
-<p>persons(N, [(_Men,_Color,_Drink,_Smoke,_Animal)|T]) :- N1 is N-1, persons(N1,T).[/prolog]</p>
+<div class="code"><pre><span class="nf">persons</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="p">[])</span> <span class="p">:-</span> <span class="p">!.</span>
+<span class="nf">persons</span><span class="p">(</span><span class="nv">N</span><span class="p">,</span> <span class="p">[(</span><span class="k">_</span><span class="nv">Men</span><span class="p">,</span><span class="k">_</span><span class="nv">Color</span><span class="p">,</span><span class="k">_</span><span class="nv">Drink</span><span class="p">,</span><span class="k">_</span><span class="nv">Smoke</span><span class="p">,</span><span class="k">_</span><span class="nv">Animal</span><span class="p">)|</span><span class="nv">T</span><span class="p">])</span> <span class="p">:-</span> <span class="nv">N1</span> <span class="o">is</span> <span class="nv">N</span><span class="o">-</span><span class="m">1</span><span class="p">,</span> <span class="nf">persons</span><span class="p">(</span><span class="nv">N1</span><span class="p">,</span><span class="nv">T</span><span class="p">).</span>
+</pre></div>
+
+
 <p>The first predicate, is to end when the index is 0 and the list is empty. And the second one create a recursive list with N element. Then, I needed a predicate to get the Nth element if corresponding to some informations of the recursive list : </p>
-<p>[prolog]person(1, [H|_], H) :- !.</p>
-<p>person(N, [_|T], R) :- N1 is N-1, person(N1, T, R).[/prolog]</p>
+<div class="code"><pre><span class="nf">person</span><span class="p">(</span><span class="m">1</span><span class="p">,</span> <span class="p">[</span><span class="nv">H</span><span class="p">|</span><span class="k">_</span><span class="p">],</span> <span class="nv">H</span><span class="p">)</span> <span class="p">:-</span> <span class="p">!.</span>
+<span class="nf">person</span><span class="p">(</span><span class="nv">N</span><span class="p">,</span> <span class="p">[</span><span class="k">_</span><span class="p">|</span><span class="nv">T</span><span class="p">],</span> <span class="nv">R</span><span class="p">)</span> <span class="p">:-</span> <span class="nv">N1</span> <span class="o">is</span> <span class="nv">N</span><span class="o">-</span><span class="m">1</span><span class="p">,</span> <span class="nf">person</span><span class="p">(</span><span class="nv">N1</span><span class="p">,</span> <span class="nv">T</span><span class="p">,</span> <span class="nv">R</span><span class="p">).</span>
+</pre></div>
+
+
 <p>Again, the first one is used to stop when we are at the good element. And the second predicate iterate until the good element is found. </p>
 <p>Then, I have translated the hints into predicate : </p>
-<p>[prolog]% The Brit lives in a red house</p>
-<p>hint1([(brit,red,<em>, </em>, <em>)|</em>]).</p>
-<p>hint1([_|T]) :- hint1(T).</p>
-<p>% The Swede keeps dogs as pets</p>
-<p>hint2([(swede,<em>,</em>,<em>,dog)|</em>]).</p>
-<p>hint2([_|T]) :- hint2(T).</p>
-<p>% The Dane drinks tea</p>
-<p>hint3([(dane,<em>,tea,</em>,<em>)|</em>]).</p>
-<p>hint3([_|T]) :- hint3(T).</p>
-<p>% The Green house is on the left of the White house</p>
-<p>hint4([(<em>,green,</em>,<em>,</em>),(<em>,white,</em>,<em>,</em>)|_]).</p>
-<p>hint4([_|T]) :- hint4(T).</p>
-<p>% The owner of the Green house drinks coffee. </p>
-<p>hint5([(<em>,green,coffee,</em>,<em>)|</em>]).</p>
-<p>hint5([_|T]) :- hint5(T).</p>
-<p>% The person who smokes Pall Mall rears birds</p>
-<p>hint6([(<em>,</em>,<em>,pallmall,bird)|</em>]).</p>
-<p>hint6([_|T]) :- hint6(T).</p>
-<p>% The owner of the Yellow house smokes Dunhill</p>
-<p>hint7([(<em>,yellow,</em>,dunhill,<em>)|</em>]).</p>
-<p>hint7([_|T]) :- hint7(T).</p>
-<p>% The man living in the centre house drinks milk</p>
-<p>hint8(Persons) :- person(3, Persons, (<em>,</em>,milk,<em>,</em>)).</p>
-<p>% The Norwegian lives in the first house</p>
-<p>hint9(Persons) :- person(1, Persons, (norwegian,<em>,</em>,<em>,</em>)).</p>
-<p>% The man who smokes Blends lives next to the one who keeps cats</p>
-<p>hint10([(<em>,</em>,<em>,blend,</em>),(<em>,</em>,<em>,</em>,cat)|_]).</p>
-<p>hint10([(<em>,</em>,<em>,</em>,cat),(<em>,</em>,<em>,blend,</em>)|_]).</p>
-<p>hint10([_|T]) :- hint10(T).</p>
-<p>% The man who keeps horses lives next to the man who smokes Dunhill</p>
-<p>hint11([(<em>,</em>,<em>,dunhill,</em>),(<em>,</em>,<em>,</em>,horse)|_]).</p>
-<p>hint11([(<em>,</em>,<em>,</em>,horse),(<em>,</em>,<em>,dunhill,</em>)|_]).</p>
-<p>hint11([_|T]) :- hint11(T).</p>
-<p>% The man who smokes Blue Master drinks beer</p>
-<p>hint12([(<em>,</em>,beer,bluemaster,<em>)|</em>]).</p>
-<p>hint12([_|T]) :- hint12(T).</p>
-<p>% The German smokes Prince</p>
-<p>hint13([(german,<em>,</em>,prince,<em>)|</em>]).</p>
-<p>hint13([_|T]) :- hint13(T).</p>
-<p>% The Norwegian lives next to the blue house</p>
-<p>hint14([(norwegian,<em>,</em>,<em>,</em>),(<em>,blue,</em>,<em>,</em>)|_]).</p>
-<p>hint14([(<em>,blue,</em>,<em>,</em>),(norwegian,<em>,</em>,<em>,</em>)|_]).</p>
-<p>hint14([_|T]) :- hint14(T).</p>
-<p>% The man who smokes Blends has a neighbour who drinks water</p>
-<p>hint15([(<em>,</em>,<em>,blend,</em>),(<em>,</em>,water,<em>,</em>)|_]).</p>
-<p>hint15([(<em>,</em>,water,<em>,</em>),(<em>,</em>,<em>,blend,</em>)|_]).</p>
-<p>hint15([_|T]) :- hint15(T).</p>
-<p>% The question : Who owns the fish ?</p>
-<p>question([(<em>,</em>,<em>,</em>,fish)|_]).</p>
-<p>question([_|T]) :- question(T).[/prolog]</p>
+<div class="code"><pre><span class="c1">% The Brit lives in a red house</span>
+<span class="nf">hint1</span><span class="p">([(</span><span class="s-Atom">brit</span><span class="p">,</span><span class="s-Atom">red</span><span class="p">,</span><span class="k">_</span><span class="p">,</span> <span class="k">_</span><span class="p">,</span> <span class="k">_</span><span class="p">)|</span><span class="k">_</span><span class="p">]).</span>
+<span class="nf">hint1</span><span class="p">([</span><span class="k">_</span><span class="p">|</span><span class="nv">T</span><span class="p">])</span> <span class="p">:-</span> <span class="nf">hint1</span><span class="p">(</span><span class="nv">T</span><span class="p">).</span>
+<span class="c1">% The Swede keeps dogs as pets</span>
+<span class="nf">hint2</span><span class="p">([(</span><span class="s-Atom">swede</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="s-Atom">dog</span><span class="p">)|</span><span class="k">_</span><span class="p">]).</span>
+<span class="nf">hint2</span><span class="p">([</span><span class="k">_</span><span class="p">|</span><span class="nv">T</span><span class="p">])</span> <span class="p">:-</span> <span class="nf">hint2</span><span class="p">(</span><span class="nv">T</span><span class="p">).</span>
+<span class="c1">% The Dane drinks tea</span>
+<span class="nf">hint3</span><span class="p">([(</span><span class="s-Atom">dane</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="s-Atom">tea</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">)|</span><span class="k">_</span><span class="p">]).</span>
+<span class="nf">hint3</span><span class="p">([</span><span class="k">_</span><span class="p">|</span><span class="nv">T</span><span class="p">])</span> <span class="p">:-</span> <span class="nf">hint3</span><span class="p">(</span><span class="nv">T</span><span class="p">).</span>
+<span class="c1">% The Green house is on the left of the White house</span>
+<span class="nf">hint4</span><span class="p">([(</span><span class="k">_</span><span class="p">,</span><span class="s-Atom">green</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">),(</span><span class="k">_</span><span class="p">,</span><span class="s-Atom">white</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">)|</span><span class="k">_</span><span class="p">]).</span>
+<span class="nf">hint4</span><span class="p">([</span><span class="k">_</span><span class="p">|</span><span class="nv">T</span><span class="p">])</span> <span class="p">:-</span> <span class="nf">hint4</span><span class="p">(</span><span class="nv">T</span><span class="p">).</span>
+<span class="c1">% The owner of the Green house drinks coffee. </span>
+<span class="nf">hint5</span><span class="p">([(</span><span class="k">_</span><span class="p">,</span><span class="s-Atom">green</span><span class="p">,</span><span class="s-Atom">coffee</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">)|</span><span class="k">_</span><span class="p">]).</span>
+<span class="nf">hint5</span><span class="p">([</span><span class="k">_</span><span class="p">|</span><span class="nv">T</span><span class="p">])</span> <span class="p">:-</span> <span class="nf">hint5</span><span class="p">(</span><span class="nv">T</span><span class="p">).</span>
+<span class="c1">% The person who smokes Pall Mall rears birds</span>
+<span class="nf">hint6</span><span class="p">([(</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="s-Atom">pallmall</span><span class="p">,</span><span class="s-Atom">bird</span><span class="p">)|</span><span class="k">_</span><span class="p">]).</span>
+<span class="nf">hint6</span><span class="p">([</span><span class="k">_</span><span class="p">|</span><span class="nv">T</span><span class="p">])</span> <span class="p">:-</span> <span class="nf">hint6</span><span class="p">(</span><span class="nv">T</span><span class="p">).</span>
+<span class="c1">% The owner of the Yellow house smokes Dunhill</span>
+<span class="nf">hint7</span><span class="p">([(</span><span class="k">_</span><span class="p">,</span><span class="s-Atom">yellow</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="s-Atom">dunhill</span><span class="p">,</span><span class="k">_</span><span class="p">)|</span><span class="k">_</span><span class="p">]).</span>
+<span class="nf">hint7</span><span class="p">([</span><span class="k">_</span><span class="p">|</span><span class="nv">T</span><span class="p">])</span> <span class="p">:-</span> <span class="nf">hint7</span><span class="p">(</span><span class="nv">T</span><span class="p">).</span>
+<span class="c1">% The man living in the centre house drinks milk</span>
+<span class="nf">hint8</span><span class="p">(</span><span class="nv">Persons</span><span class="p">)</span> <span class="p">:-</span> <span class="nf">person</span><span class="p">(</span><span class="m">3</span><span class="p">,</span> <span class="nv">Persons</span><span class="p">,</span> <span class="p">(</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="s-Atom">milk</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">)).</span>
+<span class="c1">% The Norwegian lives in the first house</span>
+<span class="nf">hint9</span><span class="p">(</span><span class="nv">Persons</span><span class="p">)</span> <span class="p">:-</span> <span class="nf">person</span><span class="p">(</span><span class="m">1</span><span class="p">,</span> <span class="nv">Persons</span><span class="p">,</span> <span class="p">(</span><span class="s-Atom">norwegian</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">)).</span>
+<span class="c1">% The man who smokes Blends lives next to the one who keeps cats</span>
+<span class="nf">hint10</span><span class="p">([(</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="s-Atom">blend</span><span class="p">,</span><span class="k">_</span><span class="p">),(</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="s-Atom">cat</span><span class="p">)|</span><span class="k">_</span><span class="p">]).</span>
+<span class="nf">hint10</span><span class="p">([(</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="s-Atom">cat</span><span class="p">),(</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="s-Atom">blend</span><span class="p">,</span><span class="k">_</span><span class="p">)|</span><span class="k">_</span><span class="p">]).</span>
+<span class="nf">hint10</span><span class="p">([</span><span class="k">_</span><span class="p">|</span><span class="nv">T</span><span class="p">])</span> <span class="p">:-</span> <span class="nf">hint10</span><span class="p">(</span><span class="nv">T</span><span class="p">).</span>
+<span class="c1">% The man who keeps horses lives next to the man who smokes Dunhill</span>
+<span class="nf">hint11</span><span class="p">([(</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="s-Atom">dunhill</span><span class="p">,</span><span class="k">_</span><span class="p">),(</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="s-Atom">horse</span><span class="p">)|</span><span class="k">_</span><span class="p">]).</span>
+<span class="nf">hint11</span><span class="p">([(</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="s-Atom">horse</span><span class="p">),(</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="s-Atom">dunhill</span><span class="p">,</span><span class="k">_</span><span class="p">)|</span><span class="k">_</span><span class="p">]).</span>
+<span class="nf">hint11</span><span class="p">([</span><span class="k">_</span><span class="p">|</span><span class="nv">T</span><span class="p">])</span> <span class="p">:-</span> <span class="nf">hint11</span><span class="p">(</span><span class="nv">T</span><span class="p">).</span>
+<span class="c1">% The man who smokes Blue Master drinks beer</span>
+<span class="nf">hint12</span><span class="p">([(</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="s-Atom">beer</span><span class="p">,</span><span class="s-Atom">bluemaster</span><span class="p">,</span><span class="k">_</span><span class="p">)|</span><span class="k">_</span><span class="p">]).</span>
+<span class="nf">hint12</span><span class="p">([</span><span class="k">_</span><span class="p">|</span><span class="nv">T</span><span class="p">])</span> <span class="p">:-</span> <span class="nf">hint12</span><span class="p">(</span><span class="nv">T</span><span class="p">).</span>
+<span class="c1">% The German smokes Prince</span>
+<span class="nf">hint13</span><span class="p">([(</span><span class="s-Atom">german</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="s-Atom">prince</span><span class="p">,</span><span class="k">_</span><span class="p">)|</span><span class="k">_</span><span class="p">]).</span>
+<span class="nf">hint13</span><span class="p">([</span><span class="k">_</span><span class="p">|</span><span class="nv">T</span><span class="p">])</span> <span class="p">:-</span> <span class="nf">hint13</span><span class="p">(</span><span class="nv">T</span><span class="p">).</span>
+<span class="c1">% The Norwegian lives next to the blue house</span>
+<span class="nf">hint14</span><span class="p">([(</span><span class="s-Atom">norwegian</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">),(</span><span class="k">_</span><span class="p">,</span><span class="s-Atom">blue</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">)|</span><span class="k">_</span><span class="p">]).</span>
+<span class="nf">hint14</span><span class="p">([(</span><span class="k">_</span><span class="p">,</span><span class="s-Atom">blue</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">),(</span><span class="s-Atom">norwegian</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">)|</span><span class="k">_</span><span class="p">]).</span>
+<span class="nf">hint14</span><span class="p">([</span><span class="k">_</span><span class="p">|</span><span class="nv">T</span><span class="p">])</span> <span class="p">:-</span> <span class="nf">hint14</span><span class="p">(</span><span class="nv">T</span><span class="p">).</span>
+<span class="c1">% The man who smokes Blends has a neighbour who drinks water</span>
+<span class="nf">hint15</span><span class="p">([(</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="s-Atom">blend</span><span class="p">,</span><span class="k">_</span><span class="p">),(</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="s-Atom">water</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">)|</span><span class="k">_</span><span class="p">]).</span>
+<span class="nf">hint15</span><span class="p">([(</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="s-Atom">water</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">),(</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="s-Atom">blend</span><span class="p">,</span><span class="k">_</span><span class="p">)|</span><span class="k">_</span><span class="p">]).</span>
+<span class="nf">hint15</span><span class="p">([</span><span class="k">_</span><span class="p">|</span><span class="nv">T</span><span class="p">])</span> <span class="p">:-</span> <span class="nf">hint15</span><span class="p">(</span><span class="nv">T</span><span class="p">).</span>
+<span class="c1">% The question : Who owns the fish ?</span>
+<span class="nf">question</span><span class="p">([(</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="s-Atom">fish</span><span class="p">)|</span><span class="k">_</span><span class="p">]).</span>
+<span class="nf">question</span><span class="p">([</span><span class="k">_</span><span class="p">|</span><span class="nv">T</span><span class="p">])</span> <span class="p">:-</span> <span class="nf">question</span><span class="p">(</span><span class="nv">T</span><span class="p">).</span>
+</pre></div>
+
+
 <p>I've used one main way to do the predicates. The first predicate type used for every predicates except 8 and 9 is really  simple. I expressed the valid values and then, I used iteration to iterate over the arrays. With that, the predicate is true when the the list contains the good value (or values when testing for an house next to another). </p>
 <p>The other predicate is that we specify that the Nth contains some values. </p>
 <p>After that, we must specify the question : </p>
-<p>[prolog]question([(<em>,</em>,<em>,</em>,fish)|_]).</p>
-<p>question([_|T]) :- question(T).[/prolog]</p>
+<div class="code"><pre><span class="nf">question</span><span class="p">([(</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="k">_</span><span class="p">,</span><span class="s-Atom">fish</span><span class="p">)|</span><span class="k">_</span><span class="p">]).</span>
+<span class="nf">question</span><span class="p">([</span><span class="k">_</span><span class="p">|</span><span class="nv">T</span><span class="p">])</span> <span class="p">:-</span> <span class="nf">question</span><span class="p">(</span><span class="nv">T</span><span class="p">).</span>
+</pre></div>
+
+
 <p>We just iterate the list, specifying that there is a man with a fish. Without the question, we can solve the problem, but we don't know that the last animal is a fish. </p>
 <p>And after all, we can try to solve the riddle : </p>
-<p>[prolog]solution(Persons) :-
-  persons(5, Persons),
-  hint1(Persons),
-  hint2(Persons),
-  hint3(Persons),
-  hint4(Persons),
-  hint5(Persons),
-  hint6(Persons),
-  hint7(Persons),
-  hint8(Persons),
-  hint9(Persons),
-  hint10(Persons),
-  hint11(Persons),
-  hint12(Persons),
-  hint13(Persons),
-  hint14(Persons),
-  hint15(Persons),
-  question(Persons).[/prolog]</p>
+<div class="code"><pre><span class="nf">solution</span><span class="p">(</span><span class="nv">Persons</span><span class="p">)</span> <span class="p">:-</span>
+  <span class="nf">persons</span><span class="p">(</span><span class="m">5</span><span class="p">,</span> <span class="nv">Persons</span><span class="p">),</span>
+  <span class="nf">hint1</span><span class="p">(</span><span class="nv">Persons</span><span class="p">),</span>
+  <span class="nf">hint2</span><span class="p">(</span><span class="nv">Persons</span><span class="p">),</span>
+  <span class="nf">hint3</span><span class="p">(</span><span class="nv">Persons</span><span class="p">),</span>
+  <span class="nf">hint4</span><span class="p">(</span><span class="nv">Persons</span><span class="p">),</span>
+  <span class="nf">hint5</span><span class="p">(</span><span class="nv">Persons</span><span class="p">),</span>
+  <span class="nf">hint6</span><span class="p">(</span><span class="nv">Persons</span><span class="p">),</span>
+  <span class="nf">hint7</span><span class="p">(</span><span class="nv">Persons</span><span class="p">),</span>
+  <span class="nf">hint8</span><span class="p">(</span><span class="nv">Persons</span><span class="p">),</span>
+  <span class="nf">hint9</span><span class="p">(</span><span class="nv">Persons</span><span class="p">),</span>
+  <span class="nf">hint10</span><span class="p">(</span><span class="nv">Persons</span><span class="p">),</span>
+  <span class="nf">hint11</span><span class="p">(</span><span class="nv">Persons</span><span class="p">),</span>
+  <span class="nf">hint12</span><span class="p">(</span><span class="nv">Persons</span><span class="p">),</span>
+  <span class="nf">hint13</span><span class="p">(</span><span class="nv">Persons</span><span class="p">),</span>
+  <span class="nf">hint14</span><span class="p">(</span><span class="nv">Persons</span><span class="p">),</span>
+  <span class="nf">hint15</span><span class="p">(</span><span class="nv">Persons</span><span class="p">),</span>
+  <span class="nf">question</span><span class="p">(</span><span class="nv">Persons</span><span class="p">).</span>
+</pre></div>
+
+
 <p>We just say that the solution is the combinaison of all the hints and the question, so that the solution must validate all predicates. </p>
 <p>So let's try our program : </p>
 <pre>wichtounet@wichtounet-laptop:~/Desktop$ gprolog
-
 GNU Prolog 1.3.0
-
 By Daniel Diaz
-
 Copyright (C) 1999-2007 Daniel Diaz
-
 | ?- [einstein.pl].      
-
 uncaught exception: error(syntax_error('user_input:1 (char:10) , | ] or operator expected in list'),read_term/3)
-
 | ?- 
-
 Prolog interruption (h for help) ? e
-
 wichtounet@wichtounet-laptop:~/Desktop$ gprolog
-
 GNU Prolog 1.3.0
-
 By Daniel Diaz
-
 Copyright (C) 1999-2007 Daniel Diaz
-
 | ?- consult('einstein.pl').
-
 compiling /home/wichtounet/Desktop/einstein.pl for byte code...
-
 /home/wichtounet/Desktop/einstein.pl compiled, 100 lines read - 14891 bytes written, 17 ms
-
 yes
-
 | ?- solution(Persons).
-
 Persons = [(norwegian,yellow,water,dunhill,cat),(dane,blue,tea,blend,horse),(brit,red,milk,pallmall,bird),
-
 (german,green,coffee,prince,fish),(swede,white,beer,bluemaster,dog)] ? a
-
 (20 ms) no
-
 | ?- 
-
 Prolog interruption (h for help) ? e
-
 </pre>
 
 <p>With that, we found not only the man who have fish but also all the other informations. The answer is the german. </p>

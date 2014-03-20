@@ -1,4 +1,4 @@
-<html><body><h3>I. Introduction</h3>
+<h3>I. Introduction</h3>
 
 SLF4J is an abstract layer for logging APIs. The principle is roughly the same as Jakarta Commons Logging. The advantages of the use of such a layer enable to be completely independant of the logging implementation. So it's possible to easily change the logging implementation without modifying the existing code. You only have to change the configuration of the implementation. And finally in the case of the conception of a library, this leaves the user to choose the logging system.
 
@@ -38,25 +38,35 @@ The following diagram show exactly how the calls are redirected :
 
 The API of SLF4J is not really hard to use and is very like the others implementations or abstractions like Log4J or Commons Logging. Here is how to get a logger :
 
-[java]org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(HelloWorld.class);[/java]
+```java
+org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(HelloWorld.class);
+```
 
 Then, you can use it like any other implementation with the methods debug(), info(), warn(), trace() et error(). Par exemple :
 
-[java]logger.info("Hello World");[/java]
+```java
+logger.info("Hello World");
+```
 
 But this is not the strength of SLF4J. Let's take a simple logging example :
 
-[java]logger.debug("Info : x = " + info.getX() + ", y = " + info.getY() + ", str = " + infos.getStr());[/java]
+```java
+logger.debug("Info : x = " + info.getX() + ", y = " + info.getY() + ", str = " + infos.getStr());
+```
 
 That means than all times this line is executed, a concatenation is done. This can quickly be heavy for the performance if the code is executed regularly. It's because we must first test if the level is enabled :
 
-[java]if(logger.isDebugEnabled()){
+```java
+if(logger.isDebugEnabled()){
 	logger.debug("Info : x = " + info.getX() + ", y = " + info.getY() + ", str = " + infos.getStr());
-}[/java]
+}
+```
 
 This times the performances are guaranteed, but this kind of code is not esthetical and is quickly heavy. Moreover the test is already done in the debug method who displays nothing if the debug level is not enabled. So why do the work twice ? SLF4J offer a new alternative really interesting :
 
-[java]logger.debug("Info : x = {}, y = {}, str = {}", new Object[]{info.getX(), info.getY(), infos.getStr()});[/java]
+```java
+logger.debug("Info : x = {}, y = {}, str = {}", new Object[]{info.getX(), info.getY(), infos.getStr()});
+```
 
 The {} will be replaced by the parameters. The, the concatenation is only done if the logging level is enabled. Furthermore, this code is really cleaner than the two previous.
 
@@ -70,21 +80,24 @@ This functionaly is only available with the LogBack implementation : it's the on
 
 Imagine by example an appender named CryptAppender who encode the log using some algorithm. We could configure it thus :
 
-[xml]&lt;appender name="CRYPTED" class="CryptAppender"&gt;
-  &lt;layout class="ch.qos.logback.classic.html.HTMLLayout"&gt;
-    &lt;pattern&gt;%date%-5level%logger%msg&lt;/pattern&gt;
-    &lt;throwableRenderer class="ch.qos.logback.classic.html.DefaultThrowableRenderer" /&gt;
-  &lt;/layout&gt;
-  &lt;evaluator class="ch.qos.logback.classic.boolex.OnMarkerEvaluator"&gt;
-    &lt;marker&gt;CONFIDENTIAL&lt;/marker&gt;
-  &lt;/evaluator&gt;
-&lt;/appender&gt;[/xml]
+```xml
+<appender name="CRYPTED" class="CryptAppender">
+  <layout class="ch.qos.logback.classic.html.HTMLLayout">
+    <pattern>%date%-5level%logger%msg</pattern>
+    <throwableRenderer class="ch.qos.logback.classic.html.DefaultThrowableRenderer" />
+  </layout>
+  <evaluator class="ch.qos.logback.classic.boolex.OnMarkerEvaluator">
+    <marker>CONFIDENTIAL</marker>
+  </evaluator>
+</appender>
+```
 
 The OnMarkerEvaluator enable to select only logs than have been marked with some tag. In our case, we have to mark to confidential logs with CONFIDENTIAl. Here is how to do that :
 
-[java]Marker confidentialMarker = MarkerFactory.getMarker("CONFIDENTIAL");
-
-logger.error(confidentialMarker, "C'est confidentiel !");[/java]
+```java
+Marker confidentialMarker = MarkerFactory.getMarker("CONFIDENTIAL");
+logger.error(confidentialMarker, "C'est confidentiel !");
+```
 
 That will not display the log directly but crypted.
 
@@ -92,11 +105,11 @@ An other use of this functionality could by example be the send by mail of some 
 
 You could of course configure several appenders for the same tag. You could also create a Marker hierarchy :
 
-[java]Marker parentMarker = MarkerFactory.getMarker(“parent”);
-
+```java
+Marker parentMarker = MarkerFactory.getMarker(“parent”);
 Marker childMarker = MarkerFactory.getMarker(“child”);
-
-parentMarker.add(childMarker);[/java]
+parentMarker.add(childMarker);
+```
 
 Doing that, all that is logged with parentMarker or childMarker will be treated in appenders configured for parent and the appenders configured for child will only see what is logged with child.
 
@@ -110,9 +123,10 @@ Imagine that we treat informations on persons and that we display in logging. Th
 
 It is possible to add values in MDC with the put method :
 
-[java]MDC.put("prenom", "Baptiste");
-
-MDC.put("nom", "Wicht");[/java]
+```java
+MDC.put("prenom", "Baptiste");
+MDC.put("nom", "Wicht");
+```
 
 Then, we can use them in the layout of logging. This layout can be configured in the implementation. At this time only Log4J, JUL and Logback support MDC. Here is a layout using MDC :
 
@@ -120,28 +134,27 @@ Then, we can use them in the layout of logging. This layout can be configured in
 
 Then, to display informations, we just have to do :
 
-[java]logger.info("Age {}", age);
-
-logger.info("Localisation {}", localisation); [/java]
+```java
+logger.info("Age {}", age);
+logger.info("Localisation {}", localisation); 
+```
 
 That will display :
 
 <pre>Baptiste Wicht - Age 22
-
 Baptiste Wicht - Localisation Suisse</pre>
 
 And finally if the MDC is configured between to logging instructions, this will directly change the logging :
 
-[java]logger.info("Age {}", age);
-
+```java
+logger.info("Age {}", age);
 MDC.put("prenom", "Jacques");
-
-logger.info("Localisation {}", localisation);[/java]
+logger.info("Localisation {}", localisation);
+```
 
 will display :
 
 <pre>Baptiste Wicht - Age 22
-
 Jacques Wicht - Localisation Suisse</pre>
 
 That can be very practical to stock and display global informations. For example a login, a session id or any other data.
@@ -152,4 +165,4 @@ In conclusion, SLF4J is really good abstraction layer. It's really powerful, but
 
 The author of SLF4J advises to use LogBack as implementation. This is the reference implementation.
 
-If you any comment to do on this article, don't hesitate to put it on the above form.</body></html>
+If you any comment to do on this article, don't hesitate to put it on the above form.

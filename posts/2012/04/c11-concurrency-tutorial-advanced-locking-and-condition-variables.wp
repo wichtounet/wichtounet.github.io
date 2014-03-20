@@ -1,9 +1,11 @@
-<html><body><p>In the previous article, we saw how to use mutexes to fix concurrency problems. In this post, we will continue to work on mutexes with more advanced techniques. We will also study another concurrency technique of the C++11 Concurrency Library: condition variables.
-</p><h3>Recursive locking</h3>
+In the previous article, we saw how to use mutexes to fix concurrency problems. In this post, we will continue to work on mutexes with more advanced techniques. We will also study another concurrency technique of the C++11 Concurrency Library: condition variables.
+
+<h3>Recursive locking</h3>
 
 Let's imagine that you have a simple class like this one:
 
-[cpp]struct Complex {
+```cpp
+struct Complex {
     std::mutex mutex;
     int i;
 
@@ -18,30 +20,36 @@ Let's imagine that you have a simple class like this one:
         std::lock_guard&lt;std::mutex&gt; lock(mutex);
         i /= x;
     }
-};[/cpp]
+};
+```
 
 And you want to add an operation doing both operations with no problems, so you add a new function:
 
-[cpp]void both(int x, int y){
+```cpp
+void both(int x, int y){
     std::lock_guard&lt;std::mutex&gt; lock(mutex);
     mul(x);
     div(y);
-}[/cpp]
+}
+```
 
 Now, it's time to test this function:
 
-[cpp]int main(){
+```cpp
+int main(){
     Complex complex;
     complex.both(32, 23);
 
     return 0;
-}[/cpp]
+}
+```
 
 If you launch this application, you'll see that the program will never terminates. The problem is very simple. In the <em>both()</em> function, the thread acquires the lock and then calls the <em>mul()</em> function. In this function, the threads tries to acquire the lock again, but the lock is already locked. This is a case of deadlock. By default, a thread cannot acquire the same mutex twice.
 
 There is a simple solution to this problem: <strong>std::recursive_mutex</strong>. This mutex can be acquired several times by the same thread. Here is the correct version of the Complex struct:
 
-[cpp]struct Complex {
+```cpp
+struct Complex {
     std::recursive_mutex mutex;
     int i;
 
@@ -62,7 +70,8 @@ There is a simple solution to this problem: <strong>std::recursive_mutex</strong
         mul(x);
         div(y);
     }
-};[/cpp]
+};
+```
 
 This time, the application works correctly.
 
@@ -72,7 +81,8 @@ Sometimes, you doesn't want a thread to wait ad infinitum for a mutex. For examp
 
 The first one is also the most useful. It allows you to set a timeout after when the function automatically returns even if the lock was not acquired. The function returns true if the lock has been acquired, false otherwise. Let's try it with a simple example:
 
-[cpp]std::timed_mutex mutex;
+```cpp
+std::timed_mutex mutex;
 
 void work(){
     std::chrono::milliseconds timeout(100);
@@ -104,7 +114,8 @@ int main(){
     t2.join();
 
     return 0;
-}[/cpp]
+}
+```
 
 (The example is completely useless in practice)
 
@@ -114,7 +125,8 @@ The first interesting thing in this example is the declaration of the duration w
 
 Sometimes you want a function to be called only once no matter the number of threads that are used. Imagine a function that has two parts. The first part has to be called only once and the second has to be executed every time the function gets called. We can use the std::call_once function to fix this problem very easily. Here is an example using this mechanism:
 
-[cpp]std::once_flag flag;
+```cpp
+std::once_flag flag;
 
 void do_something(){
     std::call_once(flag, [](){std::cout &lt;&lt; "Called once" &lt;&lt; std::endl;});
@@ -134,7 +146,8 @@ int main(){
     t4.join();
 
     return 0;
-}[/cpp]
+}
+```
 
 Each <strong>std::call_once</strong> is matched to a <strong>std::once_flag</strong> variable. Here I put a closure to be executed only once, but a function pointer or a std::function will make the trick.
 
@@ -144,7 +157,8 @@ A condition variable manages a list of threads waiting until another thread noti
 
 A very good example is a concurrent Bounded Buffer. It’s a cyclic buffer with a certain capacity with a start and an end. Here is our implementation of a Bounded Buffer using condition variables:
 
-[cpp]struct BoundedBuffer {
+```cpp
+struct BoundedBuffer {
     int* buffer;
     int capacity;
 
@@ -191,14 +205,14 @@ A very good example is a concurrent Bounded Buffer. It’s a cyclic buffer with 
         return result;
     }
 };
-
-[/cpp]
+```
 
 The mutexes are managed by a <strong>std::unique_lock</strong>. It is a wrapper to manage a lock. This is necessary to be used with the condition variables. To wake up a thread that is waiting on a condition variable, the <em>notify_one()</em> function is used. The wait function is a bit special. It takes as the first argument the unique lock and a the second one a predicate. The predicate must return false when the waiting must be continued (it is equivalent to while(!pred()){cv.wait(l);}). The rest of the example has nothing special.
 
 We can use this structure to fix multiple consumers / multiple producers problem. This problem is very common in concurrent programming. Several threads (consumers) are waiting from data produced by another several threads (producers). Here is an example with several threads using the structure:
 
-[cpp]void consumer(int id, BoundedBuffer&amp; buffer){
+```cpp
+void consumer(int id, BoundedBuffer&amp; buffer){
     for(int i = 0; i &lt; 50; ++i){
         int value = buffer.fetch();
         std::cout &lt;&lt; "Consumer " &lt;&lt; id &lt;&lt; " fetched " &lt;&lt; value &lt;&lt; std::endl;
@@ -230,7 +244,8 @@ int main(){
     p2.join();
 
     return 0;
-}[/cpp]
+}
+```
 
 Three consumer threads and two producer threads are created and query the structure constantly. An interesting thing about this example is the use of std::ref to pass the buffer by reference, it is necessary to avoid a copy of the buffer.
 
@@ -242,4 +257,4 @@ The source code for this article can be found on <a title="Source code of this a
 
 <h3>Next</h3>
 
-In the next post of this series, we will another technique of this new C++11 Concurrency Library, the Atomics.</body></html>
+In the next post of this series, we will another technique of this new C++11 Concurrency Library, the Atomics.

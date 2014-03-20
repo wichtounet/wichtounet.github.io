@@ -134,12 +134,13 @@
     </small>
     <hr>
     <div class="e-content" itemprop="articleBody text">
-    <div><p></p><p>When we work with OSGi, a problem we always have is how to work with dependencies non OSGi Ready.</p>
+    <div><p>When we work with OSGi, a problem we always have is how to work with dependencies non OSGi Ready.</p>
 <p>This is not a really great problem because there we can work with. There is essentially two solutions :</p>
-<p></p><ul>
+<ul>
     <li>Embed the JAR files within the bundle. That is to say putting the JAR file into the bundle JAR and reference it in the Manifest</li>
     <li>Wrap the JAR files with an OSGi Manifest. Namely, transform the JAR into an OSGi bundle.</li>
 </ul>
+
 <p>Personnaly, i doesn't like the first solution, because for me, having a jar into a jar sounds really weird and bad and i prefer to have real OSGi Bundle. With wrapping, if i need this library in an other bundle, i doesn't have to do anything.</p>
 <!--more-->
 
@@ -147,98 +148,101 @@
 <p>If we must do that by hand, that could be really long and hard to do.</p>
 <p>We can do that in a simple way using Maven 2 and the maven-bundle-plugin that can generate an OSGi jar embedding the other using the BND tools. With some configurations, we can simply create a totally valid OSGi Bundle. To make several bundles  easily, i created a simple parent pom (i take the first sources from Spring Blog) and all the modules of this parent project will be simple project to wrap a dependency.</p>
 <p>Here is the parent pom i use :</p>
-<p>[xml]&lt;?xml version="1.0" encoding="UTF-8"?&gt;</p>
-<p>&lt;project
-        xmlns="http://maven.apache.org/POM/4.0.0"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd"&gt;</p>
-<div class="code"><pre><span class="ni">&amp;lt;</span>modelVersion<span class="ni">&amp;gt;</span>4.0.0<span class="ni">&amp;lt;</span>/modelVersion<span class="ni">&amp;gt;</span>
-<span class="ni">&amp;lt;</span>groupId<span class="ni">&amp;gt;</span>org.jtheque<span class="ni">&amp;lt;</span>/groupId<span class="ni">&amp;gt;</span>
-<span class="ni">&amp;lt;</span>artifactId<span class="ni">&amp;gt;</span>jtheque-osgi-wrap<span class="ni">&amp;lt;</span>/artifactId<span class="ni">&amp;gt;</span>
-<span class="ni">&amp;lt;</span>name<span class="ni">&amp;gt;</span>jtheque-osgi-wrap<span class="ni">&amp;lt;</span>/name<span class="ni">&amp;gt;</span>
-<span class="ni">&amp;lt;</span>packaging<span class="ni">&amp;gt;</span>pom<span class="ni">&amp;lt;</span>/packaging<span class="ni">&amp;gt;</span>
-<span class="ni">&amp;lt;</span>version<span class="ni">&amp;gt;</span>1.0<span class="ni">&amp;lt;</span>/version<span class="ni">&amp;gt;</span>
+<div class="code"><pre><span class="cp">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</span>
+<span class="nt">&lt;project</span>
+        <span class="na">xmlns=</span><span class="s">"http://maven.apache.org/POM/4.0.0"</span>
+        <span class="na">xmlns:xsi=</span><span class="s">"http://www.w3.org/2001/XMLSchema-instance"</span>
+        <span class="na">xsi:schemaLocation=</span><span class="s">"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd"</span><span class="nt">&gt;</span>
 
-<span class="ni">&amp;lt;</span>modules<span class="ni">&amp;gt;</span>
-    <span class="ni">&amp;lt;</span>!-- Modules --<span class="ni">&amp;gt;</span>
-<span class="ni">&amp;lt;</span>/modules<span class="ni">&amp;gt;</span>
+    <span class="nt">&lt;modelVersion&gt;</span>4.0.0<span class="nt">&lt;/modelVersion&gt;</span>
+    <span class="nt">&lt;groupId&gt;</span>org.jtheque<span class="nt">&lt;/groupId&gt;</span>
+    <span class="nt">&lt;artifactId&gt;</span>jtheque-osgi-wrap<span class="nt">&lt;/artifactId&gt;</span>
+    <span class="nt">&lt;name&gt;</span>jtheque-osgi-wrap<span class="nt">&lt;/name&gt;</span>
+    <span class="nt">&lt;packaging&gt;</span>pom<span class="nt">&lt;/packaging&gt;</span>
+    <span class="nt">&lt;version&gt;</span>1.0<span class="nt">&lt;/version&gt;</span>
 
-<span class="ni">&amp;lt;</span>properties<span class="ni">&amp;gt;</span>
-    <span class="ni">&amp;lt;</span>export.packages<span class="ni">&amp;gt;</span><span class="cp">${</span><span class="n">export</span><span class="o">.</span><span class="n">package</span><span class="cp">}</span>*;version=<span class="cp">${</span><span class="n">unpack</span><span class="o">.</span><span class="n">version</span><span class="cp">}</span><span class="ni">&amp;lt;</span>/export.packages<span class="ni">&amp;gt;</span>
-    <span class="ni">&amp;lt;</span>import.packages<span class="ni">&amp;gt;</span>*<span class="ni">&amp;lt;</span>/import.packages<span class="ni">&amp;gt;</span>
-    <span class="ni">&amp;lt;</span>private.packages<span class="ni">&amp;gt;</span>!*<span class="ni">&amp;lt;</span>/private.packages<span class="ni">&amp;gt;</span>
-    <span class="ni">&amp;lt;</span>symbolic.name<span class="ni">&amp;gt;</span><span class="cp">${</span><span class="n">pom</span><span class="o">.</span><span class="n">groupId</span><span class="cp">}</span>.<span class="cp">${</span><span class="n">pom</span><span class="o">.</span><span class="n">artifactId</span><span class="cp">}</span><span class="ni">&amp;lt;</span>/symbolic.name<span class="ni">&amp;gt;</span>
-    <span class="ni">&amp;lt;</span>embed-dep<span class="ni">&amp;gt;</span>*;scope=compile;type=!pom;inline=true<span class="ni">&amp;lt;</span>/embed-dep<span class="ni">&amp;gt;</span>
-    <span class="ni">&amp;lt;</span>unpack-bundle<span class="ni">&amp;gt;</span>false<span class="ni">&amp;lt;</span>/unpack-bundle<span class="ni">&amp;gt;</span>
-<span class="ni">&amp;lt;</span>/properties<span class="ni">&amp;gt;</span>
+    <span class="nt">&lt;modules&gt;</span>
+        <span class="c">&lt;!-- Modules --&gt;</span>
+    <span class="nt">&lt;/modules&gt;</span>
 
-<span class="ni">&amp;lt;</span>build<span class="ni">&amp;gt;</span>
-    <span class="ni">&amp;lt;</span>directory<span class="ni">&amp;gt;</span><span class="cp">${</span><span class="n">env</span><span class="o">.</span><span class="n">BUILD_HOME</span><span class="cp">}</span>/dependencies/<span class="cp">${</span><span class="n">symbolic</span><span class="o">.</span><span class="n">name</span><span class="cp">}</span><span class="ni">&amp;lt;</span>/directory<span class="ni">&amp;gt;</span>
+    <span class="nt">&lt;properties&gt;</span>
+        <span class="nt">&lt;export.packages&gt;</span>${export.package}*;version=${unpack.version}<span class="nt">&lt;/export.packages&gt;</span>
+        <span class="nt">&lt;import.packages&gt;</span>*<span class="nt">&lt;/import.packages&gt;</span>
+        <span class="nt">&lt;private.packages&gt;</span>!*<span class="nt">&lt;/private.packages&gt;</span>
+        <span class="nt">&lt;symbolic.name&gt;</span>${pom.groupId}.${pom.artifactId}<span class="nt">&lt;/symbolic.name&gt;</span>
+        <span class="nt">&lt;embed-dep&gt;</span>*;scope=compile;type=!pom;inline=true<span class="nt">&lt;/embed-dep&gt;</span>
+        <span class="nt">&lt;unpack-bundle&gt;</span>false<span class="nt">&lt;/unpack-bundle&gt;</span>
+    <span class="nt">&lt;/properties&gt;</span>
 
-    <span class="ni">&amp;lt;</span>plugins<span class="ni">&amp;gt;</span>
-        <span class="ni">&amp;lt;</span>plugin<span class="ni">&amp;gt;</span>
-            <span class="ni">&amp;lt;</span>groupId<span class="ni">&amp;gt;</span>org.apache.felix<span class="ni">&amp;lt;</span>/groupId<span class="ni">&amp;gt;</span>
-            <span class="ni">&amp;lt;</span>artifactId<span class="ni">&amp;gt;</span>maven-bundle-plugin<span class="ni">&amp;lt;</span>/artifactId<span class="ni">&amp;gt;</span>
-            <span class="ni">&amp;lt;</span>version<span class="ni">&amp;gt;</span>1.2.0<span class="ni">&amp;lt;</span>/version<span class="ni">&amp;gt;</span>
-            <span class="ni">&amp;lt;</span>configuration<span class="ni">&amp;gt;</span>
-                <span class="ni">&amp;lt;</span>unpackBundle<span class="ni">&amp;gt;</span><span class="cp">${</span><span class="n">unpack</span><span class="o">.</span><span class="n">bundle</span><span class="cp">}</span><span class="ni">&amp;lt;</span>/unpackBundle<span class="ni">&amp;gt;</span>
-                <span class="ni">&amp;lt;</span>instructions<span class="ni">&amp;gt;</span>
-                    <span class="ni">&amp;lt;</span>Bundle-Name<span class="ni">&amp;gt;</span><span class="cp">${</span><span class="n">artifactId</span><span class="cp">}</span><span class="ni">&amp;lt;</span>/Bundle-Name<span class="ni">&amp;gt;</span>
-                    <span class="ni">&amp;lt;</span>Bundle-SymbolicName<span class="ni">&amp;gt;</span><span class="cp">${</span><span class="n">symbolic</span><span class="o">.</span><span class="n">name</span><span class="cp">}</span><span class="ni">&amp;lt;</span>/Bundle-SymbolicName<span class="ni">&amp;gt;</span>
-                    <span class="ni">&amp;lt;</span>Bundle-Description<span class="ni">&amp;gt;</span><span class="cp">${</span><span class="n">pom</span><span class="o">.</span><span class="n">name</span><span class="cp">}</span><span class="ni">&amp;lt;</span>/Bundle-Description<span class="ni">&amp;gt;</span>
-                    <span class="ni">&amp;lt;</span>Import-Package<span class="ni">&amp;gt;</span><span class="cp">${</span><span class="n">import</span><span class="o">.</span><span class="n">packages</span><span class="cp">}</span><span class="ni">&amp;lt;</span>/Import-Package<span class="ni">&amp;gt;</span>
-                    <span class="ni">&amp;lt;</span>Private-Package<span class="ni">&amp;gt;</span><span class="cp">${</span><span class="n">private</span><span class="o">.</span><span class="n">packages</span><span class="cp">}</span><span class="ni">&amp;lt;</span>/Private-Package<span class="ni">&amp;gt;</span>
-                    <span class="ni">&amp;lt;</span>Include-Resource<span class="ni">&amp;gt;</span><span class="cp">${</span><span class="n">include</span><span class="o">.</span><span class="n">resources</span><span class="cp">}</span><span class="ni">&amp;lt;</span>/Include-Resource<span class="ni">&amp;gt;</span>
-                    <span class="ni">&amp;lt;</span>Embed-Dependency<span class="ni">&amp;gt;</span><span class="cp">${</span><span class="n">embed</span><span class="o">-</span><span class="n">dep</span><span class="cp">}</span><span class="ni">&amp;lt;</span>/Embed-Dependency<span class="ni">&amp;gt;</span>
-                    <span class="ni">&amp;lt;</span>_exportcontents<span class="ni">&amp;gt;</span><span class="cp">${</span><span class="n">export</span><span class="o">.</span><span class="n">packages</span><span class="cp">}</span><span class="ni">&amp;lt;</span>/_exportcontents<span class="ni">&amp;gt;</span>
-                <span class="ni">&amp;lt;</span>/instructions<span class="ni">&amp;gt;</span>
-            <span class="ni">&amp;lt;</span>/configuration<span class="ni">&amp;gt;</span>
-            <span class="ni">&amp;lt;</span>extensions<span class="ni">&amp;gt;</span>true<span class="ni">&amp;lt;</span>/extensions<span class="ni">&amp;gt;</span>
-        <span class="ni">&amp;lt;</span>/plugin<span class="ni">&amp;gt;</span>
-    <span class="ni">&amp;lt;</span>/plugins<span class="ni">&amp;gt;</span>
-<span class="ni">&amp;lt;</span>/build<span class="ni">&amp;gt;</span>
+    <span class="nt">&lt;build&gt;</span>
+        <span class="nt">&lt;directory&gt;</span>${env.BUILD_HOME}/dependencies/${symbolic.name}<span class="nt">&lt;/directory&gt;</span>
+
+        <span class="nt">&lt;plugins&gt;</span>
+            <span class="nt">&lt;plugin&gt;</span>
+                <span class="nt">&lt;groupId&gt;</span>org.apache.felix<span class="nt">&lt;/groupId&gt;</span>
+                <span class="nt">&lt;artifactId&gt;</span>maven-bundle-plugin<span class="nt">&lt;/artifactId&gt;</span>
+                <span class="nt">&lt;version&gt;</span>1.2.0<span class="nt">&lt;/version&gt;</span>
+                <span class="nt">&lt;configuration&gt;</span>
+                    <span class="nt">&lt;unpackBundle&gt;</span>${unpack.bundle}<span class="nt">&lt;/unpackBundle&gt;</span>
+                    <span class="nt">&lt;instructions&gt;</span>
+                        <span class="nt">&lt;Bundle-Name&gt;</span>${artifactId}<span class="nt">&lt;/Bundle-Name&gt;</span>
+                        <span class="nt">&lt;Bundle-SymbolicName&gt;</span>${symbolic.name}<span class="nt">&lt;/Bundle-SymbolicName&gt;</span>
+                        <span class="nt">&lt;Bundle-Description&gt;</span>${pom.name}<span class="nt">&lt;/Bundle-Description&gt;</span>
+                        <span class="nt">&lt;Import-Package&gt;</span>${import.packages}<span class="nt">&lt;/Import-Package&gt;</span>
+                        <span class="nt">&lt;Private-Package&gt;</span>${private.packages}<span class="nt">&lt;/Private-Package&gt;</span>
+                        <span class="nt">&lt;Include-Resource&gt;</span>${include.resources}<span class="nt">&lt;/Include-Resource&gt;</span>
+                        <span class="nt">&lt;Embed-Dependency&gt;</span>${embed-dep}<span class="nt">&lt;/Embed-Dependency&gt;</span>
+                        <span class="nt">&lt;_exportcontents&gt;</span>${export.packages}<span class="nt">&lt;/_exportcontents&gt;</span>
+                    <span class="nt">&lt;/instructions&gt;</span>
+                <span class="nt">&lt;/configuration&gt;</span>
+                <span class="nt">&lt;extensions&gt;</span>true<span class="nt">&lt;/extensions&gt;</span>
+            <span class="nt">&lt;/plugin&gt;</span>
+        <span class="nt">&lt;/plugins&gt;</span>
+    <span class="nt">&lt;/build&gt;</span>
+<span class="nt">&lt;/project&gt;</span>
 </pre></div>
 
 
-<p>&lt;/project&gt;[/xml]</p>
 <p>That really simple, we use some properties to generify the process to have really simple modules. </p>
 <p>Here is an example to wrap the substance look and feel library : </p>
-<p>[xml]&lt;?xml version="1.0" encoding="UTF-8"?&gt;</p>
-<p>&lt;project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"&gt;</p>
-<div class="code"><pre><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">modelVersion</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="mf">4.0.0</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">modelVersion</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
-<span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">groupId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">org</span><span class="p">.</span><span class="n">substance</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">groupId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
-<span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">packaging</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">bundle</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">packaging</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
-<span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">artifactId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">org</span><span class="p">.</span><span class="n">jtheque</span><span class="p">.</span><span class="n">substance</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">artifactId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
-<span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">name</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">apple</span><span class="o">-</span><span class="n">extensions</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">name</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
-<span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">version</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="mf">6.0.0</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">version</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+<div class="code"><pre><span class="cp">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</span>
 
-<span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">parent</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
-    <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">artifactId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">jtheque</span><span class="o">-</span><span class="n">osgi</span><span class="o">-</span><span class="n">wrap</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">artifactId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
-    <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">groupId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">org</span><span class="p">.</span><span class="n">jtheque</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">groupId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
-    <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">version</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="mf">1.0</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">version</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
-<span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">parent</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+<span class="nt">&lt;project</span> <span class="na">xmlns=</span><span class="s">"http://maven.apache.org/POM/4.0.0"</span>
+         <span class="na">xmlns:xsi=</span><span class="s">"http://www.w3.org/2001/XMLSchema-instance"</span>
+         <span class="na">xsi:schemaLocation=</span><span class="s">"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"</span><span class="nt">&gt;</span>
 
-<span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">properties</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
-    <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">unpack</span><span class="p">.</span><span class="n">version</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="mf">6.0.0</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">unpack</span><span class="p">.</span><span class="n">version</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
-    <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">export</span><span class="p">.</span><span class="n">package</span><span class="o">/&amp;</span><span class="n">gt</span><span class="p">;</span>
-<span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">properties</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+    <span class="nt">&lt;modelVersion&gt;</span>4.0.0<span class="nt">&lt;/modelVersion&gt;</span>
+    <span class="nt">&lt;groupId&gt;</span>org.substance<span class="nt">&lt;/groupId&gt;</span>
+    <span class="nt">&lt;packaging&gt;</span>bundle<span class="nt">&lt;/packaging&gt;</span>
+    <span class="nt">&lt;artifactId&gt;</span>org.jtheque.substance<span class="nt">&lt;/artifactId&gt;</span>
+    <span class="nt">&lt;name&gt;</span>apple-extensions<span class="nt">&lt;/name&gt;</span>
+    <span class="nt">&lt;version&gt;</span>6.0.0<span class="nt">&lt;/version&gt;</span>
 
-<span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">dependencies</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
-    <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">dependency</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
-        <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">groupId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">org</span><span class="p">.</span><span class="n">substance</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">groupId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
-        <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">artifactId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">substance</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">artifactId</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
-        <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">version</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="mf">6.0</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">version</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
-    <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">dependency</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
-<span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">/</span><span class="n">dependencies</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
+    <span class="nt">&lt;parent&gt;</span>
+        <span class="nt">&lt;artifactId&gt;</span>jtheque-osgi-wrap<span class="nt">&lt;/artifactId&gt;</span>
+        <span class="nt">&lt;groupId&gt;</span>org.jtheque<span class="nt">&lt;/groupId&gt;</span>
+        <span class="nt">&lt;version&gt;</span>1.0<span class="nt">&lt;/version&gt;</span>
+    <span class="nt">&lt;/parent&gt;</span>
+
+    <span class="nt">&lt;properties&gt;</span>
+        <span class="nt">&lt;unpack.version&gt;</span>6.0.0<span class="nt">&lt;/unpack.version&gt;</span>
+        <span class="nt">&lt;export.package/&gt;</span>
+    <span class="nt">&lt;/properties&gt;</span>
+
+    <span class="nt">&lt;dependencies&gt;</span>
+        <span class="nt">&lt;dependency&gt;</span>
+            <span class="nt">&lt;groupId&gt;</span>org.substance<span class="nt">&lt;/groupId&gt;</span>
+            <span class="nt">&lt;artifactId&gt;</span>substance<span class="nt">&lt;/artifactId&gt;</span>
+            <span class="nt">&lt;version&gt;</span>6.0<span class="nt">&lt;/version&gt;</span>
+        <span class="nt">&lt;/dependency&gt;</span>
+    <span class="nt">&lt;/dependencies&gt;</span>
+<span class="nt">&lt;/project&gt;</span>
 </pre></div>
 
 
-<p>&lt;/project&gt;[/xml]</p>
 <p>Like you can see, that's really simple and that generates a great OSGi Bundle. Here i didnt' specify any export package. Doing that all the packages are exported except the ones containing impl or internal. </p>
 <p>Thats it :)</p>
-<p>I hope that this post will be useful to some of you. </p></div>
+<p>I hope that this post will be useful to some of you.</p></div>
     </div>
     </div>
     

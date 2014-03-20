@@ -1,4 +1,4 @@
-<html><body><p>After seeing <a title="Java Concurrency – Part 4 : Semaphores" href="http://www.baptiste-wicht.com/2010/08/java-concurrency-part-4-semaphores/" target="_blank">how to synchronize code using semaphores</a>, we'll see how to do that using <strong>monitors</strong>.
+After seeing <a title="Java Concurrency – Part 4 : Semaphores" href="http://www.baptiste-wicht.com/2010/08/java-concurrency-part-4-semaphores/" target="_blank">how to synchronize code using semaphores</a>, we'll see how to do that using <strong>monitors</strong>.
 
 Monitors are an other mechanism of concurrent programming. It's a higher level mechanism than semaphores and also more powerful. A monitor is an instance of a class that can be used safely by several threads. All the methods of a monitor are executed with mutual exclusion. So at most one thread can execute a method of the monitor at the same time. This mutual exclusion policy makes easier to work with monitor and to develop the method content of the monitor.
 
@@ -6,7 +6,7 @@ Monitors have an other feature, the possibility to make a thread waiting for a c
 
 There is several advantages on using monitors instead of a lower-level mechanisms :
 
-</p><ul>
+<ul>
 	<li>All the synchronization code is centralized in one location and the users of this code don’t need to know how it’s implemented.</li>
 	<li>The code doesn't depend on the number of processes, it works for as many processes as you want</li>
 	<li>You don’t need to release something like a mutex, so you cannot forget to do it</li>
@@ -14,7 +14,8 @@ There is several advantages on using monitors instead of a lower-level mechanism
 
 When we must describe a monitor, we simple use the <strong>monitor</strong> keyword and describe the methods as common methods :
 
-[java]monitor SimpleMonitor {
+```java
+monitor SimpleMonitor {
     public method void testA(){
         //Some code
     }
@@ -22,7 +23,8 @@ When we must describe a monitor, we simple use the <strong>monitor</strong> keyw
     public method int testB(){
         return 1;
     }
-}[/java]
+}
+```
 
 To describe a condition variable, we use the <strong>cond</strong> keyword. A condition variable is a kind of queue of process who are waiting on the same condition. You have several operations available on a condition, the most important is to signal a process waiting to be awaken and to wait on a condition. There are some similarities between signal/wait operations and P and V of semaphores, but this is a little different. The signal operation does nothing if the queue is empty and the wait operation put always the thread in the waiting queue. The process queue is served in a first come, first served mode.   When a thread wakes up after waiting on a condition, it must reacquire the lock before continuing in the code.
 
@@ -43,7 +45,8 @@ The explicit locks have the same memory semantics than the synchronized blocks. 
 
 So to implement, the monitor example we've seen before, we just need to create a class and use the lock to make the mutual exclusion :
 
-[java]public class SimpleMonitor {
+```java
+public class SimpleMonitor {
     private final Lock lock = new ReentrantLock();
 
     public void testA() {
@@ -65,7 +68,8 @@ So to implement, the monitor example we've seen before, we just need to create a
             lock.unlock();
         }
     }
-}[/java]
+}
+```
 
 The person who've already read the other parts of this post set will say that it will be easier to use the synchronized keyword on the two methods. But with synchronized, we will not have the condition variables. If you don't need condition variables but only locking, it will be easier to use the synchronized blocks instead of Locks.
 
@@ -73,7 +77,8 @@ You can create conditions using the <em>newCondition</em> method on the lock. A 
 
 Let's try with a simple common example : A bounded buffer. It's a cyclic buffer with a certain capacity with a start and an end.
 
-[java]import java.util.concurrent.locks.Condition;
+```java
+import java.util.concurrent.locks.Condition;
 
 import java.util.concurrent.locks.Lock;
 
@@ -137,7 +142,8 @@ public class BoundedBuffer {
             lock.unlock();
         }
     }
-}[/java]
+}
+```
 
 So some explications :
 
@@ -151,4 +157,4 @@ And that BoundedBuffer can be easily used with several threads with no problems.
 
 As you can see, you can use monitors to solve a lot of concurrent programming problems and this mechanism is really powerful and performing.
 
-I hope you found that article interesting and that this set of posts about Java concurrency brings you some stuff about Java.</body></html>
+I hope you found that article interesting and that this set of posts about Java concurrency brings you some stuff about Java.

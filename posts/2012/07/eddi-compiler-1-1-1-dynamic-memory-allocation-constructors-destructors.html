@@ -134,44 +134,49 @@
     </small>
     <hr>
     <div class="e-content" itemprop="articleBody text">
-    <div><p></p><p>As I'm in holiday, the work is going pretty fast. The <strong>version 1.1.1</strong> of the <strong>EDDI Compiler</strong> (eddic) is available.</p>
+    <div><p>As I'm in holiday, the work is going pretty fast. The <strong>version 1.1.1</strong> of the <strong>EDDI Compiler</strong> (eddic) is available.</p>
 <p>This version introduces two major changes. The first is the support of dynamic memory allocation. You can allocate a struct or a standard type in help using the new operator. The memory can be released using the delete operator. Another related improved is the addition of constructors and destructors to the language. The following sample shows what can be done with the new features:</p>
-<p>[cpp]struct A {
-    int a;</p>
-<div class="code"><pre><span class="n">this</span><span class="p">(</span><span class="kt">int</span> <span class="n">a</span><span class="p">){</span>
-    <span class="n">this</span><span class="p">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">a</span><span class="p">;</span>
+<div class="code"><pre><span class="k">struct</span> <span class="n">A</span> <span class="p">{</span>
+    <span class="kt">int</span> <span class="n">a</span><span class="p">;</span>
 
-    <span class="n">print</span><span class="p">(</span><span class="s">"Constructed"</span><span class="p">);</span>
+    <span class="k">this</span><span class="p">(</span><span class="kt">int</span> <span class="n">a</span><span class="p">){</span>
+        <span class="k">this</span><span class="p">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">a</span><span class="p">;</span>
+
+        <span class="n">print</span><span class="p">(</span><span class="s">"Constructed"</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="o">~</span><span class="k">this</span><span class="p">(){</span>
+        <span class="n">println</span><span class="p">(</span><span class="s">"Destructed"</span><span class="p">);</span>
+    <span class="p">}</span>
 <span class="p">}</span>
 
-<span class="o">~</span><span class="n">this</span><span class="p">(){</span>
-    <span class="n">println</span><span class="p">(</span><span class="s">"Destructed"</span><span class="p">);</span>
+<span class="kt">void</span> <span class="n">main</span><span class="p">(){</span>
+    <span class="n">A</span><span class="o">*</span> <span class="n">b</span> <span class="o">=</span> <span class="k">new</span> <span class="n">A</span><span class="p">(</span><span class="mi">55</span><span class="p">);</span>
+    <span class="k">delete</span> <span class="n">b</span><span class="p">;</span>
 <span class="p">}</span>
 </pre></div>
 
 
-<p>}</p>
-<p>void main(){
-    A* b = new A(55);
-    delete b;
-}[/cpp]</p>
 <p>The constructor is called once the memory is allocated. The delete operator calls the destructor and then free the memory. </p>
 <p>When a structure is allocated on the stack, the constructor is called at the declaration point and the destructor is called when the variable gets out of scope. </p>
 <p>The memory manager is quite simple for now. Memory is allocated in blocks. Each block has a header indicating the size of the block and its availability. The size of the header is 8 bytes in 32 bits and 16 bytes in 64 bits. The free operation can be done in constant time by just setting the availability flag to false. The disadvantage of this technique is that all the blocks needs to be tested to find a free block. This can be slow in some situations. I will try to make a better version in the future. </p>
 <p>For that, the memory model has been improved. All the offsets are now increasing and the stack addresses are set at the end of the block. </p>
 <p>Another interesting improvement of the language is the support of switch. For now, only switch on int is supported. Here is an example of a switch in EDDI:</p>
-<p>[cpp]switch(a){
-    case 3:
-        print("3");
-    case 4:
-        print("4");
-    case 5:
-        print("5");
-    case 6:
-        print("6");
-    default:
-        print("default");
-}[/cpp]</p>
+<div class="code"><pre><span class="k">switch</span><span class="p">(</span><span class="n">a</span><span class="p">){</span>
+    <span class="k">case</span> <span class="mi">3</span>:
+        <span class="n">print</span><span class="p">(</span><span class="s">"3"</span><span class="p">);</span>
+    <span class="k">case</span> <span class="mi">4</span>:
+        <span class="n">print</span><span class="p">(</span><span class="s">"4"</span><span class="p">);</span>
+    <span class="k">case</span> <span class="mi">5</span>:
+        <span class="n">print</span><span class="p">(</span><span class="s">"5"</span><span class="p">);</span>
+    <span class="k">case</span> <span class="mi">6</span>:
+        <span class="n">print</span><span class="p">(</span><span class="s">"6"</span><span class="p">);</span>
+    <span class="nl">default:</span>
+        <span class="n">print</span><span class="p">(</span><span class="s">"default"</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+
+
 <p>The performances of the optimizer have been improved, by doing live-variable analysis less often. Pointers can now be passed in registers. Some of the variables used as temporary copies are removed </p>
 <p>The peephole optimizer has been improved to use conditional move when possible. Moreover, the peephole optimizer is now able to perform some local copy propagation. </p>
 <p></p><h4>Future work</h4>

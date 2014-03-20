@@ -1,8 +1,8 @@
-<html><body><p>When we work with OSGi, a problem we always have is how to work with dependencies non OSGi Ready.
+When we work with OSGi, a problem we always have is how to work with dependencies non OSGi Ready.
 
 This is not a really great problem because there we can work with. There is essentially two solutions :
 
-</p><ul>
+<ul>
 	<li>Embed the JAR files within the bundle. That is to say putting the JAR file into the bundle JAR and reference it in the Manifest</li>
 	<li>Wrap the JAR files with an OSGi Manifest. Namely, transform the JAR into an OSGi bundle.</li>
 </ul>
@@ -19,99 +19,102 @@ We can do that in a simple way using Maven 2 and the maven-bundle-plugin that ca
 
 Here is the parent pom i use :
 
-[xml]&lt;?xml version="1.0" encoding="UTF-8"?&gt;
-
-&lt;project
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project
         xmlns="http://maven.apache.org/POM/4.0.0"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd"&gt;
+        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
-    &lt;modelVersion&gt;4.0.0&lt;/modelVersion&gt;
-    &lt;groupId&gt;org.jtheque&lt;/groupId&gt;
-    &lt;artifactId&gt;jtheque-osgi-wrap&lt;/artifactId&gt;
-    &lt;name&gt;jtheque-osgi-wrap&lt;/name&gt;
-    &lt;packaging&gt;pom&lt;/packaging&gt;
-    &lt;version&gt;1.0&lt;/version&gt;
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>org.jtheque</groupId>
+    <artifactId>jtheque-osgi-wrap</artifactId>
+    <name>jtheque-osgi-wrap</name>
+    <packaging>pom</packaging>
+    <version>1.0</version>
 
-    &lt;modules&gt;
-        &lt;!-- Modules --&gt;
-    &lt;/modules&gt;
+    <modules>
+        <!-- Modules -->
+    </modules>
     
-    &lt;properties&gt;
-        &lt;export.packages&gt;${export.package}*;version=${unpack.version}&lt;/export.packages&gt;
-        &lt;import.packages&gt;*&lt;/import.packages&gt;
-        &lt;private.packages&gt;!*&lt;/private.packages&gt;
-        &lt;symbolic.name&gt;${pom.groupId}.${pom.artifactId}&lt;/symbolic.name&gt;
-        &lt;embed-dep&gt;*;scope=compile;type=!pom;inline=true&lt;/embed-dep&gt;
-        &lt;unpack-bundle&gt;false&lt;/unpack-bundle&gt;
-    &lt;/properties&gt;
+    <properties>
+        <export.packages>${export.package}*;version=${unpack.version}</export.packages>
+        <import.packages>*</import.packages>
+        <private.packages>!*</private.packages>
+        <symbolic.name>${pom.groupId}.${pom.artifactId}</symbolic.name>
+        <embed-dep>*;scope=compile;type=!pom;inline=true</embed-dep>
+        <unpack-bundle>false</unpack-bundle>
+    </properties>
 
-    &lt;build&gt;
-        &lt;directory&gt;${env.BUILD_HOME}/dependencies/${symbolic.name}&lt;/directory&gt;
+    <build>
+        <directory>${env.BUILD_HOME}/dependencies/${symbolic.name}</directory>
 
-        &lt;plugins&gt;
-            &lt;plugin&gt;
-                &lt;groupId&gt;org.apache.felix&lt;/groupId&gt;
-                &lt;artifactId&gt;maven-bundle-plugin&lt;/artifactId&gt;
-                &lt;version&gt;1.2.0&lt;/version&gt;
-                &lt;configuration&gt;
-                    &lt;unpackBundle&gt;${unpack.bundle}&lt;/unpackBundle&gt;
-                    &lt;instructions&gt;
-                        &lt;Bundle-Name&gt;${artifactId}&lt;/Bundle-Name&gt;
-                        &lt;Bundle-SymbolicName&gt;${symbolic.name}&lt;/Bundle-SymbolicName&gt;
-                        &lt;Bundle-Description&gt;${pom.name}&lt;/Bundle-Description&gt;
-                        &lt;Import-Package&gt;${import.packages}&lt;/Import-Package&gt;
-                        &lt;Private-Package&gt;${private.packages}&lt;/Private-Package&gt;
-                        &lt;Include-Resource&gt;${include.resources}&lt;/Include-Resource&gt;
-                        &lt;Embed-Dependency&gt;${embed-dep}&lt;/Embed-Dependency&gt;
-                        &lt;_exportcontents&gt;${export.packages}&lt;/_exportcontents&gt;
-                    &lt;/instructions&gt;
-                &lt;/configuration&gt;
-                &lt;extensions&gt;true&lt;/extensions&gt;
-            &lt;/plugin&gt;
-        &lt;/plugins&gt;
-    &lt;/build&gt;
-&lt;/project&gt;[/xml]
+        <plugins>
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <version>1.2.0</version>
+                <configuration>
+                    <unpackBundle>${unpack.bundle}</unpackBundle>
+                    <instructions>
+                        <Bundle-Name>${artifactId}</Bundle-Name>
+                        <Bundle-SymbolicName>${symbolic.name}</Bundle-SymbolicName>
+                        <Bundle-Description>${pom.name}</Bundle-Description>
+                        <Import-Package>${import.packages}</Import-Package>
+                        <Private-Package>${private.packages}</Private-Package>
+                        <Include-Resource>${include.resources}</Include-Resource>
+                        <Embed-Dependency>${embed-dep}</Embed-Dependency>
+                        <_exportcontents>${export.packages}</_exportcontents>
+                    </instructions>
+                </configuration>
+                <extensions>true</extensions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
 
 That really simple, we use some properties to generify the process to have really simple modules. 
 
 Here is an example to wrap the substance look and feel library : 
 
-[xml]&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
 
-&lt;project xmlns="http://maven.apache.org/POM/4.0.0"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"&gt;
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
-    &lt;modelVersion&gt;4.0.0&lt;/modelVersion&gt;
-    &lt;groupId&gt;org.substance&lt;/groupId&gt;
-    &lt;packaging&gt;bundle&lt;/packaging&gt;
-    &lt;artifactId&gt;org.jtheque.substance&lt;/artifactId&gt;
-    &lt;name&gt;apple-extensions&lt;/name&gt;
-    &lt;version&gt;6.0.0&lt;/version&gt;
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>org.substance</groupId>
+    <packaging>bundle</packaging>
+    <artifactId>org.jtheque.substance</artifactId>
+    <name>apple-extensions</name>
+    <version>6.0.0</version>
 
-    &lt;parent&gt;
-        &lt;artifactId&gt;jtheque-osgi-wrap&lt;/artifactId&gt;
-        &lt;groupId&gt;org.jtheque&lt;/groupId&gt;
-        &lt;version&gt;1.0&lt;/version&gt;
-    &lt;/parent&gt;
+    <parent>
+        <artifactId>jtheque-osgi-wrap</artifactId>
+        <groupId>org.jtheque</groupId>
+        <version>1.0</version>
+    </parent>
 
-    &lt;properties&gt;
-        &lt;unpack.version&gt;6.0.0&lt;/unpack.version&gt;
-        &lt;export.package/&gt;
-    &lt;/properties&gt;
+    <properties>
+        <unpack.version>6.0.0</unpack.version>
+        <export.package/>
+    </properties>
 
-    &lt;dependencies&gt;
-        &lt;dependency&gt;
-            &lt;groupId&gt;org.substance&lt;/groupId&gt;
-            &lt;artifactId&gt;substance&lt;/artifactId&gt;
-            &lt;version&gt;6.0&lt;/version&gt;
-        &lt;/dependency&gt;
-    &lt;/dependencies&gt;
-&lt;/project&gt;[/xml]
+    <dependencies>
+        <dependency>
+            <groupId>org.substance</groupId>
+            <artifactId>substance</artifactId>
+            <version>6.0</version>
+        </dependency>
+    </dependencies>
+</project>
+```
 
 Like you can see, that's really simple and that generates a great OSGi Bundle. Here i didnt' specify any export package. Doing that all the packages are exported except the ones containing impl or internal. 
 
 Thats it :)
 
-I hope that this post will be useful to some of you. </body></html>
+I hope that this post will be useful to some of you.

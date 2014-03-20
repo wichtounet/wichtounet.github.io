@@ -1,4 +1,4 @@
-<html><body><p>Now that we've seen <a href="http://www.baptiste-wicht.com/2010/05/develop-a-modular-application-implementation/">how to describe a module in Java</a>, we'll see how to load it dynamically in our application.
+Now that we've seen <a href="http://www.baptiste-wicht.com/2010/05/develop-a-modular-application-implementation/">how to describe a module in Java</a>, we'll see how to load it dynamically in our application.
 
 In Java, all the classes are loaded using several ClassLoader.In this article, we'll develop a loader for our modules and watch the problems that arrive when working with custom ClassLoaders.
 
@@ -10,14 +10,15 @@ Moreover, we cannot theoretically add files to the system ClassLoader. I say the
 
 So we've to create a new ClassLoader to load our modules. We'll do that in two phases :
 
-</p><ol>
+<ol>
 	<li>Browse the module files to get the classes of the modules and the URLs of the modules Jar files</li>
 	<li>Load the modules into our ClassLoader using the URLs of the first phase</li>
 </ol>
 
 We'll do all the loading in a new class ModularLoader. so let's create a create a method that return the list of classes to load :
 
-[java]public class ModuleLoader { 
+```java
+public class ModuleLoader { 
   private static List&lt;URL&gt; urls = new ArrayList&lt;URL&gt;(); 
    
   private static List&lt;String&gt; getModuleClasses(){ 
@@ -62,7 +63,8 @@ We'll do all the loading in a new class ModularLoader. so let's create a create 
       return file.isFile() &amp;&amp; file.getName().toLowerCase().endsWith(".jar"); 
     } 
   } 
-}[/java]
+}
+```
 
 Like you see, it's not complicated at all. We search all the module files and then for each jar file, we open it, get the manifest et read the class name of the module. And then, for the second phase, we get the URL to the Jar file. 
 
@@ -70,7 +72,8 @@ Of course, this loader is not perfect. We can have modules with no manifest or m
 
 Now we can do the second phase, adding a method to create the ClassLoader, instantiate the modules and return them : 
 
- [java]private static ClassLoader classLoader; 
+```java
+private static ClassLoader classLoader; 
  
 public static List&lt;IModule&gt; loadModules(){ 
   List&lt;IModule&gt; modules = new ArrayList&lt;IModule&gt;(); 
@@ -108,13 +111,15 @@ public static List&lt;IModule&gt; loadModules(){
   } 
   
   return modules; 
-}[/java]
+}
+```
 
 So we start creating a new ClassLoader taking the urls of the Jar files. Then, we use this ClassLoader to load all the module classes and instantiate them. We only verify if the class is of type IModule. 
 
 This is all for our ModuleLoader. We can now test our simple modular application. We create a JAR file for the module of the previous post and then we create a very simple application to test that : 
 
-[java]List&lt;IModule&gt; modules = ModuleLoader.loadModules(); 
+```java
+List&lt;IModule&gt; modules = ModuleLoader.loadModules(); 
  
 for(IModule module : modules){ 
   System.out.println("Plug : " + module.getName()); 
@@ -125,16 +130,14 @@ System.out.println("Lot of other things done by the application. ");
  
 for(IModule module : modules){ 
   module.unplug(); 
-}[/java]
+}
+```
 
 And here is the output of the application : 
 
 <pre>Plug : Simple module
-
 Hello kernel !
-
 Lot of other things done by the application. 
-
 Bye kernel !</pre>
 
 Like you can see, we just created a modular applications ! The application doesn't know the modules, but the modules can do things in the application. 
@@ -148,4 +151,4 @@ However, there is some problems with the current implementations :
 	<li>Using a second ClassLoader may be problematic with libraries loading dynamically the classes like Spring or Hibernate. To make these libraries working with your ClassLoader, you have to look at case by case depending on the library. Often, you achieve specifying the contextClassLoader using the method  Thread.currentThread().setContextClassLoader(ClassLoader cl) with your ClassLoader</li>
 </ul>
 
-So here is the end of this four posts about creating a modular application. I hope you find these posts interesting. </body></html>
+So here is the end of this four posts about creating a modular application. I hope you find these posts interesting.

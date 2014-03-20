@@ -132,79 +132,117 @@
     </small>
     <hr>
     <div class="e-content" itemprop="articleBody text">
-    <div><p></p><p>In command-line program, we often faces problems with the management of command-line options. When you have a few options, it's not a problem. But when writing complex programs with tens of options (or hundreds), it starts to be too complicated to manage by hand. That's where <strong>Boost Program Options</strong> enters the game!</p>
+    <div><p>In command-line program, we often faces problems with the management of command-line options. When you have a few options, it's not a problem. But when writing complex programs with tens of options (or hundreds), it starts to be too complicated to manage by hand. That's where <strong>Boost Program Options</strong> enters the game!</p>
 <p>Boost Program Options is one of the Boost C++ Libraries. It is a very powerful library to handle command-line options. You define all the options of the program and then Boost Program Options takes care of all. It parses the command line, handles errors, gets values and even displays help. It is not a perfect library. But it is very complete that will answer most of the common needs. </p>
 <p>This library is not header-only. You will need to build the library and link your program with the library. </p>
-<p></p><h4>Getting started</h4>
+<h4>Getting started</h4>
+
 <p>In this article, I will use <em>po</em> as an abbreviation of boost::program_options and all source will contains this namespace alias:</p>
-<p>[cpp]namespace po = boost::program_options;[/cpp]</p>
+<div class="code"><pre><span class="k">namespace</span> <span class="n">po</span> <span class="o">=</span> <span class="n">boost</span><span class="o">::</span><span class="n">program_options</span><span class="p">;</span>
+</pre></div>
+
+
 <p>First of all, it is necessary to create an instance of po::option_description:</p>
-<p>[cpp]po::options_description description("MyTool Usage");</p>
-<p>description.add_options()
-    ("help", "Display this help message")
-    ("version", "Display the version number");[/cpp]</p>
+<div class="code"><pre><span class="n">po</span><span class="o">::</span><span class="n">options_description</span> <span class="n">description</span><span class="p">(</span><span class="s">"MyTool Usage"</span><span class="p">);</span>
+
+<span class="n">description</span><span class="p">.</span><span class="n">add_options</span><span class="p">()</span>
+    <span class="p">(</span><span class="s">"help"</span><span class="p">,</span> <span class="s">"Display this help message"</span><span class="p">)</span>
+    <span class="p">(</span><span class="s">"version"</span><span class="p">,</span> <span class="s">"Display the version number"</span><span class="p">);</span>
+</pre></div>
+
+
 <p>The parameter to the constructor is the title of the options. To add options, you use the add_options() function and append all your options, each one surrounded with parenthesis. Here, we declared two options (help and version). They can be set with <em>--help</em> and <em>--version</em>. </p>
 <p>Then, you can parse the command line by declaring a po::variables_map to store the variables and parse the command line into that storage: </p>
-<p>[cpp]po::variables_map vm;</p>
-<p>po::store(po::command_line_parser(argc, argv).options(description).run(), vm);</p>
-<p>po::notify(vm);[/cpp]</p>
+<div class="code"><pre><span class="n">po</span><span class="o">::</span><span class="n">variables_map</span> <span class="n">vm</span><span class="p">;</span>
+<span class="n">po</span><span class="o">::</span><span class="n">store</span><span class="p">(</span><span class="n">po</span><span class="o">::</span><span class="n">command_line_parser</span><span class="p">(</span><span class="n">argc</span><span class="p">,</span> <span class="n">argv</span><span class="p">).</span><span class="n">options</span><span class="p">(</span><span class="n">description</span><span class="p">).</span><span class="n">run</span><span class="p">(),</span> <span class="n">vm</span><span class="p">);</span>
+<span class="n">po</span><span class="o">::</span><span class="n">notify</span><span class="p">(</span><span class="n">vm</span><span class="p">);</span>
+</pre></div>
+
+
 <p>Then, you can easily verify if an option has been set by using the <em>count(const std::string&amp; name)</em> function on the <em>vm</em> object: </p>
-<p>[cpp]if(vm.count("help")){
-    std::cout &lt;&lt; description;
-}[/cpp]</p>
+<div class="code"><pre><span class="k">if</span><span class="p">(</span><span class="n">vm</span><span class="p">.</span><span class="n">count</span><span class="p">(</span><span class="s">"help"</span><span class="p">)){</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="n">description</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
 <p>You can use <em>operator on the description to output all the options of program. </em></p>
 <h4>Short options</h4>
 
 <p>By default, all the options are accessed by using -- in front of them. You can also specify a short version for each option: </p>
-<p>[cpp]description.add_options()
-    ("help,h", "Display this help message")
-    ("version,v", "Display the version number");[/cpp]</p>
+<div class="code"><pre><span class="n">description</span><span class="p">.</span><span class="n">add_options</span><span class="p">()</span>
+    <span class="p">(</span><span class="s">"help,h"</span><span class="p">,</span> <span class="s">"Display this help message"</span><span class="p">)</span>
+    <span class="p">(</span><span class="s">"version,v"</span><span class="p">,</span> <span class="s">"Display the version number"</span><span class="p">);</span>
+</pre></div>
+
+
 <p>With that, you can display with either --help or -h. Even if you select help with -h, you can still verify if help has been set with count("help"). </p>
 <h4>Option with value</h4>
 
 <p>Boost Program Options can also handle option that need a specific value. Lets add a <i>compression</i> option:</p>
-<p>[cpp]description.add_options()
-    ("help,h", "Display this help message")
-    ("compression,c", po::value&lt;int&gt;(), "Compression level")
-    ("version,v", "Display the version number");[/cpp]</p>
+<div class="code"><pre><span class="n">description</span><span class="p">.</span><span class="n">add_options</span><span class="p">()</span>
+    <span class="p">(</span><span class="s">"help,h"</span><span class="p">,</span> <span class="s">"Display this help message"</span><span class="p">)</span>
+    <span class="p">(</span><span class="s">"compression,c"</span><span class="p">,</span> <span class="n">po</span><span class="o">::</span><span class="n">value</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="kt">int</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;(),</span> <span class="s">"Compression level"</span><span class="p">)</span>
+    <span class="p">(</span><span class="s">"version,v"</span><span class="p">,</span> <span class="s">"Display the version number"</span><span class="p">);</span>
+</pre></div>
+
+
 <p>You can then get the value of option easily: </p>
-<p>[cpp]if(vm.count("compression")){
-    std::cout &lt;&lt; "Compression level " &lt;&lt; vm["compression"].as&lt;int&gt;() &lt;&lt; std::endl;
-}[/cpp]</p>
+<div class="code"><pre><span class="k">if</span><span class="p">(</span><span class="n">vm</span><span class="p">.</span><span class="n">count</span><span class="p">(</span><span class="s">"compression"</span><span class="p">)){</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="s">"Compression level "</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="n">vm</span><span class="p">[</span><span class="s">"compression"</span><span class="p">].</span><span class="n">as</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="kt">int</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;()</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
 <p>For the story, the option value are stored as boost::any. You can get the value of the option by using operator[] on the po::variables_map. You can get the value type with the as function with the type you need. </p>
 <p>On the command line, the value can be set with --compression 10, -c 10 or -c10. </p>
 <p>You can also configure a default value for an option:</p>
-<p>[cpp]description.add_options()
-    ("help,h", "Display this help message")
-    ("compression,c", po::value&lt;int&gt;()-&gt;default_value(5), "Compression level")
-    ("version,v", "Display the version number");[/cpp]</p>
+<div class="code"><pre><span class="n">description</span><span class="p">.</span><span class="n">add_options</span><span class="p">()</span>
+    <span class="p">(</span><span class="s">"help,h"</span><span class="p">,</span> <span class="s">"Display this help message"</span><span class="p">)</span>
+    <span class="p">(</span><span class="s">"compression,c"</span><span class="p">,</span> <span class="n">po</span><span class="o">::</span><span class="n">value</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="kt">int</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;()</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">default_value</span><span class="p">(</span><span class="mi">5</span><span class="p">),</span> <span class="s">"Compression level"</span><span class="p">)</span>
+    <span class="p">(</span><span class="s">"version,v"</span><span class="p">,</span> <span class="s">"Display the version number"</span><span class="p">);</span>
+</pre></div>
+
+
 <p>With that, if the option is not set on the command line, the option has the specified value. With that, the option is always defined. </p>
 <p>Finally, you can also set an implicit value. This is the value of the option is the option is set to the command line without a value (--compression or -c): </p>
-<p>[cpp]description.add_options()
-    ("help,h", "Display this help message")
-    ("compression,c", po::value&lt;int&gt;()-&gt;default_value(5)-&gt;implicit_value(10), "Compression level")
-    ("version,v", "Display the version number");[/cpp]</p>
+<div class="code"><pre><span class="n">description</span><span class="p">.</span><span class="n">add_options</span><span class="p">()</span>
+    <span class="p">(</span><span class="s">"help,h"</span><span class="p">,</span> <span class="s">"Display this help message"</span><span class="p">)</span>
+    <span class="p">(</span><span class="s">"compression,c"</span><span class="p">,</span> <span class="n">po</span><span class="o">::</span><span class="n">value</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="kt">int</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;()</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">default_value</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">implicit_value</span><span class="p">(</span><span class="mi">10</span><span class="p">),</span> <span class="s">"Compression level"</span><span class="p">)</span>
+    <span class="p">(</span><span class="s">"version,v"</span><span class="p">,</span> <span class="s">"Display the version number"</span><span class="p">);</span>
+</pre></div>
+
+
 <h4>Positional options</h4>
 
 <p>It is often convenient to have a list of files on the command line. These options does not have a name. In Boost Program Options, these options are called positional options. You have to declare them in the describe as any other action. For example, for a list of files: </p>
-<p>[cpp]description.add_options()
-    ("help,h", "Display this help message")
-    ("compression,c", po::value&lt;int&gt;()-&gt;default_value(5)-&gt;implicit_value(10),"Compression level")
-    ("input-files", po::value&lt;std::vector&lt;std::string&gt;&gt;(), "Input files")
-    ("version,v", "Display the version number");[/cpp]</p>
+<div class="code"><pre><span class="n">description</span><span class="p">.</span><span class="n">add_options</span><span class="p">()</span>
+    <span class="p">(</span><span class="s">"help,h"</span><span class="p">,</span> <span class="s">"Display this help message"</span><span class="p">)</span>
+    <span class="p">(</span><span class="s">"compression,c"</span><span class="p">,</span> <span class="n">po</span><span class="o">::</span><span class="n">value</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="kt">int</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;()</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">default_value</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">implicit_value</span><span class="p">(</span><span class="mi">10</span><span class="p">),</span><span class="s">"Compression level"</span><span class="p">)</span>
+    <span class="p">(</span><span class="s">"input-files"</span><span class="p">,</span> <span class="n">po</span><span class="o">::</span><span class="n">value</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;(),</span> <span class="s">"Input files"</span><span class="p">)</span>
+    <span class="p">(</span><span class="s">"version,v"</span><span class="p">,</span> <span class="s">"Display the version number"</span><span class="p">);</span>
+</pre></div>
+
+
 <p>Then, you have to declare it as positional and then finally specify it when parsing the command-line: </p>
-<p>[cpp]po::positional_options_description p;</p>
-<p>p.add("input-files", -1);</p>
-<p>po::variables_map vm;</p>
-<p>po::store(po::command_line_parser(argc, argv).options(description).positional(p).run(), vm);</p>
-<p>po::notify(vm);[/cpp]</p>
+<div class="code"><pre><span class="n">po</span><span class="o">::</span><span class="n">positional_options_description</span> <span class="n">p</span><span class="p">;</span>
+<span class="n">p</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="s">"input-files"</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">);</span>
+<span class="n">po</span><span class="o">::</span><span class="n">variables_map</span> <span class="n">vm</span><span class="p">;</span>
+<span class="n">po</span><span class="o">::</span><span class="n">store</span><span class="p">(</span><span class="n">po</span><span class="o">::</span><span class="n">command_line_parser</span><span class="p">(</span><span class="n">argc</span><span class="p">,</span> <span class="n">argv</span><span class="p">).</span><span class="n">options</span><span class="p">(</span><span class="n">description</span><span class="p">).</span><span class="n">positional</span><span class="p">(</span><span class="n">p</span><span class="p">).</span><span class="n">run</span><span class="p">(),</span> <span class="n">vm</span><span class="p">);</span>
+<span class="n">po</span><span class="o">::</span><span class="n">notify</span><span class="p">(</span><span class="n">vm</span><span class="p">);</span>
+</pre></div>
+
+
 <p>The positional options values are retrieved the exact same way as other options: </p>
-<p>[cpp]if(vm.count("input-files")){
-    std::vector&lt;std::string&gt; files = vm["input-files"].as&lt;std::vector&lt;std::string&gt;&gt;();
-    for(std::string file : files){
-        std::cout &lt;&lt; "Input file " &lt;&lt; file &lt;&lt; std::endl;
-    }
-}[/cpp]</p>
+<div class="code"><pre><span class="k">if</span><span class="p">(</span><span class="n">vm</span><span class="p">.</span><span class="n">count</span><span class="p">(</span><span class="s">"input-files"</span><span class="p">)){</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="n">files</span> <span class="o">=</span> <span class="n">vm</span><span class="p">[</span><span class="s">"input-files"</span><span class="p">].</span><span class="n">as</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;();</span>
+    <span class="k">for</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">file</span> <span class="o">:</span> <span class="n">files</span><span class="p">){</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="s">"Input file "</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="n">file</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
 <h4>Wrap-Up</h4>
 
 <p>In this article, we saw the most important aspects of Boost Program Options. With these notions, you can start using this great library. If you need more information about the library, you can read <a href="http://www.boost.org/doc/libs/1_50_0/doc/html/program_options.html" title="Boost Program Options documentation">the official documentation</a> that is very well made. </p>

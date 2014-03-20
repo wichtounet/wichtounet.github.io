@@ -129,111 +129,133 @@
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><p>We've now covered the basic synchronization systems (<a href="http://www.baptiste-wicht.com/2010/01/jr-introduction/" target="_blank">semaphore</a>, <a href="http://www.baptiste-wicht.com/2010/06/monitor-programming-in-jr/" target="_blank">monitors</a>) and we know how to <a href="http://www.baptiste-wicht.com/2010/06/jr-operations-and-capabilities/" target="_blank">declare operations and capabilities</a> . It's time to go to an other form of synchronization : <strong>Message Passing</strong>. In this post, we'll focus in <strong>Asynchronous Message Passing</strong>, we'll cover later, the synchronous message passing system with RendezVous.</p>
+        <div><p>We've now covered the basic synchronization systems (<a href="http://www.baptiste-wicht.com/2010/01/jr-introduction/" target="_blank">semaphore</a>, <a href="http://www.baptiste-wicht.com/2010/06/monitor-programming-in-jr/" target="_blank">monitors</a>) and we know how to <a href="http://www.baptiste-wicht.com/2010/06/jr-operations-and-capabilities/" target="_blank">declare operations and capabilities</a> . It's time to go to an other form of synchronization : <strong>Message Passing</strong>. In this post, we'll focus in <strong>Asynchronous Message Passing</strong>, we'll cover later, the synchronous message passing system with RendezVous.</p>
 <p>When we use message passing, the threads doesn't share datas anymore, they share channels. You can see channels like an abstraction of a network between several processes. The processes will send messages to other and the other will wait for receive a message. Normally, with that form of synchronization, the channels are the only objects shared between the threads. So you doesn't need to share memory. That makes possible to distribute the processes across several virtual machines or computers, of course, this also works on a simple computer, like any other program. In message passing, we often see models with several clients and a server that manage the messages. </p>
 <!--more-->
 
 <p>In Java, you will do that with Socket or RMI but in JR, this system is really easily integrated. We'll use operations as messages queues and send/receive operations in the queue to respectively send a message to the queue and receive a message from the queue. The operations must not be implemented to achieve asynchronous message passing. If the operations is implemented, this will make a remote procedure call, but we'll not cover that system for now. And because, it's asynchronous, the operations cannot have a return type. The operations visibility is the same as the method visibility. So if an operation is static in class A, a send statement on this operation can be serviced by any process who has the visibility to access this operation. </p>
 <p>So we will need that kind of operations :</p>
-<p>[java]private static op void channel(int);[/java]</p>
+<div class="code"><pre><span class="kd">private</span> <span class="kd">static</span> <span class="n">op</span> <span class="kt">void</span> <span class="nf">channel</span><span class="o">(</span><span class="kt">int</span><span class="o">);</span>
+</pre></div>
+
+
 <p>To send a message to a channel, you just have to use the send keyword followed by the name of the operations with the arguments :</p>
-<p>[java]send channel(12);[/java]</p>
+<div class="code"><pre><span class="n">send</span> <span class="nf">channel</span><span class="o">(</span><span class="mi">12</span><span class="o">);</span>
+</pre></div>
+
+
 <p>The send operation does not block, when the same is sended, the send operation is released.</p>
 <p>To receive a message, you have to use the receive keyword, followed by the variables name in which put the values of the arguments :</p>
-<p>[java]int x;</p>
-<p>receive channel(x);[/java]</p>
-<p>The variables must have been declared before used in the receive statement. It's a little weird when we start, but it's really practical to assign them in one operation even if we have a lot of parameters. When we the process are on the same virtual machines, the parameters are passed like for any method in Java, by value. If we put all that together in processes :</p>
-<p>[java]public class AMP1 {
-    private static op void channel(int);</p>
-<div class="code"><pre><span class="n">private</span> <span class="k">static</span> <span class="n">process</span> <span class="n">p1</span><span class="p">{</span>
-    <span class="n">send</span> <span class="n">channel</span><span class="p">(</span><span class="mi">12</span><span class="p">);</span>
-<span class="p">}</span>
-
-<span class="n">private</span> <span class="k">static</span> <span class="n">process</span> <span class="n">p2</span><span class="p">{</span>
-    <span class="kt">int</span> <span class="n">x</span><span class="p">;</span>      
-    <span class="n">receive</span> <span class="nf">channel</span><span class="p">(</span><span class="n">x</span><span class="p">);</span>
-    <span class="n">System</span><span class="p">.</span><span class="n">out</span><span class="p">.</span><span class="n">println</span><span class="p">(</span><span class="n">x</span><span class="p">);</span>
-<span class="p">}</span>
-
-<span class="n">public</span> <span class="k">static</span> <span class="kt">void</span> <span class="n">main</span><span class="p">(</span><span class="n">String</span><span class="p">...</span> <span class="n">args</span><span class="p">){}</span>
+<div class="code"><pre><span class="kt">int</span> <span class="n">x</span><span class="o">;</span>
+<span class="n">receive</span> <span class="nf">channel</span><span class="o">(</span><span class="n">x</span><span class="o">);</span>
 </pre></div>
 
 
-<p>}[/java]</p>
+<p>The variables must have been declared before used in the receive statement. It's a little weird when we start, but it's really practical to assign them in one operation even if we have a lot of parameters. When we the process are on the same virtual machines, the parameters are passed like for any method in Java, by value. If we put all that together in processes :</p>
+<div class="code"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">AMP1</span> <span class="o">{</span>
+    <span class="kd">private</span> <span class="kd">static</span> <span class="n">op</span> <span class="kt">void</span> <span class="nf">channel</span><span class="o">(</span><span class="kt">int</span><span class="o">);</span>
+
+    <span class="kd">private</span> <span class="kd">static</span> <span class="n">process</span> <span class="n">p1</span><span class="o">{</span>
+        <span class="n">send</span> <span class="nf">channel</span><span class="o">(</span><span class="mi">12</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="kd">private</span> <span class="kd">static</span> <span class="n">process</span> <span class="n">p2</span><span class="o">{</span>
+        <span class="kt">int</span> <span class="n">x</span><span class="o">;</span>      
+        <span class="n">receive</span> <span class="nf">channel</span><span class="o">(</span><span class="n">x</span><span class="o">);</span>
+        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">x</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">...</span> <span class="n">args</span><span class="o">){}</span>
+<span class="o">}</span>
+</pre></div>
+
+
 <p>The messages are received in the order they are sent for each sender. But it's possible that a message sent by Thread 1 before an other message sent by Thread 2 will be received after the one of Thread 2. Normally this would never appears when working in a simple computer, but that could appear often when working with several computers. So don't make any assumptions on the order your messages will be received. </p>
 <p>With all that, we can solve the producer-consumer problem really easily : </p>
-<p>[java]public class ProducerConsumer {
-    private static final int N = 12; //Number of producers and consumers</p>
-<div class="code"><pre><span class="n">private</span> <span class="k">static</span> <span class="n">op</span> <span class="kt">void</span> <span class="nf">deposit</span><span class="p">(</span><span class="n">String</span><span class="p">);</span> <span class="c1">//The channel</span>
+<div class="code"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">ProducerConsumer</span> <span class="o">{</span>
+    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">int</span> <span class="n">N</span> <span class="o">=</span> <span class="mi">12</span><span class="o">;</span> <span class="c1">//Number of producers and consumers</span>
 
-<span class="n">public</span> <span class="k">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="p">(</span><span class="n">String</span><span class="p">...</span> <span class="n">args</span><span class="p">){}</span>
+    <span class="kd">private</span> <span class="kd">static</span> <span class="n">op</span> <span class="kt">void</span> <span class="nf">deposit</span><span class="o">(</span><span class="n">String</span><span class="o">);</span> <span class="c1">//The channel</span>
 
-<span class="n">private</span> <span class="k">static</span> <span class="n">process</span> <span class="n">Producer</span><span class="p">((</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="n">N</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)){</span>
-    <span class="n">send</span> <span class="n">deposit</span><span class="p">(</span><span class="s">"Producer"</span> <span class="o">+</span> <span class="n">i</span><span class="p">);</span>
-<span class="p">}</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">...</span> <span class="n">args</span><span class="o">){}</span>
 
-<span class="n">private</span> <span class="k">static</span> <span class="n">process</span> <span class="n">Consumer</span><span class="p">((</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="n">N</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)){</span>
-    <span class="n">String</span> <span class="n">data</span><span class="p">;</span>
-    <span class="n">receive</span> <span class="nf">deposit</span><span class="p">(</span><span class="n">data</span><span class="p">);</span>
-    <span class="n">System</span><span class="p">.</span><span class="n">out</span><span class="p">.</span><span class="n">println</span><span class="p">(</span><span class="s">"Consumer"</span> <span class="o">+</span> <span class="n">i</span> <span class="o">+</span> <span class="s">" : "</span> <span class="o">+</span> <span class="n">data</span><span class="p">);</span>
-<span class="p">}</span>
+    <span class="kd">private</span> <span class="kd">static</span> <span class="n">process</span> <span class="nf">Producer</span><span class="o">((</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">N</span><span class="o">;</span> <span class="n">i</span><span class="o">++)){</span>
+        <span class="n">send</span> <span class="nf">deposit</span><span class="o">(</span><span class="s">"Producer"</span> <span class="o">+</span> <span class="n">i</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="kd">private</span> <span class="kd">static</span> <span class="n">process</span> <span class="nf">Consumer</span><span class="o">((</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">N</span><span class="o">;</span> <span class="n">i</span><span class="o">++)){</span>
+        <span class="n">String</span> <span class="n">data</span><span class="o">;</span>
+        <span class="n">receive</span> <span class="nf">deposit</span><span class="o">(</span><span class="n">data</span><span class="o">);</span>
+        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Consumer"</span> <span class="o">+</span> <span class="n">i</span> <span class="o">+</span> <span class="s">" : "</span> <span class="o">+</span> <span class="n">data</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
 </pre></div>
 
 
-<p>}[/java]</p>
 <p>No need to great explanations. A Producer send a message with the informations it has produced and doesn't wait for the receive. And a Consumer wait for a deposit (a send) with a receive statement and print the result when it has received the message. </p>
 <p>Like you can invoke operations with capabilities, you can also send messages through a capability. It's very easy to share channels because this is only a variable. We often send the channels in a message for an answer. </p>
 <p>Let's imagine a simple problem. We have N clients that needs resources shared by all the clients. We need something to manage the resources. So we'll use a kind of server to achieve that. So we can start with something really simple for the clients : </p>
-<p>[java]op void request();</p>
-<p>op void resource(Resource);</p>
-<p>op void release(Resource);</p>
-<p>send request();</p>
-<p>receive resource(resource);</p>
-<p>//Use resources</p>
-<p>send release(resource);</p>
-<p>[/java]</p>
-<p>That seems good, but there are some problems : </p>
-<p></p><ul>
-<li>How can the server distinguish the clients ? If it sends a message to resource any client can take it, we need a way to create a channel between one client and the server (also called private channels). For this we'll use a capability as a channel. </li>
+<div class="code"><pre><span class="n">op</span> <span class="kt">void</span> <span class="nf">request</span><span class="o">();</span>
+<span class="n">op</span> <span class="kt">void</span> <span class="nf">resource</span><span class="o">(</span><span class="n">Resource</span><span class="o">);</span>
+<span class="n">op</span> <span class="kt">void</span> <span class="nf">release</span><span class="o">(</span><span class="n">Resource</span><span class="o">);</span>
+<span class="n">send</span> <span class="nf">request</span><span class="o">();</span>
+<span class="n">receive</span> <span class="nf">resource</span><span class="o">(</span><span class="n">resource</span><span class="o">);</span>
 
-<li>If the server wait for request messages, it cannot wait for release messages and vice-versa. A solution is to have two process in the servers, but with that, you must synchronize the two process. A better solution is to create an operation that give informations about the type of request. </li>
-
-</ul>
-
-<p>So here, is the new version of client : </p>
-<p>[java]enum Type {REQUEST, RELEASE};</p>
-<p>op void request(Type, cap void (Resource), Resource);</p>
-<p>cap void (Resource) channel = new op void (Resource);</p>
-<p>send request(Type.REQUEST, channel, null);</p>
-<p>Resource resource;</p>
-<p>receive channel(resource);</p>
-<p>send request(Type.RELEASE, noop, resoure); [/java]</p>
-<p>and now the server : </p>
-<p>[java]cap void (Resource) client;</p>
-<p>Type type;</p>
-<p>Resource resource;</p>
-<p>Queue&lt;Resource&gt; resources = new LinkedQueue&lt;Resource&gt;();</p>
-<p>//Fill the queue of resources</p>
-<p>Queue&lt;cap void (int)&gt; clients = new LinkedQueue&lt;cap void int&gt;();</p>
-<p>while(true){
-    receive request(type, client, resource);</p>
-<div class="code"><pre><span class="k">if</span><span class="p">(</span><span class="n">type</span> <span class="o">==</span> <span class="n">Type</span><span class="p">.</span><span class="n">REQUEST</span><span class="p">){</span>
-    <span class="k">if</span><span class="p">(</span><span class="n">resources</span><span class="p">.</span><span class="n">isEmpty</span><span class="p">()){</span>
-        <span class="n">clients</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="n">client</span><span class="p">);</span>
-    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-        <span class="n">send</span> <span class="n">client</span><span class="p">(</span><span class="n">resource</span><span class="p">.</span><span class="n">pop</span><span class="p">());</span>
-    <span class="p">}</span>
-<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-    <span class="k">if</span><span class="p">(</span><span class="n">clients</span><span class="p">.</span><span class="n">isEmpty</span><span class="p">()){</span>
-        <span class="n">resources</span><span class="p">.</span><span class="n">put</span><span class="p">(</span><span class="n">resource</span><span class="p">);</span>
-    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-        <span class="n">send</span> <span class="n">clients</span><span class="p">.</span><span class="n">pop</span><span class="p">()(</span><span class="n">resource</span><span class="p">);</span>
-    <span class="p">}</span>   
-<span class="p">}</span>
+<span class="c1">//Use resources</span>
+<span class="n">send</span> <span class="nf">release</span><span class="o">(</span><span class="n">resource</span><span class="o">);</span>
 </pre></div>
 
 
-<p>}[/java]</p>
+<p>That seems good, but there are some problems : </p>
+<ul>
+<li>How can the server distinguish the clients ? If it sends a message to resource any client can take it, we need a way to create a channel between one client and the server (also called private channels). For this we'll use a capability as a channel. </li>
+<li>If the server wait for request messages, it cannot wait for release messages and vice-versa. A solution is to have two process in the servers, but with that, you must synchronize the two process. A better solution is to create an operation that give informations about the type of request. </li>
+</ul>
+
+<p>So here, is the new version of client : </p>
+<div class="code"><pre><span class="kd">enum</span> <span class="n">Type</span> <span class="o">{</span><span class="n">REQUEST</span><span class="o">,</span> <span class="n">RELEASE</span><span class="o">};</span>
+<span class="n">op</span> <span class="kt">void</span> <span class="nf">request</span><span class="o">(</span><span class="n">Type</span><span class="o">,</span> <span class="n">cap</span> <span class="kt">void</span> <span class="o">(</span><span class="n">Resource</span><span class="o">),</span> <span class="n">Resource</span><span class="o">);</span>
+<span class="n">cap</span> <span class="nf">void</span> <span class="o">(</span><span class="n">Resource</span><span class="o">)</span> <span class="n">channel</span> <span class="o">=</span> <span class="k">new</span> <span class="n">op</span> <span class="kt">void</span> <span class="o">(</span><span class="n">Resource</span><span class="o">);</span>
+
+<span class="n">send</span> <span class="nf">request</span><span class="o">(</span><span class="n">Type</span><span class="o">.</span><span class="na">REQUEST</span><span class="o">,</span> <span class="n">channel</span><span class="o">,</span> <span class="kc">null</span><span class="o">);</span>
+<span class="n">Resource</span> <span class="n">resource</span><span class="o">;</span>
+<span class="n">receive</span> <span class="nf">channel</span><span class="o">(</span><span class="n">resource</span><span class="o">);</span>
+<span class="n">send</span> <span class="nf">request</span><span class="o">(</span><span class="n">Type</span><span class="o">.</span><span class="na">RELEASE</span><span class="o">,</span> <span class="n">noop</span><span class="o">,</span> <span class="n">resoure</span><span class="o">);</span> 
+</pre></div>
+
+
+<p>and now the server : </p>
+<div class="code"><pre><span class="n">cap</span> <span class="nf">void</span> <span class="o">(</span><span class="n">Resource</span><span class="o">)</span> <span class="n">client</span><span class="o">;</span>
+
+<span class="n">Type</span> <span class="n">type</span><span class="o">;</span>
+<span class="n">Resource</span> <span class="n">resource</span><span class="o">;</span>
+
+<span class="n">Queue</span><span class="o">&lt;</span><span class="n">Resource</span><span class="o">&gt;</span> <span class="n">resources</span> <span class="o">=</span> <span class="k">new</span> <span class="n">LinkedQueue</span><span class="o">&lt;</span><span class="n">Resource</span><span class="o">&gt;();</span>
+
+<span class="c1">//Fill the queue of resources</span>
+
+<span class="n">Queue</span><span class="o">&lt;</span><span class="n">cap</span> <span class="nf">void</span> <span class="o">(</span><span class="kt">int</span><span class="o">)&gt;</span> <span class="n">clients</span> <span class="o">=</span> <span class="k">new</span> <span class="n">LinkedQueue</span><span class="o">&lt;</span><span class="n">cap</span> <span class="kt">void</span> <span class="kt">int</span><span class="o">&gt;();</span>
+
+<span class="k">while</span><span class="o">(</span><span class="kc">true</span><span class="o">){</span>
+    <span class="n">receive</span> <span class="nf">request</span><span class="o">(</span><span class="n">type</span><span class="o">,</span> <span class="n">client</span><span class="o">,</span> <span class="n">resource</span><span class="o">);</span>
+
+    <span class="k">if</span><span class="o">(</span><span class="n">type</span> <span class="o">==</span> <span class="n">Type</span><span class="o">.</span><span class="na">REQUEST</span><span class="o">){</span>
+        <span class="k">if</span><span class="o">(</span><span class="n">resources</span><span class="o">.</span><span class="na">isEmpty</span><span class="o">()){</span>
+            <span class="n">clients</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">client</span><span class="o">);</span>
+        <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+            <span class="n">send</span> <span class="nf">client</span><span class="o">(</span><span class="n">resource</span><span class="o">.</span><span class="na">pop</span><span class="o">());</span>
+        <span class="o">}</span>
+    <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+        <span class="k">if</span><span class="o">(</span><span class="n">clients</span><span class="o">.</span><span class="na">isEmpty</span><span class="o">()){</span>
+            <span class="n">resources</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">resource</span><span class="o">);</span>
+        <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+            <span class="n">send</span> <span class="n">clients</span><span class="o">.</span><span class="na">pop</span><span class="o">()(</span><span class="n">resource</span><span class="o">);</span>
+        <span class="o">}</span>   
+    <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+
+
 <p>Really easy no ? And that code can be distributed with only minor changes. And it works for any number of process your want. You will find the complete code of this problem joined to this post. </p>
 <p>We have now covered the complete informations about Asynchronous Message Passing in JR. I hope you found that article interesting. The next post will be about the RendezVous in JR. RendezVous are a very powerful way to achieve synchronization also with message passing, but synchronous. </p>
 <p><a href="wp-content/uploads/2010/07/ResourceAllocator.jr_.tar.gz">The complete source</a></p></div>
@@ -252,104 +274,110 @@
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><p>Now that we've seen how to use <a target="_blank" href="http://www.baptiste-wicht.com/2010/01/jr-introduction/">semaphores</a> and <a target="_blank" href="http://www.baptiste-wicht.com/2010/06/monitor-programming-in-jr/">monitors</a> in JR, we must go to message passing. But before, we must learn how to use operation and capabilities in JR. These concepts are used in JR to message passing, so we must learn them before. </p>
+        <div><p>Now that we've seen how to use <a target="_blank" href="http://www.baptiste-wicht.com/2010/01/jr-introduction/">semaphores</a> and <a target="_blank" href="http://www.baptiste-wicht.com/2010/06/monitor-programming-in-jr/">monitors</a> in JR, we must go to message passing. But before, we must learn how to use operation and capabilities in JR. These concepts are used in JR to message passing, so we must learn them before. </p>
 <p>An operation (or op-method) has the same form as a method declaration but are declared with a op keyword. An operation can be invoked the same way as a normal method or can be invoked with a call statement (also with a send statement as we'll see in next post about JR). </p>
 <!--more-->
 
 <p>A little example : </p>
-<p>[java]public class Operations1 {
-    public static op int sum(int i1, int i2){
-        System.out.println("sum()");</p>
-<div class="code"><pre>    <span class="k">return</span> <span class="n">i1</span> <span class="o">+</span> <span class="n">i2</span><span class="p">;</span>
-<span class="p">}</span>
+<div class="code"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Operations1</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="n">op</span> <span class="kt">int</span> <span class="nf">sum</span><span class="o">(</span><span class="kt">int</span> <span class="n">i1</span><span class="o">,</span> <span class="kt">int</span> <span class="n">i2</span><span class="o">){</span>
+        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"sum()"</span><span class="o">);</span>
 
-<span class="n">public</span> <span class="k">static</span> <span class="kt">void</span> <span class="n">main</span><span class="p">(</span><span class="n">String</span><span class="p">...</span> <span class="n">args</span><span class="p">){</span>
-    <span class="n">System</span><span class="p">.</span><span class="n">out</span><span class="p">.</span><span class="n">println</span><span class="p">(</span><span class="n">sum</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">));</span>
-    <span class="n">call</span> <span class="nf">sum</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">);</span>
-<span class="p">}</span>
+        <span class="k">return</span> <span class="n">i1</span> <span class="o">+</span> <span class="n">i2</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">...</span> <span class="n">args</span><span class="o">){</span>
+        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">sum</span><span class="o">(</span><span class="mi">2</span><span class="o">,</span> <span class="mi">2</span><span class="o">));</span>
+        <span class="n">call</span> <span class="nf">sum</span><span class="o">(</span><span class="mi">3</span><span class="o">,</span> <span class="mi">3</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
 </pre></div>
 
 
-<p>}[/java]</p>
 <p>You can also write the operation in two part : </p>
-<p>[java]public static op int sum(int i1, int i2);</p>
-<p>public static int sum(int i1, int i2){
-    System.out.println("sum()");</p>
-<div class="code"><pre><span class="k">return</span> <span class="n">i1</span> <span class="o">+</span> <span class="n">i2</span><span class="p">;</span>
+<div class="code"><pre><span class="kd">public</span> <span class="kd">static</span> <span class="n">op</span> <span class="kt">int</span> <span class="nf">sum</span><span class="o">(</span><span class="kt">int</span> <span class="n">i1</span><span class="o">,</span> <span class="kt">int</span> <span class="n">i2</span><span class="o">);</span>
+
+<span class="kd">public</span> <span class="kd">static</span> <span class="kt">int</span> <span class="nf">sum</span><span class="o">(</span><span class="kt">int</span> <span class="n">i1</span><span class="o">,</span> <span class="kt">int</span> <span class="n">i2</span><span class="o">){</span>
+    <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"sum()"</span><span class="o">);</span>
+
+    <span class="k">return</span> <span class="n">i1</span> <span class="o">+</span> <span class="n">i2</span><span class="o">;</span>
+<span class="o">}</span>
 </pre></div>
 
 
-<p>}[/java]</p>
 <p>This is exactly the same. As you will see in the next post, we'll also use operations only declared with no method body. </p>
 <p>When you've operations, you can refer to them using capabilities. The capabilities are a kind of function pointer. You can declare a capability like that : </p>
 <p>cap operation_signature cap_name</p>
 <p>You can invoke a capability like a normal method. Here is a little example : </p>
-<p>[java]public class Operations3 {
-    public static op int sum(int i1, int i2){
-        System.out.println("sum()");</p>
-<div class="code"><pre>    <span class="k">return</span> <span class="n">i1</span> <span class="o">+</span> <span class="n">i2</span><span class="p">;</span>
-<span class="p">}</span>
+<div class="code"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Operations3</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="n">op</span> <span class="kt">int</span> <span class="nf">sum</span><span class="o">(</span><span class="kt">int</span> <span class="n">i1</span><span class="o">,</span> <span class="kt">int</span> <span class="n">i2</span><span class="o">){</span>
+        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"sum()"</span><span class="o">);</span>
 
-<span class="n">public</span> <span class="k">static</span> <span class="kt">void</span> <span class="n">main</span><span class="p">(</span><span class="n">String</span><span class="p">...</span> <span class="n">args</span><span class="p">){</span>
-    <span class="n">cap</span> <span class="kt">int</span> <span class="p">(</span><span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="p">)</span> <span class="n">cap_sum</span><span class="p">;</span> <span class="c1">//Declare the capability</span>
+        <span class="k">return</span> <span class="n">i1</span> <span class="o">+</span> <span class="n">i2</span><span class="o">;</span>
+    <span class="o">}</span>
 
-    <span class="n">cap_sum</span> <span class="o">=</span> <span class="n">sum</span><span class="p">;</span>              <span class="c1">//Make a reference to sum operations</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">...</span> <span class="n">args</span><span class="o">){</span>
+        <span class="n">cap</span> <span class="nf">int</span> <span class="o">(</span><span class="kt">int</span><span class="o">,</span> <span class="kt">int</span><span class="o">)</span> <span class="n">cap_sum</span><span class="o">;</span> <span class="c1">//Declare the capability</span>
 
-    <span class="n">System</span><span class="p">.</span><span class="n">out</span><span class="p">.</span><span class="n">println</span><span class="p">(</span><span class="n">cap_sum</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">));</span>
-<span class="p">}</span>
+        <span class="n">cap_sum</span> <span class="o">=</span> <span class="n">sum</span><span class="o">;</span>              <span class="c1">//Make a reference to sum operations</span>
+
+        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">cap_sum</span><span class="o">(</span><span class="mi">2</span><span class="o">,</span> <span class="mi">2</span><span class="o">));</span>
+    <span class="o">}</span>
+<span class="o">}</span>
 </pre></div>
 
 
-<p>}[/java]</p>
 <p>And you can also pass them as arguments, that can be useful to generify a code. Here is a little example that use </p>
-<p>[java]import java.util.Random;</p>
-<p>public class Operations3 {
-    public static op int square(int x){
-        return x * x;
-    }</p>
-<div class="code"><pre><span class="kr">public</span> <span class="kr">static</span> <span class="nx">op</span> <span class="kr">int</span> <span class="nx">dec</span><span class="p">(</span><span class="kr">int</span> <span class="nx">x</span><span class="p">){</span>
-    <span class="k">return</span> <span class="nx">x</span> <span class="o">-</span> <span class="mi">3</span><span class="p">;</span>
-<span class="p">}</span>
+<div class="code"><pre><span class="kn">import</span> <span class="nn">java.util.Random</span><span class="o">;</span>
 
-<span class="kr">public</span> <span class="kr">static</span> <span class="nx">op</span> <span class="kr">int</span> <span class="nx">inc</span><span class="p">(</span><span class="kr">int</span> <span class="nx">x</span><span class="p">){</span>
-    <span class="k">return</span> <span class="nx">x</span> <span class="o">+</span> <span class="mi">11</span><span class="p">;</span>
-<span class="p">}</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">Operations3</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="n">op</span> <span class="kt">int</span> <span class="nf">square</span><span class="o">(</span><span class="kt">int</span> <span class="n">x</span><span class="o">){</span>
+        <span class="k">return</span> <span class="n">x</span> <span class="o">*</span> <span class="n">x</span><span class="o">;</span>
+    <span class="o">}</span>
 
-<span class="kr">public</span> <span class="kr">static</span> <span class="nx">op</span> <span class="kr">int</span> <span class="nx">add</span><span class="p">(</span><span class="nx">cap</span> <span class="kr">int</span> <span class="p">(</span><span class="kr">int</span><span class="p">)</span> <span class="nx">f1</span><span class="p">,</span> <span class="nx">cap</span> <span class="kr">int</span> <span class="p">(</span><span class="kr">int</span><span class="p">)</span> <span class="nx">f2</span><span class="p">,</span> <span class="kr">int</span> <span class="nx">result</span><span class="p">){</span>
-    <span class="k">return</span> <span class="nx">f1</span><span class="p">(</span><span class="nx">result</span><span class="p">)</span> <span class="o">+</span> <span class="nx">f2</span><span class="p">(</span><span class="nx">result</span><span class="p">);</span>
-<span class="p">}</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="n">op</span> <span class="kt">int</span> <span class="nf">dec</span><span class="o">(</span><span class="kt">int</span> <span class="n">x</span><span class="o">){</span>
+        <span class="k">return</span> <span class="n">x</span> <span class="o">-</span> <span class="mi">3</span><span class="o">;</span>
+    <span class="o">}</span>
 
-<span class="kr">public</span> <span class="kr">static</span> <span class="nx">op</span> <span class="kr">int</span> <span class="nx">sub</span><span class="p">(</span><span class="nx">cap</span> <span class="kr">int</span> <span class="p">(</span><span class="kr">int</span><span class="p">)</span> <span class="nx">f1</span><span class="p">,</span> <span class="nx">cap</span> <span class="kr">int</span> <span class="p">(</span><span class="kr">int</span><span class="p">)</span> <span class="nx">f2</span><span class="p">,</span> <span class="kr">int</span> <span class="nx">result</span><span class="p">){</span>
-    <span class="k">return</span> <span class="nx">f1</span><span class="p">(</span><span class="nx">result</span><span class="p">)</span> <span class="o">+</span> <span class="nx">f2</span><span class="p">(</span><span class="nx">result</span><span class="p">);</span>
-<span class="p">}</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="n">op</span> <span class="kt">int</span> <span class="nf">inc</span><span class="o">(</span><span class="kt">int</span> <span class="n">x</span><span class="o">){</span>
+        <span class="k">return</span> <span class="n">x</span> <span class="o">+</span> <span class="mi">11</span><span class="o">;</span>
+    <span class="o">}</span>
 
-<span class="kr">public</span> <span class="kr">static</span> <span class="k">void</span> <span class="nx">main</span><span class="p">(</span><span class="nb">String</span><span class="p">...</span> <span class="nx">args</span><span class="p">){</span>
-    <span class="nx">cap</span> <span class="kr">int</span> <span class="p">(</span><span class="kr">int</span><span class="p">)</span> <span class="nx">functions</span><span class="cp">[]</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">cap</span> <span class="kr">int</span> <span class="p">(</span><span class="kr">int</span><span class="p">)</span><span class="cp">[</span><span class="mi">3</span><span class="cp">]</span><span class="p">;</span>
-    <span class="nx">functions</span><span class="cp">[</span><span class="mi">0</span><span class="cp">]</span> <span class="o">=</span> <span class="nx">square</span><span class="p">;</span>
-    <span class="nx">functions</span><span class="cp">[</span><span class="mi">1</span><span class="cp">]</span> <span class="o">=</span> <span class="nx">dec</span><span class="p">;</span>
-    <span class="nx">functions</span><span class="cp">[</span><span class="mi">2</span><span class="cp">]</span> <span class="o">=</span> <span class="nx">inc</span><span class="p">;</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="n">op</span> <span class="kt">int</span> <span class="nf">add</span><span class="o">(</span><span class="n">cap</span> <span class="kt">int</span> <span class="o">(</span><span class="kt">int</span><span class="o">)</span> <span class="n">f1</span><span class="o">,</span> <span class="n">cap</span> <span class="kt">int</span> <span class="o">(</span><span class="kt">int</span><span class="o">)</span> <span class="n">f2</span><span class="o">,</span> <span class="kt">int</span> <span class="n">result</span><span class="o">){</span>
+        <span class="k">return</span> <span class="nf">f1</span><span class="o">(</span><span class="n">result</span><span class="o">)</span> <span class="o">+</span> <span class="n">f2</span><span class="o">(</span><span class="n">result</span><span class="o">);</span>
+    <span class="o">}</span>
 
-    <span class="nx">cap</span> <span class="kr">int</span> <span class="p">(</span><span class="nx">cap</span> <span class="kr">int</span> <span class="p">(</span><span class="kr">int</span><span class="p">),</span> <span class="nx">cap</span> <span class="kr">int</span> <span class="p">(</span><span class="kr">int</span><span class="p">),</span> <span class="kr">int</span><span class="p">)</span><span class="cp">[]</span> <span class="nx">double_functions</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">cap</span> <span class="kr">int</span> <span class="p">(</span><span class="nx">cap</span> <span class="kr">int</span> <span class="p">(</span><span class="kr">int</span><span class="p">),</span> <span class="nx">cap</span> <span class="kr">int</span> <span class="p">(</span><span class="kr">int</span><span class="p">),</span> <span class="kr">int</span><span class="p">)</span><span class="cp">[</span><span class="mi">2</span><span class="cp">]</span>
-    <span class="nx">double_functions</span><span class="cp">[</span><span class="mi">0</span><span class="cp">]</span> <span class="o">=</span> <span class="nx">add</span><span class="p">;</span>
-    <span class="nx">double_functions</span><span class="cp">[</span><span class="mi">1</span><span class="cp">]</span> <span class="o">=</span> <span class="nx">sub</span><span class="p">;</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="n">op</span> <span class="kt">int</span> <span class="nf">sub</span><span class="o">(</span><span class="n">cap</span> <span class="kt">int</span> <span class="o">(</span><span class="kt">int</span><span class="o">)</span> <span class="n">f1</span><span class="o">,</span> <span class="n">cap</span> <span class="kt">int</span> <span class="o">(</span><span class="kt">int</span><span class="o">)</span> <span class="n">f2</span><span class="o">,</span> <span class="kt">int</span> <span class="n">result</span><span class="o">){</span>
+        <span class="k">return</span> <span class="nf">f1</span><span class="o">(</span><span class="n">result</span><span class="o">)</span> <span class="o">+</span> <span class="n">f2</span><span class="o">(</span><span class="n">result</span><span class="o">);</span>
+    <span class="o">}</span>
 
-    <span class="kr">int</span> <span class="nx">result</span> <span class="o">=</span> <span class="mi">100</span><span class="p">;</span>
-    <span class="nx">Random</span> <span class="nx">random</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Random</span><span class="p">();</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">...</span> <span class="n">args</span><span class="o">){</span>
+        <span class="n">cap</span> <span class="nf">int</span> <span class="o">(</span><span class="kt">int</span><span class="o">)</span> <span class="n">functions</span><span class="o">[]</span> <span class="o">=</span> <span class="k">new</span> <span class="n">cap</span> <span class="kt">int</span> <span class="o">(</span><span class="kt">int</span><span class="o">)[</span><span class="mi">3</span><span class="o">];</span>
+        <span class="n">functions</span><span class="o">[</span><span class="mi">0</span><span class="o">]</span> <span class="o">=</span> <span class="n">square</span><span class="o">;</span>
+        <span class="n">functions</span><span class="o">[</span><span class="mi">1</span><span class="o">]</span> <span class="o">=</span> <span class="n">dec</span><span class="o">;</span>
+        <span class="n">functions</span><span class="o">[</span><span class="mi">2</span><span class="o">]</span> <span class="o">=</span> <span class="n">inc</span><span class="o">;</span>
 
-    <span class="k">for</span><span class="p">(</span><span class="kr">int</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&amp;</span><span class="nx">lt</span><span class="p">;</span> <span class="mi">10</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">){</span>
-        <span class="kr">int</span> <span class="nx">index1</span> <span class="o">=</span> <span class="nx">random</span><span class="p">.</span><span class="nx">nextInt</span><span class="p">(</span><span class="nx">double_functions</span><span class="p">.</span><span class="nx">length</span><span class="p">);</span>
-        <span class="kr">int</span> <span class="nx">index2</span> <span class="o">=</span> <span class="nx">random</span><span class="p">.</span><span class="nx">nextInt</span><span class="p">(</span><span class="nx">functions</span><span class="p">.</span><span class="nx">length</span><span class="p">);</span>
+        <span class="n">cap</span> <span class="nf">int</span> <span class="o">(</span><span class="n">cap</span> <span class="kt">int</span> <span class="o">(</span><span class="kt">int</span><span class="o">),</span> <span class="n">cap</span> <span class="kt">int</span> <span class="o">(</span><span class="kt">int</span><span class="o">),</span> <span class="kt">int</span><span class="o">)[]</span> <span class="n">double_functions</span> <span class="o">=</span> <span class="k">new</span> <span class="n">cap</span> <span class="kt">int</span> <span class="o">(</span><span class="n">cap</span> <span class="kt">int</span> <span class="o">(</span><span class="kt">int</span><span class="o">),</span> <span class="n">cap</span> <span class="kt">int</span> <span class="o">(</span><span class="kt">int</span><span class="o">),</span> <span class="kt">int</span><span class="o">)[</span><span class="mi">2</span><span class="o">]</span>
+        <span class="n">double_functions</span><span class="o">[</span><span class="mi">0</span><span class="o">]</span> <span class="o">=</span> <span class="n">add</span><span class="o">;</span>
+        <span class="n">double_functions</span><span class="o">[</span><span class="mi">1</span><span class="o">]</span> <span class="o">=</span> <span class="n">sub</span><span class="o">;</span>
 
-        <span class="nx">result</span> <span class="o">=</span> <span class="nx">double_functions</span><span class="cp">[</span><span class="nx">index1</span><span class="cp">]</span><span class="p">(</span><span class="nx">functions</span><span class="cp">[</span><span class="nx">index2</span><span class="cp">]</span><span class="p">,</span> <span class="nx">functions</span><span class="cp">[</span><span class="nx">index2</span><span class="cp">]</span><span class="p">,</span> <span class="nx">result</span><span class="p">);</span>
-    <span class="p">}</span>
+        <span class="kt">int</span> <span class="n">result</span> <span class="o">=</span> <span class="mi">100</span><span class="o">;</span>
+        <span class="n">Random</span> <span class="n">random</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Random</span><span class="o">();</span>       
 
-    <span class="nx">System</span><span class="p">.</span><span class="nx">out</span><span class="p">.</span><span class="nx">println</span><span class="p">(</span><span class="nx">result</span><span class="p">);</span>
-<span class="p">}</span>
+        <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&amp;</span><span class="n">lt</span><span class="o">;</span> <span class="mi">10</span><span class="o">;</span> <span class="n">i</span><span class="o">++){</span>
+            <span class="kt">int</span> <span class="n">index1</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="na">nextInt</span><span class="o">(</span><span class="n">double_functions</span><span class="o">.</span><span class="na">length</span><span class="o">);</span>
+            <span class="kt">int</span> <span class="n">index2</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="na">nextInt</span><span class="o">(</span><span class="n">functions</span><span class="o">.</span><span class="na">length</span><span class="o">);</span>
+
+            <span class="n">result</span> <span class="o">=</span> <span class="n">double_functions</span><span class="o">[</span><span class="n">index1</span><span class="o">](</span><span class="n">functions</span><span class="o">[</span><span class="n">index2</span><span class="o">],</span> <span class="n">functions</span><span class="o">[</span><span class="n">index2</span><span class="o">],</span> <span class="n">result</span><span class="o">);</span>
+        <span class="o">}</span>
+
+        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">result</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
 </pre></div>
 
 
-<p>}[/java]</p>
-<p>Now you know everything about operations and capabilities. In the next post, we'll learn asynchronous message passing in JR. </p></div>
+<p>Now you know everything about operations and capabilities. In the next post, we'll learn asynchronous message passing in JR.</p></div>
         </div>
             
         
@@ -365,64 +393,79 @@
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><p>Like I promised, I will restart to write articles now that the evaluation period is over. </p>
+        <div><p>Like I promised, I will restart to write articles now that the evaluation period is over. </p>
 <p>After seeing <a href="http://www.baptiste-wicht.com/2010/01/jr-introduction/">how to develop using the JR programming language</a>, we'll see now how to use monitors in JR.</p>
 <p>Monitors provide a higher-level abstraction than semaphores and produce a better code with several advantages :</p>
-<p></p><ul>
+<ul>
     <li>All the synchronization code is centralized in one location and the users of this code doesn't need to know how it's implemented.</li>
     <li>The code doesn't depends on the number of processes, it works for as much process as you want</li>
     <li>You doesn't need to release something like a mutex, so you cannot forget to do it</li>
 </ul>
+
 <p>The mutual exclusion is implicit with monitors. Only one process is allowed in the monitor, so all the method are automatically guarded with synchronization code. The synchronization between threads is made using signaling system, with condition variables. A condition variable is a kind of queue of process who are waiting on the same condition. You have several operations available on a condition, the most important is to signal a process waiting to be awaken and to wait on a condition. There are some similitudes between signal/wait operations and P and V of semaphores, but this is a little different. The signal operation does nothing if the queue is empty and the wait operation put always the thread in the waiting queue. The process queue is served in a first come, first served mode. </p>
 <p>Now we'll see how to use them in JR. </p>
 <!--more-->
 
 <p>In JR, you doesn't have directly the possibility to create monitors, but there is a preprocessor that transform a file with both JR and monitors operations into a plain JR file. This processor is called <em>m2jr</em> (monitor to JR) and is directly available in the JR distribution. So you only have to use the m2jr command to translate a .m file (conventional monitor extension file) into several JR files (one for the monitor and one for the condition variables). This file is normal JR with several comments to make the debugs easier (corresponding between lines in m and JR).</p>
 <p>All the keywords of the m2jr language start with _ (underscore). To declare a monitor, it's as easily as use the _monitor keyword : </p>
-<p>[java]_monitor MonitorTest {
-    //...
-}[/java]</p>
+<div class="code"><pre><span class="n">_monitor</span> <span class="n">MonitorTest</span> <span class="o">{</span>
+    <span class="c1">//...</span>
+<span class="o">}</span>
+</pre></div>
+
+
 <p>To add methods to the monitor, you just have to create method prefixed with _proc : </p>
-<p>[java]_monitor MonitorTest {
-    _proc void testA(){
-        //Some code
-    }
-}[/java]</p>
+<div class="code"><pre><span class="n">_monitor</span> <span class="n">MonitorTest</span> <span class="o">{</span>
+    <span class="n">_proc</span> <span class="kt">void</span> <span class="nf">testA</span><span class="o">(){</span>
+        <span class="c1">//Some code</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+
+
 <p>Only with that the mutual exclusion is guaranteed. Only one process is allowed into the monitor. If you want methods with a return type, you must use _return instead of return : </p>
-<p>[java]_monitor MonitorTest {
-    _proc void testA(){
-        //Some code
-    }</p>
-<div class="code"><pre><span class="n">_proc</span> <span class="kt">int</span> <span class="nf">testB</span><span class="p">(){</span>
-    <span class="n">_return</span> <span class="mi">1</span><span class="p">;</span>
-<span class="p">}</span>
+<div class="code"><pre><span class="n">_monitor</span> <span class="n">MonitorTest</span> <span class="o">{</span>
+    <span class="n">_proc</span> <span class="kt">void</span> <span class="nf">testA</span><span class="o">(){</span>
+        <span class="c1">//Some code</span>
+    <span class="o">}</span>
+
+    <span class="n">_proc</span> <span class="kt">int</span> <span class="nf">testB</span><span class="o">(){</span>
+        <span class="n">_return</span> <span class="mi">1</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
 </pre></div>
 
 
-<p>}[/java]</p>
 <p>To declare condition variables, the keyword is _condvar. You don't have to initialize them, just declare them : </p>
-<p>[java]_monitor MonitorTest {
-    _condvar condVar1;
-    _condvar condVar2;
-}[/java]</p>
-<p>To use global variables, you must prefix them with _var : </p>
-<p>[java]_monitor MonitorTest {
-    _var var1;
-    _var var2;
-}[/java]</p>
-<p>And to make operations on condition variables, you have to use _signal and _wait methods inside a proc method : </p>
-<p>[java]_monitor MonitorTest {
-    _condvar a;
-    _condvar b;</p>
-<div class="code"><pre><span class="n">_proc</span> <span class="kt">void</span> <span class="nf">test</span><span class="p">(){</span>
-    <span class="n">_wait</span><span class="p">(</span><span class="n">a</span><span class="p">);</span>
-    <span class="c1">//Some computations</span>
-    <span class="n">_signal</span><span class="p">(</span><span class="n">b</span><span class="p">);</span>
-<span class="p">}</span>
+<div class="code"><pre><span class="n">_monitor</span> <span class="n">MonitorTest</span> <span class="o">{</span>
+    <span class="n">_condvar</span> <span class="n">condVar1</span><span class="o">;</span>
+    <span class="n">_condvar</span> <span class="n">condVar2</span><span class="o">;</span>
+<span class="o">}</span>
 </pre></div>
 
 
-<p>}[/java]</p>
+<p>To use global variables, you must prefix them with _var : </p>
+<div class="code"><pre><span class="n">_monitor</span> <span class="n">MonitorTest</span> <span class="o">{</span>
+    <span class="n">_var</span> <span class="n">var1</span><span class="o">;</span>
+    <span class="n">_var</span> <span class="n">var2</span><span class="o">;</span>
+<span class="o">}</span>
+</pre></div>
+
+
+<p>And to make operations on condition variables, you have to use _signal and _wait methods inside a proc method : </p>
+<div class="code"><pre><span class="n">_monitor</span> <span class="n">MonitorTest</span> <span class="o">{</span>
+    <span class="n">_condvar</span> <span class="n">a</span><span class="o">;</span>
+    <span class="n">_condvar</span> <span class="n">b</span><span class="o">;</span>
+
+    <span class="n">_proc</span> <span class="kt">void</span> <span class="nf">test</span><span class="o">(){</span>
+        <span class="n">_wait</span><span class="o">(</span><span class="n">a</span><span class="o">);</span>
+        <span class="c1">//Some computations</span>
+        <span class="n">_signal</span><span class="o">(</span><span class="n">b</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+
+
 <p>And you compile that to JR using the simple commmand : </p>
 <p><code>m2jr MonitorTest.m</code></p>
 <p>That will create two files (MonitorTest.jr and c_m_condvar.jr). Of course, you can use this monitor in a normal JR class, you don't have to compile classes who use monitors with m2jr, only with the JR compiler. There is just a single thing to worry about. m2jr generates a constructor that take a String in every monitors class, you when you instantiate the monitor, you have to provide a String representing its name as the first parameter. And if you want to create a new constructor in a monitor, you just have to call super with a String.  We'll see an example later. </p>
@@ -437,45 +480,46 @@
 <p>By default, m2jr make the compilation with SC, but you can configure it to use other philosophies. Just add the abbreviation of the philosophy (lower case) as an option to the m2jr compiler. By example, to compile using Signal &amp; Exit : </p>
 <p><code>m2jr -sx MonitorTest.m</code></p>
 <p>The main differences, is that the SC create a <em>signal stealers</em> problem. You will quickly understand with an example. With what we know now, we can create a monitor to manage a bounded buffer : </p>
-<p>[java]_monitor BoundedBuffer {
-    private static final int N = 5; //Size of the buffer</p>
-<div class="code"><pre><span class="n">_var</span> <span class="n">String</span><span class="p">[]</span> <span class="n">buffer</span> <span class="o">=</span> <span class="n">new</span> <span class="n">String</span><span class="p">[</span><span class="n">N</span><span class="p">];</span>
-<span class="n">_var</span> <span class="kt">int</span> <span class="n">front</span><span class="p">;</span>
-<span class="n">_var</span> <span class="kt">int</span> <span class="n">rear</span><span class="p">;</span>
-<span class="n">_var</span> <span class="kt">int</span> <span class="n">count</span><span class="p">;</span>
+<div class="code"><pre><span class="n">_monitor</span> <span class="n">BoundedBuffer</span> <span class="o">{</span>
+    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">int</span> <span class="n">N</span> <span class="o">=</span> <span class="mi">5</span><span class="o">;</span> <span class="c1">//Size of the buffer</span>
 
-<span class="n">_condvar</span> <span class="n">notFull</span><span class="p">;</span>
-<span class="n">_condvar</span> <span class="n">notEmpty</span><span class="p">;</span>
+    <span class="n">_var</span> <span class="n">String</span><span class="o">[]</span> <span class="n">buffer</span> <span class="o">=</span> <span class="k">new</span> <span class="n">String</span><span class="o">[</span><span class="n">N</span><span class="o">];</span>
+    <span class="n">_var</span> <span class="kt">int</span> <span class="n">front</span><span class="o">;</span>
+    <span class="n">_var</span> <span class="kt">int</span> <span class="n">rear</span><span class="o">;</span>
+    <span class="n">_var</span> <span class="kt">int</span> <span class="n">count</span><span class="o">;</span>
 
-<span class="n">_proc</span> <span class="kt">void</span> <span class="nf">deposit</span><span class="p">(</span><span class="n">String</span> <span class="n">data</span><span class="p">){</span>
-    <span class="k">while</span><span class="p">(</span><span class="n">count</span> <span class="o">==</span> <span class="n">N</span><span class="p">){</span>
-        <span class="n">_wait</span><span class="p">(</span><span class="n">notFull</span><span class="p">);</span>
-    <span class="p">}</span>
+    <span class="n">_condvar</span> <span class="n">notFull</span><span class="o">;</span>
+    <span class="n">_condvar</span> <span class="n">notEmpty</span><span class="o">;</span>  
 
-    <span class="n">buffer</span><span class="p">[</span><span class="n">rear</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">;</span>
-    <span class="n">rear</span> <span class="o">=</span> <span class="p">(</span><span class="n">rear</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="n">N</span><span class="p">;</span>
-    <span class="n">count</span><span class="o">++</span><span class="p">;</span>
+    <span class="n">_proc</span> <span class="kt">void</span> <span class="nf">deposit</span><span class="o">(</span><span class="n">String</span> <span class="n">data</span><span class="o">){</span>
+        <span class="k">while</span><span class="o">(</span><span class="n">count</span> <span class="o">==</span> <span class="n">N</span><span class="o">){</span>
+            <span class="n">_wait</span><span class="o">(</span><span class="n">notFull</span><span class="o">);</span>
+        <span class="o">}</span>
 
-    <span class="n">_signal</span><span class="p">(</span><span class="n">notEmpty</span><span class="p">);</span>
-<span class="p">}</span>
+        <span class="n">buffer</span><span class="o">[</span><span class="n">rear</span><span class="o">]</span> <span class="o">=</span> <span class="n">data</span><span class="o">;</span>
+        <span class="n">rear</span> <span class="o">=</span> <span class="o">(</span><span class="n">rear</span> <span class="o">+</span> <span class="mi">1</span><span class="o">)</span> <span class="o">%</span> <span class="n">N</span><span class="o">;</span>
+        <span class="n">count</span><span class="o">++;</span>
 
-<span class="n">_proc</span> <span class="n">String</span> <span class="nf">fetch</span><span class="p">(){</span>
-    <span class="k">while</span><span class="p">(</span><span class="n">count</span> <span class="o">==</span> <span class="mi">0</span><span class="p">){</span>
-        <span class="n">_wait</span><span class="p">(</span><span class="n">notEmpty</span><span class="p">);</span>
-    <span class="p">}</span>
+        <span class="n">_signal</span><span class="o">(</span><span class="n">notEmpty</span><span class="o">);</span>
+    <span class="o">}</span>
 
-    <span class="n">String</span> <span class="n">result</span> <span class="o">=</span> <span class="n">buffer</span><span class="p">[</span><span class="n">front</span><span class="p">];</span>
-    <span class="n">front</span> <span class="o">=</span> <span class="p">(</span><span class="n">front</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="n">N</span><span class="p">;</span>
-    <span class="n">count</span><span class="o">--</span><span class="p">;</span>
+    <span class="n">_proc</span> <span class="n">String</span> <span class="nf">fetch</span><span class="o">(){</span>
+        <span class="k">while</span><span class="o">(</span><span class="n">count</span> <span class="o">==</span> <span class="mi">0</span><span class="o">){</span>
+            <span class="n">_wait</span><span class="o">(</span><span class="n">notEmpty</span><span class="o">);</span>
+        <span class="o">}</span>
 
-    <span class="n">_signal</span><span class="p">(</span><span class="n">notFull</span><span class="p">);</span>
+        <span class="n">String</span> <span class="n">result</span> <span class="o">=</span> <span class="n">buffer</span><span class="o">[</span><span class="n">front</span><span class="o">];</span>
+        <span class="n">front</span> <span class="o">=</span> <span class="o">(</span><span class="n">front</span> <span class="o">+</span> <span class="mi">1</span><span class="o">)</span> <span class="o">%</span> <span class="n">N</span><span class="o">;</span>
+        <span class="n">count</span><span class="o">--;</span>
 
-    <span class="n">_return</span> <span class="n">result</span><span class="p">;</span>
- <span class="p">}</span>
+        <span class="n">_signal</span><span class="o">(</span><span class="n">notFull</span><span class="o">);</span>
+
+        <span class="n">_return</span> <span class="n">result</span><span class="o">;</span>
+     <span class="o">}</span>
+<span class="o">}</span>
 </pre></div>
 
 
-<p>}[/java]</p>
 <p>A thing that some of you will certainly find weird is the loop around the wait operation. Is to avoid the signal stealers problem. If there were not while loop, imagine that situation in SC : </p>
 <ol>
     <li>The thread 1 try to make a fetch(), there is no data, so it wait for the notEmpty condition variable</li>
@@ -486,36 +530,38 @@
 
 <p>To avoid that situation, you just have to wrap the wait in a while loop instead of a if and that's done ! Or you can also use SW instead of SC. </p>
 <p>With that monitor, we can easily solve the producer and consumer problem : </p>
-<p>[java]public class ProducerConsumer {
-    private static final int N = 12; //Number of producers and consumers</p>
-<div class="code"><pre><span class="n">private</span> <span class="k">static</span> <span class="n">BoundedBuffer</span> <span class="n">bb</span> <span class="o">=</span> <span class="n">new</span> <span class="n">BoundedBuffer</span><span class="p">(</span><span class="s">"Bounded Buffer monitor"</span><span class="p">);</span> <span class="c1">//The monitor</span>
+<div class="code"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">ProducerConsumer</span> <span class="o">{</span>
+    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">int</span> <span class="n">N</span> <span class="o">=</span> <span class="mi">12</span><span class="o">;</span> <span class="c1">//Number of producers and consumers</span>
 
-<span class="n">public</span> <span class="k">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="p">(</span><span class="n">String</span><span class="p">...</span> <span class="n">args</span><span class="p">){}</span>
+    <span class="kd">private</span> <span class="kd">static</span> <span class="n">BoundedBuffer</span> <span class="n">bb</span> <span class="o">=</span> <span class="k">new</span> <span class="n">BoundedBuffer</span><span class="o">(</span><span class="s">"Bounded Buffer monitor"</span><span class="o">);</span> <span class="c1">//The monitor</span>
 
-<span class="n">private</span> <span class="k">static</span> <span class="n">process</span> <span class="n">Producer</span><span class="p">((</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="n">N</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)){</span>
-    <span class="n">bb</span><span class="p">.</span><span class="n">deposit</span><span class="p">(</span><span class="s">"Producer"</span> <span class="o">+</span> <span class="n">i</span><span class="p">);</span>
-<span class="p">}</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">...</span> <span class="n">args</span><span class="o">){}</span>
 
-<span class="n">private</span> <span class="k">static</span> <span class="n">process</span> <span class="n">Consumer</span><span class="p">((</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="n">N</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)){</span>
-    <span class="n">System</span><span class="p">.</span><span class="n">out</span><span class="p">.</span><span class="n">println</span><span class="p">(</span><span class="s">"Consumer"</span> <span class="o">+</span> <span class="n">i</span> <span class="o">+</span> <span class="s">" : "</span> <span class="o">+</span> <span class="n">bb</span><span class="p">.</span><span class="n">fetch</span><span class="p">());</span>
-<span class="p">}</span>
+    <span class="kd">private</span> <span class="kd">static</span> <span class="n">process</span> <span class="nf">Producer</span><span class="o">((</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&amp;</span><span class="n">lt</span><span class="o">;</span> <span class="n">N</span><span class="o">;</span> <span class="n">i</span><span class="o">++)){</span>
+        <span class="n">bb</span><span class="o">.</span><span class="na">deposit</span><span class="o">(</span><span class="s">"Producer"</span> <span class="o">+</span> <span class="n">i</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="kd">private</span> <span class="kd">static</span> <span class="n">process</span> <span class="nf">Consumer</span><span class="o">((</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&amp;</span><span class="n">lt</span><span class="o">;</span> <span class="n">N</span><span class="o">;</span> <span class="n">i</span><span class="o">++)){</span>
+        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Consumer"</span> <span class="o">+</span> <span class="n">i</span> <span class="o">+</span> <span class="s">" : "</span> <span class="o">+</span> <span class="n">bb</span><span class="o">.</span><span class="na">fetch</span><span class="o">());</span>
+    <span class="o">}</span>
+<span class="o">}</span>
 </pre></div>
 
 
-<p>}[/java]</p>
 <p>That will provide output like that : </p>
-<p><code>Consumer10 : Producer0</code></p>
-<p>Consumer0 : Producer1</p>
-<p>Consumer1 : Producer2</p>
-<p>Consumer2 : Producer4</p>
-<p>Consumer3 : Producer5</p>
-<p>Consumer4 : Producer3</p>
-<p>Consumer8 : Producer7</p>
-<p>Consumer11 : Producer10</p>
-<p>Consumer6 : Producer8</p>
-<p>Consumer5 : Producer6</p>
-<p>Consumer7 : Producer11</p>
-<p>Consumer9 : Producer9</p>
+<pre>Consumer10 : Producer0
+Consumer0 : Producer1
+Consumer1 : Producer2
+Consumer2 : Producer4
+Consumer3 : Producer5
+Consumer4 : Producer3
+Consumer8 : Producer7
+Consumer11 : Producer10
+Consumer6 : Producer8
+Consumer5 : Producer6
+Consumer7 : Producer11
+Consumer9 : Producer9</pre>
+
 <p>So it works well. </p>
 <p>More than signal and wait operations, m2jr provide also others operations on condition variables : </p>
 <ul>
@@ -523,10 +569,11 @@
     <li>_empty : Test if the condition variable has any process waiting on it</li>
     <li>_wait(condvar, int priority) : Enqueue the process with the given priority. If you use that, the queue is now managed as a priority queue. You cannot use both wait without priority and wait with priority on the same condition variable </li>
     <li>_minrank : Return the min priority on the given condition variable. If the condition variable has no waiters, the returned given number doesn't seem anything. 
-</li></ul>
+</li>
+</ul>
 
 <p>With all that stuff, you can create monitors to solve almost all concurrency problems like barber shop, philosopher dinner, kwai cross or a lot of others problem. </p>
-<p>I hope you found that post interesting. The next post about JR will be about operations and capabilities. </p></div>
+<p>I hope you found that post interesting. The next post about JR will be about operations and capabilities.</p></div>
         </div>
             
         
@@ -542,9 +589,9 @@
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><p>Wordpress 3.0 (Thelounious) has been released this week. I just updated the blog with the new version. I had no problem during the upgrade process, all automatically. Good job !</p>
+        <div><p>Wordpress 3.0 (Thelounious) has been released this week. I just updated the blog with the new version. I had no problem during the upgrade process, all automatically. Good job !</p>
 <p>This major release of Wordpress solve more tan 1200 bug, add several performance improvements and add several new features :</p>
-<p></p><ul>
+<ul>
     <li>Merge of Wordpress MU : You can now add several different blogs on the same installation of Wordpress</li>
     <li>New default Theme : Twenty Ten</li>
     <li>Bulk updates for the plugins. You can updates all your plugins and themes at once.</li>
@@ -552,6 +599,7 @@
     <li>Custom post types</li>
     <li>Lighter interface</li>
 </ul>
+
 <p>If you want more information, this video can help you :</p>
 <p><embed src="http://v.wordpress.com/wp-content/plugins/video/flvplayer.swf?ver=1.21" type="application/x-shockwave-flash" width="640" height="360" wmode="transparent" seamlesstabbing="true" allowfullscreen="true" allowscriptaccess="always" overstretch="true" flashvars="guid=BQtfIEY1&amp;width=640&amp;height=360&amp;locksize=no&amp;dynamicseek=false&amp;qc_publisherId=p-18-mFEk4J448M" title='Introducing WordPress 3.0 "Thelonious"'></embed></p></div>
         </div>
@@ -569,12 +617,11 @@
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><p>Hi,</p>
-<p>Some informations about the current state of JTheque. I'm currently migrating it from SVN to Git. Actually the projet is hosted at Developpez.com, a french community. For more visibility, i wanted to host it in an english website. After several days of comparative, I chosen Github has host. Because i chose Git, i think it's the best and easier community to share projects using Git.</p>
+        <div><p>Some informations about the current state of JTheque. I'm currently migrating it from SVN to Git. Actually the projet is hosted at Developpez.com, a french community. For more visibility, i wanted to host it in an english website. After several days of comparative, I chosen Github has host. Because i chose Git, i think it's the best and easier community to share projects using Git.</p>
 <p>I will use a subdomain in this website (jtheque.baptiste-wicht.com) to host the Javadoc and maven reports, because it take too space to store it at GitHub. I will use GitHub for the sources, issues and Wiki.</p>
 <p>After only several days of work with Git, I found it really fun and comfortable to work with.</p>
 <p>Here are the already created projects on GitHub :</p>
-<p></p><ul>
+<ul>
     <li><a href="http://github.com/wichtounet/jtheque-utils" target="_blank">jtheque-utils</a></li>
     <li><a href="http://github.com/wichtounet/jtheque-unit-utils" target="_blank">jtheque-unit-utils</a></li>
     <li><a href="http://github.com/wichtounet/jtheque-xml-utils" target="_blank">jtheque-xml-utils</a></li>
@@ -584,6 +631,7 @@
     <li><a href="http://github.com/wichtounet/jtheque-memory-module" target="_blank">jtheque-memory-module</a></li>
     <li><a href="http://github.com/wichtounet/jtheque-osgi-wrap" target="_blank">jtheque-osgi-wrap</a></li>
 </ul>
+
 <p>Most of them are not completed at all. But the start is here. Don't hesitate to comment on how I did that. I've also already created a site for jtheque-xml-utils (<a href="http://jtheque.baptiste-wicht.com/xml-utils/">http://jtheque.baptiste-wicht.com/xml-utils/</a>).</p>
 <p>I will migrate all the projects into Git and complete the GitHub repositories and Maven Site the next few weeks.</p>
 <p>If I didn't post a lot these last weeks, it's because, it's the end of the semester, so it seems a lot of exams and projects to finish, so not a lot of time to post. I will do better the next month.</p></div>
@@ -602,11 +650,12 @@
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><p>The monitor is a very important part of your computer. Indeed without it you cannot display anything. There is several types of monitors and the price varying a lot. The most limiting criteria will be your budget when you've to choose a new monitor.</p>
+        <div><p>The monitor is a very important part of your computer. Indeed without it you cannot display anything. There is several types of monitors and the price varying a lot. The most limiting criteria will be your budget when you've to choose a new monitor.</p>
 <p>In this post, we'll see what to watch before buying a new monitor.</p>
 <!--more-->
 
-<p></p><h5>1. Type</h5>
+<h5>1. Type</h5>
+
 <p>There is several types of monitors :</p>
 <ul>
     <li><strong>CRT Monitor</strong> : This is the old type of monitor. They were a lot bigger than the current monitors. That type is no longer being sold.</li>
@@ -696,175 +745,197 @@
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><p>Java 7 introduces very interesting features for desktop windows :
-</p><ul>
+        <div><p>Java 7 introduces very interesting features for desktop windows :</p>
+<ul>
     <li><strong>Transclucency for windows</strong> : Make a full window translucent with a specified alpha level</li>
     <li><strong>Per pixel translucency</strong> : Make a part of the window translucent.</li>
     <li><strong>Shaped windows</strong> : You can now create windows with a certain shape, like circle, ovale, triangle, ...</li>
 </ul>
+
 <p>We'll see all this features in that post. All the examples are tested in Windows Seven 64 bits, because the transclucency isn't supported in Ubuntu 10.04 at the time I write the article.</p>
 <!--more-->
 
 <p>First of all, you can now set the opacity of the window with the setOpacity(float opacity) of the Window class. With that, the entire window is made translucent. There is some limitations with that new method. An opacity less than 1.0 isn't supported if the window use full-screen mode or if the simple translucency isn't supported. You can test if the window transclucency is supported with the isWindowTranslucencySupported() method added to the GraphicsDevice class :</p>
-<p>[java]GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();</p>
-<p>if (ge.getDefaultScreenDevice().isWindowTranslucencySupported(GraphicsDevice.WindowTranslucency.TRANSLUCENT)) {
-    System.out.println("Window translucency isn't supported on your system. ");
-}[/java]</p>
-<p>We know enough to write a first translucent window :</p>
-<p>[java]package com.wicht.java7.swing;</p>
-<p>import javax.swing.*;</p>
-<p>import javax.swing.event.ChangeEvent;</p>
-<p>import javax.swing.event.ChangeListener;</p>
-<p>import java.awt.*;</p>
-<p>public class TranslucentWindow extends JFrame {
-    public TranslucentWindow() {
-        super("Simple Translucency Demo");</p>
-<div class="code"><pre>    <span class="n">setSize</span><span class="p">(</span><span class="mi">300</span><span class="p">,</span> <span class="mi">200</span><span class="p">);</span>
-
-    <span class="n">setDefaultCloseOperation</span><span class="p">(</span><span class="n">EXIT_ON_CLOSE</span><span class="p">);</span>
-
-    <span class="n">getRootPane</span><span class="p">().</span><span class="n">setDoubleBuffered</span><span class="p">(</span><span class="nb">false</span><span class="p">);</span>
-    <span class="n">setOpacity</span><span class="p">(</span><span class="mf">0.5f</span><span class="p">);</span>
-
-    <span class="n">setLocationRelativeTo</span><span class="p">(</span><span class="n">null</span><span class="p">);</span>
-    <span class="n">setVisible</span><span class="p">(</span><span class="nb">true</span><span class="p">);</span>
-<span class="p">}</span>
-
-<span class="n">public</span> <span class="k">static</span> <span class="kt">void</span> <span class="n">main</span><span class="p">(</span><span class="n">String</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span> <span class="p">{</span>
-    <span class="n">SwingUtilities</span><span class="p">.</span><span class="n">invokeLater</span><span class="p">(</span><span class="n">new</span> <span class="n">Runnable</span><span class="p">(){</span>
-        <span class="err">@</span><span class="n">Override</span>
-        <span class="n">public</span> <span class="kt">void</span> <span class="n">run</span><span class="p">()</span> <span class="p">{</span>
-            <span class="n">GraphicsEnvironment</span> <span class="n">ge</span> <span class="o">=</span> <span class="n">GraphicsEnvironment</span><span class="p">.</span><span class="n">getLocalGraphicsEnvironment</span><span class="p">();</span>
-
-            <span class="k">if</span> <span class="p">(</span><span class="n">ge</span><span class="p">.</span><span class="n">getDefaultScreenDevice</span><span class="p">().</span><span class="n">isWindowTranslucencySupported</span><span class="p">(</span><span class="n">GraphicsDevice</span><span class="p">.</span><span class="n">WindowTranslucency</span><span class="p">.</span><span class="n">TRANSLUCENT</span><span class="p">))</span> <span class="p">{</span>
-                <span class="n">new</span> <span class="n">TranslucentWindow</span><span class="p">();</span>
-            <span class="p">}</span>
-        <span class="p">}</span>
-    <span class="p">});</span>
-<span class="p">}</span>
+<div class="code"><pre><span class="n">GraphicsEnvironment</span> <span class="n">ge</span> <span class="o">=</span> <span class="n">GraphicsEnvironment</span><span class="o">.</span><span class="na">getLocalGraphicsEnvironment</span><span class="o">();</span>
+<span class="k">if</span> <span class="o">(</span><span class="n">ge</span><span class="o">.</span><span class="na">getDefaultScreenDevice</span><span class="o">().</span><span class="na">isWindowTranslucencySupported</span><span class="o">(</span><span class="n">GraphicsDevice</span><span class="o">.</span><span class="na">WindowTranslucency</span><span class="o">.</span><span class="na">TRANSLUCENT</span><span class="o">))</span> <span class="o">{</span>
+    <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Window translucency isn't supported on your system. "</span><span class="o">);</span>
+<span class="o">}</span>
 </pre></div>
 
 
-<p>}[/java]</p>
+<p>We know enough to write a first translucent window :</p>
+<div class="code"><pre><span class="kn">package</span> <span class="n">com</span><span class="o">.</span><span class="na">wicht</span><span class="o">.</span><span class="na">java7</span><span class="o">.</span><span class="na">swing</span><span class="o">;</span>
+
+<span class="kn">import</span> <span class="nn">javax.swing.*</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">javax.swing.event.ChangeEvent</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">javax.swing.event.ChangeListener</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">java.awt.*</span><span class="o">;</span>
+
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">TranslucentWindow</span> <span class="kd">extends</span> <span class="n">JFrame</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="nf">TranslucentWindow</span><span class="o">()</span> <span class="o">{</span>
+        <span class="kd">super</span><span class="o">(</span><span class="s">"Simple Translucency Demo"</span><span class="o">);</span>
+
+        <span class="n">setSize</span><span class="o">(</span><span class="mi">300</span><span class="o">,</span> <span class="mi">200</span><span class="o">);</span>
+
+        <span class="n">setDefaultCloseOperation</span><span class="o">(</span><span class="n">EXIT_ON_CLOSE</span><span class="o">);</span>
+
+        <span class="n">getRootPane</span><span class="o">().</span><span class="na">setDoubleBuffered</span><span class="o">(</span><span class="kc">false</span><span class="o">);</span>
+        <span class="n">setOpacity</span><span class="o">(</span><span class="mf">0.5f</span><span class="o">);</span>
+
+        <span class="n">setLocationRelativeTo</span><span class="o">(</span><span class="kc">null</span><span class="o">);</span>
+        <span class="n">setVisible</span><span class="o">(</span><span class="kc">true</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">SwingUtilities</span><span class="o">.</span><span class="na">invokeLater</span><span class="o">(</span><span class="k">new</span> <span class="n">Runnable</span><span class="o">(){</span>
+            <span class="nd">@Override</span>
+            <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+                <span class="n">GraphicsEnvironment</span> <span class="n">ge</span> <span class="o">=</span> <span class="n">GraphicsEnvironment</span><span class="o">.</span><span class="na">getLocalGraphicsEnvironment</span><span class="o">();</span>
+
+                <span class="k">if</span> <span class="o">(</span><span class="n">ge</span><span class="o">.</span><span class="na">getDefaultScreenDevice</span><span class="o">().</span><span class="na">isWindowTranslucencySupported</span><span class="o">(</span><span class="n">GraphicsDevice</span><span class="o">.</span><span class="na">WindowTranslucency</span><span class="o">.</span><span class="na">TRANSLUCENT</span><span class="o">))</span> <span class="o">{</span>
+                    <span class="k">new</span> <span class="nf">TranslucentWindow</span><span class="o">();</span>
+                <span class="o">}</span>
+            <span class="o">}</span>
+        <span class="o">});</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+
+
 <p>Note : We disable double buffering to remove artifacts that come when double buffer a translucent window.</p>
 <p>That produce this result on my computer :</p>
 <p><a href="wp-content/uploads/2010/05/TranslucentWindow.png"><img class="size-full wp-image-610" title="Java 7 Translucent Window" src="wp-content/uploads/2010/05/TranslucentWindow.png" alt="Java 7 Translucent Window" width="300" height="200"></a></p>
 <p>So, it's really simple to make a window translucent. But there is more you can do. You can also make only a set of pixel translucent using their background color. Like the translucent window, there is some limitations, the window must not be in full-screen and the system must support the per pixel translucency. You can test it the same way as the first time :</p>
-<p>[java]GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();</p>
-<p>if (ge.getDefaultScreenDevice().isWindowTranslucencySupported(GraphicsDevice.WindowTranslucency.PERPIXEL_TRANSLUCENT)) {
-    System.out.println("Window translucency isn't supported on your system. ");
-}[/java]</p>
-<p>A simple making a grid of 16 panels more and more translucent :</p>
-<p>[java]package com.wicht.java7.swing;</p>
-<p>import javax.swing.*;</p>
-<p>import java.awt.*;</p>
-<p>import java.awt.event.ActionEvent;</p>
-<p>import java.awt.event.ActionListener;</p>
-<p>public class GriddedTranslucentWindow extends JFrame {
-    public GriddedTranslucentWindow() {
-        super("Java 7 Per Pixel Translucency");</p>
-<div class="code"><pre>    <span class="n">setSize</span><span class="p">(</span><span class="mi">300</span><span class="p">,</span> <span class="mi">320</span><span class="p">);</span>
+<div class="code"><pre><span class="n">GraphicsEnvironment</span> <span class="n">ge</span> <span class="o">=</span> <span class="n">GraphicsEnvironment</span><span class="o">.</span><span class="na">getLocalGraphicsEnvironment</span><span class="o">();</span>
 
-    <span class="n">getContentPane</span><span class="p">().</span><span class="n">setLayout</span><span class="p">(</span><span class="n">new</span> <span class="n">GridLayout</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">));</span>
-
-    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">lt</span><span class="p">;</span> <span class="mi">16</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">){</span>
-        <span class="n">add</span><span class="p">(</span><span class="n">new</span> <span class="n">AlphaPanel</span><span class="p">(</span><span class="mi">255</span> <span class="o">-</span> <span class="n">i</span> <span class="o">*</span> <span class="mi">12</span><span class="p">));</span>
-    <span class="p">}</span>
-
-    <span class="n">setBackground</span><span class="p">(</span><span class="n">new</span> <span class="n">Color</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">));</span>
-
-    <span class="n">setLocationRelativeTo</span><span class="p">(</span><span class="n">null</span><span class="p">);</span>
-    <span class="n">setVisible</span><span class="p">(</span><span class="nb">true</span><span class="p">);</span>
-<span class="p">}</span>
-
-<span class="n">public</span> <span class="k">static</span> <span class="kt">void</span> <span class="n">main</span><span class="p">(</span><span class="n">String</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span> <span class="p">{</span>
-    <span class="n">SwingUtilities</span><span class="p">.</span><span class="n">invokeLater</span><span class="p">(</span><span class="n">new</span> <span class="n">Runnable</span><span class="p">(){</span>
-        <span class="err">@</span><span class="n">Override</span>
-        <span class="n">public</span> <span class="kt">void</span> <span class="n">run</span><span class="p">()</span> <span class="p">{</span>
-            <span class="n">GraphicsEnvironment</span> <span class="n">ge</span> <span class="o">=</span> <span class="n">GraphicsEnvironment</span><span class="p">.</span><span class="n">getLocalGraphicsEnvironment</span><span class="p">();</span>
-
-            <span class="k">if</span> <span class="p">(</span><span class="n">ge</span><span class="p">.</span><span class="n">getDefaultScreenDevice</span><span class="p">().</span><span class="n">isWindowTranslucencySupported</span><span class="p">(</span><span class="n">GraphicsDevice</span><span class="p">.</span><span class="n">WindowTranslucency</span><span class="p">.</span><span class="n">PERPIXEL_TRANSLUCENT</span><span class="p">))</span> <span class="p">{</span>
-                <span class="n">new</span> <span class="n">GriddedTranslucentWindow</span><span class="p">();</span>
-            <span class="p">}</span>
-        <span class="p">}</span>
-    <span class="p">});</span>
-<span class="p">}</span>
-
-<span class="n">private</span> <span class="n">class</span> <span class="n">AlphaPanel</span> <span class="n">extends</span> <span class="n">JPanel</span> <span class="p">{</span>
-    <span class="n">private</span> <span class="n">AlphaPanel</span><span class="p">(</span><span class="kt">int</span> <span class="n">alpha</span><span class="p">)</span> <span class="p">{</span>
-        <span class="n">super</span><span class="p">();</span>
-
-        <span class="n">setBackground</span><span class="p">(</span><span class="n">new</span> <span class="n">Color</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="n">alpha</span><span class="p">));</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+<span class="k">if</span> <span class="o">(</span><span class="n">ge</span><span class="o">.</span><span class="na">getDefaultScreenDevice</span><span class="o">().</span><span class="na">isWindowTranslucencySupported</span><span class="o">(</span><span class="n">GraphicsDevice</span><span class="o">.</span><span class="na">WindowTranslucency</span><span class="o">.</span><span class="na">PERPIXEL_TRANSLUCENT</span><span class="o">))</span> <span class="o">{</span>
+    <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Window translucency isn't supported on your system. "</span><span class="o">);</span>
+<span class="o">}</span>
 </pre></div>
 
 
-<p>}[/java]</p>
+<p>A simple making a grid of 16 panels more and more translucent :</p>
+<div class="code"><pre><span class="kn">package</span> <span class="n">com</span><span class="o">.</span><span class="na">wicht</span><span class="o">.</span><span class="na">java7</span><span class="o">.</span><span class="na">swing</span><span class="o">;</span>
+
+<span class="kn">import</span> <span class="nn">javax.swing.*</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">java.awt.*</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">java.awt.event.ActionEvent</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">java.awt.event.ActionListener</span><span class="o">;</span>
+
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">GriddedTranslucentWindow</span> <span class="kd">extends</span> <span class="n">JFrame</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="nf">GriddedTranslucentWindow</span><span class="o">()</span> <span class="o">{</span>
+        <span class="kd">super</span><span class="o">(</span><span class="s">"Java 7 Per Pixel Translucency"</span><span class="o">);</span>
+
+        <span class="n">setSize</span><span class="o">(</span><span class="mi">300</span><span class="o">,</span> <span class="mi">320</span><span class="o">);</span>
+
+        <span class="n">getContentPane</span><span class="o">().</span><span class="na">setLayout</span><span class="o">(</span><span class="k">new</span> <span class="n">GridLayout</span><span class="o">(</span><span class="mi">4</span><span class="o">,</span> <span class="mi">4</span><span class="o">));</span>
+
+        <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&amp;</span><span class="n">amp</span><span class="o">;</span><span class="n">lt</span><span class="o">;</span> <span class="mi">16</span><span class="o">;</span> <span class="n">i</span><span class="o">++){</span>
+            <span class="n">add</span><span class="o">(</span><span class="k">new</span> <span class="n">AlphaPanel</span><span class="o">(</span><span class="mi">255</span> <span class="o">-</span> <span class="n">i</span> <span class="o">*</span> <span class="mi">12</span><span class="o">));</span>
+        <span class="o">}</span>
+
+        <span class="n">setBackground</span><span class="o">(</span><span class="k">new</span> <span class="n">Color</span><span class="o">(</span><span class="mi">0</span><span class="o">,</span> <span class="mi">0</span><span class="o">,</span> <span class="mi">0</span><span class="o">,</span> <span class="mi">0</span><span class="o">));</span>
+
+        <span class="n">setLocationRelativeTo</span><span class="o">(</span><span class="kc">null</span><span class="o">);</span>
+        <span class="n">setVisible</span><span class="o">(</span><span class="kc">true</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">SwingUtilities</span><span class="o">.</span><span class="na">invokeLater</span><span class="o">(</span><span class="k">new</span> <span class="n">Runnable</span><span class="o">(){</span>
+            <span class="nd">@Override</span>
+            <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+                <span class="n">GraphicsEnvironment</span> <span class="n">ge</span> <span class="o">=</span> <span class="n">GraphicsEnvironment</span><span class="o">.</span><span class="na">getLocalGraphicsEnvironment</span><span class="o">();</span>
+
+                <span class="k">if</span> <span class="o">(</span><span class="n">ge</span><span class="o">.</span><span class="na">getDefaultScreenDevice</span><span class="o">().</span><span class="na">isWindowTranslucencySupported</span><span class="o">(</span><span class="n">GraphicsDevice</span><span class="o">.</span><span class="na">WindowTranslucency</span><span class="o">.</span><span class="na">PERPIXEL_TRANSLUCENT</span><span class="o">))</span> <span class="o">{</span>
+                    <span class="k">new</span> <span class="nf">GriddedTranslucentWindow</span><span class="o">();</span>
+                <span class="o">}</span>
+            <span class="o">}</span>
+        <span class="o">});</span>
+    <span class="o">}</span>
+
+    <span class="kd">private</span> <span class="kd">class</span> <span class="nc">AlphaPanel</span> <span class="kd">extends</span> <span class="n">JPanel</span> <span class="o">{</span>
+        <span class="kd">private</span> <span class="nf">AlphaPanel</span><span class="o">(</span><span class="kt">int</span> <span class="n">alpha</span><span class="o">)</span> <span class="o">{</span>
+            <span class="kd">super</span><span class="o">();</span>
+
+            <span class="n">setBackground</span><span class="o">(</span><span class="k">new</span> <span class="n">Color</span><span class="o">(</span><span class="mi">0</span><span class="o">,</span> <span class="mi">0</span><span class="o">,</span> <span class="mi">255</span><span class="o">,</span> <span class="n">alpha</span><span class="o">));</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+
+
 <p>That give me this kind of result :</p>
 <p><a href="wp-content/uploads/2010/05/PerPixelTranslucency1.png"><img class="size-full wp-image-612" title="Java 7 : Per Pixel Translucency" src="wp-content/uploads/2010/05/PerPixelTranslucency1.png" alt="Java 7 : Per Pixel Translucency" width="284" height="279"></a></p>
 <p>The example is very simple of course, but you can imagine doing a lot of things using that feature.</p>
 <p>And now a crazy new feature : shaped windows !</p>
 <p>Java 7 allows you to create Window of whatever shape you want. You can create circle, triangle, elliptic windows or more complex shape, a smiley by example. To do that, you have now access to the setShape(Shape shape)  method in the Window class. Like the other two, full screen mode is not allowed and the per pixel transparency must be supported by your computer :</p>
-<p>[java]GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();</p>
-<p>if (ge.getDefaultScreenDevice().isWindowTranslucencySupported(GraphicsDevice.WindowTranslucency.PERPIXEL_TRANSPARENT )) {
-    System.out.println("Window translucency isn't supported on your system. ")[/java]pre&gt;
-Here is a little example combining a triangle and a circle :</p>
-<p>[java]package com.wicht.java7.swing;</p>
-<p>import javax.swing.*;</p>
-<p>import java.awt.*;</p>
-<p>import java.awt.geom.Ellipse2D;</p>
-<p>import java.awt.geom.GeneralPath;</p>
-<p>public class ShapedWindow extends JFrame {
-    public ShapedWindow() {
-        super("Shaped Window");</p>
-<div class="code"><pre>    <span class="n">setUndecorated</span><span class="p">(</span><span class="nb">true</span><span class="p">);</span>
+<div class="code"><pre><span class="n">GraphicsEnvironment</span> <span class="n">ge</span> <span class="o">=</span> <span class="n">GraphicsEnvironment</span><span class="o">.</span><span class="na">getLocalGraphicsEnvironment</span><span class="o">();</span>
 
-    <span class="n">setSize</span><span class="p">(</span><span class="n">new</span> <span class="n">Dimension</span><span class="p">(</span><span class="mi">200</span><span class="p">,</span> <span class="mi">300</span><span class="p">));</span>
-
-    <span class="n">Polygon</span> <span class="n">polygon</span> <span class="o">=</span> <span class="n">new</span> <span class="n">Polygon</span><span class="p">();</span>
-    <span class="n">polygon</span><span class="p">.</span><span class="n">addPoint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">200</span><span class="p">);</span>
-    <span class="n">polygon</span><span class="p">.</span><span class="n">addPoint</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
-    <span class="n">polygon</span><span class="p">.</span><span class="n">addPoint</span><span class="p">(</span><span class="mi">200</span><span class="p">,</span> <span class="mi">200</span><span class="p">);</span>
-
-    <span class="n">Ellipse2D</span><span class="p">.</span><span class="n">Double</span> <span class="n">theCircle</span> <span class="o">=</span> <span class="n">new</span> <span class="n">Ellipse2D</span><span class="p">.</span><span class="n">Double</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mf">1.0</span><span class="o">*</span><span class="mi">200</span><span class="p">,</span> <span class="mf">1.0</span><span class="o">*</span><span class="mi">200</span><span class="p">);</span>
-
-    <span class="n">GeneralPath</span> <span class="n">path</span> <span class="o">=</span> <span class="n">new</span> <span class="n">GeneralPath</span><span class="p">();</span>
-    <span class="n">path</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">polygon</span><span class="p">,</span> <span class="nb">true</span><span class="p">);</span>
-    <span class="n">path</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">theCircle</span><span class="p">,</span> <span class="nb">true</span><span class="p">);</span>
-
-    <span class="n">setShape</span><span class="p">(</span><span class="n">path</span><span class="p">);</span>
-
-    <span class="n">getContentPane</span><span class="p">().</span><span class="n">setLayout</span><span class="p">(</span><span class="n">new</span> <span class="n">BoxLayout</span><span class="p">(</span><span class="n">getContentPane</span><span class="p">(),</span> <span class="n">BoxLayout</span><span class="p">.</span><span class="n">X_AXIS</span><span class="p">));</span>
-
-    <span class="n">add</span><span class="p">(</span><span class="n">Box</span><span class="p">.</span><span class="n">createHorizontalGlue</span><span class="p">());</span>
-    <span class="n">JLabel</span> <span class="n">label</span> <span class="o">=</span> <span class="n">new</span> <span class="n">JLabel</span><span class="p">(</span><span class="s">"Shaped window"</span><span class="p">);</span>
-    <span class="n">label</span><span class="p">.</span><span class="n">setForeground</span><span class="p">(</span><span class="n">Color</span><span class="p">.</span><span class="n">white</span><span class="p">);</span>
-    <span class="n">add</span><span class="p">(</span><span class="n">label</span><span class="p">);</span>
-    <span class="n">add</span><span class="p">(</span><span class="n">Box</span><span class="p">.</span><span class="n">createHorizontalGlue</span><span class="p">());</span>
-
-    <span class="n">getContentPane</span><span class="p">().</span><span class="n">setBackground</span><span class="p">(</span><span class="n">Color</span><span class="p">.</span><span class="n">blue</span><span class="p">);</span>
-
-    <span class="n">setLocationRelativeTo</span><span class="p">(</span><span class="n">null</span><span class="p">);</span>
-    <span class="n">setVisible</span><span class="p">(</span><span class="nb">true</span><span class="p">);</span>
-<span class="p">}</span>
-
-<span class="n">public</span> <span class="k">static</span> <span class="kt">void</span> <span class="n">main</span><span class="p">(</span><span class="n">String</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span> <span class="p">{</span>
-    <span class="n">SwingUtilities</span><span class="p">.</span><span class="n">invokeLater</span><span class="p">(</span><span class="n">new</span> <span class="n">Runnable</span><span class="p">(){</span>
-        <span class="err">@</span><span class="n">Override</span>
-        <span class="n">public</span> <span class="kt">void</span> <span class="n">run</span><span class="p">()</span> <span class="p">{</span>
-            <span class="n">GraphicsEnvironment</span> <span class="n">ge</span> <span class="o">=</span> <span class="n">GraphicsEnvironment</span><span class="p">.</span><span class="n">getLocalGraphicsEnvironment</span><span class="p">();</span>
-
-            <span class="k">if</span> <span class="p">(</span><span class="n">ge</span><span class="p">.</span><span class="n">getDefaultScreenDevice</span><span class="p">().</span><span class="n">isWindowTranslucencySupported</span><span class="p">(</span><span class="n">GraphicsDevice</span><span class="p">.</span><span class="n">WindowTranslucency</span><span class="p">.</span><span class="n">PERPIXEL_TRANSPARENT</span><span class="p">))</span> <span class="p">{</span>
-                <span class="n">new</span> <span class="n">TranslucentShapedWindow</span><span class="p">();</span>
-            <span class="p">}</span>
-        <span class="p">}</span>
-    <span class="p">});</span>
-<span class="p">}</span>
+<span class="k">if</span> <span class="o">(</span><span class="n">ge</span><span class="o">.</span><span class="na">getDefaultScreenDevice</span><span class="o">().</span><span class="na">isWindowTranslucencySupported</span><span class="o">(</span><span class="n">GraphicsDevice</span><span class="o">.</span><span class="na">WindowTranslucency</span><span class="o">.</span><span class="na">PERPIXEL_TRANSPARENT</span> <span class="o">))</span> <span class="o">{</span>
+    <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Window translucency isn't supported on your system. "</span><span class="o">)</span>
+<span class="o">}</span>
 </pre></div>
 
 
-<p>}[/java]</p>
+<p>Here is a little example combining a triangle and a circle :</p>
+<div class="code"><pre><span class="kn">package</span> <span class="n">com</span><span class="o">.</span><span class="na">wicht</span><span class="o">.</span><span class="na">java7</span><span class="o">.</span><span class="na">swing</span><span class="o">;</span>
+
+<span class="kn">import</span> <span class="nn">javax.swing.*</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">java.awt.*</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">java.awt.geom.Ellipse2D</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">java.awt.geom.GeneralPath</span><span class="o">;</span>
+
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">ShapedWindow</span> <span class="kd">extends</span> <span class="n">JFrame</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="nf">ShapedWindow</span><span class="o">()</span> <span class="o">{</span>
+        <span class="kd">super</span><span class="o">(</span><span class="s">"Shaped Window"</span><span class="o">);</span>
+
+        <span class="n">setUndecorated</span><span class="o">(</span><span class="kc">true</span><span class="o">);</span>
+
+        <span class="n">setSize</span><span class="o">(</span><span class="k">new</span> <span class="n">Dimension</span><span class="o">(</span><span class="mi">200</span><span class="o">,</span> <span class="mi">300</span><span class="o">));</span>
+
+        <span class="n">Polygon</span> <span class="n">polygon</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Polygon</span><span class="o">();</span>
+        <span class="n">polygon</span><span class="o">.</span><span class="na">addPoint</span><span class="o">(</span><span class="mi">0</span><span class="o">,</span> <span class="mi">200</span><span class="o">);</span>
+        <span class="n">polygon</span><span class="o">.</span><span class="na">addPoint</span><span class="o">(</span><span class="mi">100</span><span class="o">,</span> <span class="mi">0</span><span class="o">);</span>
+        <span class="n">polygon</span><span class="o">.</span><span class="na">addPoint</span><span class="o">(</span><span class="mi">200</span><span class="o">,</span> <span class="mi">200</span><span class="o">);</span>
+
+        <span class="n">Ellipse2D</span><span class="o">.</span><span class="na">Double</span> <span class="n">theCircle</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Ellipse2D</span><span class="o">.</span><span class="na">Double</span><span class="o">(</span><span class="mi">0</span><span class="o">,</span> <span class="mi">100</span><span class="o">,</span> <span class="mf">1.0</span><span class="o">*</span><span class="mi">200</span><span class="o">,</span> <span class="mf">1.0</span><span class="o">*</span><span class="mi">200</span><span class="o">);</span>
+
+        <span class="n">GeneralPath</span> <span class="n">path</span> <span class="o">=</span> <span class="k">new</span> <span class="n">GeneralPath</span><span class="o">();</span>
+        <span class="n">path</span><span class="o">.</span><span class="na">append</span><span class="o">(</span><span class="n">polygon</span><span class="o">,</span> <span class="kc">true</span><span class="o">);</span>
+        <span class="n">path</span><span class="o">.</span><span class="na">append</span><span class="o">(</span><span class="n">theCircle</span><span class="o">,</span> <span class="kc">true</span><span class="o">);</span>
+
+        <span class="n">setShape</span><span class="o">(</span><span class="n">path</span><span class="o">);</span>
+
+        <span class="n">getContentPane</span><span class="o">().</span><span class="na">setLayout</span><span class="o">(</span><span class="k">new</span> <span class="n">BoxLayout</span><span class="o">(</span><span class="n">getContentPane</span><span class="o">(),</span> <span class="n">BoxLayout</span><span class="o">.</span><span class="na">X_AXIS</span><span class="o">));</span>
+
+        <span class="n">add</span><span class="o">(</span><span class="n">Box</span><span class="o">.</span><span class="na">createHorizontalGlue</span><span class="o">());</span>
+        <span class="n">JLabel</span> <span class="n">label</span> <span class="o">=</span> <span class="k">new</span> <span class="n">JLabel</span><span class="o">(</span><span class="s">"Shaped window"</span><span class="o">);</span>
+        <span class="n">label</span><span class="o">.</span><span class="na">setForeground</span><span class="o">(</span><span class="n">Color</span><span class="o">.</span><span class="na">white</span><span class="o">);</span>
+        <span class="n">add</span><span class="o">(</span><span class="n">label</span><span class="o">);</span>
+        <span class="n">add</span><span class="o">(</span><span class="n">Box</span><span class="o">.</span><span class="na">createHorizontalGlue</span><span class="o">());</span>
+
+        <span class="n">getContentPane</span><span class="o">().</span><span class="na">setBackground</span><span class="o">(</span><span class="n">Color</span><span class="o">.</span><span class="na">blue</span><span class="o">);</span>
+
+        <span class="n">setLocationRelativeTo</span><span class="o">(</span><span class="kc">null</span><span class="o">);</span>
+        <span class="n">setVisible</span><span class="o">(</span><span class="kc">true</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">SwingUtilities</span><span class="o">.</span><span class="na">invokeLater</span><span class="o">(</span><span class="k">new</span> <span class="n">Runnable</span><span class="o">(){</span>
+            <span class="nd">@Override</span>
+            <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+                <span class="n">GraphicsEnvironment</span> <span class="n">ge</span> <span class="o">=</span> <span class="n">GraphicsEnvironment</span><span class="o">.</span><span class="na">getLocalGraphicsEnvironment</span><span class="o">();</span>
+
+                <span class="k">if</span> <span class="o">(</span><span class="n">ge</span><span class="o">.</span><span class="na">getDefaultScreenDevice</span><span class="o">().</span><span class="na">isWindowTranslucencySupported</span><span class="o">(</span><span class="n">GraphicsDevice</span><span class="o">.</span><span class="na">WindowTranslucency</span><span class="o">.</span><span class="na">PERPIXEL_TRANSPARENT</span><span class="o">))</span> <span class="o">{</span>
+                    <span class="k">new</span> <span class="nf">TranslucentShapedWindow</span><span class="o">();</span>
+                <span class="o">}</span>
+            <span class="o">}</span>
+        <span class="o">});</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+
+
 <p>This produce that sort of window :</p>
 <p><a href="wp-content/uploads/2010/06/ShapedWindow.png"><img class="size-full wp-image-615" title="Java 7 : Shaped Windows" src="wp-content/uploads/2010/06/ShapedWindow.png" alt="Java 7 : Shaped Windows" width="231" height="322"></a></p>
 <p>And of course you can combine translucency and shaped windows adding setOpacity(0.5f) to your frame. For that the Per Pixel Translucency and the Per Pixel Transparency must be supported. That give us this kind of window :</p>
@@ -885,37 +956,52 @@ Here is a little example combining a triangle and a circle :</p>
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><p>At this time, we aren't sure that the closures will be included in the Java 7 release. But these doubts have generated a new project : <a href="http://cr.openjdk.java.net/~darcy/DefenderMethods.pdf" target="_blank">The "public defender methods" proposal</a>.</p>
+        <div><p>At this time, we aren't sure that the closures will be included in the Java 7 release. But these doubts have generated a new project : <a href="http://cr.openjdk.java.net/~darcy/DefenderMethods.pdf" target="_blank">The "public defender methods" proposal</a>.</p>
 <p>This new proposal for Java 7 wants to improve the interfaces allowing to add new methods to existing interfaces. The classes implementing the interfaces doesn't need implements these methods. The implementation of these methods are provided using static methods. This could be called virtual extension method.</p>
 <!--more-->
 
 <p>To illustrate the problem the proposal want to solve, let's take the example of reversing a List. When you have a List and you want to reverse it, you have to use the Collections.reverse() method :</p>
-<p>[java]List strings = new ArrayList();</p>
-<p>//...</p>
-<p>Collections.reverse(strings);[/java]</p>
+<div class="code"><pre><span class="n">List</span> <span class="n">strings</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ArrayList</span><span class="o">();</span>
+<span class="c1">//...</span>
+<span class="n">Collections</span><span class="o">.</span><span class="na">reverse</span><span class="o">(</span><span class="n">strings</span><span class="o">);</span>
+</pre></div>
+
+
 <p>But there is some problems with that code. Because it's a static method, there is no way to override it. We could imagine data structures where the reverse must be made using special algorithms to be efficient. An other problem is that the reverse() method is not in the List interface, so must learn two classes to make a simple thing as reversing a list.</p>
 <p>The "public defender methods" give an other way to do that extending the List interface :</p>
-<p>[java]public interface List extends Collection {
-  ...</p>
-<p>extension void reverse() default Collections.reverse;
-}[/java]</p>
+<div class="code"><pre><span class="kd">public</span> <span class="kd">interface</span> <span class="nc">List</span> <span class="kd">extends</span> <span class="n">Collection</span> <span class="o">{</span>
+  <span class="o">...</span>
+  <span class="n">extension</span> <span class="kt">void</span> <span class="nf">reverse</span><span class="o">()</span> <span class="k">default</span> <span class="n">Collections</span><span class="o">.</span><span class="na">reverse</span><span class="o">;</span>
+<span class="o">}</span>
+</pre></div>
+
+
 <p>This add a new method to the List with a default implement that use the Collections.reverse(List list) static method. The list will be passed as the first argument of the static method. So, now that you have a method reverse on the List, you can do that :</p>
-<p>[java]List strings = new ArrayList();</p>
-<p>//...</p>
-<p>strings.reverse();</p>
-<p>[/java]</p>
+<div class="code"><pre><span class="n">List</span> <span class="n">strings</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ArrayList</span><span class="o">();</span>
+<span class="c1">//...</span>
+<span class="n">strings</span><span class="o">.</span><span class="na">reverse</span><span class="o">();</span>
+</pre></div>
+
+
 <p>This code is a lot better than the other, isn't it ?</p>
 <p>You can now override the reverse method providing an implementation specific to your class. But the implementation is now optional. That solve all the problems we see earlier.</p>
 <p>To solve multiple inheritance issue a class implementing two interfaces providing a default implementation for the same method name and signature must provide an implementation of the method.</p>
 <p>An other objective of this proposal is to "closur-ize" the Java 7 librairies. By example, we could think of a filter() method to the List interface :</p>
-<p>[java]public interface List extends Collection {
-  ...</p>
-<p>extension void filter(Predicate predicate) default Collections.filter;
-}[/java]</p>
+<div class="code"><pre><span class="kd">public</span> <span class="kd">interface</span> <span class="nc">List</span> <span class="kd">extends</span> <span class="n">Collection</span> <span class="o">{</span>
+  <span class="o">...</span>
+
+  <span class="n">extension</span> <span class="kt">void</span> <span class="nf">filter</span><span class="o">(</span><span class="n">Predicate</span> <span class="n">predicate</span><span class="o">)</span> <span class="k">default</span> <span class="n">Collections</span><span class="o">.</span><span class="na">filter</span><span class="o">;</span>
+<span class="o">}</span>
+</pre></div>
+
+
 <p>And a predicate like that :</p>
-<p>[java]public interface Predicate {
-   boolean accept(E object);
-}[/java]</p>
+<div class="code"><pre><span class="kd">public</span> <span class="kd">interface</span> <span class="nc">Predicate</span> <span class="o">{</span>
+   <span class="kt">boolean</span> <span class="nf">accept</span><span class="o">(</span><span class="n">E</span> <span class="n">object</span><span class="o">);</span>
+<span class="o">}</span>
+</pre></div>
+
+
 <p>That type of method can take advantage of closures. We can also imagine reduce, forEach, expand, ....</p>
 <p>At this time, this is only a proposal, so we aren't sure it'll be included in Java 7 and the syntax is not definitive.</p>
 <p>Personally, i think this is a great improvement and that will make the closures (if we have them a day) more interesting for the Java language.</p>
@@ -935,9 +1021,9 @@ Here is a little example combining a triangle and a circle :</p>
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><p>2 days ago, Oracle pushed a first version of the closures implementation. We can see the evolving syntax in the test cases they made for the Java compiler. You can see these test cases <a href="http://hg.openjdk.java.net/lambda/lambda/langtools/file/7704dcd17e0b/test/tools/javac/lambda/" target="_blank">here</a>.</p>
+        <div><p>2 days ago, Oracle pushed a first version of the closures implementation. We can see the evolving syntax in the test cases they made for the Java compiler. You can see these test cases <a href="http://hg.openjdk.java.net/lambda/lambda/langtools/file/7704dcd17e0b/test/tools/javac/lambda/" target="_blank">here</a>.</p>
 <p>This revision supports the following features (copied from revision) :</p>
-<p></p><ul>
+<ul>
     <li>Function types syntax</li>
     <li>Function types subtyping</li>
     <li>Full support for lambda expression of type 1 and 2</li>
@@ -946,19 +1032,26 @@ Here is a little example combining a triangle and a circle :</p>
     <li>Support references to 'this' (both explicit and implicit)</li>
     <li>Translation using method handles</li>
 </ul>
+
 <p>The function types aren't enabled by default, so you have to use  -XDallowFunctionTypes to enable it.</p>
 <p>Here are some examples of lambda expression of type 1 taken from the test cases : </p>
-<p>[java]int i1 = #()(3).(); //i1 = 3</p>
-<p>Integer i2 = #()(3).(); //i2 = 3</p>
-<p>int i3 = #(int x)( x + 1 ).(3); //i3 = 4</p>
-<p>int i4 = #(Number x)(x.intValue()).(new Float(3.0f)); //i4 = 3[/java]</p>
+<div class="code"><pre><span class="kt">int</span> <span class="n">i1</span> <span class="o">=</span> <span class="err">#</span><span class="o">()(</span><span class="mi">3</span><span class="o">).();</span> <span class="c1">//i1 = 3</span>
+<span class="n">Integer</span> <span class="n">i2</span> <span class="o">=</span> <span class="err">#</span><span class="o">()(</span><span class="mi">3</span><span class="o">).();</span> <span class="c1">//i2 = 3</span>
+<span class="kt">int</span> <span class="n">i3</span> <span class="o">=</span> <span class="err">#</span><span class="o">(</span><span class="kt">int</span> <span class="n">x</span><span class="o">)(</span> <span class="n">x</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">).(</span><span class="mi">3</span><span class="o">);</span> <span class="c1">//i3 = 4</span>
+<span class="kt">int</span> <span class="n">i4</span> <span class="o">=</span> <span class="err">#</span><span class="o">(</span><span class="n">Number</span> <span class="n">x</span><span class="o">)(</span><span class="n">x</span><span class="o">.</span><span class="na">intValue</span><span class="o">()).(</span><span class="k">new</span> <span class="n">Float</span><span class="o">(</span><span class="mf">3.0f</span><span class="o">));</span> <span class="c1">//i4 = 3</span>
+</pre></div>
+
+
 <p>And with type 2 : </p>
-<p>[java]int i1 = #(){ return 3; }.(); //i1 = 3</p>
-<p>Integer i2 = #(){ return 3; }.(); //i2 = 3</p>
-<p>int i3 = #(int x){ return x + 1; }.(3); //i3 = 4</p>
-<p>int i4 = #(Number x){ return x.intValue(); }.(new Float(3.0f)); //i4 = 3[/java]</p>
+<div class="code"><pre><span class="kt">int</span> <span class="n">i1</span> <span class="o">=</span> <span class="err">#</span><span class="o">(){</span> <span class="k">return</span> <span class="mi">3</span><span class="o">;</span> <span class="o">}.();</span> <span class="c1">//i1 = 3</span>
+<span class="n">Integer</span> <span class="n">i2</span> <span class="o">=</span> <span class="err">#</span><span class="o">(){</span> <span class="k">return</span> <span class="mi">3</span><span class="o">;</span> <span class="o">}.();</span> <span class="c1">//i2 = 3</span>
+<span class="kt">int</span> <span class="n">i3</span> <span class="o">=</span> <span class="err">#</span><span class="o">(</span><span class="kt">int</span> <span class="n">x</span><span class="o">){</span> <span class="k">return</span> <span class="n">x</span> <span class="o">+</span> <span class="mi">1</span><span class="o">;</span> <span class="o">}.(</span><span class="mi">3</span><span class="o">);</span> <span class="c1">//i3 = 4</span>
+<span class="kt">int</span> <span class="n">i4</span> <span class="o">=</span> <span class="err">#</span><span class="o">(</span><span class="n">Number</span> <span class="n">x</span><span class="o">){</span> <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="na">intValue</span><span class="o">();</span> <span class="o">}.(</span><span class="k">new</span> <span class="n">Float</span><span class="o">(</span><span class="mf">3.0f</span><span class="o">));</span> <span class="c1">//i4 = 3</span>
+</pre></div>
+
+
 <p>For those who didn't understand the syntax, #(int x)( x + 1 ) declares a lambda expression that takes a int and return this int plus 1. And the . (dot) is used to invoke the lambda expression. So #(int x)( x + 1 ).(3) declares the lambda expression and invoke it with 3 as parameter. </p>
-<p>This syntax is a little bit shocking, but I think we'll get used. </p></div>
+<p>This syntax is a little bit shocking, but I think we'll get used.</p></div>
         </div>
             
         
@@ -974,12 +1067,11 @@ Here is a little example combining a triangle and a circle :</p>
         </small></h1>
         <hr>
         <div class="e-content">
-        <div><p></p><p>I didn't notice that earlier, but the 23 May 2010 was the 15 years birthday of Java !</p>
+        <div><p>I didn't notice that earlier, but the 23 May 2010 was the 15 years birthday of Java !</p>
 <p>I started using Java only 5 years ago, but I've always been happy of this language. </p>
 <p>It makes now a long time that we've this wonderful language to develop :)</p>
 <p>Thanks a lot to James Gosling and Sun Microsystems for this great language. </p>
-<p><a href="http://www.baptiste-wicht.com/wp-content/uploads/2010/05/duke.png"><img src="http://www.baptiste-wicht.com/wp-content/uploads/2010/05/duke.png" alt="Duke Java Logo" title="Duke Java Logo" width="255" height="200" class="size-full wp-image-601"></a></p>
-<p></p></div>
+<p><a href="http://www.baptiste-wicht.com/wp-content/uploads/2010/05/duke.png"><img src="http://www.baptiste-wicht.com/wp-content/uploads/2010/05/duke.png" alt="Duke Java Logo" title="Duke Java Logo" width="255" height="200" class="size-full wp-image-601"></a></p></div>
         </div>
             
         
