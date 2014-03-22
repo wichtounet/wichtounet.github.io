@@ -195,7 +195,160 @@
 
 <p><strong>SeekableByteChannel</strong></p>
 <p>First of all, the Java 7 includes a new ByteChannel, the <strong>SeekableByteChannel</strong>. This Channel maintains a current position, so you can read and write from this position. That allows <strong>random access</strong> positions. With that type of Channel, you can even add several threads reading/writing the same threads at different positions.</p>
-<div class="code"><pre><span class="err"></span></pre></div></div>
+<div class="code"><pre><span class="n">SeekableByteChannel</span> <span class="n">channel1</span> <span class="o">=</span> <span class="n">Paths</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="s">"Path to file"</span><span class="o">).</span><span class="na">newByteChannel</span><span class="o">();</span> <span class="c1">//Simply READ</span>
+<span class="n">SeekableByteChannel</span> <span class="n">channel2</span> <span class="o">=</span> <span class="n">Paths</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="s">"Path to file"</span><span class="o">).</span><span class="na">newByteChannel</span><span class="o">(</span><span class="n">StandardOpenOption</span><span class="o">.</span><span class="na">READ</span><span class="o">,</span> <span class="n">StandardOpenOption</span><span class="o">.</span><span class="na">WRITE</span><span class="o">);</span> <span class="c1">//READ and WRITE</span>
+</pre></div>
+
+
+<p>You can use these methods to manipulate the positions and size of the channel :</p>
+<ul>
+    <li>long position() : Return the current position</li>
+    <li>long size() : Return the current size of the entity this channel is connected to, by example the size of the file the channel is connecting to</li>
+    <li>position(long newPosition) : Move the current position to the given one</li>
+    <li>truncate(long size) : Truncates the entity to the given size.</li>
+</ul>
+
+<p>The position() and truncate() methods simply returns the current Channel to allow chained invocations.</p>
+<p>Now, <strong>FileChannel</strong> implements this new interface, so you can make random access with all FileChannels.</p>
+<p>You can of course read a file with that channel :</p>
+<div class="code"><pre><span class="n">SeekableByteChannel</span> <span class="n">channel</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+
+<span class="k">try</span> <span class="o">{</span>
+    <span class="n">channel</span> <span class="o">=</span> <span class="n">Paths</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="s">"Path to file"</span><span class="o">).</span><span class="na">newByteChannel</span><span class="o">(</span><span class="n">StandardOpenOption</span><span class="o">.</span><span class="na">READ</span><span class="o">);</span>
+    <span class="n">ByteBuffer</span> <span class="n">buffer</span> <span class="o">=</span> <span class="n">ByteBuffer</span><span class="o">.</span><span class="na">allocate</span><span class="o">(</span><span class="mi">4096</span><span class="o">);</span>
+
+    <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"File size: "</span> <span class="o">+</span> <span class="n">channel</span><span class="o">.</span><span class="na">size</span><span class="o">());</span>
+
+    <span class="k">while</span> <span class="o">(</span><span class="n">channel</span><span class="o">.</span><span class="na">read</span><span class="o">(</span><span class="n">buffer</span><span class="o">)</span> <span class="o">&amp;</span><span class="n">amp</span><span class="o">;</span><span class="n">gt</span><span class="o">;</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">buffer</span><span class="o">.</span><span class="na">rewind</span><span class="o">();</span>
+
+        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">print</span><span class="o">(</span><span class="k">new</span> <span class="n">String</span><span class="o">(</span><span class="n">buffer</span><span class="o">.</span><span class="na">array</span><span class="o">(),</span> <span class="mi">0</span><span class="o">,</span> <span class="n">buffer</span><span class="o">.</span><span class="na">remaining</span><span class="o">()));</span>
+
+        <span class="n">buffer</span><span class="o">.</span><span class="na">flip</span><span class="o">();</span>
+
+        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Current position : "</span> <span class="o">+</span> <span class="n">channel</span><span class="o">.</span><span class="na">position</span><span class="o">());</span>
+    <span class="o">}</span>
+<span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Expection when reading : "</span> <span class="o">+</span> <span class="n">e</span><span class="o">.</span><span class="na">getMessage</span><span class="o">());</span>
+    <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+<span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">sbc</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">){</span>
+        <span class="n">channel</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+
+
+<h4>MulticastChannel</h4>
+
+<p>This new interface enable to make Internet Protocol (IP) <strong>Multicasting</strong>. So you can send and receive IP datagrams from a complete group. The multicast implementations are directly bind to the native multicast facility. This interface is implement by DatagramChannel and AsynchronousDatagramChannel.</p>
+<p>A simple example taken from the Javadoc to open a DatagramChannel t :</p>
+<div class="code"><pre><span class="n">NetworkInterface</span> <span class="n">networkInterface</span> <span class="o">=</span> <span class="n">NetworkInterface</span><span class="o">.</span><span class="na">getByName</span><span class="o">(</span><span class="s">"hme0"</span><span class="o">);</span>
+
+<span class="n">DatagramChannel</span> <span class="n">dc</span> <span class="o">=</span> <span class="n">DatagramChannel</span><span class="o">.</span><span class="na">open</span><span class="o">(</span><span class="n">StandardProtocolFamily</span><span class="o">.</span><span class="na">INET</span><span class="o">)</span>
+         <span class="o">.</span><span class="na">setOption</span><span class="o">(</span><span class="n">StandardSocketOption</span><span class="o">.</span><span class="na">SO_REUSEADDR</span><span class="o">,</span> <span class="kc">true</span><span class="o">)</span>
+         <span class="o">.</span><span class="na">bind</span><span class="o">(</span><span class="k">new</span> <span class="n">InetSocketAddress</span><span class="o">(</span><span class="mi">5000</span><span class="o">))</span>
+         <span class="o">.</span><span class="na">setOption</span><span class="o">(</span><span class="n">StandardSocketOption</span><span class="o">.</span><span class="na">IP_MULTICAST_IF</span><span class="o">,</span> <span class="n">networkInterface</span><span class="o">);</span>
+
+<span class="n">InetAddress</span> <span class="n">group</span> <span class="o">=</span> <span class="n">InetAddress</span><span class="o">.</span><span class="na">getByName</span><span class="o">(</span><span class="s">"225.4.5.6"</span><span class="o">);</span>
+
+<span class="n">MembershipKey</span> <span class="n">key</span> <span class="o">=</span> <span class="n">dc</span><span class="o">.</span><span class="na">join</span><span class="o">(</span><span class="n">group</span><span class="o">,</span> <span class="n">networkInterface</span><span class="o">);</span>
+</pre></div>
+
+
+<p>With that, you can use your DatagramChannel as all others DatagramChannel you used in the past, but the operations are made with multicast, so you receive all the packets of the interface and you send packets to all the group.</p>
+<h4>NetworkChannel</h4>
+
+<p>Now, all the network-oriented channels implements the new <strong>NetworkChannel</strong> interface. With that, you easily bind the channel socket, set and query for socket options. Furthermore, the socket optioins are now extensible, so you can use operating system specific options, that could be interesting for high performances servers.</p>
+<h4>Asynchronous I/O</h4>
+
+<p>And after that little introduction, we go to the main new feature : The new <strong>Asynchronous I/O API</strong>. Its name indicate all the purpose of this new features, indeed enable Asynchronous I/O operations.This new channels provide <strong>asynchronous operations</strong> for both sockets and files.</p>
+<p>Of course, all that operations are non-blocking, but there is also blocking operations that you can do with all the asynchronous channels.</p>
+<p>All the asynchronous I/O operations have one of two forms :</p>
+<ul>
+    <li>The first one returns a java.util.concurrent.Future that represent the pending result. You can use that Future to wait for the I/O operations to finish.</li>
+    <li>The second one is created using  a CompletionHandler. That handler is invoked when the operation is has completed, like callbacks systems.</li>
+</ul>
+
+<p>So here are the examples of the two forms :</p>
+<p>The first form, using Future :</p>
+<div class="code"><pre><span class="n">AsynchronousFileChannel</span> <span class="n">channel</span> <span class="o">=</span> <span class="n">AsynchronousFileChannel</span><span class="o">.</span><span class="na">open</span><span class="o">(</span><span class="n">Paths</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="s">"Path to file"</span><span class="o">));</span>
+<span class="n">ByteBuffer</span> <span class="n">buffer</span> <span class="o">=</span> <span class="n">ByteBuffer</span><span class="o">.</span><span class="na">allocate</span><span class="o">(</span><span class="n">capacity</span><span class="o">);</span>
+<span class="n">Future</span> <span class="n">result</span> <span class="o">=</span> <span class="n">channel</span><span class="o">.</span><span class="na">read</span><span class="o">(</span><span class="n">buffer</span><span class="o">,</span> <span class="mi">100</span><span class="o">);</span> <span class="c1">//Read capacity bytes from the file starting at position 100</span>
+<span class="kt">boolean</span> <span class="n">done</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="na">isDone</span><span class="o">();</span> <span class="c1">//Indicate if the result is already terminated&amp;lt;/pre&amp;gt;</span>
+</pre></div>
+
+
+<p>You can also wait for completion :</p>
+<div class="code"><pre><span class="kt">int</span> <span class="n">bytesRead</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="na">get</span><span class="o">();</span>
+</pre></div>
+
+
+<p>Or wait with a timeout :</p>
+<div class="code"><pre><span class="kt">int</span> <span class="n">bytesRead</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="mi">10</span><span class="o">,</span> <span class="n">TimeUnit</span><span class="o">.</span><span class="na">SECONDS</span><span class="o">);</span> <span class="c1">//Wait at most 10 seconds on the result</span>
+</pre></div>
+
+
+<p>The second form, using CompletionHandler :</p>
+<div class="code"><pre><span class="n">Future</span> <span class="n">result</span> <span class="o">=</span> <span class="n">channel</span><span class="o">.</span><span class="na">read</span><span class="o">(</span><span class="n">buffer</span><span class="o">,</span> <span class="mi">100</span><span class="o">,</span> <span class="kc">null</span><span class="o">,</span> <span class="k">new</span> <span class="n">CompletionHandler</span><span class="o">(){</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">completed</span><span class="o">(</span><span class="n">Integer</span> <span class="n">result</span><span class="o">,</span> <span class="n">Object</span> <span class="n">attachement</span><span class="o">){</span>
+        <span class="c1">//Compute the result</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">failed</span><span class="o">(</span><span class="n">Throwable</span> <span class="n">exception</span><span class="o">,</span> <span class="n">Object</span> <span class="n">attachement</span><span class="o">){</span>
+        <span class="c1">//Answer to the fail</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+
+
+<p>As you can see, you can give an attachement to the operation. This attachement is given to the CompletionHandler at the end of the operation. You can give null as attachement with no problem. But you can pass anything you want, like the Connection for a AsynchronousSocketChannel or the ByteBuffer for our read :</p>
+<div class="code"><pre><span class="n">Future</span> <span class="n">result</span> <span class="o">=</span> <span class="n">channel</span><span class="o">.</span><span class="na">read</span><span class="o">(</span><span class="n">buffer</span><span class="o">,</span> <span class="mi">100</span><span class="o">,</span> <span class="n">buffer</span><span class="o">,</span> <span class="k">new</span> <span class="n">CompletionHandler</span><span class="o">(){</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">completed</span><span class="o">(</span><span class="n">Integer</span> <span class="n">result</span><span class="o">,</span> <span class="n">ByteBuffer</span> <span class="n">buffer</span><span class="o">){</span>
+        <span class="c1">//Compute the result</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">failed</span><span class="o">(</span><span class="n">Throwable</span> <span class="n">exception</span><span class="o">,</span> <span class="n">ByteBuffer</span> <span class="n">buffer</span><span class="o">){</span>
+        <span class="c1">//Answer to the fail</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+
+
+<p>And as you can see, the form with the CompletionHandle gives also you a Future element representing the pending result, so you can merge the two forms.</p>
+<p>Here, are all the asynchronous channels available in NIO.2 :</p>
+<ul>
+    <li>AsynchronousFileChannel : An asynchronous channel for reading and writing from and to a file. This channel has no global positions, so each read/write operations needs a position to operate. You can access concurrently to different parts of the file using different threads. You have to specify the options (READ, WRITE, but not APPEND) when you open this channel.</li>
+    <li>AsynchronousSocketChannel : A simple asynchronous channel to a Socket. The connect, read/write and scatter/gather methods are all asynchronous. The read/write method supports timeouts.</li>
+    <li>AsynchronousServerSocketChannel : An asynchronous channel to a ServerSocket. The accept() method is asynchronous and the CompletionHandler is called when a connection has been accepted. The result of this kind of connection is an AsynchronousSocketChannel.</li>
+    <li>AsynchronousDatagramChannel :</li>
+</ul>
+
+<p>An channel to datagram-oriented socket. The read/write (connected) and receive/send (unconnected) methods are asynchronous.</p>
+<h4>Groups</h4>
+
+<p>When you use AsynchronousChannels, there is of course threads that invoke the completion handlers. These threads are bound to an AsynchronousChannelGroup. This group contains a thread pool and encapsulates the resources shared by all the threads working for the channels. You can greate these groups using thread pool. The AsynchronousFileChannel can be created with its own group, passing an ExecutorService as argument to the open() method. The channels are created using an AsynchronousChannelGroup in the open method, if you don't give it a group or you pass null, the default group is used. The channel is said to be owned by the group, so, if the group is closed, the channel is closed too.</p>
+<p>You can create a group with a ThreadFactory :</p>
+<div class="code"><pre><span class="n">ThreadFactory</span> <span class="n">myThreadFactory</span> <span class="o">=</span> <span class="n">Executors</span><span class="o">.</span><span class="na">defaultThreadFactory</span><span class="o">();</span>
+<span class="n">AsynchronousChannelGroup</span> <span class="n">channelGroup</span> <span class="o">=</span> <span class="n">AsynchronousChannelGroup</span><span class="o">.</span><span class="na">withFixedThreadPool</span><span class="o">(</span><span class="mi">25</span><span class="o">,</span> <span class="n">myThreadFactory</span><span class="o">);</span>
+</pre></div>
+
+
+<p>Or with an ExecutorService :</p>
+<p>ExecutorService service = Executors.newFixedThreadPool(25);</p>
+<div class="code"><pre><span class="n">AsynchronousChannelGroup</span> <span class="n">channelGroup</span> <span class="o">=</span> <span class="n">AsynchronousChannelGroup</span><span class="o">.</span><span class="na">withThreadPool</span><span class="o">(</span><span class="n">service</span><span class="o">);</span>
+</pre></div>
+
+
+<p>And you easily use it :</p>
+<div class="code"><pre><span class="n">AsynchronousSocketChannel</span> <span class="n">socketChannel</span> <span class="o">=</span> <span class="n">AsynchronousSocketChannel</span><span class="o">.</span><span class="na">open</span><span class="o">(</span><span class="n">channelGroup</span><span class="o">);</span>
+</pre></div>
+
+
+<p>You can close the group using the shutdown() method on the group. After that, you cannot create more channels using this group and the group effectively terminates when all the channels are closed, the completion handlers terminated and the resources released.</p>
+<p>You must give attention to a points when you use any type of pools and CompletionHandler : DO NOT USE blocking or long operation inside a CompletionHandler. That can block the entire application if all the threads are blocking. If you've custom or cached thread pool, that can make the queue growing infinitely and cause OutOfMemoryError.</p>
+<p>I think (and I hope), I've covered the main news from this new Asynchronous I/O API. This is not simple stuff of course and that will not be used by every one but that can be useful in several cases and it's a good thing that Java will have this kind of I/O. I therefore apologize if I made some errors in my code or my explanations, is not a easy subject and I tried to explain it for everyone.</p>
+<p>You have also others informations in <a href="http://openjdk.java.net/projects/nio/presentations/TS-4222.pdf">the overview of Asynchronous I/O at JavaOne 2009</a>, by Alan Bateman and Jean-François Arcand.</p></div>
         </div>
             
         
@@ -235,7 +388,26 @@
         <hr>
         <div class="e-content">
         <div><p>I experienced some problems with Substance in OSGi. Using this code :</p>
-<div class="code"><pre><span class="err"></span></pre></div></div>
+<div class="code"><pre><span class="n">SubstanceLookAndFeel</span><span class="o">.</span><span class="na">setSkin</span><span class="o">(</span><span class="k">new</span> <span class="n">BusinessBlackSteelSkin</span><span class="o">());</span>
+</pre></div>
+
+
+<p>I got different errors, like :</p>
+<pre>Exception in thread "AWT-EventQueue-0" java.lang.NullPointerException at 
+org.pushingpixels.substance.internal.utils.SubstanceColorUtilities.getDefaultBackgroundColor(SubstanceColorUtilities.java:823)</pre>
+
+<p>I found a simple solution to make Substance work in OSGi : </p>
+<div class="code"><pre><span class="k">try</span> <span class="o">{</span>
+      <span class="n">UIManager</span><span class="o">.</span><span class="na">setLookAndFeel</span><span class="o">(</span><span class="k">new</span> <span class="n">SubstanceBusinessBlackSteelLookAndFeel</span><span class="o">());</span>
+<span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">UnsupportedLookAndFeelException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">LoggerFactory</span><span class="o">.</span><span class="na">getLogger</span><span class="o">(</span><span class="n">getClass</span><span class="o">()).</span><span class="na">error</span><span class="o">(</span><span class="n">e</span><span class="o">.</span><span class="na">getMessage</span><span class="o">(),</span> <span class="n">e</span><span class="o">);</span>
+<span class="o">}</span>
+<span class="n">UIManager</span><span class="o">.</span><span class="na">getLookAndFeelDefaults</span><span class="o">().</span><span class="na">put</span><span class="o">(</span><span class="s">"ClassLoader"</span><span class="o">,</span> <span class="n">SubstanceBusinessBlackSteelLookAndFeel</span><span class="o">.</span><span class="na">class</span><span class="o">.</span><span class="na">getClassLoader</span><span class="o">());</span>
+</pre></div>
+
+
+<p>With that code, i've no more problems using Substance Look And Feel. </p>
+<p>Hope that will help someone.</p></div>
         </div>
             
         
@@ -257,7 +429,109 @@
 
 <p>This feature is a really simple syntax improvement for generics. With that feature, you can avoid to write twice the generics type in a generics declaration. A little  example :</p>
 <p>Instead of writing this :</p>
-<div class="code"><pre><span class="err"></span></pre></div></div>
+<div class="code"><pre><span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Collection</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;&gt;</span> <span class="n">map</span> <span class="o">=</span> <span class="k">new</span> <span class="n">LinkedHashMap</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Collection</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;&gt;();</span>
+</pre></div>
+
+
+<p>You can now write that :</p>
+<div class="code"><pre><span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Collection</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;&gt;</span> <span class="n">map</span> <span class="o">=</span> <span class="k">new</span> <span class="n">LinkedHashMap</span><span class="o">&lt;&gt;();</span>
+</pre></div>
+
+
+<p>That's really practical, but not essential.</p>
+<h4>Simplified Varargs Method Invocation</h4>
+
+<p>This improvement is not a new functionality, but only a move of a warning. Like you must know, we cannot create arrray of generics type because the type verification is not made at the same time. But with the Ellipse of Java 5, you can made that type of array implicitely and the compiler generate warning at each invocation of that kind of method, so the warning has moved to the method declaration to have less warnings.</p>
+<h4>Integers declaration</h4>
+
+<p>You'll can declare integers using binary values :</p>
+<div class="code"><pre><span class="kt">int</span> <span class="n">binary</span> <span class="o">=</span> <span class="mi">0</span><span class="n">b11001001001</span><span class="o">;</span>
+</pre></div>
+
+
+<p>and you can use _ (underscores) in the declaration :</p>
+<div class="code"><pre><span class="kt">double</span> <span class="n">amount</span> <span class="o">=</span> <span class="mi">1</span><span class="n">_999_888_777</span><span class="o">.</span><span class="mi">25</span><span class="o">;</span>
+<span class="kt">int</span> <span class="n">color</span> <span class="o">=</span> <span class="mh">0xdd</span><span class="n">_dd_dd</span><span class="o">;</span>
+<span class="kt">int</span> <span class="n">binary</span> <span class="o">=</span> <span class="mi">0</span><span class="n">b110_0100_1001</span><span class="o">;</span>
+</pre></div>
+
+
+<p>That's allow to make more verbose code, but it's only sugar.</p>
+<h4>Collections manipulations and declaration</h4>
+
+<p>Another improvements to code verbosity, is the support of collections in the language. You'll have code facility to access and edit indexed collections like list and maps and to declare easily collections.</p>
+<p>First, you can access to an element using the same syntax as the array :</p>
+<div class="code"><pre><span class="n">List</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">list</span> <span class="o">=</span> <span class="o">...;</span>
+<span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;</span> <span class="n">map</span> <span class="o">=</span> <span class="o">...;</span>
+<span class="n">String</span> <span class="n">firstValue</span> <span class="o">=</span> <span class="n">list</span><span class="o">[</span><span class="mi">0</span><span class="o">];</span>
+<span class="n">map</span><span class="o">[</span><span class="s">"Test"</span><span class="o">]</span> <span class="o">=</span> <span class="n">firstValue</span><span class="o">;</span>
+<span class="n">String</span> <span class="n">valueFromMap</span> <span class="o">=</span> <span class="n">map</span><span class="o">[</span><span class="s">"Test"</span><span class="o">];</span>
+</pre></div>
+
+
+<p>For the maps, that works with any type of key. So if you have one of your class for key, you can directly pass it in the code like the Strings in my example.</p>
+<p>And, you can also quickly declare collections like array :</p>
+<p>Lists with [] :</p>
+<div class="code"><pre><span class="n">List</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;</span> <span class="n">numbers</span> <span class="o">=</span> <span class="o">[</span> <span class="mi">1</span><span class="o">,</span> <span class="mi">2</span><span class="o">,</span> <span class="mi">4</span><span class="o">,</span> <span class="mi">8</span><span class="o">,</span> <span class="mi">16</span><span class="o">,</span> <span class="mi">32</span><span class="o">,</span> <span class="mi">64</span><span class="o">,</span> <span class="mi">128</span> <span class="o">];</span>
+</pre></div>
+
+
+<p>Sets with {}</p>
+<div class="code"><pre><span class="n">Set</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;</span> <span class="n">numbers</span> <span class="o">=</span> <span class="o">{</span> <span class="mi">256</span><span class="o">,</span> <span class="mi">512</span><span class="o">,</span> <span class="mi">1024</span><span class="o">,</span> <span class="mi">2048</span><span class="o">,</span> <span class="mi">4096</span> <span class="o">};</span>
+</pre></div>
+
+
+<p>And Maps with {} and : to split value and key :</p>
+<div class="code"><pre><span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;</span> <span class="n">translations</span> <span class="o">=</span> <span class="o">{</span>
+  <span class="s">"Hi"</span> <span class="o">:</span> <span class="s">"Bonjour"</span><span class="o">,</span>
+  <span class="s">"Goodbye"</span> <span class="o">:</span> <span class="s">"Au revoir"</span><span class="o">,</span>
+  <span class="s">"Thanks"</span> <span class="o">:</span> <span class="s">"Merci"</span>
+<span class="o">}</span> 
+</pre></div>
+
+
+<p>All that created collections are immutables.</p>
+<h4>Strings switch</h4>
+
+<p>A really good feature : Switch with Strings values. You can now do that kind of switch : ¨</p>
+<div class="code"><pre><span class="n">String</span> <span class="n">value</span> <span class="o">=</span> <span class="s">""</span><span class="o">;</span>
+
+<span class="k">switch</span> <span class="o">(</span><span class="n">language</span><span class="o">)</span> <span class="o">{</span>
+  <span class="k">case</span> <span class="s">"fr"</span><span class="o">:</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="s">"Bonjour"</span><span class="o">;</span>
+    <span class="k">break</span><span class="o">;</span>
+  <span class="k">case</span> <span class="s">"en"</span><span class="o">:</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="s">"Hi"</span><span class="o">;</span>
+    <span class="k">break</span><span class="o">;</span>
+  <span class="k">case</span> <span class="s">"de"</span><span class="o">:</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="s">"Guten tag"</span><span class="o">;</span>
+    <span class="k">break</span><span class="o">;</span>
+  <span class="k">default</span><span class="o">:</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="s">"Hello"</span><span class="o">;</span>
+    <span class="k">break</span><span class="o">;</span>
+<span class="o">}</span>
+</pre></div>
+
+
+<p>I thinks, it's really great. With that, we can delete a lot of ugly list of if/else if code.</p>
+<h4>Automatic Resource Management (ARM)</h4>
+
+<p>Another great feature, you can automatically close the resources using a new try clause :</p>
+<div class="code"><pre><span class="kd">public</span> <span class="kt">void</span> <span class="nf">write</span><span class="o">(</span><span class="n">URL</span> <span class="n">url</span><span class="o">,</span> <span class="n">File</span> <span class="n">file</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IOException</span> <span class="o">{</span>
+  <span class="k">try</span> <span class="o">(</span> <span class="n">FileOutputStream</span> <span class="n">fos</span> <span class="o">=</span> <span class="k">new</span> <span class="n">FileOutputStream</span><span class="o">(</span><span class="n">file</span><span class="o">);</span> <span class="n">InputStream</span> <span class="n">is</span> <span class="o">=</span> <span class="n">url</span><span class="o">.</span><span class="na">openStream</span><span class="o">()</span> <span class="o">)</span> <span class="o">{</span>
+    <span class="kt">byte</span><span class="o">[]</span> <span class="n">buf</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">byte</span><span class="o">[</span><span class="mi">2048</span><span class="o">];</span>
+    <span class="kt">int</span> <span class="n">len</span><span class="o">;</span>
+    <span class="k">while</span> <span class="o">((</span><span class="n">len</span> <span class="o">=</span> <span class="n">is</span><span class="o">.</span><span class="na">read</span><span class="o">(</span><span class="n">buf</span><span class="o">))</span> <span class="o">&amp;</span><span class="n">amp</span><span class="o">;</span><span class="n">gt</span><span class="o">;</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">fos</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="n">buf</span><span class="o">,</span> <span class="mi">0</span><span class="o">,</span> <span class="n">len</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+
+
+<p>In that code, the FileOutputStream and the InputStream will automatically be closed after the try, making a cleared code and you cannot forgot a resource with that.</p>
+<p>And last, the modifications to support the JSR 292 directly in the language. I've already described that features in other post : <a title="Java 7 : More dynamics" href="http://www.baptiste-wicht.com/2010/04/java-7-more-dynamics/" target="_self">Java 7 : More Dynamics</a></p>
+<p>That's all for these new language enhancements from the Project Coin.</p>
+<p>For me, i like the new ARM and the Strings Switch, but i think this is simple enhancements, they were others proposals in the Project Coin i found better, like the "Improved Exception Handling for Java", "Improved Wildcard Syntax for Java" or "Elvis and Other Null-Safe Operators", but this a good start.</p></div>
         </div>
             
         
@@ -505,14 +779,12 @@
 <div class="code"><pre><span class="n">RecursiveAction</span> <span class="n">mainTask</span> <span class="o">=</span> <span class="k">new</span> <span class="n">IncrementTask</span> <span class="o">(</span><span class="n">anArray</span><span class="o">,</span> <span class="mi">0</span><span class="o">,</span> <span class="n">anArray</span><span class="o">.</span><span class="na">length</span><span class="o">);</span>
 <span class="n">ForkJoinPool</span> <span class="n">mainPool</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ForkJoinPool</span><span class="o">();</span>
 <span class="n">mainPool</span><span class="o">.</span><span class="na">invoke</span><span class="o">(</span><span class="n">mainTask</span>
-<span class="err">```</span><span class="n">e</span><span class="o">&gt;</span>
+</pre></div>
 
-<span class="n">All</span> <span class="n">the</span> <span class="n">elements</span> <span class="n">of</span> <span class="n">the</span> <span class="n">array</span> <span class="n">will</span> <span class="n">be</span> <span class="n">incremented</span><span class="o">.</span> <span class="n">Depending</span> <span class="n">on</span> <span class="n">the</span> <span class="n">size</span> <span class="n">of</span> <span class="n">the</span> <span class="n">array</span> <span class="n">and</span> <span class="n">of</span> <span class="n">the</span> <span class="n">threshold</span><span class="o">,</span> <span class="n">the</span> <span class="n">problem</span> <span class="n">will</span> <span class="n">be</span> <span class="n">divided</span> <span class="n">in</span> <span class="n">several</span> <span class="n">sub</span> <span class="n">problems</span> <span class="n">and</span> <span class="n">all</span> <span class="n">these</span> <span class="n">task</span> <span class="n">will</span> <span class="n">be</span> <span class="n">managed</span> <span class="n">by</span> <span class="n">the</span> <span class="n">ForkJoinPool</span><span class="o">.</span>
 
-<span class="n">You</span> <span class="n">can</span> <span class="n">also</span> <span class="n">make</span> <span class="n">action</span> <span class="n">that</span> <span class="k">return</span> <span class="n">something</span><span class="o">.</span> <span class="n">By</span> <span class="n">example</span><span class="o">,</span> <span class="n">we</span> <span class="n">can</span> <span class="n">compute</span> <span class="n">the</span> <span class="n">sum</span> <span class="n">of</span> <span class="n">all</span> <span class="n">the</span> <span class="n">elements</span> <span class="n">of</span> <span class="n">an</span> <span class="n">array</span> <span class="o">:</span>
-
-<span class="err">```</span><span class="n">java</span>
-<span class="kd">public</span> <span class="kd">class</span> <span class="nc">SumTask</span> <span class="kd">extends</span> <span class="n">RecursiveTask</span> <span class="o">{</span>
+<p>All the elements of the array will be incremented. Depending on the size of the array and of the threshold, the problem will be divided in several sub problems and all these task will be managed by the ForkJoinPool.</p>
+<p>You can also make action that return something. By example, we can compute the sum of all the elements of an array :</p>
+<div class="code"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">SumTask</span> <span class="kd">extends</span> <span class="n">RecursiveTask</span> <span class="o">{</span>
    <span class="kd">private</span> <span class="kd">final</span> <span class="kt">long</span><span class="o">[]</span> <span class="n">array</span><span class="o">;</span>
    <span class="kd">private</span> <span class="kd">final</span> <span class="kt">int</span> <span class="n">low</span><span class="o">;</span>
    <span class="kd">private</span> <span class="kd">final</span> <span class="kt">int</span> <span class="n">high</span><span class="o">;</span>

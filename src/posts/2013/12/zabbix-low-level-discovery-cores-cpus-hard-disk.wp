@@ -1,4 +1,4 @@
-<html><body><a href="/wp-content/uploads/2013/12/Screenshot-from-2013-12-29-165743-e1388332859892.png"><img src="/wp-content/uploads/2013/12/Screenshot-from-2013-12-29-165743-e1388332859892-300x151.png" alt="Zabbix SSD Status, configured with Low Level Discovery" width="300" height="151" class="size-medium wp-image-2644"></a> Zabbix SSD Status, configured with Low Level Discovery
+<a href="/wp-content/uploads/2013/12/Screenshot-from-2013-12-29-165743-e1388332859892.png"><img src="/wp-content/uploads/2013/12/Screenshot-from-2013-12-29-165743-e1388332859892-300x151.png" alt="Zabbix SSD Status, configured with Low Level Discovery" width="300" height="151" class="size-medium wp-image-2644"></a>
 
 At home, I'm using Zabbix to monitor my servers, it has plenty of interesting features and can be extended a lot by using User Parameter.
 
@@ -22,10 +22,8 @@ Another very interesting thing about this feature is that you can extend it by d
 
 The most important part of custom discovery is to create a script on the monitored machines that can "discover" something. It can be any executable, the only thing important is that it outputs data in the correct format. I have to say that the format is quite ugly, but that is probably not very important ;) Here is the output of my hard disk discovery script:
 
-[javascript]
-
+```javascript
 {
-
 "data":[
     {"{#DISKNAME}":"/dev/sda","{#SHORTDISKNAME}":"sda"},
     {"{#DISKNAME}":"/dev/sdb","{#SHORTDISKNAME}":"sdb"},
@@ -35,22 +33,20 @@ The most important part of custom discovery is to create a script on the monitor
     {"{#DISKNAME}":"/dev/sdf","{#SHORTDISKNAME}":"sdf"},
     {"{#DISKNAME}":"/dev/sdg","{#SHORTDISKNAME}":"sdg"},
 ]
-
-}[/javascript]
+}
+```
 
 You can have as many keys for each discovered items, but the format must remains the same. In the item, trigger and graph prototypes, you will then use {#DISKNAME} or {#SHORTDISKNAME} to use the discovered values. 
 
 Once you have created your scripts, you have to register it in the zabbix configuration as a user parameter. For instance, if you use the zabbix daemon, you need these lines in /etc/zabbix/zabbix_agentd.conf: 
 
-<code>EnableRemoteCommands=1
-
+```bash
+EnableRemoteCommands=1
 ...
-
 UnsafeUserParameters=1
-
 ...
-
-UserParameter=discovery.hard_disk,/scripts/discover_hdd.sh</code>
+UserParameter=discovery.hard_disk,/scripts/discover_hdd.sh
+```
 
 Now, when you will create the discovery rule, you can use discovery.hard_disk as the key. 
 
@@ -70,23 +66,18 @@ In the next section, I'll show how I have created discovery rules for Hard Disk,
 
 The discovery script is really simple: 
 
-[bash]#!/bin/bash
-
+```bash
+#!/bin/bash
 disks=`ls -l /dev/sd* | awk '{print $NF}' | sed 's/[0-9]//g' | uniq`
-
 echo "{"
-
 echo "\"data\":["
-
 for disk in $disks
-
 do
     echo "    {\"{#DISKNAME}\":\"$disk\",\"{#SHORTDISKNAME}\":\"${disk:5}\"},"
 done
-
 echo "]"
-
-echo "}"[/bash]
+echo "}"
+```
 
 It just lists all the /dev/sdX devices, remove the partition number and remove the duplicates, to have only the hard disk at the end. 
 
@@ -118,25 +109,19 @@ I've just used the threshold reported by smartctl, they may be different from on
 
 Here is the script to discover CPUs: 
 
-[bash]#!/bin/bash
-
+```bash
+#!/bin/bash
 cpus=`lscpu | grep "CPU(s):" | head -1 | awk '{print $NF}'`
-
 cpus=$(($cpus-1))
-
 echo "{"
-
 echo "\"data\":["
-
 for cpu in $(seq 0 $cpus)
-
 do
     echo "    {\"{#CPUID}\":\"$cpu\"},"
 done
-
 echo "]"
-
-echo "}"[/bash]
+echo "}"
+```
 
 It just uses lscpu and parses its output to find the number of CPU and then create an entry for each CPUs. 
 
@@ -148,25 +133,19 @@ I haven't created any trigger here.
 
 Just before, we discovered the CPUs, but it is also interesting to discover the cores. If you don't have Hyperthreading, the result will be the same. It is especially interesting to get the temperature of each core. Here is the script: 
 
-[bash]#!/bin/bash
-
+```bash
+#!/bin/bash
 cores=`lscpu | grep "Core(s) per socket:" | awk '{print $NF}'`
-
 cores=$(($cores-1))
-
 echo "{"
-
 echo "\"data\":["
-
 for core in $(seq 0 $cores)
-
 do
 	echo "    {\"{#COREID}\":\"$core\"},"
 done
-
 echo "]"
-
-echo "}"[/bash]
+echo "}"
+```
 
 It works in the same way as the previous script. 
 
@@ -176,45 +155,31 @@ I've only created one item prototype, to get the temperature of each core with l
 
 Here are all the UserParameter necessary to make the discovery and the items works: 
 
-<code>### System Temperature ###
-
+```bash
+### System Temperature ###
 UserParameter=system.temperature.core[*],sensors|grep Core\ $1 |cut -d "(" -f 1|cut -d "+" -f 2|cut -c 1-4
-
 ### DISK I/O###
-
 UserParameter=custom.vfs.dev.read.ops[*],cat /proc/diskstats | egrep $1 | head -1 | awk '{print $$4}'
-
 UserParameter=custom.vfs.dev.read.ms[*],cat /proc/diskstats | egrep $1 | head -1 | awk '{print $$7}'
-
 UserParameter=custom.vfs.dev.write.ops[*],cat /proc/diskstats | egrep $1 | head -1 | awk '{print $$8}'
-
 UserParameter=custom.vfs.dev.write.ms[*],cat /proc/diskstats | egrep $1 | head -1 | awk '{print $$11}'
-
 UserParameter=custom.vfs.dev.io.active[*],cat /proc/diskstats | egrep $1 | head -1 | awk '{print $$12}'
-
 UserParameter=custom.vfs.dev.io.ms[*],cat /proc/diskstats | egrep $1 | head -1 y| awk '{print $$13}'
-
 UserParameter=custom.vfs.dev.read.sectors[*],cat /proc/diskstats | egrep $1 | head -1 | awk '{print $$6}'
-
 UserParameter=custom.vfs.dev.write.sectors[*],cat /proc/diskstats | egrep $1 | head -1 | awk '{print $$10}'
-
 UserParameter=system.smartd_raw[*],sudo smartctl -A $1| egrep $2| tail -1| xargs| awk '{print $$10}'
-
 UserParameter=system.smartd_value[*],sudo smartctl -A $1| egrep $2| tail -1| xargs| awk '{print $$4}'
-
 ### Discovery ###
-
 UserParameter=discovery.hard_disk,/scripts/discover_hdd.sh
-
 UserParameter=discovery.cpus,/scripts/discover_cpus.sh
-
-UserParameter=discovery.cores,/scripts/discover_cores.sh</code>
+UserParameter=discovery.cores,/scripts/discover_cores.sh
+```
 
 (it must be set in zabbix_agentd.conf)
 
 You also need to give zabbix the right to use sudo with smartctl. For that, you have to edit your /etc/sudoers file and add this line: 
 
-<code>ALL ALL=(ALL)NOPASSWD: /usr/sbin/smartctl</code>
+<pre>ALL ALL=(ALL)NOPASSWD: /usr/sbin/smartctl</pre>
 
 <h3>Conclusion and Download</h3>
 
@@ -224,4 +189,4 @@ LLD eases a lot the creation of multiple items discovery for hosts with differen
 
 All the scripts and the template export file are available in the <a href="https://github.com/wichtounet/zabbix-lld" title="zabbix-lld repository">zabbix-lld</a> repository. For everything to work, you need the lscpu, lm_sensors and smartmontools utilities. 
 
-If you have any question or if something doesn't work (I don't offer any guarantee, but it should work on most recent Linux machines), don't hesitate to comment on this post. </body></html>
+If you have any question or if something doesn't work (I don't offer any guarantee, but it should work on most recent Linux machines), don't hesitate to comment on this post.

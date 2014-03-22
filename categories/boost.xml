@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<rss xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/" version="2.0"><channel><title>@Blog("Baptiste Wicht") (Boost)</title><link>http://wichtounet.github.io/</link><description></description><atom:link rel="self" href="http://wichtounet.github.io/categories/boost.xml" type="application/rss+xml"></atom:link><language>en</language><lastBuildDate>Fri, 21 Mar 2014 22:12:42 GMT</lastBuildDate><generator>Nikola &lt;http://getnikola.com/&gt;</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>Improving eddic Boost Spirit parser performances</title><link>http://wichtounet.github.io/posts/2013/06/improving-eddic-boost-spirit-parser-performances.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;After the last changes on the data-flow framework, the parsing pass of the eddic compiler became the slowest one. I was sure there was some area of optimizations, so I decided to improve its performances.&lt;/p&gt;
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>@Blog("Baptiste Wicht") (Boost)</title><link>http://wichtounet.github.io/</link><description></description><atom:link href="http://wichtounet.github.io/categories/boost.xml" rel="self" type="application/rss+xml"></atom:link><language>en</language><lastBuildDate>Sat, 22 Mar 2014 23:08:35 GMT</lastBuildDate><generator>Nikola &lt;http://getnikola.com/&gt;</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>Improving eddic Boost Spirit parser performances</title><link>http://wichtounet.github.io/posts/2013/06/improving-eddic-boost-spirit-parser-performances.html</link><description>&lt;div&gt;&lt;p&gt;After the last changes on the data-flow framework, the parsing pass of the eddic compiler became the slowest one. I was sure there was some area of optimizations, so I decided to improve its performances.&lt;/p&gt;
 &lt;p&gt;In this post, I will present the different techniques I applied and their results.&lt;/p&gt;
-&lt;p&gt;&lt;/p&gt;&lt;h4&gt;Static grammar&lt;/h4&gt;
+&lt;h4&gt;Static grammar&lt;/h4&gt;
+
 &lt;p&gt;The first optimization that I tried was to make the grammar static, meaning that we can declare it static and it will be constructed only once and will be allocated on the data segment.It is indeed heavy to build the lexer especially but also the grammar. I would like to thank &lt;a title="sehe on github" href="https://github.com/sehe"&gt;sehe&lt;/a&gt; for this optimization, he found it after I posted a question on Stackoverflow.&lt;/p&gt;
 &lt;p&gt;The lexer was very easy to make static (only add static keyword :) ), but the parser was a bit more complicated because it needs the lexer iterator to get the current position in the file. This problem has been resolved by saving the iterator into the qi::locals of the rules.&lt;/p&gt;
 &lt;p&gt;The result of this optimization are amazing. It saved 33% of the time.&lt;/p&gt;
@@ -245,32 +246,34 @@
 &lt;/ul&gt;
 
 &lt;p&gt;These files must be placed next to your CMakeLists.txt file. Then, you have to modify your CMakeLists.txt file to enable testing and enable the new module. For example, if you have two test suites and five tests in each:  &lt;/p&gt;
-&lt;pre&gt;INCLUDE(CTest)
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="nb"&gt;INCLUDE&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;CTest&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
 
-ENABLE_TESTING()
+&lt;span class="nb"&gt;ENABLE_TESTING&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
 
-file(
-    GLOB_RECURSE
-    test_files
-    test/*
-)
+&lt;span class="nb"&gt;file&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;
+    &lt;span class="s"&gt;GLOB_RECURSE&lt;/span&gt;
+    &lt;span class="s"&gt;test_files&lt;/span&gt;
+    &lt;span class="s"&gt;test/*&lt;/span&gt;
+&lt;span class="p"&gt;)&lt;/span&gt;
 
-include(BoostTestTargets.cmake)
+&lt;span class="nb"&gt;include&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;BoostTestTargets.cmake&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
 
-add_boost_test(eddic_boost_test
-    SOURCES ${test_files}
-    TESTS 
-    TestSuiteA/test_1
-    TestSuiteA/test_2
-    TestSuiteA/test_3
-    TestSuiteA/test_4
-    TestSuiteA/test_5
-    TestSuiteB/test_1
-    TestSuiteB/test_2
-    TestSuiteB/test_3
-    TestSuiteB/test_4
-    TestSuiteB/test_5
-    )&lt;/pre&gt;
+&lt;span class="nb"&gt;add_boost_test&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;eddic_boost_test&lt;/span&gt;
+    &lt;span class="s"&gt;SOURCES&lt;/span&gt; &lt;span class="o"&gt;${&lt;/span&gt;&lt;span class="nv"&gt;test_files&lt;/span&gt;&lt;span class="o"&gt;}&lt;/span&gt;
+    &lt;span class="s"&gt;TESTS&lt;/span&gt; 
+    &lt;span class="s"&gt;TestSuiteA/test_1&lt;/span&gt;
+    &lt;span class="s"&gt;TestSuiteA/test_2&lt;/span&gt;
+    &lt;span class="s"&gt;TestSuiteA/test_3&lt;/span&gt;
+    &lt;span class="s"&gt;TestSuiteA/test_4&lt;/span&gt;
+    &lt;span class="s"&gt;TestSuiteA/test_5&lt;/span&gt;
+    &lt;span class="s"&gt;TestSuiteB/test_1&lt;/span&gt;
+    &lt;span class="s"&gt;TestSuiteB/test_2&lt;/span&gt;
+    &lt;span class="s"&gt;TestSuiteB/test_3&lt;/span&gt;
+    &lt;span class="s"&gt;TestSuiteB/test_4&lt;/span&gt;
+    &lt;span class="s"&gt;TestSuiteB/test_5&lt;/span&gt;
+    &lt;span class="p"&gt;)&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
 
 &lt;p&gt;All the test files are searched in the test directory and used in the SOURCES variable. Then all the tests are declared. &lt;/p&gt;
 &lt;p&gt;The main test file has to include a specific header file:&lt;/p&gt;
@@ -291,7 +294,8 @@ add_boost_test(eddic_boost_test
 &lt;h3&gt;Run tests in parallel&lt;/h3&gt;
 
 &lt;p&gt;You can then run your tests in parallel with ctest. For instance, with 9 threads: &lt;/p&gt;
-&lt;p&gt;[bash]ctest -j 8[/bash]&lt;/p&gt;
+&lt;pre&gt;ctest -j 8&lt;/pre&gt;
+
 &lt;p&gt;In my case, my tests are completed 6x faster ! This is very valuable when you often run your tests. &lt;/p&gt;
 &lt;p&gt;For more information on how to integrate your Boost Test Library tests with CMake, you can consult the &lt;a href="https://github.com/rpavlik/cmake-modules/" title="cmake-modules Github repository"&gt;The cmake-modules repository&lt;/a&gt;&lt;/p&gt;&lt;/div&gt;</description><category>Boost</category><category>C++</category><category>cmake</category><category>Concurrency</category><category>EDDI</category><category>Performances</category><category>Tests</category><guid>http://wichtounet.github.io/posts/2012/10/run-boost-test-parallel-cmake.html</guid><pubDate>Mon, 15 Oct 2012 08:57:43 GMT</pubDate></item><item><title>Manage command-line options with Boost Program Options</title><link>http://wichtounet.github.io/posts/2012/07/manage-command-line-boost-program-options.html</link><description>&lt;div&gt;&lt;p&gt;In command-line program, we often faces problems with the management of command-line options. When you have a few options, it's not a problem. But when writing complex programs with tens of options (or hundreds), it starts to be too complicated to manage by hand. That's where &lt;strong&gt;Boost Program Options&lt;/strong&gt; enters the game!&lt;/p&gt;
 &lt;p&gt;Boost Program Options is one of the Boost C++ Libraries. It is a very powerful library to handle command-line options. You define all the options of the program and then Boost Program Options takes care of all. It parses the command line, handles errors, gets values and even displays help. It is not a perfect library. But it is very complete that will answer most of the common needs. &lt;/p&gt;
@@ -475,9 +479,9 @@ add_boost_test(eddic_boost_test
 
 &lt;p&gt;And you use it in your code using a shared_ptr : &lt;/p&gt;
 &lt;div class="code"&gt;&lt;pre&gt;&lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;test&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
-    &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;shared_ptr&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;X&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;X&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+    &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;shared_ptr&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;X&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;X&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
 
-    &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;cout&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="o"&gt;-&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;name&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;endl&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;cout&lt;/span&gt; &lt;span class="o"&gt;&amp;lt;&amp;lt;&lt;/span&gt; &lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="o"&gt;-&amp;gt;&lt;/span&gt;&lt;span class="n"&gt;name&lt;/span&gt; &lt;span class="o"&gt;&amp;lt;&amp;lt;&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;endl&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
 &lt;span class="p"&gt;}&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
@@ -495,11 +499,11 @@ add_boost_test(eddic_boost_test
 
 &lt;p&gt;And you have to indicate to the intrusive_ptr where the reference counter can be found for this class : &lt;/p&gt;
 &lt;div class="code"&gt;&lt;pre&gt;&lt;span class="kr"&gt;inline&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;intrusive_ptr_add_ref&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;X&lt;/span&gt;&lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
-    &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="o"&gt;-&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;references&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="o"&gt;-&amp;gt;&lt;/span&gt;&lt;span class="n"&gt;references&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
 &lt;span class="p"&gt;}&lt;/span&gt;
 
 &lt;span class="kr"&gt;inline&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;intrusive_ptr_release&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;X&lt;/span&gt;&lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
-    &lt;span class="k"&gt;if&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="o"&gt;--&lt;/span&gt;&lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="o"&gt;-&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;references&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; 
+    &lt;span class="k"&gt;if&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="o"&gt;--&lt;/span&gt;&lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="o"&gt;-&amp;gt;&lt;/span&gt;&lt;span class="n"&gt;references&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; 
         &lt;span class="k"&gt;delete&lt;/span&gt; &lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
 &lt;span class="p"&gt;}&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
@@ -507,22 +511,22 @@ add_boost_test(eddic_boost_test
 
 &lt;p&gt;And finally you can use the intrusive_ptr to replace your shared_ptr : &lt;/p&gt;
 &lt;div class="code"&gt;&lt;pre&gt;&lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;test&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
-    &lt;span class="n"&gt;boost&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;intrusive_ptr&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;X&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;X&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+    &lt;span class="n"&gt;boost&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;intrusive_ptr&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;X&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;X&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
 
-    &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;cout&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="o"&gt;-&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;name&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;endl&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;cout&lt;/span&gt; &lt;span class="o"&gt;&amp;lt;&amp;lt;&lt;/span&gt; &lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="o"&gt;-&amp;gt;&lt;/span&gt;&lt;span class="n"&gt;name&lt;/span&gt; &lt;span class="o"&gt;&amp;lt;&amp;lt;&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;endl&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
 &lt;span class="p"&gt;}&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;The smart pointer itself can be used exactly the same way as a shared_ptr. If you have several classes that are managed using an intrusive_ptr, you can use a function template to tell Boost that all the reference counter are at the same place : &lt;/p&gt;
-&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="k"&gt;template&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="k"&gt;typename&lt;/span&gt; &lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
-&lt;span class="kr"&gt;inline&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;intrusive_ptr_add_ref&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="n"&gt;expr&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
-    &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;expr&lt;/span&gt;&lt;span class="o"&gt;-&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;references&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="k"&gt;template&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="k"&gt;typename&lt;/span&gt; &lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;span class="kr"&gt;inline&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;intrusive_ptr_add_ref&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="n"&gt;expr&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;expr&lt;/span&gt;&lt;span class="o"&gt;-&amp;gt;&lt;/span&gt;&lt;span class="n"&gt;references&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
 &lt;span class="p"&gt;}&lt;/span&gt;
 
-&lt;span class="k"&gt;template&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="k"&gt;typename&lt;/span&gt; &lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
-&lt;span class="kr"&gt;inline&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;intrusive_ptr_release&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="n"&gt;expr&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
-    &lt;span class="k"&gt;if&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="o"&gt;--&lt;/span&gt;&lt;span class="n"&gt;expr&lt;/span&gt;&lt;span class="o"&gt;-&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;gt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;references&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="k"&gt;template&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="k"&gt;typename&lt;/span&gt; &lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;span class="kr"&gt;inline&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;intrusive_ptr_release&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="n"&gt;expr&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="k"&gt;if&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="o"&gt;--&lt;/span&gt;&lt;span class="n"&gt;expr&lt;/span&gt;&lt;span class="o"&gt;-&amp;gt;&lt;/span&gt;&lt;span class="n"&gt;references&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
         &lt;span class="k"&gt;delete&lt;/span&gt; &lt;span class="n"&gt;expr&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
 &lt;span class="p"&gt;}&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;

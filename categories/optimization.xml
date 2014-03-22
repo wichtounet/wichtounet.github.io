@@ -1,37 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
-<rss xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/" version="2.0"><channel><title>@Blog("Baptiste Wicht") (Optimization)</title><link>http://wichtounet.github.io/</link><description></description><atom:link rel="self" href="http://wichtounet.github.io/categories/optimization.xml" type="application/rss+xml"></atom:link><language>en</language><lastBuildDate>Fri, 21 Mar 2014 22:12:42 GMT</lastBuildDate><generator>Nikola &lt;http://getnikola.com/&gt;</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>eddic 1.2.3 - Better data-flow analysis</title><link>http://wichtounet.github.io/posts/2013/03/eddic-1-2-3-better-data-flow-analysis.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;I finally finished the version 1.2.3 of eddic. I have been quite busy finishing my master thesis in february and then taking some vacations in United States, so this version came later than I wanted. &lt;/p&gt;
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>@Blog("Baptiste Wicht") (Optimization)</title><link>http://wichtounet.github.io/</link><description></description><atom:link href="http://wichtounet.github.io/categories/optimization.xml" rel="self" type="application/rss+xml"></atom:link><language>en</language><lastBuildDate>Sat, 22 Mar 2014 23:08:38 GMT</lastBuildDate><generator>Nikola &lt;http://getnikola.com/&gt;</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>eddic 1.2.3 - Better data-flow analysis</title><link>http://wichtounet.github.io/posts/2013/03/eddic-1-2-3-better-data-flow-analysis.html</link><description>&lt;div&gt;&lt;p&gt;I finally finished the version 1.2.3 of eddic. I have been quite busy finishing my master thesis in february and then taking some vacations in United States, so this version came later than I wanted. &lt;/p&gt;
 &lt;p&gt;The main change is about the speed of the data-flow optimizations. I refactored a lot the data-flow to make it much faster. Some test cases are up to 10 times faster :)&lt;/p&gt;
 &lt;p&gt;There are still some work to do for speed of optimizations, but it is much better now. Dead Code Elimination and Constant Propagation still have to be made faster, but now the main bottleneck. In the next version of eddic, the parsing performance will be improved. &lt;/p&gt;
 &lt;p&gt;Inlining performance has also been greatly improved. The functions are considered in topological order of the call graph. This makes it much faster and moreover the resulting code is more efficient too. &lt;/p&gt;
 &lt;p&gt;There are also some improvements of the language. char and bool types now takes only one byte each. Copy constructors for structures containing field of structure type are now automatically generated. The grammar has been enhanced to support postfix operations in for loops. &lt;/p&gt;
 &lt;p&gt;Other improvements have been made to the optimization engine. A new optimization has been implemented: Loop Unswitching. This optimization transforms a code like that: &lt;/p&gt;
-&lt;p&gt;[cpp]for(int i = 0; i &amp;lt; X; ++i){&lt;/p&gt;
-&lt;p&gt;if(a){
-   //Something
-} else {
-   //Something else
-}&lt;/p&gt;
-&lt;p&gt;}[/cpp]&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;X&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="k"&gt;if&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+        &lt;span class="c1"&gt;//Something&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="k"&gt;else&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="c1"&gt;//Something else&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
 &lt;p&gt;In some code like that: &lt;/p&gt;
-&lt;p&gt;[cpp]if(a){
-   for(int i = 0; i &amp;lt; X; ++i){
-      //Something
-   }
-} else {
-   for(int i = 0; i &amp;lt; X; ++i){
-      //Something else
-   }
-}[/cpp]&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="k"&gt;if&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;X&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+        &lt;span class="c1"&gt;//Something&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="k"&gt;else&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;lt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;X&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+        &lt;span class="c1"&gt;//Something else&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
 &lt;p&gt;when a doesn't depend on the loop body. The body of the loops is much faster in the second version. &lt;/p&gt;
 &lt;p&gt;The induction variable analysis is now able to handle loops with induction variable divided in each iteration. With that new feature, the call: &lt;/p&gt;
-&lt;p&gt;[cpp]print(123);[/cpp]&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;123&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
 &lt;p&gt;is reduced to&lt;/p&gt;
-&lt;p&gt;[cpp]print('1');&lt;/p&gt;
-&lt;p&gt;print('2');&lt;/p&gt;
-&lt;p&gt;print('3');[/cpp]&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="sc"&gt;'1'&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="sc"&gt;'2'&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="sc"&gt;'3'&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
 &lt;p&gt;Another small optimization is that variables contributing only to themselves are now correctly identified as dead. &lt;/p&gt;
 &lt;p&gt;On the compiler side, the timing system has been greatly improved to contains almost all part of the compilation process. The timings for the complete compilation is available &lt;a href="https://github.com/wichtounet/eddic/wiki/Performance" title="Performance"&gt;on the wiki&lt;/a&gt;. &lt;/p&gt;
-&lt;p&gt;&lt;/p&gt;&lt;h4&gt;Future Work&lt;/h4&gt;
+&lt;h4&gt;Future Work&lt;/h4&gt;
+
 &lt;p&gt;The next version of the EDDI compiler (eddic) will be the version 1.2.4. &lt;/p&gt;
 &lt;p&gt;Performances will stil be focused for this version. The first change will be to improve the performances of the parsing. Then, I'm gonna try to improve register allocation performances by improving handling of bound registers which I believe is a bottleneck. &lt;/p&gt;
 &lt;p&gt;There are also several refactorings that I think of doing to the code. I will probably also implement new minor language features, but I still don't know what. &lt;/p&gt;
@@ -240,39 +253,53 @@
 &lt;p&gt;The chapter 19 covers more complex optimization: the inteprocedural optimizations. Several techniques for doing inteprocedural analysis are covered in details as well as several optimizations depending on these analysis, like constant propagation. This chapter is not very simple to understand and even less to apply, but it is very interesting. The chapter 20 is the last about optimizations. It covers techniques to improve the memory hierarchy usage. The first optimizations are about instruction-cache: instruction prefetching, procedure sorting and procedure splitting for example. Then, data-cache optimizations are covered. It includes data prefetching and scalar replacement of array elements in details and gives an outline for some other optimizations.&lt;/p&gt;
 &lt;p&gt;Finally, the chapter 21 studies four different compilers to see what optimizations are applied and in which order. Their intermediate forms are also studied. It is very interesting how this is done in real-world compiler.&lt;/p&gt;
 &lt;p&gt;To conclude, I think that this book is really great. It covers a lot of optimizations that can be implemented in a compiler. All the optimizations are covered in details with code samples and examples of applying the optimization on some code. However, it has to be said that this book is not easy to read and sometimes it is hard to understand exactly what means a specific optimization and in what it differs from some close technique. If you want to write an aggressive optimizer compiler or just write some optimizations for an existing one, you should consider to take a look at this book.&lt;/p&gt;
-&lt;p&gt;If you know another good book on Compilers, I will be glad to hear about it.&lt;/p&gt;&lt;/div&gt;</description><category>Books</category><category>Compilers</category><category>Optimization</category><guid>http://wichtounet.github.io/posts/2012/05/advanced-compiler-design-and-implementation-book-review.html</guid><pubDate>Tue, 15 May 2012 08:54:36 GMT</pubDate></item><item><title>EDDIC 0.8.1 : do while loop and better optimization</title><link>http://wichtounet.github.io/posts/2012/02/eddic-0-8-1-do-while-loop-and-better-optimization.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;Only three days after the 0.8 version, I finished the 0.8.1 version.&lt;/p&gt;
+&lt;p&gt;If you know another good book on Compilers, I will be glad to hear about it.&lt;/p&gt;&lt;/div&gt;</description><category>Books</category><category>Compilers</category><category>Optimization</category><guid>http://wichtounet.github.io/posts/2012/05/advanced-compiler-design-and-implementation-book-review.html</guid><pubDate>Tue, 15 May 2012 08:54:36 GMT</pubDate></item><item><title>EDDIC 0.8.1 : do while loop and better optimization</title><link>http://wichtounet.github.io/posts/2012/02/eddic-0-8-1-do-while-loop-and-better-optimization.html</link><description>&lt;div&gt;&lt;p&gt;Only three days after the 0.8 version, I finished the 0.8.1 version.&lt;/p&gt;
 &lt;p&gt;It's a minor version, so there is no big changes to the language. However, I added support for the &lt;strong&gt;do while loop&lt;/strong&gt; in the source code.&lt;/p&gt;
 &lt;p&gt;Another change is that assignment is now returning a value. That allows you to make some code like this one:&lt;/p&gt;
-&lt;p&gt;[cpp]int a = b = 5;&lt;/p&gt;
-&lt;p&gt;b = (a = 4) + 1;[/cpp]&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;b&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;5&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="n"&gt;b&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;4&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
 &lt;p&gt;This new version includes also some new changes for the optimization engine. I implemented &lt;strong&gt;constant propagation&lt;/strong&gt; and &lt;strong&gt;copy propagation&lt;/strong&gt; for offset assignment. For example:&lt;/p&gt;
-&lt;p&gt;[cpp]a(8) = 4;&lt;/p&gt;
-&lt;p&gt;b = a(8);[/cpp]&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;8&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;4&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="n"&gt;b&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;8&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
 &lt;p&gt;becomes:&lt;/p&gt;
-&lt;p&gt;[cpp]a(8) = 4;&lt;/p&gt;
-&lt;p&gt;b = 4;[/cpp]&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;8&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;4&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="n"&gt;b&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;4&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
 &lt;p&gt;And the last change is that the concatenations that are detected to be constant after some optimization are made at compile-time by the optimization engine. This simplify a lot the generated code for source file with a lot of concatenations.&lt;/p&gt;
 &lt;p&gt;The next version (the 0.9) will introduce floating point operations and parameter passing with registers (probably only in 64 bit). It's also possible that I will try to implement a first version of global optimization.&lt;/p&gt;
-&lt;p&gt;&lt;/p&gt;&lt;h4&gt;Download&lt;/h4&gt;
+&lt;h4&gt;Download&lt;/h4&gt;
+
 &lt;p&gt;You can find the compiler sources on the Github repository: &lt;a title="eddic on Github" href="https://github.com/wichtounet/eddic"&gt;https://github.com/wichtounet/eddic&lt;/a&gt;&lt;/p&gt;
-&lt;p&gt;The exact version I refer to is the v0.8.1 available in the github tags or directly as the release branch.&lt;/p&gt;&lt;/div&gt;</description><category>EDDI</category><category>Optimization</category><guid>http://wichtounet.github.io/posts/2012/02/eddic-0-8-1-do-while-loop-and-better-optimization.html</guid><pubDate>Sun, 19 Feb 2012 07:21:50 GMT</pubDate></item><item><title>Local optimization of Three-Address-Code</title><link>http://wichtounet.github.io/posts/2012/02/local-optimization-on-three-address-code.html</link><description>&lt;div&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;Some compilers are using Three-Address-Code (TAC) as an intermediate representation. This representation is very simple to understand and write. Moreover, it's easy to run some optimization on this representation.&lt;/p&gt;
+&lt;p&gt;The exact version I refer to is the v0.8.1 available in the github tags or directly as the release branch.&lt;/p&gt;&lt;/div&gt;</description><category>EDDI</category><category>Optimization</category><guid>http://wichtounet.github.io/posts/2012/02/eddic-0-8-1-do-while-loop-and-better-optimization.html</guid><pubDate>Sun, 19 Feb 2012 07:21:50 GMT</pubDate></item><item><title>Local optimization of Three-Address-Code</title><link>http://wichtounet.github.io/posts/2012/02/local-optimization-on-three-address-code.html</link><description>&lt;div&gt;&lt;p&gt;Some compilers are using Three-Address-Code (TAC) as an intermediate representation. This representation is very simple to understand and write. Moreover, it's easy to run some optimization on this representation.&lt;/p&gt;
 &lt;p&gt;Each TAC statement has this general form : result = operand1 operator operand2&lt;/p&gt;
 &lt;p&gt;For example, here are some TAC statements:&lt;/p&gt;
-&lt;p&gt;[cpp]a = 1&lt;/p&gt;
-&lt;p&gt;x = a * 3&lt;/p&gt;
-&lt;p&gt;if x &amp;amp;gt; a goto test&lt;/p&gt;
-&lt;p&gt;param "dddd"&lt;/p&gt;
-&lt;p&gt;call print&lt;/p&gt;
-&lt;p&gt;test:&lt;/p&gt;
-&lt;p&gt;param "asdf"&lt;/p&gt;
-&lt;p&gt;call print[/cpp]&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;
+&lt;span class="n"&gt;x&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="mi"&gt;3&lt;/span&gt;
+&lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="n"&gt;x&lt;/span&gt; &lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="k"&gt;goto&lt;/span&gt; &lt;span class="n"&gt;test&lt;/span&gt;
+&lt;span class="n"&gt;param&lt;/span&gt; &lt;span class="s"&gt;"dddd"&lt;/span&gt;
+&lt;span class="n"&gt;call&lt;/span&gt; &lt;span class="n"&gt;print&lt;/span&gt;
+&lt;span class="nl"&gt;test:&lt;/span&gt;
+&lt;span class="n"&gt;param&lt;/span&gt; &lt;span class="s"&gt;"asdf"&lt;/span&gt;
+&lt;span class="n"&gt;call&lt;/span&gt; &lt;span class="n"&gt;print&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
 &lt;p&gt;In this post, we will see some of the local optimizations that can be applied on TAC. A local optimization is an optimization that is applied locally to a basic block. A basic block is a set of TAC statements that has only one entry point and one exit point. Once the first instruction of the basic block is executed, the rest of the instructions are necessarily executed exactly once. These optimizations are easy to design and implement. If you want to run global optimizations (through all the basic blocks of a function) or even Interprocedural Optimization (IPO), you will need a far more complex framework to run optimizations. I will try to write something on global optimization when I will have implemented some of them in EDDI.&lt;/p&gt;
 &lt;p&gt;The goal of optimization is of course to replace some statements with more efficient statements. &lt;/p&gt;
 &lt;!--more--&gt;
 
 &lt;p&gt;The list presented in this post is not exhaustive, this is only the optimizations that I've implemented in EDDIC, but this represent most of the local optimizations.&lt;/p&gt;
 &lt;p&gt;The first three optimization techniques can be applied independently on each statement of the program. &lt;/p&gt;
-&lt;p&gt;&lt;/p&gt;&lt;h4&gt;1. Arithmetic Identities&lt;/h4&gt;
+&lt;h4&gt;1. Arithmetic Identities&lt;/h4&gt;
+
 &lt;p&gt;The first optimization is about arithmetic identities. There are some properties in math that we can use to simplify simple TAC statement.&lt;/p&gt;
 &lt;p&gt;Here are all the identities that are simplified in EDDIC:&lt;/p&gt;
 &lt;ul&gt;
@@ -319,108 +346,136 @@
 
 &lt;p&gt;We can also use this optimization to simplify conditional jumps. For example, &lt;em&gt;if 3 &amp;gt; 2 goto B2&lt;/em&gt; can be replaced by &lt;em&gt;goto B2&lt;/em&gt;. &lt;/p&gt;
 &lt;p&gt;More than being way more efficient statements, it also enables other optimization to be performed on the TAC program. &lt;/p&gt;
-&lt;!--nextpage--&gt;
-
 &lt;p&gt;The next two optimizations cannot be made on each statement independently. They have to be made on each basic blocks. They are replacing some variables by other variables or values.  &lt;/p&gt;
 &lt;h4&gt;4. Constant propagation&lt;/h4&gt;
 
 &lt;p&gt;This optimization consists in replacing a variable by its constant value at each place we know it's constant. For example, this basic block: &lt;/p&gt;
-&lt;p&gt;[cpp]a = 2&lt;/p&gt;
-&lt;p&gt;b = c * a &lt;/p&gt;
-&lt;p&gt;a = 5&lt;/p&gt;
-&lt;p&gt;a = a + b&lt;/p&gt;
-&lt;p&gt;c = a + 2[/cpp]&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;2&lt;/span&gt;
+&lt;span class="n"&gt;b&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;c&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt; 
+&lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;5&lt;/span&gt;
+&lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;b&lt;/span&gt;
+&lt;span class="n"&gt;c&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="mi"&gt;2&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
 &lt;p&gt;can be optimized into:&lt;/p&gt;
-&lt;p&gt;[cpp]a = 2&lt;/p&gt;
-&lt;p&gt;b = c * 2&lt;/p&gt;
-&lt;p&gt;a = 5&lt;/p&gt;
-&lt;p&gt;a = 5 + b&lt;/p&gt;
-&lt;p&gt;c = a + 2[/cpp]&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;2&lt;/span&gt;
+&lt;span class="n"&gt;b&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;c&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="mi"&gt;2&lt;/span&gt;
+&lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;5&lt;/span&gt;
+&lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;5&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;b&lt;/span&gt;
+&lt;span class="n"&gt;c&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="mi"&gt;2&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
 &lt;p&gt;Two use of a variable have been replaced by its value. In this case, we cannot replace the last use of a because we do not know its value there. &lt;/p&gt;
 &lt;p&gt;This optimization can be made using a simple algorithm on each statement of a basic block: &lt;/p&gt;
 &lt;ol&gt;
     &lt;li&gt;If the statement is of the form &lt;em&gt;x = constant&lt;/em&gt;, c[x] = constant&lt;/li&gt;
     &lt;li&gt;If the statement is of the form &lt;em&gt;x = a + b, c[x] = null&lt;/em&gt;
-    &lt;/li&gt;&lt;li&gt;For each variable appearing in an operand of a statement, if c[x] is not null, replace the variable by c[x]
-&lt;/li&gt;&lt;/ol&gt;
+    &lt;/li&gt;&lt;li&gt;For each variable appearing in an operand of a statement, if c[x] is not null, replace the variable by c[x]&lt;/li&gt;
+&lt;/ol&gt;
 
 &lt;h4&gt;5. Copy propagation&lt;/h4&gt;
 
 &lt;p&gt;Copy propagation is almost the same as constant propagation. We replace a variable by the variable it refers to. For example, we can optimize: &lt;/p&gt;
-&lt;p&gt;[cpp]b = a&lt;/p&gt;
-&lt;p&gt;c = b + 2[/cpp]&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;b&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt;
+&lt;span class="n"&gt;c&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;b&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="mi"&gt;2&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
 &lt;p&gt;into:&lt;/p&gt;
-&lt;p&gt;[cpp]b = a&lt;/p&gt;
-&lt;p&gt;c = a + 2[/cpp]&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;b&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt;
+&lt;span class="n"&gt;c&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="mi"&gt;2&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
 &lt;p&gt;The algorithm is the same as the one for constant propagation but we keep track of the variables that are assigned to a variable. &lt;/p&gt;
 &lt;p&gt;These two optimizations does not create a more efficient code, but the optimized code can be optimized again. &lt;/p&gt;
-&lt;!--nextpage--&gt;
-
 &lt;h4&gt;6. Remove assign&lt;/h4&gt;
 
 &lt;p&gt;We can often find some assigns that are useless in a basic blocks. There are three types of assigns that can be removed: &lt;/p&gt;
 &lt;ol&gt;
     &lt;li&gt;&lt;em&gt;x = x&lt;/em&gt; is never useful&lt;/li&gt;
     &lt;li&gt;An assignment to a temporary variable that is not used after this assignment is not useful. A temporary is a variable created by the compiler to perform some complex expressions. They are not stored and are used only within one basic block, so its value is not useful after the basic block. 
-    &lt;/li&gt;&lt;li&gt;An assignment to x following another assignment to x, with no use of x between the two assignments, is not useful. 
-&lt;/li&gt;&lt;/ol&gt;
+    &lt;/li&gt;&lt;li&gt;An assignment to x following another assignment to x, with no use of x between the two assignments, is not useful. &lt;/li&gt;
+&lt;/ol&gt;
 
 &lt;h4&gt;7. Remove temporaries&lt;/h4&gt;
 
 &lt;p&gt;When compiling some expression, we often generate this kind of code: &lt;/p&gt;
-&lt;p&gt;[cpp]t1 = a + b&lt;/p&gt;
-&lt;p&gt;x = t1[/cpp]&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;t1&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;b&lt;/span&gt;
+&lt;span class="n"&gt;x&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;t1&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
 &lt;p&gt;We can simplify this code into: &lt;/p&gt;
-&lt;p&gt;[cpp]x = a + b[/cpp]&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;x&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;b&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
 &lt;p&gt;For that optimization, we can apply a more complex propagation. For each assignment to a temporary, we store the right side of the assignment. Then, for each assignment of a temporary to another variable (&lt;em&gt;x = t1&lt;/em&gt;) if this use of the temporary is the only one, we replace the right side by the right side of the assignment to the temporary. &lt;/p&gt;
 &lt;h4&gt;8. Remove needless jumps&lt;/h4&gt;
 
 &lt;p&gt;We can also find some jumps from basic blocks to basic that are not useful. A jump (conditional or not) to the next basic blocks is not useful. If we have two basic blocks: &lt;/p&gt;
-&lt;p&gt;[cpp]B1:&lt;/p&gt;
-&lt;p&gt;a = 2&lt;/p&gt;
-&lt;p&gt;goto B2&lt;/p&gt;
-&lt;p&gt;B2: &lt;/p&gt;
-&lt;p&gt;b = a[/cpp]&lt;/p&gt;
-&lt;p&gt;we can optimize into: &lt;/p&gt;
-&lt;p&gt;[cpp]B1:&lt;/p&gt;
-&lt;p&gt;a = 2&lt;/p&gt;
-&lt;p&gt;B2: &lt;/p&gt;
-&lt;p&gt;b = a[/cpp]&lt;/p&gt;
-&lt;p&gt;For that optimization, we have to test each jump for the distance of the target block. If the distance is only one, we can remove the jump. This works also for conditional jumps. A conditional has two exit points. If the condition is true, we jump to the specified block, otherwise we jump to the next block. If the target block is the next one, the effect is the same has a non-conditional jump and then can be removed. &lt;/p&gt;
-&lt;!--nextpage--&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="nl"&gt;B1:&lt;/span&gt;
+&lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;2&lt;/span&gt;
+&lt;span class="k"&gt;goto&lt;/span&gt; &lt;span class="n"&gt;B2&lt;/span&gt;
+&lt;span class="nl"&gt;B2:&lt;/span&gt; 
+&lt;span class="n"&gt;b&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
 
+
+&lt;p&gt;we can optimize into: &lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="nl"&gt;B1:&lt;/span&gt;
+&lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;2&lt;/span&gt;
+&lt;span class="nl"&gt;B2:&lt;/span&gt; 
+&lt;span class="n"&gt;b&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;For that optimization, we have to test each jump for the distance of the target block. If the distance is only one, we can remove the jump. This works also for conditional jumps. A conditional has two exit points. If the condition is true, we jump to the specified block, otherwise we jump to the next block. If the target block is the next one, the effect is the same has a non-conditional jump and then can be removed. &lt;/p&gt;
 &lt;p&gt;The last two optimizations are not really local, but are simple versions of global optimizations. There are not as powerful as they are not following a data-flow, but they can be greatly improve the efficiency of some function, even if they don't have the power of the equivalent global optimization.  &lt;/p&gt;
 &lt;h4&gt;9. Remove dead basic blocks&lt;/h4&gt;
 
 &lt;p&gt;Sometimes after having simplified some conditional jumps into simple jumps or even removed some of them, some basic blocks are not reachable. For example, this set of basic block:&lt;/p&gt;
-&lt;p&gt;[cpp]B1:&lt;/p&gt;
-&lt;p&gt;a = 2&lt;/p&gt;
-&lt;p&gt;goto B3&lt;/p&gt;
-&lt;p&gt;B2: &lt;/p&gt;
-&lt;p&gt;b = a&lt;/p&gt;
-&lt;p&gt;B3:&lt;/p&gt;
-&lt;p&gt;b = 33[/cpp]&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="nl"&gt;B1:&lt;/span&gt;
+&lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;2&lt;/span&gt;
+&lt;span class="k"&gt;goto&lt;/span&gt; &lt;span class="n"&gt;B3&lt;/span&gt;
+&lt;span class="nl"&gt;B2:&lt;/span&gt; 
+&lt;span class="n"&gt;b&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt;
+&lt;span class="nl"&gt;B3:&lt;/span&gt;
+&lt;span class="n"&gt;b&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;33&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
 &lt;p&gt;can be optimized into:&lt;/p&gt;
-&lt;p&gt;[cpp]B1:&lt;/p&gt;
-&lt;p&gt;a = 2&lt;/p&gt;
-&lt;p&gt;goto B3&lt;/p&gt;
-&lt;p&gt;B3:&lt;/p&gt;
-&lt;p&gt;b = 33[/cpp]&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="nl"&gt;B1:&lt;/span&gt;
+&lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;2&lt;/span&gt;
+&lt;span class="k"&gt;goto&lt;/span&gt; &lt;span class="n"&gt;B3&lt;/span&gt;
+&lt;span class="nl"&gt;B3:&lt;/span&gt;
+&lt;span class="n"&gt;b&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;33&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
 &lt;p&gt;There are no general algorithm for applying that. It depends on the instruction set that you TAC language has. &lt;/p&gt;
 &lt;h4&gt;10. Merge basic blocks&lt;/h4&gt;
 
 &lt;p&gt;Finally, another optimization, not really local again, is to merge some basic blocks. After the basic blocks have been optimized, we often have some blocks that are redundant. For example: &lt;/p&gt;
-&lt;p&gt;[cpp]B1:&lt;/p&gt;
-&lt;p&gt;a = 2&lt;/p&gt;
-&lt;p&gt;B2: &lt;/p&gt;
-&lt;p&gt;b = a[/cpp]&lt;/p&gt;
-&lt;p&gt;can be optimized into:&lt;/p&gt;
-&lt;p&gt;[cpp]B1:&lt;/p&gt;
-&lt;p&gt;a = 2&lt;/p&gt;
-&lt;p&gt;b = a[/cpp]&lt;/p&gt;
-&lt;p&gt;Of course, the second basic block that is merged with the first one must not be referred by a jump. &lt;/p&gt;
-&lt;!--nextpage--&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="nl"&gt;B1:&lt;/span&gt;
+&lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;2&lt;/span&gt;
+&lt;span class="nl"&gt;B2:&lt;/span&gt; 
+&lt;span class="n"&gt;b&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
 
+
+&lt;p&gt;can be optimized into:&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="nl"&gt;B1:&lt;/span&gt;
+&lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;2&lt;/span&gt;
+&lt;span class="n"&gt;b&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Of course, the second basic block that is merged with the first one must not be referred by a jump. &lt;/p&gt;
 &lt;h4&gt;Optimization passes&lt;/h4&gt;
 
 &lt;p&gt;When you have ten optimization techniques, you will have to find a way to make them interact correctly. As you certainly saw on the examples, some of the optimized sample can be optimized again with another optimization. &lt;/p&gt;
@@ -428,7 +483,7 @@
 &lt;h4&gt;Conclusion&lt;/h4&gt;
 
 &lt;p&gt;By using all the techniques described in this post, you will be able to have an efficient code. It won't be as good as with local optimization coupled to global optimization, but it's a good start for a simple compiler. &lt;/p&gt;
-&lt;p&gt;I hope I will have the time to implement some global optimization techniques into eddic and then write about it on this blog. &lt;/p&gt;&lt;/div&gt;</description><category>Compilers</category><category>EDDI</category><category>Optimization</category><guid>http://wichtounet.github.io/posts/2012/02/local-optimization-on-three-address-code.html</guid><pubDate>Wed, 08 Feb 2012 08:55:40 GMT</pubDate></item><item><title>Compilers : Principles, Techniques &amp; Tools - Book Review</title><link>http://wichtounet.github.io/posts/2012/01/compilers-principles-techniques-tools.html</link><description>&lt;div&gt;&lt;p&gt;Some weeks ago, I finished reading &lt;strong&gt;Compilers : Principles, Techniques &amp;amp; Tools&lt;/strong&gt;, by Afred V. Aho, Monica S. Lam, Ravi Sethi and Jeffrey D. Ullman. This book is also called the &lt;strong&gt;Dragon Book&lt;/strong&gt; due to the cover.&lt;/p&gt;
+&lt;p&gt;I hope I will have the time to implement some global optimization techniques into eddic and then write about it on this blog.&lt;/p&gt;&lt;/div&gt;</description><category>Compilers</category><category>EDDI</category><category>Optimization</category><guid>http://wichtounet.github.io/posts/2012/02/local-optimization-on-three-address-code.html</guid><pubDate>Wed, 08 Feb 2012 08:55:40 GMT</pubDate></item><item><title>Compilers : Principles, Techniques &amp; Tools - Book Review</title><link>http://wichtounet.github.io/posts/2012/01/compilers-principles-techniques-tools.html</link><description>&lt;div&gt;&lt;p&gt;Some weeks ago, I finished reading &lt;strong&gt;Compilers : Principles, Techniques &amp;amp; Tools&lt;/strong&gt;, by Afred V. Aho, Monica S. Lam, Ravi Sethi and Jeffrey D. Ullman. This book is also called the &lt;strong&gt;Dragon Book&lt;/strong&gt; due to the cover.&lt;/p&gt;
 &lt;p&gt;This book is a reference about compiler construction and design. If you are interested in this subject, this book is for you, it's a must-have. However, I have to warn you that this book is very technical and hard. Honestly, some of the chapters are beyond my comprehension. Before this book, I had no real comprehension of the subject. I will certainly read again some of the chapters when I will have more practice into the subject.&lt;/p&gt;
 &lt;p&gt;If you want, the book is full of exercises about each subject covered in the book. If you plan to do all the exercises, you'll need a lot of time as there are a lot of them and some of them are quite hard. I've done some of them but only a little part.&lt;/p&gt;
 &lt;p&gt;The first chapter introduces the construction of compilers. You will see the common structure of compilers, the evolution of programming languages and the science behind building a compiler and its applications. The second chapter is still quite general. It will teach you how to develop a simple syntax-directed translator. This chapter is very important as it will give you the basics for understanding the following chapters. You will learn how to define a grammar, what are the main parsing techniques and what is lexical analysis. It will also covers symbol tables and intermediate language generation.&lt;/p&gt;

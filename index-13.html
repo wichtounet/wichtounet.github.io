@@ -164,7 +164,7 @@
 
 <p>and then, we have to use the write method to write to the file. But this function is really basic and takes only a char<em> and the size of the data we wan't to write, so we have to convert our data to char</em>. A good way to do that is using the reinterpret_cast function and the sizeof operator. For example, to write an int, you can make that :</p>
 <div class="code"><pre><span class="kt">int</span> <span class="n">test</span> <span class="o">=</span> <span class="mi">22</span><span class="p">;</span>
-<span class="n">outStream</span><span class="p">.</span><span class="n">write</span><span class="p">(</span><span class="k">reinterpret_cast</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="k">const</span> <span class="kt">char</span><span class="o">*&amp;</span><span class="n">gt</span><span class="p">;(</span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">test</span><span class="p">),</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="p">));</span>
+<span class="n">outStream</span><span class="p">.</span><span class="n">write</span><span class="p">(</span><span class="k">reinterpret_cast</span><span class="o">&lt;</span><span class="k">const</span> <span class="kt">char</span><span class="o">*&gt;</span><span class="p">(</span><span class="o">&amp;</span><span class="n">test</span><span class="p">),</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="p">));</span>
 </pre></div>
 
 
@@ -172,9 +172,9 @@
 <!--more-->
 
 <p>We can simplify that, using a function template like this one :</p>
-<div class="code"><pre><span class="k">template</span>
-<span class="n">std</span><span class="o">::</span><span class="n">ostream</span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span> <span class="n">binary_write</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">ostream</span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span> <span class="n">stream</span><span class="p">,</span> <span class="k">const</span> <span class="n">T</span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span> <span class="n">value</span><span class="p">){</span>
-    <span class="k">return</span> <span class="n">stream</span><span class="p">.</span><span class="n">write</span><span class="p">(</span><span class="k">reinterpret_cast</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="k">const</span> <span class="kt">char</span><span class="o">*&amp;</span><span class="n">gt</span><span class="p">;(</span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">value</span><span class="p">),</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">T</span><span class="p">));</span>
+<div class="code"><pre><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="n">std</span><span class="o">::</span><span class="n">ostream</span><span class="o">&amp;</span> <span class="n">binary_write</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">ostream</span><span class="o">&amp;</span> <span class="n">stream</span><span class="p">,</span> <span class="k">const</span> <span class="n">T</span><span class="o">&amp;</span> <span class="n">value</span><span class="p">){</span>
+    <span class="k">return</span> <span class="n">stream</span><span class="p">.</span><span class="n">write</span><span class="p">(</span><span class="k">reinterpret_cast</span><span class="o">&lt;</span><span class="k">const</span> <span class="kt">char</span><span class="o">*&gt;</span><span class="p">(</span><span class="o">&amp;</span><span class="n">value</span><span class="p">),</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">T</span><span class="p">));</span>
 <span class="p">}</span>
 </pre></div>
 
@@ -186,9 +186,9 @@
 
 
 <p>A little less verbose, isn't it ? You can also pass a class or struct instance directly tot his method. If you have complex objects, it's perhaps not the more proper way to do it, in that case, consider using some serialization API. If you have object with variable length, it will not work because the size cannot be computed with the sizeof operator. For example, this function doesn't work with a std::string because the sizeof operator doesn't represent the real size of the string. We can make another function to write string :</p>
-<div class="code"><pre><span class="k">template</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span>
-<span class="n">std</span><span class="o">::</span><span class="n">ostream</span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span> <span class="n">binary_write_string</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">ofstream</span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span> <span class="n">stream</span><span class="p">,</span> <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span> <span class="n">value</span><span class="p">){</span>
-    <span class="k">return</span> <span class="n">stream</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">write</span><span class="p">(</span><span class="n">value</span><span class="p">.</span><span class="n">c_str</span><span class="p">(),</span> <span class="n">value</span><span class="p">.</span><span class="n">length</span><span class="p">());</span>
+<div class="code"><pre><span class="k">template</span><span class="o">&lt;&gt;</span>
+<span class="n">std</span><span class="o">::</span><span class="n">ostream</span><span class="o">&amp;</span> <span class="n">binary_write_string</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">ofstream</span><span class="o">&amp;</span> <span class="n">stream</span><span class="p">,</span> <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">value</span><span class="p">){</span>
+    <span class="k">return</span> <span class="n">stream</span><span class="o">-&gt;</span><span class="n">write</span><span class="p">(</span><span class="n">value</span><span class="p">.</span><span class="n">c_str</span><span class="p">(),</span> <span class="n">value</span><span class="p">.</span><span class="n">length</span><span class="p">());</span>
 <span class="p">}</span>
 </pre></div>
 
@@ -200,14 +200,14 @@
 
 <p>And then, you have to use the read method to read your values :</p>
 <div class="code"><pre><span class="kt">int</span> <span class="n">test</span><span class="p">;</span>
-<span class="n">inStream</span><span class="p">.</span><span class="n">read</span><span class="p">(</span><span class="k">reinterpret_cast</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="kt">char</span><span class="o">*&amp;</span><span class="n">gt</span><span class="p">;(</span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">test</span><span class="p">),</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="p">));</span>
+<span class="n">inStream</span><span class="p">.</span><span class="n">read</span><span class="p">(</span><span class="k">reinterpret_cast</span><span class="o">&lt;</span><span class="kt">char</span><span class="o">*&gt;</span><span class="p">(</span><span class="o">&amp;</span><span class="n">test</span><span class="p">),</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="p">));</span>
 </pre></div>
 
 
 <p>Once again, we can create a function template to have a little better code :</p>
-<div class="code"><pre><span class="k">template</span>
-<span class="n">std</span><span class="o">::</span><span class="n">istream</span> <span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span> <span class="n">binary_read</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">istream</span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span> <span class="n">stream</span><span class="p">,</span> <span class="n">T</span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span> <span class="n">value</span><span class="p">){</span>
-    <span class="k">return</span> <span class="n">stream</span><span class="p">.</span><span class="n">read</span><span class="p">(</span><span class="k">reinterpret_cast</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="kt">char</span><span class="o">*&amp;</span><span class="n">gt</span><span class="p">;(</span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">value</span><span class="p">),</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">T</span><span class="p">));</span>
+<div class="code"><pre><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="n">std</span><span class="o">::</span><span class="n">istream</span> <span class="o">&amp;</span> <span class="n">binary_read</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">istream</span><span class="o">&amp;</span> <span class="n">stream</span><span class="p">,</span> <span class="n">T</span><span class="o">&amp;</span> <span class="n">value</span><span class="p">){</span>
+    <span class="k">return</span> <span class="n">stream</span><span class="p">.</span><span class="n">read</span><span class="p">(</span><span class="k">reinterpret_cast</span><span class="o">&lt;</span><span class="kt">char</span><span class="o">*&gt;</span><span class="p">(</span><span class="o">&amp;</span><span class="n">value</span><span class="p">),</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">T</span><span class="p">));</span>
 <span class="p">}</span>
 </pre></div>
 
@@ -296,7 +296,7 @@ EOF</pre>
 
 <p>This script asks you your password. With that, you don't have to put it in clear inside your program. The most important command here is the put -R * that make a recursive upload of the current folder in the current remote folder. </p>
 <p>If I launch it from my computer (using the good values of course), it gives me that : </p>
-<blockquote>$ bash website.sh
+<pre>$ bash website.sh
 NcFTP 3.2.4 (Apr 07, 2010) by Mike Gleason (http://www.NcFTP.com/contact/).
 Copyright (c) 1992-2009 by Mike Gleason.
 All rights reserved.
@@ -317,7 +317,7 @@ index.php:                                             230.00 B   37.11 B/s
 links.php:                                             188.00 B   37.73 B/s   
 minutes.php:                                           254.00 B    1.96 kB/s  
 styles/default.css:                                      1.00 kB    8.01 kB/s  
-weeks.php:                                             237.00 B   65.24 B/s</blockquote>
+weeks.php:                                             237.00 B   65.24 B/s</pre>
 
 <p>You will see the current status of all the files during the upload. The tool is enough smart to detect if a file must be sent or not (so it upload only newer files). </p>
 <p>I hope this can help some of you.</p></div>

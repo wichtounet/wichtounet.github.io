@@ -183,7 +183,57 @@
 <p>The MethodHandle class allows to manipulate a reference to a method. It's like a pointer to a method. With that features, we avoid the heavy process of reflection.</p>
 <p>With that class, we can have informations about the method (return type and parameters) and invoke that method with a special invoke() method that can be called with any number of parameters. To create a MethodHandle we use the MethodHandles factory.</p>
 <p>Here is an example :</p>
-<div class="code"><pre><span class="err"></span></pre></div></div>
+<div class="code"><pre><span class="n">JComboBox</span> <span class="n">combo</span> <span class="o">=</span> <span class="k">new</span> <span class="n">JComboBox</span><span class="o">();</span>
+
+<span class="n">MethodHandle</span> <span class="n">handle</span> <span class="o">=</span> <span class="n">MethodHandles</span><span class="o">.</span><span class="na">lookup</span><span class="o">().</span><span class="na">findVirtual</span><span class="o">(</span><span class="n">JComboBox</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="s">"setModel"</span><span class="o">,</span> <span class="n">MethodType</span><span class="o">.</span><span class="na">make</span><span class="o">(</span><span class="kt">void</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="n">ComboBoxModel</span><span class="o">.</span><span class="na">class</span><span class="o">));</span>
+
+<span class="n">handle</span><span class="o">.</span><span class="na">invoke</span><span class="o">(</span><span class="n">combo</span><span class="o">,</span> <span class="k">new</span> <span class="n">CustomComboModel</span><span class="o">());</span>
+</pre></div>
+
+
+<p>Of course, this example is completely useless but shows the process of invoking a method using Method. There are some differences with Reflection :</p>
+<ul>
+    <li>The call to invoke() is optimized by the JVM with calling directly the target method like any other call.</li>
+    <li>The performances are a lot better, almost the same as a standard call.</li>
+    <li>The cheks on the method are made when we create the MethodHandle Object not at all the invoke() calls.</li>
+</ul>
+
+<h4>InvokeDynamic</h4>
+
+<p>The second class of this new package is the InvokeDynamic class. This is even more weird than the first one, because this class has no methods. But we can invoke any methods on it.</p>
+<div class="code"><pre><span class="n">InvokeDynamic</span><span class="o">.</span><span class="na">setModel</span><span class="o">(</span><span class="k">new</span> <span class="n">CustomComboModel</span><span class="o">());</span>
+<span class="n">InvokeDynamic</span><span class="o">.</span><span class="na">init</span><span class="o">();</span>
+<span class="n">Date</span> <span class="n">today</span> <span class="o">=</span> <span class="n">InvokeDynamic</span><span class="o">.</span><span class="na">getDate</span><span class="o">();</span>
+<span class="c1">//... You can call any valid method</span>
+</pre></div>
+
+
+<p>All that calls will be compiled with InvokeDynamic. Namely, all that calls will not be checked at compile time but at runtime. </p>
+<p>To use that mechanism, we must define a bootstrap mechanism who will do the conversion between the method calls on InvokeDynamic and the really Method (through MethodHandle) to invoke. When we invoke the method, the JVM use that bootstrap method to get the MethodHandle and invoke it.The JVM use a cache for the MethodHandle to improve performances. So, only the first dynamic call will be searched in the bootstrap method.  </p>
+<p>To register the bootstrap method, we have to use the <em>Linkage.registerBootstrapMethod(String methodName)</em> method. </p>
+<p>Here is a really basic example of a boot strap method. That method only use the name of the called method and return the MethodHandle to the same method in the Utility class with no args. Of course, that kind of bootstrap method must not be used, but that shows the basics of develop that kind of methods. </p>
+<div class="code"><pre><span class="kd">private</span> <span class="kd">static</span> <span class="n">CallSite</span> <span class="nf">bootstrap</span><span class="o">(</span><span class="n">Class</span> <span class="n">caller</span><span class="o">,</span> <span class="n">String</span> <span class="n">name</span><span class="o">,</span> <span class="n">MethodType</span> <span class="n">type</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">CallSite</span> <span class="n">site</span> <span class="o">=</span> <span class="k">new</span> <span class="n">CallSite</span><span class="o">(</span><span class="n">caller</span><span class="o">,</span> <span class="n">name</span><span class="o">,</span> <span class="n">MethodType</span><span class="o">.</span><span class="na">make</span><span class="o">(</span><span class="kt">void</span><span class="o">.</span><span class="na">class</span><span class="o">));</span>
+    <span class="n">site</span><span class="o">.</span><span class="na">setTarget</span><span class="o">(</span><span class="n">MethodHandles</span><span class="o">.</span><span class="na">lookup</span><span class="o">().</span><span class="na">findStatic</span><span class="o">(</span><span class="n">Utility</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="n">name</span><span class="o">,</span> <span class="n">MethodType</span><span class="o">.</span><span class="na">make</span><span class="o">(</span><span class="kt">void</span><span class="o">.</span><span class="na">class</span><span class="o">)));</span>
+    <span class="k">return</span> <span class="n">site</span><span class="o">;</span>
+<span class="o">}</span>
+</pre></div>
+
+
+<p>References of type InvokeDynamic can take any types of objects : </p>
+<div class="code"><pre><span class="n">InvokeDynamic</span> <span class="n">dynamicString</span> <span class="o">=</span> <span class="s">"Hello World"</span><span class="o">;</span>
+<span class="n">InvokeDynamic</span> <span class="n">dynamicCombo</span> <span class="o">=</span> <span class="k">new</span> <span class="n">JComboBox</span><span class="o">();</span>
+<span class="n">InvokeDynamic</span> <span class="n">dynamicNumber</span> <span class="o">=</span> <span class="mi">1</span><span class="o">;</span>
+</pre></div>
+
+
+<p>With that, we can dynamically call a method on the target : </p>
+<div class="code"><pre><span class="n">dynamicString</span><span class="o">.</span><span class="na">aSimpleMethod</span><span class="o">();</span>
+</pre></div>
+
+
+<p>Here we are. I think we've covered the main features of this new package. </p>
+<p>Of course these classes will mostly be used by dynamic languages developers instead of standard programmers but the MethodHandle class can be useful to improve reflection performances in simple programs. I think it's a great new features but that will not be used by everybody.</p></div>
         </div>
             
         
@@ -239,7 +289,157 @@
 </ul>
 
 <p>Some simple examples :</p>
-<div class="code"><pre><span class="err"></span></pre></div></div>
+<div class="code"><pre><span class="kd">public</span> <span class="kt">void</span> <span class="nf">setFoo</span><span class="o">(</span><span class="n">Foo</span> <span class="n">foo</span><span class="o">){</span>
+    <span class="k">this</span><span class="o">.</span><span class="na">foo</span> <span class="o">=</span> <span class="n">Objects</span><span class="o">.</span><span class="na">nonNull</span><span class="o">(</span><span class="n">foo</span><span class="o">);</span>
+<span class="o">}</span>
+
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">setBar</span><span class="o">(</span><span class="n">Bar</span> <span class="n">bar</span><span class="o">){</span>
+    <span class="k">this</span><span class="o">.</span><span class="na">foo</span> <span class="o">=</span> <span class="n">Objects</span><span class="o">.</span><span class="na">nonNull</span><span class="o">(</span><span class="n">bar</span><span class="o">,</span> <span class="s">"bar cannot be null"</span><span class="o">);</span>
+<span class="o">}</span>
+</pre></div>
+
+
+<p>Although simple, these methods can improve the readability of code and avoid having to write the is-null check ourselves.</p>
+<p>Then, we have two methods to compute a toString() value for Object supporting null objects :</p>
+<ul>
+    <li>String <strong>toString</strong>(Object o) : Return the toString() value of a non-null object otherwise "null".</li>
+    <li>String <strong>toString</strong>(Object o, String nullDefault) : Return the toString() value of a non-null object otherwise return nullDefault</li>
+</ul>
+
+<p>Again, this is useful for code readibility :</p>
+<div class="code"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Bar</span> <span class="o">{</span>
+    <span class="kd">private</span> <span class="n">Foo</span> <span class="n">foo</span><span class="o">;</span>
+    <span class="kd">private</span> <span class="n">Bar</span> <span class="n">parent</span><span class="o">;</span>
+
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="n">String</span> <span class="nf">toString</span><span class="o">(){</span>
+        <span class="k">return</span> <span class="s">"Bar {foo = "</span> <span class="o">+</span> <span class="n">Objects</span><span class="o">.</span><span class="na">toString</span><span class="o">(</span><span class="n">foo</span><span class="o">)</span> <span class="o">+</span> <span class="s">", parent = "</span> <span class="o">+</span> <span class="n">Objects</span><span class="o">.</span><span class="na">toString</span><span class="o">(</span><span class="n">parent</span><span class="o">,</span> <span class="s">"no parent, orphan"</span><span class="o">)</span> <span class="o">+</span> <span class="s">"}"</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+
+
+<p>I think, it's a lot better than :</p>
+<div class="code"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Bar</span> <span class="o">{</span>
+    <span class="kd">private</span> <span class="n">Foo</span> <span class="n">foo</span><span class="o">;</span>
+    <span class="kd">private</span> <span class="n">Bar</span> <span class="n">parent</span><span class="o">;</span>
+
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="n">String</span> <span class="nf">toString</span><span class="o">(){</span>
+        <span class="k">return</span> <span class="s">"Bar {foo = "</span> <span class="o">+</span> <span class="o">(</span><span class="n">foo</span> <span class="o">==</span> <span class="kc">null</span> <span class="o">?</span> <span class="s">"null"</span> <span class="o">:</span> <span class="n">foo</span><span class="o">.</span><span class="na">toString</span><span class="o">())</span> <span class="o">+</span> <span class="s">", parent = "</span> <span class="o">+</span> <span class="o">(</span><span class="n">parent</span> <span class="o">==</span> <span class="kc">null</span> <span class="o">?</span> <span class="s">"o parent, orphan"</span> <span class="o">:</span> <span class="n">parent</span><span class="o">.</span><span class="na">toString</span><span class="o">())</span> <span class="o">+</span> <span class="s">"}"</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+
+
+<p>Isn't it ?</p>
+<p>After that, we also two similar methods for hashing :</p>
+<ul>
+    <li>int <strong>hash</strong>(Object... values) : Compute a hash code for all the given values</li>
+    <li>int <strong>hashCode</strong>(Object o) : If 0 is null return 0 othewise return o.hashCode()</li>
+</ul>
+
+<p>If we take again the exemple of the Bar class. If we have to write the hashCode() method without Objects, we could do that :</p>
+<div class="code"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Bar</span> <span class="o">{</span>
+    <span class="kd">private</span> <span class="n">Foo</span> <span class="n">foo</span><span class="o">;</span>
+    <span class="kd">private</span> <span class="n">Bar</span> <span class="n">parent</span><span class="o">;</span>
+
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="kt">int</span> <span class="nf">hashCode</span><span class="o">(){</span>
+        <span class="kt">int</span> <span class="n">result</span> <span class="o">=</span> <span class="mi">17</span><span class="o">;</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="mi">31</span> <span class="o">*</span> <span class="n">result</span> <span class="o">+</span> <span class="o">(</span><span class="n">foo</span> <span class="o">==</span> <span class="kc">null</span> <span class="o">?</span> <span class="mi">0</span> <span class="o">:</span> <span class="n">foo</span><span class="o">.</span><span class="na">hashCode</span><span class="o">());</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="mi">31</span> <span class="o">*</span> <span class="n">result</span> <span class="o">+</span> <span class="o">(</span><span class="n">parent</span> <span class="o">==</span> <span class="kc">null</span> <span class="o">?</span> <span class="mi">0</span> <span class="o">:</span> <span class="n">parent</span><span class="o">.</span><span class="na">hashCode</span><span class="o">());</span>
+
+        <span class="k">return</span> <span class="n">result</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+
+
+<p>With Java 7, we only have to do that :</p>
+<div class="code"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Bar</span> <span class="o">{</span>
+    <span class="kd">private</span> <span class="n">Foo</span> <span class="n">foo</span><span class="o">;</span>
+    <span class="kd">private</span> <span class="n">Bar</span> <span class="n">parent</span><span class="o">;</span>
+
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="kt">int</span> <span class="nf">hashCode</span><span class="o">(){</span>
+        <span class="k">return</span> <span class="n">Objects</span><span class="o">.</span><span class="na">hash</span><span class="o">(</span><span class="n">foo</span><span class="o">,</span> <span class="n">parent</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+
+
+<p>And that's it :)</p>
+<p>On the same model, we've also two methods for equality checks :</p>
+<ul>
+    <li>boolean <strong>equals</strong>(Object a, Object b) : Return true if the two arguments are null or they are both not null and a.equals(b) return true, otherwise false.</li>
+    <li>boolean <strong>deepEquals</strong>(Object a, Object b) : Almost the same as the first method except that if both a and b are arrays, the equality is evaluated using Arrays.deepEquals method.</li>
+</ul>
+
+<p>Once again, that can really ease the coding of equals() methods :</p>
+<div class="code"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Bar</span> <span class="o">{</span>
+    <span class="kd">private</span> <span class="n">Foo</span> <span class="n">foo</span><span class="o">;</span>
+    <span class="kd">private</span> <span class="n">Bar</span> <span class="n">parent</span><span class="o">;</span>
+
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">equals</span><span class="o">(</span><span class="n">Object</span> <span class="n">obj</span><span class="o">){</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">obj</span> <span class="o">==</span> <span class="k">this</span><span class="o">)</span> <span class="o">{</span>
+            <span class="k">return</span> <span class="kc">true</span><span class="o">;</span>
+        <span class="o">}</span> 
+
+        <span class="k">if</span> <span class="o">(</span><span class="n">obj</span> <span class="k">instanceof</span> <span class="n">Bar</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">Bar</span> <span class="n">other</span> <span class="o">=</span> <span class="o">(</span><span class="n">Bar</span><span class="o">)</span> <span class="n">obj</span><span class="o">;</span> 
+
+            <span class="k">if</span> <span class="o">(</span><span class="n">foo</span> <span class="o">!=</span> <span class="n">other</span><span class="o">.</span><span class="na">foo</span><span class="o">)</span> <span class="o">{</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">foo</span> <span class="o">==</span> <span class="kc">null</span> <span class="o">||</span> <span class="o">!</span><span class="n">foo</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">other</span><span class="o">.</span><span class="na">foo</span><span class="o">))</span> <span class="o">{</span>
+                    <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+                <span class="o">}</span>
+            <span class="o">}</span> 
+
+            <span class="k">if</span> <span class="o">(</span><span class="n">parent</span> <span class="o">!=</span> <span class="n">other</span><span class="o">.</span><span class="na">parent</span><span class="o">)</span> <span class="o">{</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">parent</span> <span class="o">==</span> <span class="kc">null</span> <span class="o">||</span> <span class="o">!</span><span class="n">parent</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">other</span><span class="o">.</span><span class="na">parent</span><span class="o">))</span> <span class="o">{</span>
+                    <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+                <span class="o">}</span>
+            <span class="o">}</span> 
+
+            <span class="k">return</span> <span class="kc">true</span><span class="o">;</span>
+        <span class="o">}</span> 
+
+        <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+
+
+<p>become :</p>
+<div class="code"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Bar</span> <span class="o">{</span>
+    <span class="kd">private</span> <span class="n">Foo</span> <span class="n">foo</span><span class="o">;</span>
+    <span class="kd">private</span> <span class="n">Bar</span> <span class="n">parent</span><span class="o">;</span>
+
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">equals</span><span class="o">(</span><span class="n">Object</span> <span class="n">obj</span><span class="o">){</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">obj</span> <span class="o">==</span> <span class="k">this</span><span class="o">)</span> <span class="o">{</span>
+            <span class="k">return</span> <span class="kc">true</span><span class="o">;</span>
+        <span class="o">}</span> 
+
+        <span class="k">if</span> <span class="o">(</span><span class="n">obj</span> <span class="k">instanceof</span> <span class="n">Bar</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">Bar</span> <span class="n">other</span> <span class="o">=</span> <span class="o">(</span><span class="n">Bar</span><span class="o">)</span> <span class="n">obj</span><span class="o">;</span> 
+
+            <span class="k">return</span> <span class="n">Objects</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">foo</span><span class="o">,</span> <span class="n">other</span><span class="o">.</span><span class="na">foo</span><span class="o">)</span> <span class="o">&amp;</span><span class="n">amp</span><span class="o">;</span><span class="n">amp</span><span class="o">;&amp;</span><span class="n">amp</span><span class="o">;</span><span class="n">amp</span><span class="o">;</span> <span class="n">Objects</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">parent</span><span class="o">,</span> <span class="n">other</span><span class="o">.</span><span class="na">parent</span><span class="o">);</span>
+        <span class="o">}</span> 
+
+        <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+
+
+<p>Better, no ?</p>
+<p>And the last one : <t> int <strong>compare</strong>(T a, T b, Comparator&lt;? super T&gt; c). This method returns 0 if a == b or if both are null otherwise c.compare(a, b). The support of null is delegated to the comparator.</t></p>
+<p>We've covered all the features offered by this new class.</p>
+<p>Of course, there is already some methods like that in librairies like Jarkarta Commons or Google Guava, but it's always better when we doesn't have to include a library for that kind of features.</p>
+<p>I hope you found this post interesting.</p></div>
         </div>
             
         
