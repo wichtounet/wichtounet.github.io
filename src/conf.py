@@ -19,43 +19,6 @@ SITE_URL = "http://wichtounet.github.io/"
 BLOG_EMAIL = "baptistewicht@gmail.com"
 BLOG_DESCRIPTION = "Website about vtechnologies Java, Spring, OSGi, Hardware,..."
 
-# Nikola is multilingual!
-#
-# Currently supported languages are:
-# bg     Bulgarian
-# ca     Catalan
-# cs     Czech [ALTERNATIVELY cz]
-# de     German
-# el     Greek [NOT gr!]
-# en     English
-# eo     Esperanto
-# es     Spanish
-# et     Estonian
-# eu     Basque
-# fa     Persian
-# fi     Finnish
-# fr     French
-# hi     Hindi
-# hr     Croatian
-# it     Italian
-# ja     Japanese [NOT jp!]
-# nb     Norwegian Bokmål
-# nl     Dutch
-# pt_br  Portuguese (Brasil)
-# pl     Polish
-# ru     Russian
-# sl     Slovenian [NOT sl_si!]
-# tr     Turkish (Turkey) [NOT tr_tr!]
-# ur     Urdu
-# zh_cn  Chinese (Simplified)
-#
-# If you want to use Nikola with a non-supported language you have to provide
-# a module containing the necessary translations
-# (cf. the modules at nikola/data/themes/base/messages/).
-# If a specific post is not translated to a language, then the version
-# in the default language will be shown instead.
-
-# What is the default language?
 DEFAULT_LANG = "en"
 
 # What other languages do you have?
@@ -165,7 +128,7 @@ COMPILERS = {
 
 # Create by default posts in one file format?
 # Set to False for two-file posts, with separate metadata.
-# ONE_FILE_POSTS = True
+ONE_FILE_POSTS = False
 
 # If this is set to True, then posts that are not translated to a language
 # LANG will not be visible at all in the pages in that language.
@@ -569,7 +532,7 @@ ENABLED_EXTRAS = ['local_search']
 # Also, if you want to use a different time zone in some of your posts,
 # you can use W3C-DTF Format (ex. 2012-03-30T23:00:00+02:00)
 #
-# TIMEZONE = 'UTC'
+TIMEZONE = 'Europe/Zurich'
 
 # If webassets is installed, bundle JS and CSS to make site loading faster
 # USE_BUNDLES = True
