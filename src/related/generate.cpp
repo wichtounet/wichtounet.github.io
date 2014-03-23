@@ -84,6 +84,9 @@ void read_metadata(const std::vector<std::string>& files, std::vector<std::strin
         
         getline(stream, line);
         auto slug = line;
+        
+        //Ignore the date
+        getline(stream, line);
 
         getline(stream, line);
         keywords[i] = line;
