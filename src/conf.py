@@ -437,12 +437,6 @@ SOCIAL_BUTTONS_CODE = """
       //'services' : 'google_plusone,facebook_like,tweet',
       'services' : 'google_plusone_share,facebook,twitter'
     }, 
-    'follow' : {
-      'services' : [
-        {'service': 'twitter', 'id': 'wichtounet'},
-        {'service': 'google_follow', 'id': '+BaptisteWicht'}
-      ]
-    }   
   });
 </script>
 """
