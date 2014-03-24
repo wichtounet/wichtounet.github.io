@@ -1,290 +1,65 @@
-<!DOCTYPE html><html lang="en">
-<head>
-    <link href="favicon.ico" rel="icon" type="image/x-icon">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="author" content="Baptiste Wicht">
-    <title>C++11 Concurrency - Part 1 : Start Threads | @Blog("Baptiste Wicht")</title>
-    
-            <link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
-      <link rel="canonical" href="http://wichtounet.github.io/posts/2012/03/cpp11-concurrency-part1-start-threads.html">
-    <!--[if lt IE 9]>
-      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js" type="text/javascript"></script>
-    <![endif]-->
-            <link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
+<!DOCTYPE html>
+<html lang=en><head><link href=favicon.ico rel=icon type=image/x-icon><meta name=viewport content="width=device-width, initial-scale=1.0"><meta charset=utf-8><meta name=viewport content="width=device-width, initial-scale=1.0"><meta name=author content="Baptiste Wicht"><title>C++11 Concurrency - Part 1 : Start Threads | @Blog("Baptiste Wicht")</title><link href=../../../assets/css/all-nocdn.css rel=stylesheet type=text/css><link rel=canonical href=http://wichtounet.github.io/posts/2012/03/cpp11-concurrency-part1-start-threads.html><link rel=alternate type=application/rss+xml title=RSS href=../../../rss.xml></head><body><div class=social_container> <div class=social_container_gplus> <a target=_blank title="Share on Google+" href="https://plusone.google.com/_/+1/confirm?hl=en&amp;url=http://wichtounet.github.io/posts/2012/03/cpp11-concurrency-part1-start-threads.html"><img src=../../../assets/img/google_plus.png></a> </div> <div class=social_container_facebook> <a target=_blank title="Share on Facebook" href="http://www.facebook.com/sharer/sharer.php?u=#url"><img src=../../../assets/img/facebook.png></a> </div> <div class=social_container_twitter> <a target=_blank title="Tweet on Twitter" href="http://twitter.com/home?status=#url"><img src=../../../assets/img/twitter.svg></a> </div></div><nav class="navbar navbar-inverse navbar-fixed-top" role=navigation> <div class=container-fluid> <div class=navbar-header> <button type=button class=navbar-toggle data-toggle=collapse data-target=.navbar-ex1-collapse> <span class=sr-only>Toggle navigation</span> <span class=icon-bar></span> <span class=icon-bar></span> <span class=icon-bar></span> </button> <a class=navbar-brand href=http://wichtounet.github.io/>@Blog("Baptiste Wicht")</a> </div> <div class="collapse navbar-collapse navbar-ex1-collapse"> <ul class="nav navbar-nav"> <li><a href=../../../stories/about.html>About</a> </li><li><a href=../../../stories/publications.html>Publications</a> </li><li><a href=../../../stories/donate.html>Donate</a> </li><li><a href=../../../stories/contact.html>Contact</a> </li><li><a href=../../../stories/faq.html>FAQ</a> </li><li><a href=../../../stories/legal.html>Legal</a> </li><li><a href=../../../archive.html>Archives</a> </li><li><a href=../../../categories/index.html>Tags</a> </li><li><a href=../../../rss.xml>RSS</a> </li></ul> <span class="navbar-form pull-left"> <form action=../../../stories/search.html> <input type=text name=q id=tipue_search_input> </form> </span> <ul class="nav navbar-nav navbar-right"> <li> <a target=_blank title="Follow @wichtounet on Twitter" href=https://twitter.com/wichtounewichtounet> <img src=../../../assets/img/twitter.svg alt="Follow @wichtounet on Twitter"> </a> </li> <li> <a target=_blank title="Follow +BaptisteWicht on Google+" href=https://plus.google.com/+BaptisteWicht> <img src=../../../assets/img/google_plus.svg alt="Follow +BaptisteWicht on Google+"> </a> </li> </ul> </div> </div></nav><div class=body-container> <div class=left-sidebar> <div class=left-sidebar-widget> <div class=left-sidebar-widget-content> <div class=g-person data-width=275 data-href=//plus.google.com/u/0/103113673902796202116 data-theme=dark data-layout=landscape data-rel=author></div> </div> </div> <div class=left-sidebar-widget> <h3>Related posts</h3> <div class=left-sidebar-widget-content> <ol><li><a href=../../2010/05/java-concurrency-part-1-threads.html>Java Concurrency - Part 1 : Threads</a></li><li><a href=../04/c11-concurrency-tutorial-advanced-locking-and-condition-variables.html>C++11 Concurrency Tutorial - Part 3: Advanced locking and condition variables</a></li><li><a href=cp11-concurrency-tutorial-part-2-protect-shared-data.html>C++11 Concurrency Tutorial - Part 2 : Protect shared data</a></li><li><a href=../../2010/08/java-concurrrency-synchronization-locks.html>Java Concurrency – Part 3 : Synchronization with intrinsic locks</a></li><li><a href=../../2010/01/jr-introduction.html>Introduction to JR programming language</a></li></ol> </div> </div> <div class=left-sidebar-widget> <h3>Recent comments</h3> <div class=left-sidebar-widget-content> <div id=recentcomments class=dsq-widget> <script type=text/javascript src="http://blogwichtounet.disqus.com/recent_comments_widget.js?num_items=5&amp;hide_avatars=0&amp;avatar_size=28&amp;excerpt_length=50"></script> </div> </div> </div> <div class=left-sidebar-widget> <h3>Popular posts</h3> <div class=left-sidebar-widget-content> <div id=popularthreads class=dsq-widget> <script type=text/javascript src="http://blogwichtounet.disqus.com/popular_threads_widget.js?num_items=5&amp;days_back=90"></script> </div> </div> </div> <div class=left-sidebar-widget> <h3>Blogroll</h3> <div class=left-sidebar-widget-content> <ul> <li><a target=_blank href=http://www.asjava.com/>AsJava.com : Java Tutorial</a></li> <li><a target=_blank href=http://www.mkyong.com/>Mkyong : Java Tutorials</a></li> </ul> </div> </div> </div> <div class=container> <div class=body-content style="margin-top: -75px;"> <div class=row> <article class="postbox post-text"> <div class=h-entry itemscope=itemscope itemtype=http://schema.org/Article> <h1 class=p-name itemprop="headline name">C++11 Concurrency - Part 1 : Start Threads</h1> <hr> <small> Posted: <time class="published dt-published" datetime=2012-03-21T09:16:18+01:00 itemprop=datePublished>2012-03-21 09:16</time>   |   More posts about <span itemprop=keywords> <a class="tag p-category" href=../../../categories/c.html><span class="badge badge-info">C++</span></a> <a class="tag p-category" href=../../../categories/c11-concurrency-tutorial.html><span class="badge badge-info">C++11 Concurrency Tutorial</span></a> <a class="tag p-category" href=../../../categories/concurrency.html><span class="badge badge-info">Concurrency</span></a> </span> </small> <hr> <div class=e-content itemprop="articleBody text"> <div><p>C++11 introduced a new thread library. This library includes utilities for starting and managing threads. It also contains utilities for synchronization like mutexes and other locks, atomic variables and other utilities. In this serie of posts, I will try to explain most of the features provided by this new library.</p><p>To compile the samples of this article, you will need a compiler with C++11 support. In my case, I used GCC 4.6.1 (you need to pass the "-std=c++0x" or "-std=c++11" option to get the C++11 support activated).</p><h4>Starting threads</h4><p>Starting a new thread is very easy. When you create an instance of a <strong>std::thread</strong>, it will automatically be started. When you create a thread you have to give it the code it will execute. The first choice for that, is to pass it a function pointer. Let's start with the very common Hello World:</p><div class=code><pre><span class=cp>#include &lt;thread&gt;</span>
+<span class=cp>#include &lt;iostream&gt;</span>
 
-    
+<span class=kt>void</span> <span class=nf>hello</span><span class=p>(){</span>
+    <span class=n>std</span><span class=o>::</span><span class=n>cout</span> <span class=o>&lt;&lt;</span> <span class=s>"Hello from thread "</span> <span class=o>&lt;&lt;</span> <span class=n>std</span><span class=o>::</span><span class=n>endl</span><span class=p>;</span>
+<span class=p>}</span>
 
+<span class=kt>int</span> <span class=nf>main</span><span class=p>(){</span>
+    <span class=n>std</span><span class=o>::</span><span class=kr>thread</span> <span class=n>t1</span><span class=p>(</span><span class=n>hello</span><span class=p>);</span>
+    <span class=n>t1</span><span class=p>.</span><span class=n>join</span><span class=p>();</span>
 
+    <span class=k>return</span> <span class=mi>0</span><span class=p>;</span>
+<span class=p>}</span>
+</pre></div><p>All the threads utilities are located in the <strong>thread</strong> header. An interesting thing in this first example is the call to the <strong>join()</strong> function. Calling this function forces the current thread to wait for the other one (in this case, the main thread has to wait for the thread t1 to finish). If you omit this call, the result is undefined. The program can print <em>Hello from thread</em> and a new line, can print just <em>Hello from thread</em> without new line or can print nothing. That's because the main thread can return from the main function before the t1 thread finishes its execution.</p><h4>Distinguishing threads</h4><p>Each thread has a single id allowing us to distinguish each of them. The std::thread class has a <strong>get_id()</strong> function returning an unique id for this thread. You can get a reference to the current thread with the <strong>std::this_thread</strong> variable. The next example starts with threads and each of them prints its id:</p><div class=code><pre><span class=cp>#include &lt;thread&gt;</span>
+<span class=cp>#include &lt;iostream&gt;</span>
+<span class=cp>#include &lt;vector&gt;</span>
 
+<span class=kt>void</span> <span class=nf>hello</span><span class=p>(){</span>
+    <span class=n>std</span><span class=o>::</span><span class=n>cout</span> <span class=o>&lt;&lt;</span> <span class=s>"Hello from thread "</span> <span class=o>&lt;&lt;</span> <span class=n>std</span><span class=o>::</span><span class=n>this_thread</span><span class=o>::</span><span class=n>get_id</span><span class=p>()</span> <span class=o>&lt;&lt;</span> <span class=n>std</span><span class=o>::</span><span class=n>endl</span><span class=p>;</span>
+<span class=p>}</span>
 
+<span class=kt>int</span> <span class=nf>main</span><span class=p>(){</span>
+    <span class=n>std</span><span class=o>::</span><span class=n>vector</span><span class=o>&lt;</span><span class=n>std</span><span class=o>::</span><span class=kr>thread</span><span class=o>&gt;</span> <span class=n>threads</span><span class=p>;</span>
 
-    
-</head>
-<body>
+    <span class=k>for</span><span class=p>(</span><span class=kt>int</span> <span class=n>i</span> <span class=o>=</span> <span class=mi>0</span><span class=p>;</span> <span class=n>i</span> <span class=o>&lt;</span> <span class=mi>5</span><span class=p>;</span> <span class=o>++</span><span class=n>i</span><span class=p>){</span>
+        <span class=n>threads</span><span class=p>.</span><span class=n>push_back</span><span class=p>(</span><span class=n>std</span><span class=o>::</span><span class=kr>thread</span><span class=p>(</span><span class=n>hello</span><span class=p>));</span>
+    <span class=p>}</span>
 
-<div class="social_container">
-    <div class="social_container_gplus">
-        <a target="_blank" title="Share on Google+" href="https://plusone.google.com/_/+1/confirm?hl=en&amp;url=http://wichtounet.github.io/posts/2012/03/cpp11-concurrency-part1-start-threads.html"><img src="../../../assets/img/google_plus.png"></a>
-    </div>
-    <div class="social_container_facebook">
-        <a target="_blank" title="Share on Facebook" href="http://www.facebook.com/sharer/sharer.php?u=#url"><img src="../../../assets/img/facebook.png"></a>
-    </div>
-    <div class="social_container_twitter">
-        <a target="_blank" title="Tweet on Twitter" href="http://twitter.com/home?status=#url"><img src="../../../assets/img/twitter.svg"></a>
-    </div>
-</div>
+    <span class=k>for</span><span class=p>(</span><span class=k>auto</span><span class=o>&amp;</span> <span class=kr>thread</span> <span class=o>:</span> <span class=n>threads</span><span class=p>){</span>
+        <span class=kr>thread</span><span class=p>.</span><span class=n>join</span><span class=p>();</span>
+    <span class=p>}</span>
 
-<!-- Menubar -->
-
-<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
-    <div class="container-fluid"><!-- This keeps the margins nice -->
-        <div class="navbar-header">
-            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            </button>
-            <a class="navbar-brand" href="http://wichtounet.github.io/">@Blog("Baptiste Wicht")</a>
-        </div><!-- /.navbar-header -->
-        
-        <div class="collapse navbar-collapse navbar-ex1-collapse">
-            <ul class="nav navbar-nav">
-                
-                <li><a href="../../../stories/about.html">About</a>
-                </li><li><a href="../../../stories/publications.html">Publications</a>
-                </li><li><a href="../../../stories/donate.html">Donate</a>
-                </li><li><a href="../../../stories/contact.html">Contact</a>
-                </li><li><a href="../../../stories/faq.html">FAQ</a>
-                </li><li><a href="../../../stories/legal.html">Legal</a>
-                </li><li><a href="../../../archive.html">Archives</a>
-                </li><li><a href="../../../categories/index.html">Tags</a>
-                </li><li><a href="../../../rss.xml">RSS</a>
-
-            </li></ul>
-
-            <span class="navbar-form pull-left">
-                <form action="../../../stories/search.html">
-                    <input type="text" name="q" id="tipue_search_input">
-                </form>
-            </span>
-            
-            <ul class="nav navbar-nav navbar-right">
-                <li>
-                    <a target="_blank" title="Follow @wichtounet on Twitter" href="https://twitter.com/wichtounewichtounet">
-                        <img src="../../../assets/img/twitter.svg" alt="Follow @wichtounet on Twitter">
-                    </a>
-                </li>
-                <li>
-                    <a target="_blank" title="Follow +BaptisteWicht on Google+" href="https://plus.google.com/+BaptisteWicht">
-                        <img src="../../../assets/img/google_plus.svg" alt="Follow +BaptisteWicht on Google+">
-                    </a>
-                </li>
-            </ul>
-        </div><!-- /.navbar-collapse -->
-    </div><!-- /.container-fluid -->
-</nav>
-
-<!-- End of Menubar -->
-
-<div class="body-container">
-
-    <!-- Sidebar -->
-
-    <div class="left-sidebar">
-            <div class="left-sidebar-widget">
-                <div class="left-sidebar-widget-content">
-                    <div class="g-person" data-width="275" data-href="//plus.google.com/u/0/103113673902796202116" data-theme="dark" data-layout="landscape" data-rel="author"></div>
-                </div>
-            </div>
-
-            <div class="left-sidebar-widget">
-                <h3>Related posts</h3>
-                <div class="left-sidebar-widget-content">
-                    
-                    <ol>
-<li><a href="../../2010/05/java-concurrency-part-1-threads.html">Java Concurrency - Part 1 : Threads</a></li>
-<li><a href="../04/c11-concurrency-tutorial-advanced-locking-and-condition-variables.html">C++11 Concurrency Tutorial - Part 3: Advanced locking and condition variables</a></li>
-<li><a href="cp11-concurrency-tutorial-part-2-protect-shared-data.html">C++11 Concurrency Tutorial - Part 2 : Protect shared data</a></li>
-<li><a href="../../2010/08/java-concurrrency-synchronization-locks.html">Java Concurrency – Part 3 : Synchronization with intrinsic locks</a></li>
-<li><a href="../../2010/01/jr-introduction.html">Introduction to JR programming language</a></li>
-</ol>
-
-
-                </div>
-            </div>
-        
-        <div class="left-sidebar-widget">
-            <h3>Recent comments</h3>
-            <div class="left-sidebar-widget-content">
-                <div id="recentcomments" class="dsq-widget">
-                    <script type="text/javascript" src="http://blogwichtounet.disqus.com/recent_comments_widget.js?num_items=5&amp;hide_avatars=0&amp;avatar_size=28&amp;excerpt_length=50"></script> 
-                </div>
-            </div>
-        </div>
-
-        <div class="left-sidebar-widget">
-            <h3>Popular posts</h3>
-            <div class="left-sidebar-widget-content">
-                <div id="popularthreads" class="dsq-widget">
-                    <script type="text/javascript" src="http://blogwichtounet.disqus.com/popular_threads_widget.js?num_items=5&amp;days_back=90"></script>
-                </div>
-            </div>
-        </div>
-        
-        <div class="left-sidebar-widget">
-            <h3>Blogroll</h3>
-            <div class="left-sidebar-widget-content">
-                <ul>
-                    <li><a target="_blank" href="http://www.asjava.com/">AsJava.com : Java Tutorial</a></li>
-                    <li><a target="_blank" href="http://www.mkyong.com/">Mkyong : Java Tutorials</a></li>
-                </ul>
-            </div>
-        </div>
-    </div>
-
-    <!-- Content -->
-
-    <div class="container">
-            <div class="body-content" style="margin-top: -75px;">
-
-            <div class="row">
-                
-    <article class="postbox post-text">
-    <div class="h-entry" itemscope="itemscope" itemtype="http://schema.org/Article">
-    
-    <h1 class="p-name" itemprop="headline name">C++11 Concurrency - Part 1 : Start Threads</h1>
-
-    <hr>
-    <small>
-        Posted: <time class="published dt-published" datetime="2012-03-21T09:16:18+01:00" itemprop="datePublished">2012-03-21 09:16</time>
-        
-
-        
-          |  
-        More posts about 
-    <span itemprop="keywords">
-        <a class="tag p-category" href="../../../categories/c.html"><span class="badge badge-info">C++</span></a>
-        <a class="tag p-category" href="../../../categories/c11-concurrency-tutorial.html"><span class="badge badge-info">C++11 Concurrency Tutorial</span></a>
-        <a class="tag p-category" href="../../../categories/concurrency.html"><span class="badge badge-info">Concurrency</span></a>
-    </span>
-
-
-    </small>
-    <hr>
-    <div class="e-content" itemprop="articleBody text">
-    <div><p>C++11 introduced a new thread library. This library includes utilities for starting and managing threads. It also contains utilities for synchronization like mutexes and other locks, atomic variables and other utilities. In this serie of posts, I will try to explain most of the features provided by this new library.</p>
-<p>To compile the samples of this article, you will need a compiler with C++11 support. In my case, I used GCC 4.6.1 (you need to pass the "-std=c++0x" or "-std=c++11" option to get the C++11 support activated).</p>
-<h4>Starting threads</h4>
-
-<p>Starting a new thread is very easy. When you create an instance of a <strong>std::thread</strong>, it will automatically be started. When you create a thread you have to give it the code it will execute. The first choice for that, is to pass it a function pointer. Let's start with the very common Hello World:</p>
-<div class="code"><pre><span class="cp">#include &lt;thread&gt;</span>
-<span class="cp">#include &lt;iostream&gt;</span>
-
-<span class="kt">void</span> <span class="nf">hello</span><span class="p">(){</span>
-    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"Hello from thread "</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
-<span class="p">}</span>
-
-<span class="kt">int</span> <span class="nf">main</span><span class="p">(){</span>
-    <span class="n">std</span><span class="o">::</span><span class="kr">thread</span> <span class="n">t1</span><span class="p">(</span><span class="n">hello</span><span class="p">);</span>
-    <span class="n">t1</span><span class="p">.</span><span class="n">join</span><span class="p">();</span>
-
-    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<span class="p">}</span>
-</pre></div>
-
-
-<p>All the threads utilities are located in the <strong>thread</strong> header. An interesting thing in this first example is the call to the <strong>join()</strong> function. Calling this function forces the current thread to wait for the other one (in this case, the main thread has to wait for the thread t1 to finish). If you omit this call, the result is undefined. The program can print <em>Hello from thread</em> and a new line, can print just <em>Hello from thread</em> without new line or can print nothing. That's because the main thread can return from the main function before the t1 thread finishes its execution.</p>
-<h4>Distinguishing threads</h4>
-
-<p>Each thread has a single id allowing us to distinguish each of them. The std::thread class has a <strong>get_id()</strong> function returning an unique id for this thread. You can get a reference to the current thread with the <strong>std::this_thread</strong> variable. The next example starts with threads and each of them prints its id:</p>
-<div class="code"><pre><span class="cp">#include &lt;thread&gt;</span>
-<span class="cp">#include &lt;iostream&gt;</span>
-<span class="cp">#include &lt;vector&gt;</span>
-
-<span class="kt">void</span> <span class="nf">hello</span><span class="p">(){</span>
-    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"Hello from thread "</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">this_thread</span><span class="o">::</span><span class="n">get_id</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
-<span class="p">}</span>
-
-<span class="kt">int</span> <span class="nf">main</span><span class="p">(){</span>
-    <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="kr">thread</span><span class="o">&gt;</span> <span class="n">threads</span><span class="p">;</span>
-
-    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">){</span>
-        <span class="n">threads</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="kr">thread</span><span class="p">(</span><span class="n">hello</span><span class="p">));</span>
-    <span class="p">}</span>
-
-    <span class="k">for</span><span class="p">(</span><span class="k">auto</span><span class="o">&amp;</span> <span class="kr">thread</span> <span class="o">:</span> <span class="n">threads</span><span class="p">){</span>
-        <span class="kr">thread</span><span class="p">.</span><span class="n">join</span><span class="p">();</span>
-    <span class="p">}</span>
-
-    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<span class="p">}</span>
-</pre></div>
-
-
-<p>Starting each thread one after one and then storing them into a vector is a common way to handle several threads. With that, you can easily change the number of threads. Even with a very little sample like this one, the results is not predictable. The theoretic case:</p>
-<pre>Hello from thread 140276650997504
+    <span class=k>return</span> <span class=mi>0</span><span class=p>;</span>
+<span class=p>}</span>
+</pre></div><p>Starting each thread one after one and then storing them into a vector is a common way to handle several threads. With that, you can easily change the number of threads. Even with a very little sample like this one, the results is not predictable. The theoretic case:</p><pre>Hello from thread 140276650997504
 Hello from thread 140276667782912
 Hello from thread 140276659390208
 Hello from thread 140276642604800
-Hello from thread 140276676175616</pre>
-
-<p>Is, in my case, also the less common. You can also get results like this one:</p>
-<pre>Hello from thread Hello from thread Hello from thread 139810974787328Hello from thread 139810983180032Hello from thread
+Hello from thread 140276676175616</pre><p>Is, in my case, also the less common. You can also get results like this one:</p><pre>Hello from thread Hello from thread Hello from thread 139810974787328Hello from thread 139810983180032Hello from thread
 139810966394624
 139810991572736
-139810958001920</pre>
+139810958001920</pre><p>Or a lot of another results. This is because of interleaving. You have no way to control the order of execution of threads. A thread can be preempted at any moment and the appends to the out stream are made one after one (first the append of the string, then append the id and finally the new line), so a thread can print its first part and then be interrupted to print its second part after all the others threads.</p><h4>Start a thread with a lambda</h4><p>When the code that has to be executed by each thread is very small, you don't necessary want to create a function for that. In that case, you can use a lambda to define the executed by a thread. We can rewrite the code of the last sample using lambda easily:</p><div class=code><pre><span class=cp>#include &lt;thread&gt;</span>
+<span class=cp>#include &lt;iostream&gt;</span>
+<span class=cp>#include &lt;vector&gt;</span>
 
-<p>Or a lot of another results. This is because of interleaving. You have no way to control the order of execution of threads. A thread can be preempted at any moment and the appends to the out stream are made one after one (first the append of the string, then append the id and finally the new line), so a thread can print its first part and then be interrupted to print its second part after all the others threads.</p>
-<h4>Start a thread with a lambda</h4>
+<span class=kt>int</span> <span class=nf>main</span><span class=p>(){</span>
+    <span class=n>std</span><span class=o>::</span><span class=n>vector</span><span class=o>&lt;</span><span class=n>std</span><span class=o>::</span><span class=kr>thread</span><span class=o>&gt;</span> <span class=n>threads</span><span class=p>;</span>
 
-<p>When the code that has to be executed by each thread is very small, you don't necessary want to create a function for that. In that case, you can use a lambda to define the executed by a thread. We can rewrite the code of the last sample using lambda easily:</p>
-<div class="code"><pre><span class="cp">#include &lt;thread&gt;</span>
-<span class="cp">#include &lt;iostream&gt;</span>
-<span class="cp">#include &lt;vector&gt;</span>
+    <span class=k>for</span><span class=p>(</span><span class=kt>int</span> <span class=n>i</span> <span class=o>=</span> <span class=mi>0</span><span class=p>;</span> <span class=n>i</span> <span class=o>&lt;</span> <span class=mi>5</span><span class=p>;</span> <span class=o>++</span><span class=n>i</span><span class=p>){</span>
+        <span class=n>threads</span><span class=p>.</span><span class=n>push_back</span><span class=p>(</span><span class=n>std</span><span class=o>::</span><span class=kr>thread</span><span class=p>([](){</span>
+            <span class=n>std</span><span class=o>::</span><span class=n>cout</span> <span class=o>&lt;&lt;</span> <span class=s>"Hello from thread "</span> <span class=o>&lt;&lt;</span> <span class=n>std</span><span class=o>::</span><span class=n>this_thread</span><span class=o>::</span><span class=n>get_id</span><span class=p>()</span> <span class=o>&lt;&lt;</span> <span class=n>std</span><span class=o>::</span><span class=n>endl</span><span class=p>;</span>
+        <span class=p>}));</span>
+    <span class=p>}</span>
 
-<span class="kt">int</span> <span class="nf">main</span><span class="p">(){</span>
-    <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="kr">thread</span><span class="o">&gt;</span> <span class="n">threads</span><span class="p">;</span>
+    <span class=k>for</span><span class=p>(</span><span class=k>auto</span><span class=o>&amp;</span> <span class=kr>thread</span> <span class=o>:</span> <span class=n>threads</span><span class=p>){</span>
+        <span class=kr>thread</span><span class=p>.</span><span class=n>join</span><span class=p>();</span>
+    <span class=p>}</span>
 
-    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">){</span>
-        <span class="n">threads</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="kr">thread</span><span class="p">([](){</span>
-            <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"Hello from thread "</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">this_thread</span><span class="o">::</span><span class="n">get_id</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
-        <span class="p">}));</span>
-    <span class="p">}</span>
-
-    <span class="k">for</span><span class="p">(</span><span class="k">auto</span><span class="o">&amp;</span> <span class="kr">thread</span> <span class="o">:</span> <span class="n">threads</span><span class="p">){</span>
-        <span class="kr">thread</span><span class="p">.</span><span class="n">join</span><span class="p">();</span>
-    <span class="p">}</span>
-
-    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<span class="p">}</span>
-</pre></div>
-
-
-<p>Here we just used a lambda expression instead of the function pointer. Of course, this produces the exact same result as the previous sample.</p>
-<h4>Next</h4>
-
-<p>In the next post of this series, we will see how to protect code using locks.</p>
-<p>The source code for each sample is available <a title="Source code for this blog post" href="https://github.com/wichtounet/articles/tree/master/src/threads/part1">on Github</a>.</p></div>
-    </div>
-    </div>
-    
-        <ul class="pager">
-            <li class="previous">
-                <a href="introduction-64-bit-intel-assembly-language-programming-linux-book-review.html" rel="prev">← Previous post</a>
-            </li>
-            <li class="next">
-                <a href="eddic-0-9-1-enhanced-floating-point-support.html" rel="next">Next post →</a>
-            </li>
-        </ul>
-
-        
-        
-        <div id="disqus_thread"></div>
-        <script>
+    <span class=k>return</span> <span class=mi>0</span><span class=p>;</span>
+<span class=p>}</span>
+</pre></div><p>Here we just used a lambda expression instead of the function pointer. Of course, this produces the exact same result as the previous sample.</p><h4>Next</h4><p>In the next post of this series, we will see how to protect code using locks.</p><p>The source code for each sample is available <a title="Source code for this blog post" href=https://github.com/wichtounet/articles/tree/master/src/threads/part1>on Github</a>.</p></div> </div> </div> <ul class=pager> <li class=previous> <a href=introduction-64-bit-intel-assembly-language-programming-linux-book-review.html rel=prev>← Previous post</a> </li> <li class=next> <a href=eddic-0-9-1-enhanced-floating-point-support.html rel=next>Next post →</a> </li> </ul> <div id=disqus_thread></div> <script>
         var disqus_shortname ="blogwichtounet",
             disqus_url="http://wichtounet.github.io/posts/2012/03/cpp11-concurrency-part1-start-threads.html",
         disqus_title="C++11 Concurrency - Part 1 : Start Threads",
@@ -297,52 +72,7 @@ Hello from thread 140276676175616</pre>
             dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
             (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
         })();
-    </script>
-    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
-    <a href="http://disqus.com" class="dsq-brlink" rel="nofollow">Comments powered by <span class="logo-disqus">Disqus</span></a>
-
-
-    
-
-    </article>
-
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Footer -->
-
-<footer>
-    Contents © 2014         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         
-<a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="border-width:0" src="http://i.creativecommons.org/l/by/4.0/88x31.png"></a>
-        <ul class="footer_inline_ul">
-            
-    <li>
-    <a href="cpp11-concurrency-part1-start-threads.wp" id="sourcelink">Source</a>
-    </li>
-
-        </ul>
-</footer>
-
-
-            <script src="../../../assets/js/all-nocdn.js" type="text/javascript"></script>
-
-
-<!-- Late loading stuff  -->
-
-
-<!-- Google platform JS -->
-    
-<script type="text/javascript" src="https://apis.google.com/js/platform.js"></script>
-
-
-    
-
-
-<!-- Tipue Search -->
-
-<script type="text/javascript">
+    </script> <noscript>Please enable JavaScript to view the <a href=http://disqus.com/?ref_noscript rel=nofollow>comments powered by Disqus.</a></noscript> <a href=http://disqus.com class=dsq-brlink rel=nofollow>Comments powered by <span class=logo-disqus>Disqus</span></a> </article> </div> </div> </div></div><footer> Contents © 2014 <a href=mailto:baptistewicht@gmail.com>Baptiste Wicht</a> - Powered by <a href=http://getnikola.com rel=nofollow>Nikola</a><a rel=license href=http://creativecommons.org/licenses/by/4.0/><img alt="Creative Commons License" style=border-width:0 src=http://i.creativecommons.org/l/by/4.0/88x31.png></a> <ul class=footer_inline_ul> <li> <a href=cpp11-concurrency-part1-start-threads.wp id=sourcelink>Source</a> </li> </ul></footer> <script src=../../../assets/js/all-nocdn.js type=text/javascript></script><script type=text/javascript src=https://apis.google.com/js/platform.js></script><script type=text/javascript>
     $(document).ready(function() {
         $('#tipue_search_input').tipuesearch({
         'mode': 'json',
@@ -350,12 +80,4 @@ Hello from thread 140276676175616</pre>
         'showUrl': false
         });
         });
-</script>
-
-
-
-
-
-
-</body>
-</html>
+</script></body></html>

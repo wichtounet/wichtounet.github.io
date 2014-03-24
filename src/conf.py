@@ -209,12 +209,15 @@ OUTPUT_FOLDER = '..'
 
 from nikola import filters
 
+def html_minify(infile):
+        return filters.runinplace(r'htmlmin -c -s %1 %2', infile)
+
 FILTERS = {
         ".jpg": [filters.jpegoptim],
         ".png": [filters.optipng],
         ".css": [filters.yui_compressor],
         ".js": [filters.yui_compressor],
-        # ".html": [filters.tidy],
+        ".html": [html_minify],
         }
 
 # Expert setting! Create a gzipped copy of each generated file. Cheap server-

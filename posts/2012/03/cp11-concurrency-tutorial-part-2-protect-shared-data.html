@@ -1,383 +1,101 @@
-<!DOCTYPE html><html lang="en">
-<head>
-    <link href="favicon.ico" rel="icon" type="image/x-icon">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="author" content="Baptiste Wicht">
-    <title>C++11 Concurrency Tutorial - Part 2 : Protect shared data | @Blog("Baptiste Wicht")</title>
-    
-            <link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
-      <link rel="canonical" href="http://wichtounet.github.io/posts/2012/03/cp11-concurrency-tutorial-part-2-protect-shared-data.html">
-    <!--[if lt IE 9]>
-      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js" type="text/javascript"></script>
-    <![endif]-->
-            <link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
-
-    
-
-
-
-
-
-    
-</head>
-<body>
-
-<div class="social_container">
-    <div class="social_container_gplus">
-        <a target="_blank" title="Share on Google+" href="https://plusone.google.com/_/+1/confirm?hl=en&amp;url=http://wichtounet.github.io/posts/2012/03/cp11-concurrency-tutorial-part-2-protect-shared-data.html"><img src="../../../assets/img/google_plus.png"></a>
-    </div>
-    <div class="social_container_facebook">
-        <a target="_blank" title="Share on Facebook" href="http://www.facebook.com/sharer/sharer.php?u=#url"><img src="../../../assets/img/facebook.png"></a>
-    </div>
-    <div class="social_container_twitter">
-        <a target="_blank" title="Tweet on Twitter" href="http://twitter.com/home?status=#url"><img src="../../../assets/img/twitter.svg"></a>
-    </div>
-</div>
-
-<!-- Menubar -->
-
-<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
-    <div class="container-fluid"><!-- This keeps the margins nice -->
-        <div class="navbar-header">
-            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            </button>
-            <a class="navbar-brand" href="http://wichtounet.github.io/">@Blog("Baptiste Wicht")</a>
-        </div><!-- /.navbar-header -->
-        
-        <div class="collapse navbar-collapse navbar-ex1-collapse">
-            <ul class="nav navbar-nav">
-                
-                <li><a href="../../../stories/about.html">About</a>
-                </li><li><a href="../../../stories/publications.html">Publications</a>
-                </li><li><a href="../../../stories/donate.html">Donate</a>
-                </li><li><a href="../../../stories/contact.html">Contact</a>
-                </li><li><a href="../../../stories/faq.html">FAQ</a>
-                </li><li><a href="../../../stories/legal.html">Legal</a>
-                </li><li><a href="../../../archive.html">Archives</a>
-                </li><li><a href="../../../categories/index.html">Tags</a>
-                </li><li><a href="../../../rss.xml">RSS</a>
-
-            </li></ul>
-
-            <span class="navbar-form pull-left">
-                <form action="../../../stories/search.html">
-                    <input type="text" name="q" id="tipue_search_input">
-                </form>
-            </span>
-            
-            <ul class="nav navbar-nav navbar-right">
-                <li>
-                    <a target="_blank" title="Follow @wichtounet on Twitter" href="https://twitter.com/wichtounewichtounet">
-                        <img src="../../../assets/img/twitter.svg" alt="Follow @wichtounet on Twitter">
-                    </a>
-                </li>
-                <li>
-                    <a target="_blank" title="Follow +BaptisteWicht on Google+" href="https://plus.google.com/+BaptisteWicht">
-                        <img src="../../../assets/img/google_plus.svg" alt="Follow +BaptisteWicht on Google+">
-                    </a>
-                </li>
-            </ul>
-        </div><!-- /.navbar-collapse -->
-    </div><!-- /.container-fluid -->
-</nav>
-
-<!-- End of Menubar -->
-
-<div class="body-container">
-
-    <!-- Sidebar -->
-
-    <div class="left-sidebar">
-            <div class="left-sidebar-widget">
-                <div class="left-sidebar-widget-content">
-                    <div class="g-person" data-width="275" data-href="//plus.google.com/u/0/103113673902796202116" data-theme="dark" data-layout="landscape" data-rel="author"></div>
-                </div>
-            </div>
-
-            <div class="left-sidebar-widget">
-                <h3>Related posts</h3>
-                <div class="left-sidebar-widget-content">
-                    
-                    <ol>
-<li><a href="../../2010/08/java-concurrrency-synchronization-locks.html">Java Concurrency – Part 3 : Synchronization with intrinsic locks</a></li>
-<li><a href="../04/c11-concurrency-tutorial-advanced-locking-and-condition-variables.html">C++11 Concurrency Tutorial - Part 3: Advanced locking and condition variables</a></li>
-<li><a href="../../2010/01/jr-introduction.html">Introduction to JR programming language</a></li>
-<li><a href="../../2009/12/swing-user-interface-jtable.html">Creation of Swing User Interface : Tables (JTable)</a></li>
-<li><a href="../../2010/09/java-concurrency-atomic-variables.html">Java Concurrency - Part 6 : Atomic Variables</a></li>
-</ol>
-
-
-                </div>
-            </div>
-        
-        <div class="left-sidebar-widget">
-            <h3>Recent comments</h3>
-            <div class="left-sidebar-widget-content">
-                <div id="recentcomments" class="dsq-widget">
-                    <script type="text/javascript" src="http://blogwichtounet.disqus.com/recent_comments_widget.js?num_items=5&amp;hide_avatars=0&amp;avatar_size=28&amp;excerpt_length=50"></script> 
-                </div>
-            </div>
-        </div>
-
-        <div class="left-sidebar-widget">
-            <h3>Popular posts</h3>
-            <div class="left-sidebar-widget-content">
-                <div id="popularthreads" class="dsq-widget">
-                    <script type="text/javascript" src="http://blogwichtounet.disqus.com/popular_threads_widget.js?num_items=5&amp;days_back=90"></script>
-                </div>
-            </div>
-        </div>
-        
-        <div class="left-sidebar-widget">
-            <h3>Blogroll</h3>
-            <div class="left-sidebar-widget-content">
-                <ul>
-                    <li><a target="_blank" href="http://www.asjava.com/">AsJava.com : Java Tutorial</a></li>
-                    <li><a target="_blank" href="http://www.mkyong.com/">Mkyong : Java Tutorials</a></li>
-                </ul>
-            </div>
-        </div>
-    </div>
-
-    <!-- Content -->
-
-    <div class="container">
-            <div class="body-content" style="margin-top: -75px;">
-
-            <div class="row">
-                
-    <article class="postbox post-text">
-    <div class="h-entry" itemscope="itemscope" itemtype="http://schema.org/Article">
-    
-    <h1 class="p-name" itemprop="headline name">C++11 Concurrency Tutorial - Part 2 : Protect shared data</h1>
-
-    <hr>
-    <small>
-        Posted: <time class="published dt-published" datetime="2012-03-26T09:04:28+02:00" itemprop="datePublished">2012-03-26 09:04</time>
-        
-
-        
-          |  
-        More posts about 
-    <span itemprop="keywords">
-        <a class="tag p-category" href="../../../categories/c.html"><span class="badge badge-info">C++</span></a>
-        <a class="tag p-category" href="../../../categories/c11-concurrency-tutorial.html"><span class="badge badge-info">C++11 Concurrency Tutorial</span></a>
-        <a class="tag p-category" href="../../../categories/concurrency.html"><span class="badge badge-info">Concurrency</span></a>
-        <a class="tag p-category" href="../../../categories/performances.html"><span class="badge badge-info">Performances</span></a>
-    </span>
-
-
-    </small>
-    <hr>
-    <div class="e-content" itemprop="articleBody text">
-    <div><p>In the previous article, we saw how to start threads to execute some code in parallel. All the code executed in the threads were independant. In the general case, you often use shared objects between the threads. And when you do it, you will face another problem: synchronization. </p>
-<p>We will see what is this problem in a simple code. </p>
-<h4>Synchronization issues</h4>
-
-<p>As an example, we will take a simple Counter structure. This structure has a value and methods to increment or decrement the value. Here is the structure:</p>
-<div class="code"><pre><span class="k">struct</span> <span class="n">Counter</span> <span class="p">{</span>
-    <span class="kt">int</span> <span class="n">value</span><span class="p">;</span>
-
-    <span class="kt">void</span> <span class="nf">increment</span><span class="p">(){</span>
-        <span class="o">++</span><span class="n">value</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">};</span>
-</pre></div>
-
-
-<p>There is nothing new here. Now, let's start some threads and make some increments: </p>
-<div class="code"><pre><span class="kt">int</span> <span class="nf">main</span><span class="p">(){</span>
-    <span class="n">Counter</span> <span class="n">counter</span><span class="p">;</span>
-
-    <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="kr">thread</span><span class="o">&gt;</span> <span class="n">threads</span><span class="p">;</span>
-    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">){</span>
-        <span class="n">threads</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="kr">thread</span><span class="p">([</span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">counter</span><span class="p">](){</span>
-            <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">100</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">){</span>
-                <span class="n">counter</span><span class="p">.</span><span class="n">increment</span><span class="p">();</span>
-            <span class="p">}</span>
-        <span class="p">}));</span>
-    <span class="p">}</span>
-
-    <span class="k">for</span><span class="p">(</span><span class="k">auto</span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span> <span class="kr">thread</span> <span class="o">:</span> <span class="n">threads</span><span class="p">){</span>
-        <span class="kr">thread</span><span class="p">.</span><span class="n">join</span><span class="p">();</span>
-    <span class="p">}</span>
-
-    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">counter</span><span class="p">.</span><span class="n">value</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
-
-    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<span class="p">}</span>
-</pre></div>
-
-
-<p>Again, nothing new there. We launch 5 threads and each one increment the counter hundred times. After all thread have finished their work, we print the value of the counter. </p>
-<p>If we launch this program, we should expect that it will print 500. But this is not the case. No one can say what this program will print. Here are some results I obtained on my computer: </p>
-<blockquote>442
-500
-477
-400
-422
-487</blockquote>
-
-<p>The problem is that the incrementation is not an atomic operation. As a matter of fact, an incrementation is made of three operations: </p>
-<ul>
-    <li>Read the current value of <em>value</em></li>
-    <li>Add one to the current value</li>
-    <li>Write that new value to <em>value</em></li>
-</ul>
-
-<p>When you run that code using a single thread, there are no problems. It will execute each part of the  operation one after another. But when you have several threads, you can start having troubles. Imagine this situation:</p>
-<ol>
-    <li>Thread 1 : read the value, get 0, add 1, so value = 1</li>
-    <li>Thread 2 : read the value, get 0, add 1, so value = 1</li>
-    <li>Thread 1 : write 1 to the field value and return 1</li>
-    <li>Thread 2 : write 1 to the field value and return 1</li>
-</ol>
-
-<p>These situations come from what we call interleaving. Interleaving describe the possible situations of several threads executing some statements. Even for three operations and two threads, there is a lot of possible interleavings. When you have more threads and more operations, it is almost impossible to enumerate the possibles interleavings. The problem can also occurs when a thread gets preempted between instructions of the operation. </p>
-<p>There are several solutions to fix this problem: </p>
-<ul>
-    <li>Semaphores</li>
-    <li>Atomic references</li>
-    <li>Monitors</li>
-    <li>Condition codes</li>
-    <li>Compare and swap</li>
-    <li>etc.</li>
-</ul>
-
-<p>In this blog post we will learn how to use semaphores to fix this problem. As a matter of fact, we will a special kind of semaphores called mutexes. A mutex is a very object. Only one thread can obtain the lock on a mutex at the same time. This simple (and powerful) property of a mutex allow us to use it to fix synchronization problems. </p>
-<h4>Use a mutex to make our Counter thread-safe</h4>
-
-<p>In the C++11 threading library, the mutexes are in the mutex header and the class representing a mutex is the std::mutex class. There are two important methods on a mutex: lock() and unlock(). As their names indicate, the first one enable a thread to obtain the lock and the second releases the lock. The lock() method is blocking. The thread will only return from the lock() method when the lock has been obtained. </p>
-<p>To make our Counter struct thread-safe, we have to add a set::mutex member to it and then to lock()/unlock() the mutex in every function of the object: </p>
-<div class="code"><pre><span class="k">struct</span> <span class="n">Counter</span> <span class="p">{</span>
-    <span class="n">std</span><span class="o">::</span><span class="n">mutex</span> <span class="n">mutex</span><span class="p">;</span>
-    <span class="kt">int</span> <span class="n">value</span><span class="p">;</span>
-
-    <span class="n">Counter</span><span class="p">()</span> <span class="o">:</span> <span class="n">value</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="p">{}</span>
-
-    <span class="kt">void</span> <span class="n">increment</span><span class="p">(){</span>
-        <span class="n">mutex</span><span class="p">.</span><span class="n">lock</span><span class="p">();</span>
-        <span class="o">++</span><span class="n">value</span><span class="p">;</span>
-        <span class="n">mutex</span><span class="p">.</span><span class="n">unlock</span><span class="p">();</span>
-    <span class="p">}</span>
-<span class="p">};</span>
-</pre></div>
-
-
-<p>If we test now this implementation with the same code as before for starting the threads, the program will always displays 500. </p>
-<h4>Exceptions and locks</h4>
-
-<p>Now, let's see what happens in another case. Imagine that the Counter has a decrement operation that throws an exception if the value is 0: </p>
-<div class="code"><pre><span class="k">struct</span> <span class="n">Counter</span> <span class="p">{</span>
-    <span class="kt">int</span> <span class="n">value</span><span class="p">;</span>
-
-    <span class="n">Counter</span><span class="p">()</span> <span class="o">:</span> <span class="n">value</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="p">{}</span>
-
-    <span class="kt">void</span> <span class="n">increment</span><span class="p">(){</span>
-        <span class="o">++</span><span class="n">value</span><span class="p">;</span>
-    <span class="p">}</span>
-
-    <span class="kt">void</span> <span class="n">decrement</span><span class="p">(){</span>
-        <span class="k">if</span><span class="p">(</span><span class="n">value</span> <span class="o">==</span> <span class="mi">0</span><span class="p">){</span>
-            <span class="k">throw</span> <span class="s">"Value cannot be less than 0"</span><span class="p">;</span>
-        <span class="p">}</span>
-
-        <span class="o">--</span><span class="n">value</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">};</span>
-</pre></div>
-
-
-<p>You want to access this structure concurrently without modifying the class. So you create a wrapper with locks for this class: </p>
-<div class="code"><pre><span class="k">struct</span> <span class="n">ConcurrentCounter</span> <span class="p">{</span>
-    <span class="n">std</span><span class="o">::</span><span class="n">mutex</span> <span class="n">mutex</span><span class="p">;</span>
-    <span class="n">Counter</span> <span class="n">counter</span><span class="p">;</span>
-
-    <span class="kt">void</span> <span class="nf">increment</span><span class="p">(){</span>
-        <span class="n">mutex</span><span class="p">.</span><span class="n">lock</span><span class="p">();</span>
-        <span class="n">counter</span><span class="p">.</span><span class="n">increment</span><span class="p">();</span>
-        <span class="n">mutex</span><span class="p">.</span><span class="n">unlock</span><span class="p">();</span>
-    <span class="p">}</span>
-
-    <span class="kt">void</span> <span class="nf">decrement</span><span class="p">(){</span>
-        <span class="n">mutex</span><span class="p">.</span><span class="n">lock</span><span class="p">();</span>
-        <span class="n">counter</span><span class="p">.</span><span class="n">decrement</span><span class="p">();</span>        
-        <span class="n">mutex</span><span class="p">.</span><span class="n">unlock</span><span class="p">();</span>
-    <span class="p">}</span>
-<span class="p">};</span>
-</pre></div>
-
-
-<p>This wrapper works well in most of the cases, but when an exception occurs in the decrement method, you have a big problem. Indeed, if an exception occurs, the unlock() function is not called and so the lock is not released. As a consequence, you program is completely blocked. To fix this problem, you have to use a try/catch structure to unlock the lock before throwing again the exception:</p>
-<div class="code"><pre><span class="kt">void</span> <span class="nf">decrement</span><span class="p">(){</span>
-    <span class="n">mutex</span><span class="p">.</span><span class="n">lock</span><span class="p">();</span>
-    <span class="n">try</span> <span class="p">{</span>
-        <span class="n">counter</span><span class="p">.</span><span class="n">decrement</span><span class="p">();</span>
-    <span class="p">}</span> <span class="k">catch</span> <span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">e</span><span class="p">){</span>
-        <span class="n">mutex</span><span class="p">.</span><span class="n">unlock</span><span class="p">();</span>
-        <span class="k">throw</span> <span class="n">e</span><span class="p">;</span>
-    <span class="p">}</span> 
-    <span class="n">mutex</span><span class="p">.</span><span class="n">unlock</span><span class="p">();</span>
-<span class="p">}</span>
-</pre></div>
-
-
-<p>The code is not difficult but starts looking ugly. Now imagine you are in a function with 10 different exit points. You will have to call unlock() from each of these points and the probability that you will forget one is big. Even bigger is the risk that you won't add a call to unlock when you add a new exit point to a function. </p>
-<p>The next section gives a very nice solution to this problem.</p>
-<h4>Automatic management of locks</h4>
-
-<p>When you want to protect a whole block of code (a function in our case, but can be inside a loop or another control structure), it exists a good solution to avoid forgetting to release the lock: std::lock_guard. </p>
-<p>This class is a simple smart manager for a lock. When the std::lock_guard is created, it automatically calls lock() on the mutex. When the guard gets destructed, it also releases the lock. You can use it like this: </p>
-<div class="code"><pre><span class="k">struct</span> <span class="n">ConcurrentSafeCounter</span> <span class="p">{</span>
-    <span class="n">std</span><span class="o">::</span><span class="n">mutex</span> <span class="n">mutex</span><span class="p">;</span>
-    <span class="n">Counter</span> <span class="n">counter</span><span class="p">;</span>
-
-    <span class="kt">void</span> <span class="nf">increment</span><span class="p">(){</span>
-        <span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span> <span class="n">guard</span><span class="p">(</span><span class="n">mutex</span><span class="p">);</span>
-        <span class="n">counter</span><span class="p">.</span><span class="n">increment</span><span class="p">();</span>
-    <span class="p">}</span>
-
-    <span class="kt">void</span> <span class="nf">decrement</span><span class="p">(){</span>
-        <span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span> <span class="n">guard</span><span class="p">(</span><span class="n">mutex</span><span class="p">);</span>
-        <span class="n">counter</span><span class="p">.</span><span class="n">decrement</span><span class="p">();</span>
-    <span class="p">}</span>
-<span class="p">};</span>
-</pre></div>
-
-
-<p>Much nicer, isn't it :)</p>
-<p>With that solution, you do not have to handle all the cases of exit of the function, they are all handled by the destructor of the std::lock_guard instance. </p>
-<h4>Conclusion</h4>
-
-<p>We are now done with semaphores. In this article, you learned how to protect shared data using mutexes from the C++ Threads Library. </p>
-<p>Keep in mind that locks are slow. Indeed, when you use locks you make sections of the code sequential. If you want an highly parallel application, there are other solutions than locks that are performing much better but this is out of the scope of this article. </p>
-<h4>Next</h4>
-
-<p>In the next blog post of this serie, I will talk about advanced concepts for mutexes and how to use condition variables to fix little concurrent programming problem. </p>
-<p>The source code for each sample is available <a title="Source code for this blog post" href="https://github.com/wichtounet/articles/tree/master/src/threads/part2/">on Github</a>.</p></div>
-    </div>
-    </div>
-    
-        <ul class="pager">
-            <li class="previous">
-                <a href="eddic-0-9-1-enhanced-floating-point-support.html" rel="prev">← Previous post</a>
-            </li>
-            <li class="next">
-                <a href="enhanced-code-snippets-syntaxhighlighter-evolved.html" rel="next">Next post →</a>
-            </li>
-        </ul>
-
-        
-        
-        <div id="disqus_thread"></div>
-        <script>
+<!DOCTYPE html>
+<html lang=en><head><link href=favicon.ico rel=icon type=image/x-icon><meta name=viewport content="width=device-width, initial-scale=1.0"><meta charset=utf-8><meta name=viewport content="width=device-width, initial-scale=1.0"><meta name=author content="Baptiste Wicht"><title>C++11 Concurrency Tutorial - Part 2 : Protect shared data | @Blog("Baptiste Wicht")</title><link href=../../../assets/css/all-nocdn.css rel=stylesheet type=text/css><link rel=canonical href=http://wichtounet.github.io/posts/2012/03/cp11-concurrency-tutorial-part-2-protect-shared-data.html><link rel=alternate type=application/rss+xml title=RSS href=../../../rss.xml></head><body><div class=social_container> <div class=social_container_gplus> <a target=_blank title="Share on Google+" href="https://plusone.google.com/_/+1/confirm?hl=en&amp;url=http://wichtounet.github.io/posts/2012/03/cp11-concurrency-tutorial-part-2-protect-shared-data.html"><img src=../../../assets/img/google_plus.png></a> </div> <div class=social_container_facebook> <a target=_blank title="Share on Facebook" href="http://www.facebook.com/sharer/sharer.php?u=#url"><img src=../../../assets/img/facebook.png></a> </div> <div class=social_container_twitter> <a target=_blank title="Tweet on Twitter" href="http://twitter.com/home?status=#url"><img src=../../../assets/img/twitter.svg></a> </div></div><nav class="navbar navbar-inverse navbar-fixed-top" role=navigation> <div class=container-fluid> <div class=navbar-header> <button type=button class=navbar-toggle data-toggle=collapse data-target=.navbar-ex1-collapse> <span class=sr-only>Toggle navigation</span> <span class=icon-bar></span> <span class=icon-bar></span> <span class=icon-bar></span> </button> <a class=navbar-brand href=http://wichtounet.github.io/>@Blog("Baptiste Wicht")</a> </div> <div class="collapse navbar-collapse navbar-ex1-collapse"> <ul class="nav navbar-nav"> <li><a href=../../../stories/about.html>About</a> </li><li><a href=../../../stories/publications.html>Publications</a> </li><li><a href=../../../stories/donate.html>Donate</a> </li><li><a href=../../../stories/contact.html>Contact</a> </li><li><a href=../../../stories/faq.html>FAQ</a> </li><li><a href=../../../stories/legal.html>Legal</a> </li><li><a href=../../../archive.html>Archives</a> </li><li><a href=../../../categories/index.html>Tags</a> </li><li><a href=../../../rss.xml>RSS</a> </li></ul> <span class="navbar-form pull-left"> <form action=../../../stories/search.html> <input type=text name=q id=tipue_search_input> </form> </span> <ul class="nav navbar-nav navbar-right"> <li> <a target=_blank title="Follow @wichtounet on Twitter" href=https://twitter.com/wichtounewichtounet> <img src=../../../assets/img/twitter.svg alt="Follow @wichtounet on Twitter"> </a> </li> <li> <a target=_blank title="Follow +BaptisteWicht on Google+" href=https://plus.google.com/+BaptisteWicht> <img src=../../../assets/img/google_plus.svg alt="Follow +BaptisteWicht on Google+"> </a> </li> </ul> </div> </div></nav><div class=body-container> <div class=left-sidebar> <div class=left-sidebar-widget> <div class=left-sidebar-widget-content> <div class=g-person data-width=275 data-href=//plus.google.com/u/0/103113673902796202116 data-theme=dark data-layout=landscape data-rel=author></div> </div> </div> <div class=left-sidebar-widget> <h3>Related posts</h3> <div class=left-sidebar-widget-content> <ol><li><a href=../../2010/08/java-concurrrency-synchronization-locks.html>Java Concurrency – Part 3 : Synchronization with intrinsic locks</a></li><li><a href=../04/c11-concurrency-tutorial-advanced-locking-and-condition-variables.html>C++11 Concurrency Tutorial - Part 3: Advanced locking and condition variables</a></li><li><a href=../../2010/01/jr-introduction.html>Introduction to JR programming language</a></li><li><a href=../../2009/12/swing-user-interface-jtable.html>Creation of Swing User Interface : Tables (JTable)</a></li><li><a href=../../2010/09/java-concurrency-atomic-variables.html>Java Concurrency - Part 6 : Atomic Variables</a></li></ol> </div> </div> <div class=left-sidebar-widget> <h3>Recent comments</h3> <div class=left-sidebar-widget-content> <div id=recentcomments class=dsq-widget> <script type=text/javascript src="http://blogwichtounet.disqus.com/recent_comments_widget.js?num_items=5&amp;hide_avatars=0&amp;avatar_size=28&amp;excerpt_length=50"></script> </div> </div> </div> <div class=left-sidebar-widget> <h3>Popular posts</h3> <div class=left-sidebar-widget-content> <div id=popularthreads class=dsq-widget> <script type=text/javascript src="http://blogwichtounet.disqus.com/popular_threads_widget.js?num_items=5&amp;days_back=90"></script> </div> </div> </div> <div class=left-sidebar-widget> <h3>Blogroll</h3> <div class=left-sidebar-widget-content> <ul> <li><a target=_blank href=http://www.asjava.com/>AsJava.com : Java Tutorial</a></li> <li><a target=_blank href=http://www.mkyong.com/>Mkyong : Java Tutorials</a></li> </ul> </div> </div> </div> <div class=container> <div class=body-content style="margin-top: -75px;"> <div class=row> <article class="postbox post-text"> <div class=h-entry itemscope=itemscope itemtype=http://schema.org/Article> <h1 class=p-name itemprop="headline name">C++11 Concurrency Tutorial - Part 2 : Protect shared data</h1> <hr> <small> Posted: <time class="published dt-published" datetime=2012-03-26T09:04:28+02:00 itemprop=datePublished>2012-03-26 09:04</time>   |   More posts about <span itemprop=keywords> <a class="tag p-category" href=../../../categories/c.html><span class="badge badge-info">C++</span></a> <a class="tag p-category" href=../../../categories/c11-concurrency-tutorial.html><span class="badge badge-info">C++11 Concurrency Tutorial</span></a> <a class="tag p-category" href=../../../categories/concurrency.html><span class="badge badge-info">Concurrency</span></a> <a class="tag p-category" href=../../../categories/performances.html><span class="badge badge-info">Performances</span></a> </span> </small> <hr> <div class=e-content itemprop="articleBody text"> <div><p>In the previous article, we saw how to start threads to execute some code in parallel. All the code executed in the threads were independant. In the general case, you often use shared objects between the threads. And when you do it, you will face another problem: synchronization. </p><p>We will see what is this problem in a simple code. </p><h4>Synchronization issues</h4><p>As an example, we will take a simple Counter structure. This structure has a value and methods to increment or decrement the value. Here is the structure:</p><div class=code><pre><span class=k>struct</span> <span class=n>Counter</span> <span class=p>{</span>
+    <span class=kt>int</span> <span class=n>value</span><span class=p>;</span>
+
+    <span class=kt>void</span> <span class=nf>increment</span><span class=p>(){</span>
+        <span class=o>++</span><span class=n>value</span><span class=p>;</span>
+    <span class=p>}</span>
+<span class=p>};</span>
+</pre></div><p>There is nothing new here. Now, let's start some threads and make some increments: </p><div class=code><pre><span class=kt>int</span> <span class=nf>main</span><span class=p>(){</span>
+    <span class=n>Counter</span> <span class=n>counter</span><span class=p>;</span>
+
+    <span class=n>std</span><span class=o>::</span><span class=n>vector</span><span class=o>&lt;</span><span class=n>std</span><span class=o>::</span><span class=kr>thread</span><span class=o>&gt;</span> <span class=n>threads</span><span class=p>;</span>
+    <span class=k>for</span><span class=p>(</span><span class=kt>int</span> <span class=n>i</span> <span class=o>=</span> <span class=mi>0</span><span class=p>;</span> <span class=n>i</span> <span class=o>&lt;</span> <span class=mi>5</span><span class=p>;</span> <span class=o>++</span><span class=n>i</span><span class=p>){</span>
+        <span class=n>threads</span><span class=p>.</span><span class=n>push_back</span><span class=p>(</span><span class=n>std</span><span class=o>::</span><span class=kr>thread</span><span class=p>([</span><span class=o>&amp;</span><span class=n>amp</span><span class=p>;</span><span class=n>counter</span><span class=p>](){</span>
+            <span class=k>for</span><span class=p>(</span><span class=kt>int</span> <span class=n>i</span> <span class=o>=</span> <span class=mi>0</span><span class=p>;</span> <span class=n>i</span> <span class=o>&lt;</span> <span class=mi>100</span><span class=p>;</span> <span class=o>++</span><span class=n>i</span><span class=p>){</span>
+                <span class=n>counter</span><span class=p>.</span><span class=n>increment</span><span class=p>();</span>
+            <span class=p>}</span>
+        <span class=p>}));</span>
+    <span class=p>}</span>
+
+    <span class=k>for</span><span class=p>(</span><span class=k>auto</span><span class=o>&amp;</span><span class=n>amp</span><span class=p>;</span> <span class=kr>thread</span> <span class=o>:</span> <span class=n>threads</span><span class=p>){</span>
+        <span class=kr>thread</span><span class=p>.</span><span class=n>join</span><span class=p>();</span>
+    <span class=p>}</span>
+
+    <span class=n>std</span><span class=o>::</span><span class=n>cout</span> <span class=o>&lt;&lt;</span> <span class=n>counter</span><span class=p>.</span><span class=n>value</span> <span class=o>&lt;&lt;</span> <span class=n>std</span><span class=o>::</span><span class=n>endl</span><span class=p>;</span>
+
+    <span class=k>return</span> <span class=mi>0</span><span class=p>;</span>
+<span class=p>}</span>
+</pre></div><p>Again, nothing new there. We launch 5 threads and each one increment the counter hundred times. After all thread have finished their work, we print the value of the counter. </p><p>If we launch this program, we should expect that it will print 500. But this is not the case. No one can say what this program will print. Here are some results I obtained on my computer: </p><blockquote>442 500 477 400 422 487</blockquote><p>The problem is that the incrementation is not an atomic operation. As a matter of fact, an incrementation is made of three operations: </p><ul> <li>Read the current value of <em>value</em></li> <li>Add one to the current value</li> <li>Write that new value to <em>value</em></li></ul><p>When you run that code using a single thread, there are no problems. It will execute each part of the operation one after another. But when you have several threads, you can start having troubles. Imagine this situation:</p><ol> <li>Thread 1 : read the value, get 0, add 1, so value = 1</li> <li>Thread 2 : read the value, get 0, add 1, so value = 1</li> <li>Thread 1 : write 1 to the field value and return 1</li> <li>Thread 2 : write 1 to the field value and return 1</li></ol><p>These situations come from what we call interleaving. Interleaving describe the possible situations of several threads executing some statements. Even for three operations and two threads, there is a lot of possible interleavings. When you have more threads and more operations, it is almost impossible to enumerate the possibles interleavings. The problem can also occurs when a thread gets preempted between instructions of the operation. </p><p>There are several solutions to fix this problem: </p><ul> <li>Semaphores</li> <li>Atomic references</li> <li>Monitors</li> <li>Condition codes</li> <li>Compare and swap</li> <li>etc.</li></ul><p>In this blog post we will learn how to use semaphores to fix this problem. As a matter of fact, we will a special kind of semaphores called mutexes. A mutex is a very object. Only one thread can obtain the lock on a mutex at the same time. This simple (and powerful) property of a mutex allow us to use it to fix synchronization problems. </p><h4>Use a mutex to make our Counter thread-safe</h4><p>In the C++11 threading library, the mutexes are in the mutex header and the class representing a mutex is the std::mutex class. There are two important methods on a mutex: lock() and unlock(). As their names indicate, the first one enable a thread to obtain the lock and the second releases the lock. The lock() method is blocking. The thread will only return from the lock() method when the lock has been obtained. </p><p>To make our Counter struct thread-safe, we have to add a set::mutex member to it and then to lock()/unlock() the mutex in every function of the object: </p><div class=code><pre><span class=k>struct</span> <span class=n>Counter</span> <span class=p>{</span>
+    <span class=n>std</span><span class=o>::</span><span class=n>mutex</span> <span class=n>mutex</span><span class=p>;</span>
+    <span class=kt>int</span> <span class=n>value</span><span class=p>;</span>
+
+    <span class=n>Counter</span><span class=p>()</span> <span class=o>:</span> <span class=n>value</span><span class=p>(</span><span class=mi>0</span><span class=p>)</span> <span class=p>{}</span>
+
+    <span class=kt>void</span> <span class=n>increment</span><span class=p>(){</span>
+        <span class=n>mutex</span><span class=p>.</span><span class=n>lock</span><span class=p>();</span>
+        <span class=o>++</span><span class=n>value</span><span class=p>;</span>
+        <span class=n>mutex</span><span class=p>.</span><span class=n>unlock</span><span class=p>();</span>
+    <span class=p>}</span>
+<span class=p>};</span>
+</pre></div><p>If we test now this implementation with the same code as before for starting the threads, the program will always displays 500. </p><h4>Exceptions and locks</h4><p>Now, let's see what happens in another case. Imagine that the Counter has a decrement operation that throws an exception if the value is 0: </p><div class=code><pre><span class=k>struct</span> <span class=n>Counter</span> <span class=p>{</span>
+    <span class=kt>int</span> <span class=n>value</span><span class=p>;</span>
+
+    <span class=n>Counter</span><span class=p>()</span> <span class=o>:</span> <span class=n>value</span><span class=p>(</span><span class=mi>0</span><span class=p>)</span> <span class=p>{}</span>
+
+    <span class=kt>void</span> <span class=n>increment</span><span class=p>(){</span>
+        <span class=o>++</span><span class=n>value</span><span class=p>;</span>
+    <span class=p>}</span>
+
+    <span class=kt>void</span> <span class=n>decrement</span><span class=p>(){</span>
+        <span class=k>if</span><span class=p>(</span><span class=n>value</span> <span class=o>==</span> <span class=mi>0</span><span class=p>){</span>
+            <span class=k>throw</span> <span class=s>"Value cannot be less than 0"</span><span class=p>;</span>
+        <span class=p>}</span>
+
+        <span class=o>--</span><span class=n>value</span><span class=p>;</span>
+    <span class=p>}</span>
+<span class=p>};</span>
+</pre></div><p>You want to access this structure concurrently without modifying the class. So you create a wrapper with locks for this class: </p><div class=code><pre><span class=k>struct</span> <span class=n>ConcurrentCounter</span> <span class=p>{</span>
+    <span class=n>std</span><span class=o>::</span><span class=n>mutex</span> <span class=n>mutex</span><span class=p>;</span>
+    <span class=n>Counter</span> <span class=n>counter</span><span class=p>;</span>
+
+    <span class=kt>void</span> <span class=nf>increment</span><span class=p>(){</span>
+        <span class=n>mutex</span><span class=p>.</span><span class=n>lock</span><span class=p>();</span>
+        <span class=n>counter</span><span class=p>.</span><span class=n>increment</span><span class=p>();</span>
+        <span class=n>mutex</span><span class=p>.</span><span class=n>unlock</span><span class=p>();</span>
+    <span class=p>}</span>
+
+    <span class=kt>void</span> <span class=nf>decrement</span><span class=p>(){</span>
+        <span class=n>mutex</span><span class=p>.</span><span class=n>lock</span><span class=p>();</span>
+        <span class=n>counter</span><span class=p>.</span><span class=n>decrement</span><span class=p>();</span>        
+        <span class=n>mutex</span><span class=p>.</span><span class=n>unlock</span><span class=p>();</span>
+    <span class=p>}</span>
+<span class=p>};</span>
+</pre></div><p>This wrapper works well in most of the cases, but when an exception occurs in the decrement method, you have a big problem. Indeed, if an exception occurs, the unlock() function is not called and so the lock is not released. As a consequence, you program is completely blocked. To fix this problem, you have to use a try/catch structure to unlock the lock before throwing again the exception:</p><div class=code><pre><span class=kt>void</span> <span class=nf>decrement</span><span class=p>(){</span>
+    <span class=n>mutex</span><span class=p>.</span><span class=n>lock</span><span class=p>();</span>
+    <span class=n>try</span> <span class=p>{</span>
+        <span class=n>counter</span><span class=p>.</span><span class=n>decrement</span><span class=p>();</span>
+    <span class=p>}</span> <span class=k>catch</span> <span class=p>(</span><span class=n>std</span><span class=o>::</span><span class=n>string</span> <span class=n>e</span><span class=p>){</span>
+        <span class=n>mutex</span><span class=p>.</span><span class=n>unlock</span><span class=p>();</span>
+        <span class=k>throw</span> <span class=n>e</span><span class=p>;</span>
+    <span class=p>}</span> 
+    <span class=n>mutex</span><span class=p>.</span><span class=n>unlock</span><span class=p>();</span>
+<span class=p>}</span>
+</pre></div><p>The code is not difficult but starts looking ugly. Now imagine you are in a function with 10 different exit points. You will have to call unlock() from each of these points and the probability that you will forget one is big. Even bigger is the risk that you won't add a call to unlock when you add a new exit point to a function. </p><p>The next section gives a very nice solution to this problem.</p><h4>Automatic management of locks</h4><p>When you want to protect a whole block of code (a function in our case, but can be inside a loop or another control structure), it exists a good solution to avoid forgetting to release the lock: std::lock_guard. </p><p>This class is a simple smart manager for a lock. When the std::lock_guard is created, it automatically calls lock() on the mutex. When the guard gets destructed, it also releases the lock. You can use it like this: </p><div class=code><pre><span class=k>struct</span> <span class=n>ConcurrentSafeCounter</span> <span class=p>{</span>
+    <span class=n>std</span><span class=o>::</span><span class=n>mutex</span> <span class=n>mutex</span><span class=p>;</span>
+    <span class=n>Counter</span> <span class=n>counter</span><span class=p>;</span>
+
+    <span class=kt>void</span> <span class=nf>increment</span><span class=p>(){</span>
+        <span class=n>std</span><span class=o>::</span><span class=n>lock_guard</span><span class=o>&lt;</span><span class=n>std</span><span class=o>::</span><span class=n>mutex</span><span class=o>&gt;</span> <span class=n>guard</span><span class=p>(</span><span class=n>mutex</span><span class=p>);</span>
+        <span class=n>counter</span><span class=p>.</span><span class=n>increment</span><span class=p>();</span>
+    <span class=p>}</span>
+
+    <span class=kt>void</span> <span class=nf>decrement</span><span class=p>(){</span>
+        <span class=n>std</span><span class=o>::</span><span class=n>lock_guard</span><span class=o>&lt;</span><span class=n>std</span><span class=o>::</span><span class=n>mutex</span><span class=o>&gt;</span> <span class=n>guard</span><span class=p>(</span><span class=n>mutex</span><span class=p>);</span>
+        <span class=n>counter</span><span class=p>.</span><span class=n>decrement</span><span class=p>();</span>
+    <span class=p>}</span>
+<span class=p>};</span>
+</pre></div><p>Much nicer, isn't it :)</p><p>With that solution, you do not have to handle all the cases of exit of the function, they are all handled by the destructor of the std::lock_guard instance. </p><h4>Conclusion</h4><p>We are now done with semaphores. In this article, you learned how to protect shared data using mutexes from the C++ Threads Library. </p><p>Keep in mind that locks are slow. Indeed, when you use locks you make sections of the code sequential. If you want an highly parallel application, there are other solutions than locks that are performing much better but this is out of the scope of this article. </p><h4>Next</h4><p>In the next blog post of this serie, I will talk about advanced concepts for mutexes and how to use condition variables to fix little concurrent programming problem. </p><p>The source code for each sample is available <a title="Source code for this blog post" href=https://github.com/wichtounet/articles/tree/master/src/threads/part2/>on Github</a>.</p></div> </div> </div> <ul class=pager> <li class=previous> <a href=eddic-0-9-1-enhanced-floating-point-support.html rel=prev>← Previous post</a> </li> <li class=next> <a href=enhanced-code-snippets-syntaxhighlighter-evolved.html rel=next>Next post →</a> </li> </ul> <div id=disqus_thread></div> <script>
         var disqus_shortname ="blogwichtounet",
             disqus_url="http://wichtounet.github.io/posts/2012/03/cp11-concurrency-tutorial-part-2-protect-shared-data.html",
         disqus_title="C++11 Concurrency Tutorial - Part 2 : Protect shared data",
@@ -390,52 +108,7 @@
             dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
             (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
         })();
-    </script>
-    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
-    <a href="http://disqus.com" class="dsq-brlink" rel="nofollow">Comments powered by <span class="logo-disqus">Disqus</span></a>
-
-
-    
-
-    </article>
-
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Footer -->
-
-<footer>
-    Contents © 2014         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         
-<a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="border-width:0" src="http://i.creativecommons.org/l/by/4.0/88x31.png"></a>
-        <ul class="footer_inline_ul">
-            
-    <li>
-    <a href="cp11-concurrency-tutorial-part-2-protect-shared-data.wp" id="sourcelink">Source</a>
-    </li>
-
-        </ul>
-</footer>
-
-
-            <script src="../../../assets/js/all-nocdn.js" type="text/javascript"></script>
-
-
-<!-- Late loading stuff  -->
-
-
-<!-- Google platform JS -->
-    
-<script type="text/javascript" src="https://apis.google.com/js/platform.js"></script>
-
-
-    
-
-
-<!-- Tipue Search -->
-
-<script type="text/javascript">
+    </script> <noscript>Please enable JavaScript to view the <a href=http://disqus.com/?ref_noscript rel=nofollow>comments powered by Disqus.</a></noscript> <a href=http://disqus.com class=dsq-brlink rel=nofollow>Comments powered by <span class=logo-disqus>Disqus</span></a> </article> </div> </div> </div></div><footer> Contents © 2014 <a href=mailto:baptistewicht@gmail.com>Baptiste Wicht</a> - Powered by <a href=http://getnikola.com rel=nofollow>Nikola</a><a rel=license href=http://creativecommons.org/licenses/by/4.0/><img alt="Creative Commons License" style=border-width:0 src=http://i.creativecommons.org/l/by/4.0/88x31.png></a> <ul class=footer_inline_ul> <li> <a href=cp11-concurrency-tutorial-part-2-protect-shared-data.wp id=sourcelink>Source</a> </li> </ul></footer> <script src=../../../assets/js/all-nocdn.js type=text/javascript></script><script type=text/javascript src=https://apis.google.com/js/platform.js></script><script type=text/javascript>
     $(document).ready(function() {
         $('#tipue_search_input').tipuesearch({
         'mode': 'json',
@@ -443,12 +116,4 @@
         'showUrl': false
         });
         });
-</script>
-
-
-
-
-
-
-</body>
-</html>
+</script></body></html>
