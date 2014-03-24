@@ -212,6 +212,7 @@ from nikola import filters
 FILTERS = {
         ".css": [filters.yui_compressor],
         ".js": [filters.yui_compressor],
+        # ".html": [filters.tidy],
         }
 
 # Expert setting! Create a gzipped copy of each generated file. Cheap server-
