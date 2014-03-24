@@ -210,6 +210,8 @@ OUTPUT_FOLDER = '..'
 from nikola import filters
 
 FILTERS = {
+        ".jpg": [filters.jpegoptim],
+        ".png": [filters.optipng],
         ".css": [filters.yui_compressor],
         ".js": [filters.yui_compressor],
         # ".html": [filters.tidy],
