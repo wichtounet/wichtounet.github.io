@@ -207,30 +207,12 @@ OUTPUT_FOLDER = '..'
 # default: 'cache'
 # CACHE_FOLDER = 'cache'
 
-# Filters to apply to the output.
-# A directory where the keys are either: a file extensions, or
-# a tuple of file extensions.
-#
-# And the value is a list of commands to be applied in order.
-#
-# Each command must be either:
-#
-# A string containing a '%s' which will
-# be replaced with a filename. The command *must* produce output
-# in place.
-#
-# Or:
-#
-# A python callable, which will be called with the filename as
-# argument.
-#
-# By default, there are no filters.
-#
-# Many filters are shipped with Nikola.  A list is available in the manual:
-# <http://getnikola.com/handbook.html#post-processing-filters>
-# FILTERS = {
-#    ".jpg": ["jpegoptim --strip-all -m75 -v %s"],
-# }
+from nikola import filters
+
+FILTERS = {
+        ".css": [filters.yui_compressor],
+        ".js": [filters.yui_compressor],
+        }
 
 # Expert setting! Create a gzipped copy of each generated file. Cheap server-
 # side optimization for very high traffic sites or low memory servers.
