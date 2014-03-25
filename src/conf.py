@@ -296,16 +296,9 @@ THEME = "wicht"
 # (str used by datetime.datetime.strftime)
 # DATE_FORMAT = '%Y-%m-%d %H:%M'
 
-# Show only teasers in the index pages? Defaults to False.
-# INDEX_TEASERS = False
-
-# A HTML fragment with the Read more... link.
-# The following tags exist and are replaced for you:
-# {link}        A link to the full post page.
-# {read_more}   The string “Read more” in the current language.
-# {{            A literal { (U+007B LEFT CURLY BRACKET)
-# }}            A literal } (U+007D RIGHT CURLY BRACKET)
-# READ_MORE_LINK = '<p class="more"><a href="{link}">{read_more}…</a></p>'
+INDEX_TEASERS = True
+RSS_TEASERS = True
+READ_MORE_LINK = '<p class="more"><a href="{link}">{read_more}…</a></p>'
 
 LICENSE = """
 <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="border-width:0" src="http://i.creativecommons.org/l/by/4.0/88x31.png" /></a>"""

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0"><channel><title>@Blog("Baptiste Wicht") (Maven)</title><link>http://wichtounet.github.io/</link><description></description><atom:link href="http://wichtounet.github.io/categories/maven.xml" rel="self" type="application/rss+xml"></atom:link><language>en</language><lastBuildDate>Mon, 24 Mar 2014 23:06:41 GMT</lastBuildDate><generator>Nikola &lt;http://getnikola.com/&gt;</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>Improve the performance of your Maven builds with maven-cli-plugin</title><link>http://wichtounet.github.io/posts/2010/05/improve-performance-builds-maven-cli-plugin.html</link><description>&lt;div&gt;&lt;p&gt;When you makes a lot of build using &lt;strong&gt;Maven&lt;/strong&gt;, this is quickly a pain to wait for the end of the build. So this is always good to have solutions to improve the &lt;strong&gt;performances&lt;/strong&gt; of the builds.&lt;/p&gt;
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>@Blog("Baptiste Wicht") (Maven)</title><link>http://wichtounet.github.io/</link><description></description><atom:link type="application/rss+xml" href="http://wichtounet.github.io/categories/maven.xml" rel="self"></atom:link><language>en</language><lastBuildDate>Tue, 25 Mar 2014 18:03:37 GMT</lastBuildDate><generator>Nikola &lt;http://getnikola.com/&gt;</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>Improve the performance of your Maven builds with maven-cli-plugin</title><link>http://wichtounet.github.io/posts/2010/05/improve-performance-builds-maven-cli-plugin.html</link><description>&lt;div&gt;&lt;p&gt;When you makes a lot of build using &lt;strong&gt;Maven&lt;/strong&gt;, this is quickly a pain to wait for the end of the build. So this is always good to have solutions to improve the &lt;strong&gt;performances&lt;/strong&gt; of the builds.&lt;/p&gt;
 &lt;p&gt;The better improvement i found until now is the &lt;strong&gt;maven-cli-plugin&lt;/strong&gt;. This plugin provides an &lt;strong&gt;interactive command line&lt;/strong&gt; interface to launch builds. The improvement is that the first phases of the build are made only once. So multiple builds are really &lt;strong&gt;faster&lt;/strong&gt;. We loose a little time at the first build to make some &lt;strong&gt;caching&lt;/strong&gt; improvements.&lt;/p&gt;
 &lt;p&gt;With these features, I save a lot of time when I made a lot of builds. For example a simple clean takes sometimes 20 seconds on a big multimodule project. When using the cli, it takes 20 seconds including the time to load the shell for the first time and then it takes only 1 second the make the following cleans. The effect is the same on other phases like install, package, compile, ...&lt;/p&gt;
 &lt;p&gt;The installation is quite simple. First you must add a plugin group to the settings.xml file :&lt;/p&gt;
@@ -69,105 +69,5 @@
 &lt;/ul&gt;
 
 &lt;p&gt;Personnaly, i doesn't like the first solution, because for me, having a jar into a jar sounds really weird and bad and i prefer to have real OSGi Bundle. With wrapping, if i need this library in an other bundle, i doesn't have to do anything.&lt;/p&gt;
-&lt;!--more--&gt;
-
-&lt;p&gt;But, yes there is a but, wrapping a jar is much complicated than embedding. Because, we much transform the JAR into a real OSGi Bundle. That is to say that we much create a new JAR with a Manifest, importing all the needed packages, exporting all the necessary packages, computing the names and version, ...&lt;/p&gt;
-&lt;p&gt;If we must do that by hand, that could be really long and hard to do.&lt;/p&gt;
-&lt;p&gt;We can do that in a simple way using Maven 2 and the maven-bundle-plugin that can generate an OSGi jar embedding the other using the BND tools. With some configurations, we can simply create a totally valid OSGi Bundle. To make several bundles  easily, i created a simple parent pom (i take the first sources from Spring Blog) and all the modules of this parent project will be simple project to wrap a dependency.&lt;/p&gt;
-&lt;p&gt;Here is the parent pom i use :&lt;/p&gt;
-&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="cp"&gt;&amp;lt;?xml version="1.0" encoding="UTF-8"?&amp;gt;&lt;/span&gt;
-&lt;span class="nt"&gt;&amp;lt;project&lt;/span&gt;
-        &lt;span class="na"&gt;xmlns=&lt;/span&gt;&lt;span class="s"&gt;"http://maven.apache.org/POM/4.0.0"&lt;/span&gt;
-        &lt;span class="na"&gt;xmlns:xsi=&lt;/span&gt;&lt;span class="s"&gt;"http://www.w3.org/2001/XMLSchema-instance"&lt;/span&gt;
-        &lt;span class="na"&gt;xsi:schemaLocation=&lt;/span&gt;&lt;span class="s"&gt;"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd"&lt;/span&gt;&lt;span class="nt"&gt;&amp;gt;&lt;/span&gt;
-
-    &lt;span class="nt"&gt;&amp;lt;modelVersion&amp;gt;&lt;/span&gt;4.0.0&lt;span class="nt"&gt;&amp;lt;/modelVersion&amp;gt;&lt;/span&gt;
-    &lt;span class="nt"&gt;&amp;lt;groupId&amp;gt;&lt;/span&gt;org.jtheque&lt;span class="nt"&gt;&amp;lt;/groupId&amp;gt;&lt;/span&gt;
-    &lt;span class="nt"&gt;&amp;lt;artifactId&amp;gt;&lt;/span&gt;jtheque-osgi-wrap&lt;span class="nt"&gt;&amp;lt;/artifactId&amp;gt;&lt;/span&gt;
-    &lt;span class="nt"&gt;&amp;lt;name&amp;gt;&lt;/span&gt;jtheque-osgi-wrap&lt;span class="nt"&gt;&amp;lt;/name&amp;gt;&lt;/span&gt;
-    &lt;span class="nt"&gt;&amp;lt;packaging&amp;gt;&lt;/span&gt;pom&lt;span class="nt"&gt;&amp;lt;/packaging&amp;gt;&lt;/span&gt;
-    &lt;span class="nt"&gt;&amp;lt;version&amp;gt;&lt;/span&gt;1.0&lt;span class="nt"&gt;&amp;lt;/version&amp;gt;&lt;/span&gt;
-
-    &lt;span class="nt"&gt;&amp;lt;modules&amp;gt;&lt;/span&gt;
-        &lt;span class="c"&gt;&amp;lt;!-- Modules --&amp;gt;&lt;/span&gt;
-    &lt;span class="nt"&gt;&amp;lt;/modules&amp;gt;&lt;/span&gt;
-
-    &lt;span class="nt"&gt;&amp;lt;properties&amp;gt;&lt;/span&gt;
-        &lt;span class="nt"&gt;&amp;lt;export.packages&amp;gt;&lt;/span&gt;${export.package}*;version=${unpack.version}&lt;span class="nt"&gt;&amp;lt;/export.packages&amp;gt;&lt;/span&gt;
-        &lt;span class="nt"&gt;&amp;lt;import.packages&amp;gt;&lt;/span&gt;*&lt;span class="nt"&gt;&amp;lt;/import.packages&amp;gt;&lt;/span&gt;
-        &lt;span class="nt"&gt;&amp;lt;private.packages&amp;gt;&lt;/span&gt;!*&lt;span class="nt"&gt;&amp;lt;/private.packages&amp;gt;&lt;/span&gt;
-        &lt;span class="nt"&gt;&amp;lt;symbolic.name&amp;gt;&lt;/span&gt;${pom.groupId}.${pom.artifactId}&lt;span class="nt"&gt;&amp;lt;/symbolic.name&amp;gt;&lt;/span&gt;
-        &lt;span class="nt"&gt;&amp;lt;embed-dep&amp;gt;&lt;/span&gt;*;scope=compile;type=!pom;inline=true&lt;span class="nt"&gt;&amp;lt;/embed-dep&amp;gt;&lt;/span&gt;
-        &lt;span class="nt"&gt;&amp;lt;unpack-bundle&amp;gt;&lt;/span&gt;false&lt;span class="nt"&gt;&amp;lt;/unpack-bundle&amp;gt;&lt;/span&gt;
-    &lt;span class="nt"&gt;&amp;lt;/properties&amp;gt;&lt;/span&gt;
-
-    &lt;span class="nt"&gt;&amp;lt;build&amp;gt;&lt;/span&gt;
-        &lt;span class="nt"&gt;&amp;lt;directory&amp;gt;&lt;/span&gt;${env.BUILD_HOME}/dependencies/${symbolic.name}&lt;span class="nt"&gt;&amp;lt;/directory&amp;gt;&lt;/span&gt;
-
-        &lt;span class="nt"&gt;&amp;lt;plugins&amp;gt;&lt;/span&gt;
-            &lt;span class="nt"&gt;&amp;lt;plugin&amp;gt;&lt;/span&gt;
-                &lt;span class="nt"&gt;&amp;lt;groupId&amp;gt;&lt;/span&gt;org.apache.felix&lt;span class="nt"&gt;&amp;lt;/groupId&amp;gt;&lt;/span&gt;
-                &lt;span class="nt"&gt;&amp;lt;artifactId&amp;gt;&lt;/span&gt;maven-bundle-plugin&lt;span class="nt"&gt;&amp;lt;/artifactId&amp;gt;&lt;/span&gt;
-                &lt;span class="nt"&gt;&amp;lt;version&amp;gt;&lt;/span&gt;1.2.0&lt;span class="nt"&gt;&amp;lt;/version&amp;gt;&lt;/span&gt;
-                &lt;span class="nt"&gt;&amp;lt;configuration&amp;gt;&lt;/span&gt;
-                    &lt;span class="nt"&gt;&amp;lt;unpackBundle&amp;gt;&lt;/span&gt;${unpack.bundle}&lt;span class="nt"&gt;&amp;lt;/unpackBundle&amp;gt;&lt;/span&gt;
-                    &lt;span class="nt"&gt;&amp;lt;instructions&amp;gt;&lt;/span&gt;
-                        &lt;span class="nt"&gt;&amp;lt;Bundle-Name&amp;gt;&lt;/span&gt;${artifactId}&lt;span class="nt"&gt;&amp;lt;/Bundle-Name&amp;gt;&lt;/span&gt;
-                        &lt;span class="nt"&gt;&amp;lt;Bundle-SymbolicName&amp;gt;&lt;/span&gt;${symbolic.name}&lt;span class="nt"&gt;&amp;lt;/Bundle-SymbolicName&amp;gt;&lt;/span&gt;
-                        &lt;span class="nt"&gt;&amp;lt;Bundle-Description&amp;gt;&lt;/span&gt;${pom.name}&lt;span class="nt"&gt;&amp;lt;/Bundle-Description&amp;gt;&lt;/span&gt;
-                        &lt;span class="nt"&gt;&amp;lt;Import-Package&amp;gt;&lt;/span&gt;${import.packages}&lt;span class="nt"&gt;&amp;lt;/Import-Package&amp;gt;&lt;/span&gt;
-                        &lt;span class="nt"&gt;&amp;lt;Private-Package&amp;gt;&lt;/span&gt;${private.packages}&lt;span class="nt"&gt;&amp;lt;/Private-Package&amp;gt;&lt;/span&gt;
-                        &lt;span class="nt"&gt;&amp;lt;Include-Resource&amp;gt;&lt;/span&gt;${include.resources}&lt;span class="nt"&gt;&amp;lt;/Include-Resource&amp;gt;&lt;/span&gt;
-                        &lt;span class="nt"&gt;&amp;lt;Embed-Dependency&amp;gt;&lt;/span&gt;${embed-dep}&lt;span class="nt"&gt;&amp;lt;/Embed-Dependency&amp;gt;&lt;/span&gt;
-                        &lt;span class="nt"&gt;&amp;lt;_exportcontents&amp;gt;&lt;/span&gt;${export.packages}&lt;span class="nt"&gt;&amp;lt;/_exportcontents&amp;gt;&lt;/span&gt;
-                    &lt;span class="nt"&gt;&amp;lt;/instructions&amp;gt;&lt;/span&gt;
-                &lt;span class="nt"&gt;&amp;lt;/configuration&amp;gt;&lt;/span&gt;
-                &lt;span class="nt"&gt;&amp;lt;extensions&amp;gt;&lt;/span&gt;true&lt;span class="nt"&gt;&amp;lt;/extensions&amp;gt;&lt;/span&gt;
-            &lt;span class="nt"&gt;&amp;lt;/plugin&amp;gt;&lt;/span&gt;
-        &lt;span class="nt"&gt;&amp;lt;/plugins&amp;gt;&lt;/span&gt;
-    &lt;span class="nt"&gt;&amp;lt;/build&amp;gt;&lt;/span&gt;
-&lt;span class="nt"&gt;&amp;lt;/project&amp;gt;&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
-
-
-&lt;p&gt;That really simple, we use some properties to generify the process to have really simple modules. &lt;/p&gt;
-&lt;p&gt;Here is an example to wrap the substance look and feel library : &lt;/p&gt;
-&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="cp"&gt;&amp;lt;?xml version="1.0" encoding="UTF-8"?&amp;gt;&lt;/span&gt;
-
-&lt;span class="nt"&gt;&amp;lt;project&lt;/span&gt; &lt;span class="na"&gt;xmlns=&lt;/span&gt;&lt;span class="s"&gt;"http://maven.apache.org/POM/4.0.0"&lt;/span&gt;
-         &lt;span class="na"&gt;xmlns:xsi=&lt;/span&gt;&lt;span class="s"&gt;"http://www.w3.org/2001/XMLSchema-instance"&lt;/span&gt;
-         &lt;span class="na"&gt;xsi:schemaLocation=&lt;/span&gt;&lt;span class="s"&gt;"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"&lt;/span&gt;&lt;span class="nt"&gt;&amp;gt;&lt;/span&gt;
-
-    &lt;span class="nt"&gt;&amp;lt;modelVersion&amp;gt;&lt;/span&gt;4.0.0&lt;span class="nt"&gt;&amp;lt;/modelVersion&amp;gt;&lt;/span&gt;
-    &lt;span class="nt"&gt;&amp;lt;groupId&amp;gt;&lt;/span&gt;org.substance&lt;span class="nt"&gt;&amp;lt;/groupId&amp;gt;&lt;/span&gt;
-    &lt;span class="nt"&gt;&amp;lt;packaging&amp;gt;&lt;/span&gt;bundle&lt;span class="nt"&gt;&amp;lt;/packaging&amp;gt;&lt;/span&gt;
-    &lt;span class="nt"&gt;&amp;lt;artifactId&amp;gt;&lt;/span&gt;org.jtheque.substance&lt;span class="nt"&gt;&amp;lt;/artifactId&amp;gt;&lt;/span&gt;
-    &lt;span class="nt"&gt;&amp;lt;name&amp;gt;&lt;/span&gt;apple-extensions&lt;span class="nt"&gt;&amp;lt;/name&amp;gt;&lt;/span&gt;
-    &lt;span class="nt"&gt;&amp;lt;version&amp;gt;&lt;/span&gt;6.0.0&lt;span class="nt"&gt;&amp;lt;/version&amp;gt;&lt;/span&gt;
-
-    &lt;span class="nt"&gt;&amp;lt;parent&amp;gt;&lt;/span&gt;
-        &lt;span class="nt"&gt;&amp;lt;artifactId&amp;gt;&lt;/span&gt;jtheque-osgi-wrap&lt;span class="nt"&gt;&amp;lt;/artifactId&amp;gt;&lt;/span&gt;
-        &lt;span class="nt"&gt;&amp;lt;groupId&amp;gt;&lt;/span&gt;org.jtheque&lt;span class="nt"&gt;&amp;lt;/groupId&amp;gt;&lt;/span&gt;
-        &lt;span class="nt"&gt;&amp;lt;version&amp;gt;&lt;/span&gt;1.0&lt;span class="nt"&gt;&amp;lt;/version&amp;gt;&lt;/span&gt;
-    &lt;span class="nt"&gt;&amp;lt;/parent&amp;gt;&lt;/span&gt;
-
-    &lt;span class="nt"&gt;&amp;lt;properties&amp;gt;&lt;/span&gt;
-        &lt;span class="nt"&gt;&amp;lt;unpack.version&amp;gt;&lt;/span&gt;6.0.0&lt;span class="nt"&gt;&amp;lt;/unpack.version&amp;gt;&lt;/span&gt;
-        &lt;span class="nt"&gt;&amp;lt;export.package/&amp;gt;&lt;/span&gt;
-    &lt;span class="nt"&gt;&amp;lt;/properties&amp;gt;&lt;/span&gt;
-
-    &lt;span class="nt"&gt;&amp;lt;dependencies&amp;gt;&lt;/span&gt;
-        &lt;span class="nt"&gt;&amp;lt;dependency&amp;gt;&lt;/span&gt;
-            &lt;span class="nt"&gt;&amp;lt;groupId&amp;gt;&lt;/span&gt;org.substance&lt;span class="nt"&gt;&amp;lt;/groupId&amp;gt;&lt;/span&gt;
-            &lt;span class="nt"&gt;&amp;lt;artifactId&amp;gt;&lt;/span&gt;substance&lt;span class="nt"&gt;&amp;lt;/artifactId&amp;gt;&lt;/span&gt;
-            &lt;span class="nt"&gt;&amp;lt;version&amp;gt;&lt;/span&gt;6.0&lt;span class="nt"&gt;&amp;lt;/version&amp;gt;&lt;/span&gt;
-        &lt;span class="nt"&gt;&amp;lt;/dependency&amp;gt;&lt;/span&gt;
-    &lt;span class="nt"&gt;&amp;lt;/dependencies&amp;gt;&lt;/span&gt;
-&lt;span class="nt"&gt;&amp;lt;/project&amp;gt;&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
-
-
-&lt;p&gt;Like you can see, that's really simple and that generates a great OSGi Bundle. Here i didnt' specify any export package. Doing that all the packages are exported except the ones containing impl or internal. &lt;/p&gt;
-&lt;p&gt;Thats it :)&lt;/p&gt;
-&lt;p&gt;I hope that this post will be useful to some of you.&lt;/p&gt;&lt;/div&gt;</description><category>Apache</category><category>Java</category><category>Maven</category><category>OSGi</category><guid>http://wichtounet.github.io/posts/2010/03/bundle-non-osgi-dependencies-maven.html</guid><pubDate>Fri, 19 Mar 2010 14:41:29 GMT</pubDate></item><item><title>New design for JTheque Web site</title><link>http://wichtounet.github.io/posts/2010/01/new-design-jtheque-website.html</link><description>&lt;div&gt;&lt;p&gt;I've made a new design for the JTheque web site : &lt;a title="New design for JTheque Web site" href="http://wichtounet.github.io/posts/2010/01/New%20design%20for%20JTheque%20Web%20site" target="_self"&gt;http://jtheque.developpez.com/en&lt;/a&gt;&lt;/p&gt;
+&lt;p class="more"&gt;&lt;a href="http://wichtounet.github.io/posts/2010/03/bundle-non-osgi-dependencies-maven.html"&gt;Read more…&lt;/a&gt;&lt;/p&gt;&lt;/div&gt;</description><category>Apache</category><category>Java</category><category>Maven</category><category>OSGi</category><guid>http://wichtounet.github.io/posts/2010/03/bundle-non-osgi-dependencies-maven.html</guid><pubDate>Fri, 19 Mar 2010 14:41:29 GMT</pubDate></item><item><title>New design for JTheque Web site</title><link>http://wichtounet.github.io/posts/2010/01/new-design-jtheque-website.html</link><description>&lt;div&gt;&lt;p&gt;I've made a new design for the JTheque web site : &lt;a title="New design for JTheque Web site" href="http://wichtounet.github.io/posts/2010/01/New%20design%20for%20JTheque%20Web%20site" target="_self"&gt;http://jtheque.developpez.com/en&lt;/a&gt;&lt;/p&gt;
 &lt;p&gt;I took the same design than for my personal web site. The web site is still generated with Maven 2, but i use a custom maven skin to generate the site.&lt;/p&gt;&lt;/div&gt;</description><category>JTheque</category><category>Maven</category><guid>http://wichtounet.github.io/posts/2010/01/new-design-jtheque-website.html</guid><pubDate>Fri, 01 Jan 2010 12:33:53 GMT</pubDate></item></channel></rss>
