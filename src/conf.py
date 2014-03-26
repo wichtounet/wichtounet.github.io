@@ -306,7 +306,7 @@ RSS_TEASERS = True
 READ_MORE_LINK = '<p class="more"><a href="{link}">{read_more}…</a></p>'
 
 LICENSE = """
-<a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="border-width:0" src="http://i.creativecommons.org/l/by/4.0/88x31.png" /></a>"""
+<a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="padding-left:5px;border-width:0" src="/assets/img/cc.png" /></a>"""
 
 # A small copyright notice for the page footer (in HTML).
 CONTENT_FOOTER = 'Contents &copy; {date}         <a href="mailto:{email}">{author}</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         {license}'
