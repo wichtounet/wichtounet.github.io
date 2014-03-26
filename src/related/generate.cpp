@@ -136,6 +136,8 @@ void compute_frequencies(const std::string& source, std::unordered_map<std::stri
 
         word.erase(std::remove(word.begin(), word.end(), ' '), word.end());
 
+        std::transform(word.begin(), word.end(), word.begin(), ::tolower);
+
         tf[word] += factor;
         word_set.insert(word);
     } while(ss);
@@ -176,6 +178,7 @@ int main(int argc, char* argv[]){
         compute_frequencies(titles[i], tf_tmp[i], word_set, 3);
     }
 
+
     std::vector<std::string> words;
     words.reserve(word_set.size());
     std::copy(word_set.begin(), word_set.end(), std::back_inserter(words));
@@ -204,7 +207,7 @@ int main(int argc, char* argv[]){
             n += tf[i][w] > 0 ? 1 : 0;
         }
 
-        idf[w] = log(files.size() / (1.0 + n));
+        idf[w] = log(files.size() / (1.0 + static_cast<double>(n)));
     }
 
     //Compute TF-IDF
@@ -213,8 +216,8 @@ int main(int argc, char* argv[]){
         std::size_t max = *std::max_element(tf[i].begin(), tf[i].end());
 
         for(size_t w = 0; w < words.size(); ++w){
-            auto n_tf = 0.5 + ((0.5 * tf[i][w]) / max);
-            tf_idf[i][w] = n_tf * idf[w];
+            //auto n_tf = 0.5 + ((0.5 * tf[i][w]) / max);
+            tf_idf[i][w] = tf[i][w] * idf[w];
         }
     }
 
