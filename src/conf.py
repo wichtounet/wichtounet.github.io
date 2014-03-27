@@ -54,9 +54,9 @@ NAVIGATION_LINKS = {
         ('/stories/contact.html', 'Contact'),
         ('/stories/faq.html', 'FAQ'),
         ('/stories/legal.html', 'Legal'),
-        ('/archive.html', 'Archives'),
         ('/categories/index.html', 'Tags'),
-        ('/rss.xml', 'RSS'),
+        ('/archive.html', 'Archives'),
+        ('http://feeds.feedburner.com/BaptisteWicht', 'RSS'),
     ),
 }
 
