@@ -446,7 +446,19 @@ ENABLED_EXTRAS = ['local_search']
 
 # Extra things you want in the pages HEAD tag. This will be added right
 # before </head>
-# EXTRA_HEAD_DATA = ""
+EXTRA_HEAD_DATA = """
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-2175227-7']);
+  _gaq.push(['_trackPageview']);
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+"""
+
 # Google Analytics or whatever else you use. Added to the bottom of <body>
 # in the default template (base.tmpl).
 # BODY_END = ""
