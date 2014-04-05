@@ -3,11 +3,10 @@
 default: generate
 
 generate: generate.cpp
-	clang++ -g -Ofast -march=native -std=c++11 -o generate generate.cpp
+	clang++ -g -Wall -Wextra -O2 -march=native -std=c++11 -o generate generate.cpp
 
 related_all: generate
-	./generate `find ../posts/ -iname "*.wp"`
-	./generate `find ../posts/ -iname "*.md"`
+	./generate `find ../posts/ -iname "*.wp"` `find ../posts/ -iname "*.md"`
 
 clean:
 	rm -rf generate

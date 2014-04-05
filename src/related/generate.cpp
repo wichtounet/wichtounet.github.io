@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <algorithm>
+#include <memory>
 
 namespace {
 
@@ -178,9 +179,7 @@ int main(int argc, char* argv[]){
         compute_frequencies(titles[i], tf_tmp[i], word_set, 3);
     }
 
-
     std::vector<std::string> words;
-    words.reserve(word_set.size());
     std::copy(word_set.begin(), word_set.end(), std::back_inserter(words));
     
     std::vector<double> idf(words.size());
@@ -213,17 +212,14 @@ int main(int argc, char* argv[]){
     //Compute TF-IDF
         
     for(size_t i = 0; i < files.size(); ++i){
-        std::size_t max = *std::max_element(tf[i].begin(), tf[i].end());
-
         for(size_t w = 0; w < words.size(); ++w){
-            //auto n_tf = 0.5 + ((0.5 * tf[i][w]) / max);
             tf_idf[i][w] = tf[i][w] * idf[w];
         }
     }
 
     //Compute the matrix of Cosine Similarities
 
-    double* similarities = new double[files.size() * files.size()];
+    std::unique_ptr<double[]> similarities(new double[files.size() * files.size()]);
     
     for(size_t i = 0; i < files.size(); ++i){
         similarities[i * files.size() + i] = 1;
@@ -249,9 +245,7 @@ int main(int argc, char* argv[]){
     //Generate HTML
         
     std::vector<std::size_t> related(files.size());
-    for(size_t i = 0; i < files.size(); ++i){
-        related.push_back(i);
-    }
+    std::iota(related.begin(), related.end(), 0);
     
     for(size_t i = 0; i < files.size(); ++i){
         std::sort(related.begin(), related.end(), [i,&similarities, &files](size_t j1, size_t j2) -> bool {
@@ -272,8 +266,6 @@ int main(int argc, char* argv[]){
 
         file << "</ol>\n" << std::endl;
     }
-
-    delete[] similarities;
 
     return 0;
 }
