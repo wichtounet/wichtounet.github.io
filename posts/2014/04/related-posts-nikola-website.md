@@ -1,4 +1,4 @@
-The one thing I missed in Nikola was the lack of Related Posts generation. I solved this during [the migration from WordPress to Nikola](http://baptiste-wicht.com/posts/2014/03/migrated-from-wordpress-to-nikola.html), by using simple algorithms to generate related posts for each blog post and then display them in the form of a simple widget. 
+The one thing I missed in Nikola was the lack of **Related Posts generation**. I solved this during [the migration from WordPress to Nikola](http://baptiste-wicht.com/posts/2014/03/migrated-from-wordpress-to-nikola.html), by using simple algorithms to generate related posts for each blog post and then display them in the form of a simple widget. 
 
 For example, you can see the related posts of this post on the left, just under my Google+ badge. 
 
@@ -25,7 +25,7 @@ Once we have the two values, we can easily compute the TF-IDF vectors of each bl
 
 Finally, we can derive the matrix of Cosine similarities between the TF-IDF vectors. The idea of the algorithm is simple: each document is represented by a vector and then the distance between two vectors indicates how related two posts are. The formula for the Cosine similarity is also simple: *cs(d1, d2) = dot(d1, d2) / ||d1|| * || d2||*. *d1* and *d2* are two TF-IDF vectors. Once the cosine similarities between each document is computed, we can just take the N most related documents as the "Related Posts" for each blog post. 
 
-With this list, the C++ program simply generates an HTML file that will be included in each post by Nikola template. 
+With this list, the C++ program simply generates an HTML file that will be included in each post by Nikola template. This process is **very fast**. I have around 200 posts on this blog and the generation takes about 1 second. 
 
 # Include in template
 
