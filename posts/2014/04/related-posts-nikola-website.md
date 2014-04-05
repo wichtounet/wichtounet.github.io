@@ -56,6 +56,8 @@ Once the HTML files are generate, they are included into the website by altering
 
 You could also display it in *post.tmpl* as a simple list. 
 
+There is a limitation with this code: it only works if the source file has the same name than the slug, otherwise the file is not found. If someone has a solution to get the path to the source file and not the slug version, I'd be glad to have it ;)
+
 # Conclusion
 
 The code for the generator is available on the [Github repository of my website](https://github.com/wichtounet/wichtounet.github.io/tree/master/src/related). 
