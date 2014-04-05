@@ -100,6 +100,7 @@ NAVIGATION_LINKS = {
 
 POSTS = (
             ("posts/*.wp", "posts", "post.tmpl"),
+            ("posts/*.md", "posts", "post.tmpl"),
         )
 PAGES = (
             ("stories/*.wp", "stories", "story.tmpl"),

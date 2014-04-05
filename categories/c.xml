@@ -1,5 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
-<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0"><channel><title>@Blog("Baptiste Wicht") (C++)</title><link>http://baptiste-wicht.com/</link><description></description><atom:link type="application/rss+xml" rel="self" href="http://baptiste-wicht.com/categories/c.xml"></atom:link><language>en</language><lastBuildDate>Fri, 04 Apr 2014 17:59:20 GMT</lastBuildDate><generator>Nikola &lt;http://getnikola.com/&gt;</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>budgetwarrior 0.3.0 - Objective and wish management</title><link>http://baptiste-wicht.com/posts/2014/02/budgetwarrior-0-3-0-objective-wish-management.html</link><description>&lt;div&gt;&lt;p&gt;I'm pleased to announce the release of another budgetwarrior release, the version 0.3.0.&lt;/p&gt;
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>@Blog("Baptiste Wicht") (C++)</title><link>http://baptiste-wicht.com/</link><description></description><atom:link href="http://baptiste-wicht.com/categories/c.xml" rel="self" type="application/rss+xml"></atom:link><language>en</language><lastBuildDate>Sat, 05 Apr 2014 17:06:43 GMT</lastBuildDate><generator>Nikola &lt;http://getnikola.com/&gt;</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>Related posts on a Nikola website</title><link>http://baptiste-wicht.com/posts/2014/04/related-posts-nikola-website.html</link><description>&lt;div&gt;&lt;p&gt;The one thing I missed in Nikola was the lack of Related Posts generation. I solved this during &lt;a href="http://baptiste-wicht.com/posts/2014/03/migrated-from-wordpress-to-nikola.html"&gt;the migration from WordPress to Nikola&lt;/a&gt;, by using simple algorithms to generate related posts for each blog post and then display them in the form of a simple widget. &lt;/p&gt;
+&lt;p&gt;For example, you can see the related posts of this post on the left, just under my Google+ badge. &lt;/p&gt;
+&lt;p&gt;Here is the workflow that is used: 
+ * A simple C++ tool generate a list of related posts in HTML for each posts
+ * The generated HTML code is included in the MAKO template using Python&lt;/p&gt;
+&lt;p&gt;In this article, I'll show how the related posts are generated and how to include them in your template.&lt;/p&gt;
+&lt;h2&gt;Related Post Generation&lt;/h2&gt;
+&lt;p&gt;It is important to note that it is necessary to cleanup the content of the files before using it: 
+ * First, it is necessary to remove all HTML that may be present in the Markdown files. I remove only the HTML tags, not their content. For instance, in &lt;em&gt;&amp;lt;strong&amp;gt;test&amp;lt;/strong&amp;gt;&lt;/em&gt;, test would be counted, but not strong. The only exception to that, is that the content of preformatted parts (typically some or console output) is completely removed.
+ * It is also necessary to cleanup Markdown, for instance, parentheses and square brackets are removed, but not their content. Same goes for Markdown syntax for bold, italics, ...
+ * Finally, I also remove punctuation. &lt;/p&gt;
+&lt;p&gt;My related posts algorithm is very simple. &lt;/p&gt;
+&lt;p&gt;First, I compute the Term Frequency (TF) of each word in each post. The number of times a word is present in a document is represented by &lt;em&gt;tf(w,d)&lt;/em&gt;. I decided to give a bigger importance to words in the title and the tags, but that is just a matter of choice. &lt;/p&gt;
+&lt;p&gt;After that, I compute the Inverse Document Frequency (IDF) of each word. This measure allows to filter words like: a, the, and, has, is, ... These words are not really representative of the content of a blog post. The formula for idf is very simple: &lt;em&gt;idf(w) = log(N / (1+ n(w)))&lt;/em&gt;. &lt;em&gt;n(w)&lt;/em&gt; is the number of posts where the word is present. It is a measure of rarity of a word on the complete posts set. &lt;/p&gt;
+&lt;p&gt;Once we have the two values, we can easily compute the TF-IDF vectors of each blog post. The TF-IDF for a word is simply: &lt;em&gt;tf_idf(w,d) = tf(w, d) * idf(w)&lt;/em&gt;. &lt;/p&gt;
+&lt;p&gt;Finally, we can derive the matrix of Cosine similarities between the TF-IDF vectors. The idea of the algorithm is simple: each document is represented by a vector and then the distance between two vectors indicates how related two posts are. The formula for the Cosine similarity is also simple: &lt;em&gt;cs(d1, d2) = dot(d1, d2) / ||d1|| * || d2||&lt;/em&gt;. &lt;em&gt;d1&lt;/em&gt; and &lt;em&gt;d2&lt;/em&gt; are two TF-IDF vectors. Once the cosine similarities between each document is computed, we can just take the N most related documents as the "Related Posts" for each blog post. &lt;/p&gt;
+&lt;p&gt;With this list, the C++ program simply generates an HTML file that will be included in each post by Nikola template. &lt;/p&gt;
+&lt;h2&gt;Include in template&lt;/h2&gt;
+&lt;p&gt;Once the HTML files are generate, they are included into the website by altering the template and adding their content directly into the web page. Here is the code I use in &lt;em&gt;base.tmpl&lt;/em&gt;.&lt;/p&gt;
+&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="cp"&gt;%&lt;/span&gt;&lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="n"&gt;post&lt;/span&gt; &lt;span class="ow"&gt;and&lt;/span&gt; &lt;span class="ow"&gt;not&lt;/span&gt; &lt;span class="n"&gt;post&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;source_link&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;startswith&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;'/stories/'&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;&lt;span class="x"&gt;&lt;/span&gt;
+&lt;span class="x"&gt;    &amp;lt;div class="left-sidebar-widget"&amp;gt;&lt;/span&gt;
+&lt;span class="x"&gt;        &amp;lt;h3&amp;gt;Related posts&amp;lt;/h3&amp;gt;&lt;/span&gt;
+&lt;span class="x"&gt;        &amp;lt;div class="left-sidebar-widget-content"&amp;gt;&lt;/span&gt;
+&lt;span class="x"&gt;            &lt;/span&gt;&lt;span class="cp"&gt;&amp;lt;%&lt;/span&gt;
+                &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;os&lt;/span&gt;
+                &lt;span class="n"&gt;related_dir&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;os&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;getcwd&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+                &lt;span class="n"&gt;related_path&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;related_dir&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;post&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;source_link&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="s"&gt;".related.html"&lt;/span&gt;
+
+                &lt;span class="k"&gt;try&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+                    &lt;span class="k"&gt;with&lt;/span&gt; &lt;span class="nb"&gt;open&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;related_path&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s"&gt;'r'&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="k"&gt;as&lt;/span&gt; &lt;span class="n"&gt;f&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+                        &lt;span class="n"&gt;related_text&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;f&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;read&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+                        &lt;span class="n"&gt;f&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;close&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+                &lt;span class="k"&gt;except&lt;/span&gt; &lt;span class="ne"&gt;IOError&lt;/span&gt; &lt;span class="k"&gt;as&lt;/span&gt; &lt;span class="n"&gt;e&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+                    &lt;span class="n"&gt;related_text&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s"&gt;"Not generated"&lt;/span&gt;
+            &lt;span class="cp"&gt;%&amp;gt;&lt;/span&gt;&lt;span class="x"&gt;&lt;/span&gt;
+&lt;span class="x"&gt;            &lt;/span&gt;&lt;span class="cp"&gt;${&lt;/span&gt;&lt;span class="n"&gt;related_text&lt;/span&gt;&lt;span class="cp"&gt;}&lt;/span&gt;&lt;span class="x"&gt;&lt;/span&gt;
+&lt;span class="x"&gt;        &amp;lt;/div&amp;gt;&lt;/span&gt;
+&lt;span class="x"&gt;    &amp;lt;/div&amp;gt;&lt;/span&gt;
+&lt;span class="cp"&gt;%&lt;/span&gt;&lt;span class="k"&gt;endif&lt;/span&gt;&lt;span class="x"&gt;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;You could also display it in &lt;em&gt;post.tmpl&lt;/em&gt; as a simple list. &lt;/p&gt;
+&lt;h2&gt;Conclusion&lt;/h2&gt;
+&lt;p&gt;The code for the generator is available on the &lt;a href="https://github.com/wichtounet/wichtounet.github.io/tree/master/src/related"&gt;Github repository of my website&lt;/a&gt;. &lt;/p&gt;
+&lt;p&gt;I wrote it in C++ because I don't like Python a lot and because I'm not good at it and it would have taken me a lot more time to include it in Nikola. If I have time and I'm motivated enough, I'll try to integrate that in Nikola. &lt;/p&gt;
+&lt;p&gt;I hope that could be useful for some people. &lt;/p&gt;&lt;/div&gt;</description><category>Nikola</category><category>The site</category><category>C++</category><category>Algorithm</category><category>Python</category><guid>http://baptiste-wicht.com/posts/2014/04/related-posts-nikola-website.html</guid><pubDate>Sat, 05 Apr 2014 14:16:45 GMT</pubDate></item><item><title>budgetwarrior 0.3.0 - Objective and wish management</title><link>http://baptiste-wicht.com/posts/2014/02/budgetwarrior-0-3-0-objective-wish-management.html</link><description>&lt;div&gt;&lt;p&gt;I'm pleased to announce the release of another budgetwarrior release, the version 0.3.0.&lt;/p&gt;
 &lt;h3&gt;Changes&lt;/h3&gt;
 &lt;p&gt;This version contains several important changes.&lt;/p&gt;
 &lt;p&gt;The first one is the addition of a new module to manage objectives. You can add objective with &lt;em&gt;budget objective add). &lt;/em&gt;For instance, you can add an objective saying you want to save 10000$ a year or 200$ a month. When you set your objectives, budget warrior computes how well you complete them. For instance, here is the status of my objectives:&lt;/p&gt;
@@ -1373,58 +1419,4 @@ ctest -I FailedTests.log&lt;/the&gt;&lt;/pre&gt;
 &lt;h4&gt;Download&lt;/h4&gt;
 
 &lt;p&gt;You can find the compiler sources on the Github repository: &lt;a title="eddic on GitHub" href="https://github.com/wichtounet/eddic"&gt;https://github.com/wichtounet/eddic&lt;/a&gt;&lt;/p&gt;
-&lt;p&gt;The exact version I refer to is the v1.0.2 available in the GitHub tags or directly as the release branch.&lt;/p&gt;&lt;/div&gt;</description><category>C++</category><category>Compilers</category><category>EDDI</category><category>Optimization</category><guid>http://baptiste-wicht.com/posts/2012/07/eddi-compiler-1-0-2-better-pointer-support-new-optimizations.html</guid><pubDate>Wed, 04 Jul 2012 06:56:22 GMT</pubDate></item><item><title>EDDI Compiler 1.0.1 - Pointers and better struct support</title><link>http://baptiste-wicht.com/posts/2012/06/eddi-compiler-1-0-1-pointers-better-struct-support.html</link><description>&lt;div&gt;&lt;p&gt;The &lt;strong&gt;version 1.0.1&lt;/strong&gt; of the &lt;strong&gt;EDDI Compiler&lt;/strong&gt; (eddic) is now available. &lt;/p&gt;
-&lt;p&gt;The language itself has been updated to support &lt;strong&gt;pointers&lt;/strong&gt;. For now, this support is quite basic, but it allows to pass any type of the language by pointer to a function. No arithmetic is permitted on pointers, only dereferencing is allowed. The following sample shows how pointers are used in the language: &lt;/p&gt;
-&lt;div class="code"&gt;&lt;pre&gt;&lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="n"&gt;A&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
-    &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
-    &lt;span class="n"&gt;string&lt;/span&gt; &lt;span class="n"&gt;b&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
-    &lt;span class="kt"&gt;float&lt;/span&gt; &lt;span class="n"&gt;c&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
-&lt;span class="p"&gt;}&lt;/span&gt;
-
-&lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;main&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
-    &lt;span class="n"&gt;A&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
-
-    &lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;44&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
-    &lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;b&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s"&gt;"44"&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
-    &lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;c&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mf"&gt;44f&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
-
-    &lt;span class="n"&gt;test&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt; 
-    &lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
-    &lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"|"&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
-&lt;span class="p"&gt;}&lt;/span&gt;
-
-&lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;test&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;A&lt;/span&gt;&lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
-    &lt;span class="n"&gt;A&lt;/span&gt;&lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="n"&gt;b&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
-
-    &lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;55&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
-
-    &lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
-    &lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"|"&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
-
-    &lt;span class="n"&gt;b&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;66&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
-    &lt;span class="n"&gt;b&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;b&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s"&gt;"66"&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
-    &lt;span class="n"&gt;b&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;c&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mf"&gt;66f&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
-
-    &lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
-    &lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"|"&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
-    &lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;b&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
-    &lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"|"&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
-&lt;span class="p"&gt;}&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
-
-
-&lt;p&gt;This sample is not very useful, but it shows the usage of pointers well enough. &lt;/p&gt;
-&lt;p&gt;Another improvement to the language is that it supports now nested struct. It means that a member of a struct can be a struct itself. &lt;/p&gt;
-&lt;p&gt;That's it for the language improvements. On the side of the compiler itself, I've improved the error reporting for structs. For example, the compiler display a clear error when a struct is recursively nested. The peephole optimizer has been improved a bit with new optimization, but it still rather simple. The optimization engine is now able to optimize functions in parallel. The improvement is not quite large, but that can be useful if there are a lot of functions. I've also improved a lot the Abstract Syntax Tree representation of assignments to unify variable, array and struct assignments in one Node with the notion of LeftValue. &lt;/p&gt;
-&lt;p&gt;Finally, the tests have also been improved. New tests have been added and helped me find new bugs. Moreover, the tests are now made on each optimization levels for each test case. There was some issue with smallest optimization level. &lt;/p&gt;
-&lt;h4&gt;Future work&lt;/h4&gt;
-
-&lt;p&gt;The next version of the EDDI Compiler will be the &lt;strong&gt;version 1.0.2&lt;/strong&gt;. &lt;/p&gt;
-&lt;p&gt;This version will adds support for returning a pointer from a function. Moreover, it will also adds support for pointers inside of struct. The last change to the language will be that you will be able to declare array of pointers and array of structure. &lt;/p&gt;
-&lt;p&gt;The peephole optimizer will perform more powerful optimization. At least, I will add an optimization to remove assignments to registers that are not used and use less registers. That will perhaps imply to add support for basic blocks in the LTAC Language. &lt;/p&gt;
-&lt;p&gt;I will also add a powerful dead-code optimization to the Optimization Engine. This will replace the RemoveAssign and RemoveMultipleAssign pass of the engine, being more powerful. &lt;/p&gt;
-&lt;p&gt;As ever, I'm open to any idea you could have about this project :)&lt;/p&gt;
-&lt;h4&gt;Download&lt;/h4&gt;
-
-&lt;p&gt;You can find the compiler sources on the Github repository: &lt;a title="eddic on GitHub" href="https://github.com/wichtounet/eddic"&gt;https://github.com/wichtounet/eddic&lt;/a&gt;&lt;/p&gt;
-&lt;p&gt;The exact version I refer to is the v1.0.1 available in the GitHub tags or directly as the release branch.&lt;/p&gt;&lt;/div&gt;</description><category>C++</category><category>Compilers</category><category>EDDI</category><category>Optimization</category><guid>http://baptiste-wicht.com/posts/2012/06/eddi-compiler-1-0-1-pointers-better-struct-support.html</guid><pubDate>Mon, 25 Jun 2012 06:57:17 GMT</pubDate></item></channel></rss>
+&lt;p&gt;The exact version I refer to is the v1.0.2 available in the GitHub tags or directly as the release branch.&lt;/p&gt;&lt;/div&gt;</description><category>C++</category><category>Compilers</category><category>EDDI</category><category>Optimization</category><guid>http://baptiste-wicht.com/posts/2012/07/eddi-compiler-1-0-2-better-pointer-support-new-optimizations.html</guid><pubDate>Wed, 04 Jul 2012 06:56:22 GMT</pubDate></item></channel></rss>
