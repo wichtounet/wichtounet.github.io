@@ -12,12 +12,12 @@ struct Complex {
     Complex() : i(0) {}
 
     void mul(int x){
-        std::lock_guard&lt;std::mutex&gt; lock(mutex);
+        std::lock_guard<std::mutex> lock(mutex);
         i *= x;
     }
 
     void div(int x){
-        std::lock_guard&lt;std::mutex&gt; lock(mutex);
+        std::lock_guard<std::mutex> lock(mutex);
         i /= x;
     }
 };
@@ -27,7 +27,7 @@ And you want to add an operation doing both operations with no problems, so you 
 
 ```cpp
 void both(int x, int y){
-    std::lock_guard&lt;std::mutex&gt; lock(mutex);
+    std::lock_guard<std::mutex> lock(mutex);
     mul(x);
     div(y);
 }
@@ -56,17 +56,17 @@ struct Complex {
     Complex() : i(0) {}
 
     void mul(int x){
-        std::lock_guard&lt;std::recursive_mutex&gt; lock(mutex);
+        std::lock_guard<std::recursive_mutex> lock(mutex);
         i *= x;
     }
 
     void div(int x){
-        std::lock_guard&lt;std::recursive_mutex&gt; lock(mutex);
+        std::lock_guard<std::recursive_mutex> lock(mutex);
         i /= x;
     }
 
     void both(int x, int y){
-        std::lock_guard&lt;std::recursive_mutex&gt; lock(mutex);
+        std::lock_guard<std::recursive_mutex> lock(mutex);
         mul(x);
         div(y);
     }
@@ -89,7 +89,7 @@ void work(){
 
     while(true){
         if(mutex.try_lock_for(timeout)){
-            std::cout &lt;&lt; std::this_thread::get_id() &lt;&lt; ": do work with the mutex" &lt;&lt; std::endl;
+            std::cout << std::this_thread::get_id() << ": do work with the mutex" << std::endl;
 
             std::chrono::milliseconds sleepDuration(250);
             std::this_thread::sleep_for(sleepDuration);
@@ -98,7 +98,7 @@ void work(){
 
             std::this_thread::sleep_for(sleepDuration);
         } else {
-            std::cout &lt;&lt; std::this_thread::get_id() &lt;&lt; ": do work without mutex" &lt;&lt; std::endl;
+            std::cout << std::this_thread::get_id() << ": do work without mutex" << std::endl;
 
             std::chrono::milliseconds sleepDuration(100);
             std::this_thread::sleep_for(sleepDuration);
@@ -129,9 +129,9 @@ Sometimes you want a function to be called only once no matter the number of thr
 std::once_flag flag;
 
 void do_something(){
-    std::call_once(flag, [](){std::cout &lt;&lt; "Called once" &lt;&lt; std::endl;});
+    std::call_once(flag, [](){std::cout << "Called once" << std::endl;});
 
-    std::cout &lt;&lt; "Called each time" &lt;&lt; std::endl;
+    std::cout << "Called each time" << std::endl;
 }
 
 int main(){
@@ -180,7 +180,7 @@ struct BoundedBuffer {
     }
 
     void deposit(int data){
-        std::unique_lock&lt;std::mutex&gt; l(lock);
+        std::unique_lock<std::mutex> l(lock);
 
         not_full.wait(l, [this](){return count != capacity; });
 
@@ -192,7 +192,7 @@ struct BoundedBuffer {
     }
 
     int fetch(){
-        std::unique_lock&lt;std::mutex&gt; l(lock);
+        std::unique_lock<std::mutex> l(lock);
 
         not_empty.wait(l, [this](){return count != 0; });
 
@@ -212,18 +212,18 @@ The mutexes are managed by a <strong>std::unique_lock</strong>. It is a wrapper 
 We can use this structure to fix multiple consumers / multiple producers problem. This problem is very common in concurrent programming. Several threads (consumers) are waiting from data produced by another several threads (producers). Here is an example with several threads using the structure:
 
 ```cpp
-void consumer(int id, BoundedBuffer&amp; buffer){
-    for(int i = 0; i &lt; 50; ++i){
+void consumer(int id, BoundedBuffer& buffer){
+    for(int i = 0; i < 50; ++i){
         int value = buffer.fetch();
-        std::cout &lt;&lt; "Consumer " &lt;&lt; id &lt;&lt; " fetched " &lt;&lt; value &lt;&lt; std::endl;
+        std::cout << "Consumer " << id << " fetched " << value << std::endl;
         std::this_thread::sleep_for(std::chrono::milliseconds(250));
     }
 }
 
-void producer(int id, BoundedBuffer&amp; buffer){
-    for(int i = 0; i &lt; 75; ++i){
+void producer(int id, BoundedBuffer& buffer){
+    for(int i = 0; i < 75; ++i){
         buffer.deposit(i);
-        std::cout &lt;&lt; "Produced " &lt;&lt; id &lt;&lt; " produced " &lt;&lt; i &lt;&lt; std::endl;
+        std::cout << "Produced " << id << " produced " << i << std::endl;
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 }
