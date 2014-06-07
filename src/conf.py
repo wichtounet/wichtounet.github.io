@@ -176,7 +176,7 @@ ONE_FILE_POSTS = False
 # RSS_PATH = ""
 
 # Number of posts in RSS feeds
-FEED_LENGTH = 25 
+FEED_LENGTH = 25
 
 # Slug the Tag URL easier for users to type, special characters are
 # often removed or replaced as well.
@@ -304,7 +304,8 @@ THEME = "wicht"
 
 INDEX_TEASERS = True
 RSS_TEASERS = True
-READ_MORE_LINK = '<p class="more"><a href="{link}">{read_more}…</a></p>'
+INDEX_READ_MORE_LINK = '<p class="more"><a href="{link}">{read_more}…</a></p>'
+RSS_READ_MORE_LINK = '<p class="more"><a href="{link}">{read_more}…</a></p>'
 
 LICENSE = """
 <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="padding-left:5px;border-width:0" src="/assets/img/cc.png" /></a>"""

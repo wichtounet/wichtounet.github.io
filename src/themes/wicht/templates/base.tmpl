@@ -1,22 +1,13 @@
 ## -*- coding: utf-8 -*-
 <%namespace name="base" file="base_helper.tmpl" import="*" />
-<%namespace name="bootstrap" file="bootstrap_helper.tmpl" import="*" />
 <%namespace name="notes" file="annotation_helper.tmpl" import="*" />
 ${set_locale(lang)}
-<!DOCTYPE html>
-<html lang="${lang}">
-<head>
-    <link href="favicon.ico" rel="icon" type="image/x-icon" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    ${bootstrap.html_head()}
-    <%block name="extra_head">
-    </%block>
-    % if annotations and post and not post.meta('noannotations'):
-        ${notes.css()}
-    % elif not annotations and post and post.meta('annotations'):
-        ${notes.css()}
-    % endif
-    ${extra_head_data}
+${base.html_headstart()}
+<%block name="extra_head">
+### Leave this block alone.
+</%block>
+${template_hooks['extra_head']()}
+<link href="/favicon.ico" rel="icon" type="image/x-icon">
 </head>
 <body>
 
@@ -43,12 +34,14 @@ ${set_locale(lang)}
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" href="${abs_link('/')}">${blog_title}</a>
+            <a class="navbar-brand" href="${abs_link('/')}">
+                <span id="blog-title">${blog_title}</span>
+            </a>
         </div><!-- /.navbar-header -->
         
         <div class="collapse navbar-collapse navbar-ex1-collapse">
             <ul class="nav navbar-nav">
-                ${bootstrap.html_navigation_links()}
+                ${base.html_navigation_links()}
             </ul>
 
             <span class="navbar-form pull-left">
@@ -112,10 +105,11 @@ ${set_locale(lang)}
                 <div class="left-sidebar-widget-content">
                     <%
                         related_path = post.source_path + ".related.html"
+                        import codecs
 
                         try:
-                            with open(related_path, 'r') as f:
-                                related_text = f.read() 
+                            with codecs.open(related_path, 'r', 'utf8') as f:
+                                related_text = f.read()
                                 f.close()
                         except IOError as e:
                             related_text = "Not generated"
@@ -146,7 +140,7 @@ ${set_locale(lang)}
     </div>
 
     %if post and post.source_link() == '/stories/search.md':
-        ${bootstrap.late_load_js()}
+        ${base.late_load_js()}
     %endif
 
     <!-- Content -->
@@ -174,7 +168,7 @@ ${set_locale(lang)}
 <!-- Late loading stuff  -->
 
 %if not post or not post.source_link() == '/stories/search.md':
-    ${bootstrap.late_load_js()}
+    ${base.late_load_js()}
 %endif
 
 % if not post:
@@ -214,7 +208,6 @@ ${set_locale(lang)}
     
 <script type="text/javascript" src="https://apis.google.com/js/platform.js"></script>
 
-${base.html_social()}
 
 <%block name="extra_js"></%block>
 
