@@ -99,12 +99,14 @@ NAVIGATION_LINKS = {
 #
 
 POSTS = (
-            ("posts/*.wp", "posts", "post.tmpl"),
+            ("posts/*.rst", "posts", "post.tmpl"),
             ("posts/*.md", "posts", "post.tmpl"),
+            ("posts/*.wp", "posts", "post.tmpl"),
         )
 PAGES = (
-            ("stories/*.wp", "stories", "story.tmpl"),
+            ("stories/*.rest", "stories", "story.tmpl"),
             ("stories/*.md", "stories", "story.tmpl"),
+            ("stories/*.wp", "stories", "story.tmpl"),
         )
 
 # One or more folders containing files to be copied as-is into the output.
@@ -121,7 +123,7 @@ PAGES = (
 # 'markdown' is MarkDown
 # 'html' assumes the file is html and just copies it
 COMPILERS = {
-        "rest": ('.txt', '.rst'),
+        "rest": ('.rst'),
         "markdown": ('.md', '.mdown', '.markdown', '.wp'),
         "html": ('.html', '.htm')
         }
