@@ -1,5 +1,194 @@
 <?xml version="1.0" encoding="utf-8"?>
-<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>@Blog("Baptiste Wicht") (C++)</title><link>http://baptiste-wicht.com/</link><description></description><language>en</language><lastBuildDate>Tue, 01 Jul 2014 23:12:36 GMT</lastBuildDate><generator>http://getnikola.com/</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>budgetwarrior 0.3.1 - Git versioning and easier creation</title><link>http://baptiste-wicht.com/posts/2014/05/budgetwarrior-031-git-versioning-easier-creation.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;I've finished a new version of budgetwarrior: budgetwarrior 0.3.1&lt;/p&gt;
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>@Blog("Baptiste Wicht") (C++)</title><link>http://baptiste-wicht.com/</link><description></description><language>en</language><lastBuildDate>Wed, 02 Jul 2014 22:10:07 GMT</lastBuildDate><generator>http://getnikola.com/</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>Compile integer Square Roots at compile-time in C++</title><link>http://baptiste-wicht.com/posts/2014/07/compile-integer-square-roots-at-compile-time-in-cpp.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;For one of my projects, I needed to evaluate a square root at compile-time.
+There are several ways to implement it and some are better than the others.&lt;/p&gt;
+&lt;p&gt;In this post, I'll show several versions, both with Template Metaprogramming
+(TMP) and constexpr functions.&lt;/p&gt;
+&lt;div class="section" id="naive-version"&gt;
+&lt;h2&gt;Naive version&lt;/h2&gt;
+&lt;p&gt;The easiest way to implement it is to enumerate the integers until we find two
+integers that when multiplied are equal to our number. This can easily be
+implemented in C++ with class template and partial specialization:&lt;/p&gt;
+&lt;pre class="code c++ literal-block"&gt;
+&lt;span class="k"&gt;template&lt;/span&gt; &lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;N&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;I&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="n"&gt;ct_sqrt&lt;/span&gt; &lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;integral_constant&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;I&lt;/span&gt;&lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;I&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;N&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;?&lt;/span&gt; &lt;span class="n"&gt;ct_sqrt&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;N&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="n"&gt;I&lt;/span&gt;&lt;span class="o"&gt;+&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;::&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt; &lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;I&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="p"&gt;{};&lt;/span&gt;
+
+&lt;span class="k"&gt;template&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;N&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="n"&gt;ct_sqrt&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;N&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="n"&gt;N&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;integral_constant&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;N&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="p"&gt;{};&lt;/span&gt;
+&lt;/pre&gt;
+&lt;p&gt;Really easy, isn't it ? If we test it with 100, it gives 10. But, if we try with
+higher values, we are going to run into problem. For instance, when compiled
+with 289, here is what clang++ gives me:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+src/sqrt/tmp.cpp:5:64: fatal error: recursive template instantiation exceeded maximum depth of 256
+struct ct_sqrt : std::integral_constant&amp;lt;std::size_t, (I*I&amp;lt;N) ? ct_sqrt&amp;lt;N,I+1&amp;gt;::value : I &amp;gt; {};
+                                                               ^
+src/sqrt/tmp.cpp:5:64: note: in instantiation of template class 'ct_sqrt&amp;lt;289, 257&amp;gt;' requested here
+struct ct_sqrt : std::integral_constant&amp;lt;std::size_t, (I*I&amp;lt;N) ? ct_sqrt&amp;lt;N,I+1&amp;gt;::value : I &amp;gt; {};
+                                                               ^
+src/sqrt/tmp.cpp:5:64: note: in instantiation of template class 'ct_sqrt&amp;lt;289, 256&amp;gt;' requested here
+struct ct_sqrt : std::integral_constant&amp;lt;std::size_t, (I*I&amp;lt;N) ? ct_sqrt&amp;lt;N,I+1&amp;gt;::value : I &amp;gt; {};
+                                                               ^
+src/sqrt/tmp.cpp:5:64: note: in instantiation of template class 'ct_sqrt&amp;lt;289, 255&amp;gt;' requested here
+struct ct_sqrt : std::integral_constant&amp;lt;std::size_t, (I*I&amp;lt;N) ? ct_sqrt&amp;lt;N,I+1&amp;gt;::value : I &amp;gt; {};
+                                                               ^
+src/sqrt/tmp.cpp:5:64: note: in instantiation of template class 'ct_sqrt&amp;lt;289, 254&amp;gt;' requested here
+struct ct_sqrt : std::integral_constant&amp;lt;std::size_t, (I*I&amp;lt;N) ? ct_sqrt&amp;lt;N,I+1&amp;gt;::value : I &amp;gt; {};
+                                                               ^
+src/sqrt/tmp.cpp:5:64: note: in instantiation of template class 'ct_sqrt&amp;lt;289, 253&amp;gt;' requested here
+struct ct_sqrt : std::integral_constant&amp;lt;std::size_t, (I*I&amp;lt;N) ? ct_sqrt&amp;lt;N,I+1&amp;gt;::value : I &amp;gt; {};
+                                                               ^
+src/sqrt/tmp.cpp:5:64: note: (skipping 247 contexts in backtrace; use -ftemplate-backtrace-limit=0 to see all)
+src/sqrt/tmp.cpp:5:64: note: in instantiation of template class 'ct_sqrt&amp;lt;289, 5&amp;gt;' requested here
+struct ct_sqrt : std::integral_constant&amp;lt;std::size_t, (I*I&amp;lt;N) ? ct_sqrt&amp;lt;N,I+1&amp;gt;::value : I &amp;gt; {};
+                                                               ^
+src/sqrt/tmp.cpp:5:64: note: in instantiation of template class 'ct_sqrt&amp;lt;289, 4&amp;gt;' requested here
+struct ct_sqrt : std::integral_constant&amp;lt;std::size_t, (I*I&amp;lt;N) ? ct_sqrt&amp;lt;N,I+1&amp;gt;::value : I &amp;gt; {};
+                                                               ^
+src/sqrt/tmp.cpp:5:64: note: in instantiation of template class 'ct_sqrt&amp;lt;289, 3&amp;gt;' requested here
+struct ct_sqrt : std::integral_constant&amp;lt;std::size_t, (I*I&amp;lt;N) ? ct_sqrt&amp;lt;N,I+1&amp;gt;::value : I &amp;gt; {};
+                                                               ^
+src/sqrt/tmp.cpp:5:64: note: in instantiation of template class 'ct_sqrt&amp;lt;289, 2&amp;gt;' requested here
+struct ct_sqrt : std::integral_constant&amp;lt;std::size_t, (I*I&amp;lt;N) ? ct_sqrt&amp;lt;N,I+1&amp;gt;::value : I &amp;gt; {};
+                                                               ^
+src/sqrt/tmp.cpp:11:18: note: in instantiation of template class 'ct_sqrt&amp;lt;289, 1&amp;gt;' requested here
+    std::cout &amp;lt;&amp;lt; ct_sqrt&amp;lt;289&amp;gt;::value &amp;lt;&amp;lt; std::endl;
+                 ^
+src/sqrt/tmp.cpp:5:64: note: use -ftemplate-depth=N to increase recursive template instantiation depth
+struct ct_sqrt : std::integral_constant&amp;lt;std::size_t, (I*I&amp;lt;N) ? ct_sqrt&amp;lt;N,I+1&amp;gt;::value : I &amp;gt; {};
+                                                               ^
+&lt;/pre&gt;
+&lt;p&gt;And it is only to compute the square root for 289, not a big number. We could of
+course increase the template depth limit (-ftemplate-depth=X), but that would
+only get us a bit farther. If you try with g++, you should see that this works,
+that is because g++ has a higher template depth limit (900 for 4.8.2 on my
+machine) where clang has a default limit of 256. It can be noted too that with
+g++ no context is skipped, therefore the error is quite long.&lt;/p&gt;
+&lt;p&gt;Now that C++11 gives us constexpr function, we can rewrite it more cleanly:&lt;/p&gt;
+&lt;pre class="code c++ literal-block"&gt;
+&lt;span class="n"&gt;constexpr&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;ct_sqrt&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;n&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;n&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;?&lt;/span&gt; &lt;span class="n"&gt;n&lt;/span&gt; &lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;&amp;lt;&lt;/span&gt; &lt;span class="n"&gt;n&lt;/span&gt; &lt;span class="o"&gt;?&lt;/span&gt; &lt;span class="n"&gt;ct_sqrt&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;n&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;
+&lt;p&gt;Much nicer :) And it works perfectly with 289. And it works quite well up to a
+large number. But it still fails once we git large numbers. For instance, here
+is what clang++ gives me with 302500 (550*550):&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+src/sqrt/constexpr.cpp:8:36: error: constexpr variable 'result' must be initialized by a constant expression
+static constexpr const std::size_t result = ct_sqrt(SQRT_VALUE);
+                                   ^        ~~~~~~~~~~~~~~~~~~~
+src/sqrt/constexpr.cpp:5:38: note: constexpr evaluation exceeded maximum depth of 512 calls
+    return n == i ? n : (i * i &amp;lt; n ? ct_sqrt(n, i + 1) : i);
+                                     ^
+src/sqrt/constexpr.cpp:5:38: note: in call to 'ct_sqrt(302500, 512)'
+src/sqrt/constexpr.cpp:5:38: note: in call to 'ct_sqrt(302500, 511)'
+src/sqrt/constexpr.cpp:5:38: note: in call to 'ct_sqrt(302500, 510)'
+src/sqrt/constexpr.cpp:5:38: note: in call to 'ct_sqrt(302500, 509)'
+src/sqrt/constexpr.cpp:5:38: note: in call to 'ct_sqrt(302500, 508)'
+src/sqrt/constexpr.cpp:5:38: note: (skipping 502 calls in backtrace; use -fconstexpr-backtrace-limit=0 to see all)
+src/sqrt/constexpr.cpp:5:38: note: in call to 'ct_sqrt(302500, 5)'
+src/sqrt/constexpr.cpp:5:38: note: in call to 'ct_sqrt(302500, 4)'
+src/sqrt/constexpr.cpp:5:38: note: in call to 'ct_sqrt(302500, 3)'
+src/sqrt/constexpr.cpp:5:38: note: in call to 'ct_sqrt(302500, 2)'
+src/sqrt/constexpr.cpp:8:45: note: in call to 'ct_sqrt(302500, 1)'
+static constexpr const std::size_t result = ct_sqrt(SQRT_VALUE);
+                                            ^
+&lt;/pre&gt;
+&lt;p&gt;Again, we run into the limits of the compiler. And again, the limit can be
+change with fconstexpr-backtrace-limit=X. With g++, the result is the same
+(without the skipped part, which makes the error horribly long), but the command
+to change the depth is -fconstexpr-depth=X.&lt;/p&gt;
+&lt;p&gt;So, if we need to compute higher square roots at compile-time, we need a better
+version.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="binary-search-version"&gt;
+&lt;h2&gt;Binary Search version&lt;/h2&gt;
+&lt;p&gt;To find the good square root, you don't need to iterate through all the numbers
+from 1 to N, you can perform a binary search to find the numbers to test. I
+found a very nice implementation by John Khvatov (&lt;a class="reference external" href="http://jkhvatov.blogspot.ch/2009/11/c-compile-time-square-root-sqrt-using.html"&gt;source&lt;/a&gt;).&lt;/p&gt;
+&lt;p&gt;Here is an adaptation of its code:&lt;/p&gt;
+&lt;pre class="code c++ literal-block"&gt;
+&lt;span class="cp"&gt;#define MID(a, b) ((a+b)/2)
+#define POW(a) (a*a)
+&lt;/span&gt;
+&lt;span class="k"&gt;template&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;res&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;l&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;r&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;res&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="n"&gt;ct_sqrt&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+&lt;span class="k"&gt;template&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;res&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;r&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="n"&gt;ct_sqrt&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;res&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;r&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;r&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;integral_constant&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;r&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="p"&gt;{};&lt;/span&gt;
+
+&lt;span class="k"&gt;template&lt;/span&gt; &lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;res&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;l&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;r&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="n"&gt;ct_sqrt&lt;/span&gt; &lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;integral_constant&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;ct_sqrt&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;res&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+        &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;POW&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;MID&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;r&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;l&lt;/span&gt;&lt;span class="p"&gt;))&lt;/span&gt; &lt;span class="o"&gt;&amp;gt;=&lt;/span&gt; &lt;span class="n"&gt;res&lt;/span&gt; &lt;span class="o"&gt;?&lt;/span&gt; &lt;span class="n"&gt;l&lt;/span&gt; &lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;MID&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;r&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;l&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="o"&gt;+&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt;
+        &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;POW&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;MID&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;r&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;l&lt;/span&gt;&lt;span class="p"&gt;))&lt;/span&gt; &lt;span class="o"&gt;&amp;gt;=&lt;/span&gt; &lt;span class="n"&gt;res&lt;/span&gt; &lt;span class="o"&gt;?&lt;/span&gt; &lt;span class="n"&gt;MID&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;r&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;l&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;r&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;::&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="p"&gt;{};&lt;/span&gt;
+&lt;/pre&gt;
+&lt;p&gt;With smart binary search, you can reduce A LOT the numbers that needs to be
+tested in order to find the answer. It very easily found the answer for 302500.
+It can find the square root of almost all integers, until it fails due to
+overflows. I think it is really great :)&lt;/p&gt;
+&lt;p&gt;Of course, we can also do the constexpr version:&lt;/p&gt;
+&lt;pre class="code c++ literal-block"&gt;
+&lt;span class="k"&gt;static&lt;/span&gt; &lt;span class="n"&gt;constexpr&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;ct_mid&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;b&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="o"&gt;+&lt;/span&gt;&lt;span class="n"&gt;b&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;/&lt;/span&gt; &lt;span class="mi"&gt;2&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="k"&gt;static&lt;/span&gt; &lt;span class="n"&gt;constexpr&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;ct_pow&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="k"&gt;static&lt;/span&gt; &lt;span class="n"&gt;constexpr&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;ct_sqrt&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;res&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;l&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;r&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="k"&gt;return&lt;/span&gt;
+        &lt;span class="n"&gt;l&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="n"&gt;r&lt;/span&gt; &lt;span class="o"&gt;?&lt;/span&gt; &lt;span class="n"&gt;r&lt;/span&gt;
+        &lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;ct_sqrt&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;res&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;ct_pow&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;
+            &lt;span class="n"&gt;ct_mid&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;r&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;l&lt;/span&gt;&lt;span class="p"&gt;))&lt;/span&gt; &lt;span class="o"&gt;&amp;gt;=&lt;/span&gt; &lt;span class="n"&gt;res&lt;/span&gt; &lt;span class="o"&gt;?&lt;/span&gt; &lt;span class="n"&gt;l&lt;/span&gt; &lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;ct_mid&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;r&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;l&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+            &lt;span class="n"&gt;ct_pow&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;ct_mid&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;r&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;l&lt;/span&gt;&lt;span class="p"&gt;))&lt;/span&gt; &lt;span class="o"&gt;&amp;gt;=&lt;/span&gt; &lt;span class="n"&gt;res&lt;/span&gt; &lt;span class="o"&gt;?&lt;/span&gt; &lt;span class="n"&gt;ct_mid&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;r&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;l&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;r&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="k"&gt;static&lt;/span&gt; &lt;span class="n"&gt;constexpr&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;ct_sqrt&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;res&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;ct_sqrt&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;res&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;res&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;
+&lt;p&gt;Which is a bit more understandable. It works the same way than the previous one
+and is only limited by numeric overflow.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="c-14-fun"&gt;
+&lt;h2&gt;C++14 Fun&lt;/h2&gt;
+&lt;p&gt;In C++14, the constraints on constexpr functions have been highly relaxed, we
+can now use variables, if/then/else statements, loops and so on... in constexpr
+functions making them much more readable. Here is the C++14 version of the
+previous code:&lt;/p&gt;
+&lt;pre class="code c++ literal-block"&gt;
+&lt;span class="k"&gt;static&lt;/span&gt; &lt;span class="n"&gt;constexpr&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;ct_sqrt&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;res&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;l&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;r&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="k"&gt;if&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;l&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="n"&gt;r&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+        &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;r&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="k"&gt;else&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="k"&gt;const&lt;/span&gt; &lt;span class="k"&gt;auto&lt;/span&gt; &lt;span class="n"&gt;mid&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;r&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;l&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;/&lt;/span&gt; &lt;span class="mi"&gt;2&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+        &lt;span class="k"&gt;if&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;mid&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="n"&gt;mid&lt;/span&gt; &lt;span class="o"&gt;&amp;gt;=&lt;/span&gt; &lt;span class="n"&gt;res&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+            &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;ct_sqrt&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;res&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;l&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;mid&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+        &lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="k"&gt;else&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+            &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;ct_sqrt&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;res&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;mid&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;r&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+        &lt;span class="p"&gt;}&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="k"&gt;static&lt;/span&gt; &lt;span class="n"&gt;constexpr&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;ct_sqrt&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;res&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;ct_sqrt&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;res&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;res&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;
+&lt;p&gt;I think this version is highly superior than the previous version. Don't you
+think ?&lt;/p&gt;
+&lt;p&gt;It performs exactly the same as the previous. This can only be done in clang for
+now, but that will come eventually to gcc too.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="conclusion"&gt;
+&lt;h2&gt;Conclusion&lt;/h2&gt;
+&lt;p&gt;As you saw, there are several ways to compute a square root at compile-time in
+C++. The constexpr versions are much more readable and generally more scalable
+than the template metaprogramming version. Moreover, now, with C++14, we can
+write constexpr functions almost as standard function, which makes really great.&lt;/p&gt;
+&lt;p&gt;I hope that is is helpful to some of you :)&lt;/p&gt;
+&lt;p&gt;All the sources are available on Github: &lt;a class="reference external" href="https://github.com/wichtounet/articles/tree/master/src/sqrt"&gt;https://github.com/wichtounet/articles/tree/master/src/sqrt&lt;/a&gt;&lt;/p&gt;
+&lt;/div&gt;</description><category>C++11</category><category>C++14</category><category>C++</category><category>Programming</category><category>clang</category><guid>http://baptiste-wicht.com/posts/2014/07/compile-integer-square-roots-at-compile-time-in-cpp.html</guid><pubDate>Wed, 02 Jul 2014 19:05:11 GMT</pubDate></item><item><title>budgetwarrior 0.3.1 - Git versioning and easier creation</title><link>http://baptiste-wicht.com/posts/2014/05/budgetwarrior-031-git-versioning-easier-creation.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;I've finished a new version of budgetwarrior: budgetwarrior 0.3.1&lt;/p&gt;
 &lt;h3&gt;Changes&lt;/h3&gt;
 &lt;p&gt;The most interesting change is the ability to estimate the date when it is a good time to buy something from the wish list. This is done with the &lt;em&gt;budget wish estimate&lt;/em&gt; command: &lt;/p&gt;
 &lt;p&gt;&lt;img alt="budget wish estimate" src="http://baptiste-wicht.com/images/budget_031_wish_estimate.jpg"&gt;&lt;/p&gt;
@@ -1395,58 +1584,4 @@ ctest -I FailedTests.log&lt;/the&gt;&lt;/pre&gt;
 &lt;h4&gt;Wrap-Up&lt;/h4&gt;
 
 &lt;p&gt;In this article, we saw the most important aspects of Boost Program Options. With these notions, you can start using this great library. If you need more information about the library, you can read &lt;a href="http://www.boost.org/doc/libs/1_50_0/doc/html/program_options.html" title="Boost Program Options documentation"&gt;the official documentation&lt;/a&gt; that is very well made. &lt;/p&gt;
-&lt;p&gt;You can download the final sources of this article on Github: &lt;a href="https://github.com/wichtounet/articles/blob/master/src/boost_po/v1.cpp" title="Source file for this article"&gt;v1.cpp&lt;/a&gt;&lt;/p&gt;</description><category>Boost</category><category>C++</category><guid>http://baptiste-wicht.com/posts/2012/07/manage-command-line-boost-program-options.html</guid><pubDate>Thu, 19 Jul 2012 06:19:37 GMT</pubDate></item><item><title>C++11 Concurrency Tutorial - Part 4: Atomic Types</title><link>http://baptiste-wicht.com/posts/2012/07/c11-concurrency-tutorial-part-4-atomic-type.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;In the previous article, we saw advanced techniques about mutexes. In this post, we will continue to work on mutexes with more advanced techniques. We will also study another concurrency technique of the C++11 Concurrency Library: Atomic Types&lt;/p&gt;
-&lt;h4&gt;Atomic Types&lt;/h4&gt;
-
-&lt;p&gt;We will take, the example of a Counter:&lt;/p&gt;
-&lt;pre class="code literal-block"&gt;&lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="n"&gt;Counter&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
-    &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
-&lt;span class="err"&gt; &lt;/span&gt; &lt;span class="err"&gt;  &lt;/span&gt;
-    &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;increment&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
-        &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
-    &lt;span class="p"&gt;}&lt;/span&gt;
-&lt;span class="err"&gt; &lt;/span&gt; &lt;span class="err"&gt;  &lt;/span&gt;
-    &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;decrement&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
-        &lt;span class="o"&gt;--&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
-    &lt;span class="p"&gt;}&lt;/span&gt;
-&lt;span class="err"&gt; &lt;/span&gt; &lt;span class="err"&gt;  &lt;/span&gt;
-    &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;get&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
-        &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;value&lt;/span&gt;
-    &lt;span class="p"&gt;}&lt;/span&gt;
-&lt;span class="p"&gt;};&lt;/span&gt;
-&lt;/pre&gt;
-
-
-&lt;p&gt;We already saw that this class was not safe at all to use in multithreaded environment. We also saw how to make if safe using mutexes. This time, we will see how to make it safe using atomic types. The main advantage of this technique is its performance. Indeed, in most cases, the std::atomic operations are implemented with lock-free operations that are much faster than locks. &lt;/p&gt;
-&lt;p&gt;The C++11 Concurrency Library introduces Atomic Types as a template class: std::atomic&lt;type&gt;. You can use any Type you want with that template and the operations on that variable will be atomic and so thread-safe. It has to be taken into account that it is up to the library implementation to choose which syncronization mechanism is used to make the operations on that type atomic. On standard platforms for integral types like int, long, float, ... it will be some lock-free technique. If you want to make a big type (let's saw 2MB storage), you can use std::atomic as well, but mutexes will be used. In this case, there will be no performance advantage. &lt;/type&gt;&lt;/p&gt;
-&lt;p&gt;The main functions that std::atomic provide are the store and load functions that atomically set and get the contents of the std::atomic. Another interesting function is exchange, that sets the atomic to a new value and returns the value held previously. Finally, there are also two functions compare_exchange_weak and compare_exchance_strong that performs atomic exchange only if the value is equal to the provided expected value. These two last functions can be used to implement lock-free algorithms. &lt;/p&gt;
-&lt;p&gt;std::atomic is specialized for all integral types to provide member functions specific to integral (like operators ++, --, fetch_add, fetch_sub, ...). &lt;/p&gt;
-&lt;p&gt;It is fairly easy to make  the counter safe with std::atomic: &lt;/p&gt;
-&lt;pre class="code literal-block"&gt;&lt;span class="cp"&gt;#include &amp;lt;atomic&amp;gt;&lt;/span&gt;
-
-&lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="n"&gt;AtomicCounter&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
-    &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;atomic&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
-
-    &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;increment&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
-        &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
-    &lt;span class="p"&gt;}&lt;/span&gt;
-
-    &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;decrement&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
-        &lt;span class="o"&gt;--&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
-    &lt;span class="p"&gt;}&lt;/span&gt;
-
-    &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="nf"&gt;get&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
-        &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;load&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
-    &lt;span class="p"&gt;}&lt;/span&gt;
-&lt;span class="p"&gt;};&lt;/span&gt;
-&lt;/pre&gt;
-
-
-&lt;p&gt;If you test this counter, you will see that the value is always the expected one. &lt;/p&gt;
-&lt;h4&gt;Wrap-Up&lt;/h4&gt;
-
-&lt;p&gt;In this article we saw a very elegant technique to perform atomic operations on any type. I advice you to use std::atomic any time you need to make atomic operations on a type, especially integral types. &lt;/p&gt;
-&lt;p&gt;The source code for this article can be found &lt;a href="https://github.com/wichtounet/articles/tree/master/src/threads/part4" title="Source of this article"&gt;on Github&lt;/a&gt;.&lt;/p&gt;
-&lt;h4&gt;Next&lt;/h4&gt;
-
-&lt;p&gt;In the next post of this series, we will see how to use the Futures facility to perform asynchronous task.&lt;/p&gt;</description><category>C++11 Concurrency Tutorial</category><category>C++</category><category>Concurrency</category><category>Performances</category><guid>http://baptiste-wicht.com/posts/2012/07/c11-concurrency-tutorial-part-4-atomic-type.html</guid><pubDate>Mon, 16 Jul 2012 07:22:04 GMT</pubDate></item></channel></rss>
+&lt;p&gt;You can download the final sources of this article on Github: &lt;a href="https://github.com/wichtounet/articles/blob/master/src/boost_po/v1.cpp" title="Source file for this article"&gt;v1.cpp&lt;/a&gt;&lt;/p&gt;</description><category>Boost</category><category>C++</category><guid>http://baptiste-wicht.com/posts/2012/07/manage-command-line-boost-program-options.html</guid><pubDate>Thu, 19 Jul 2012 06:19:37 GMT</pubDate></item></channel></rss>
