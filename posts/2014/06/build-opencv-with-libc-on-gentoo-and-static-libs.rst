@@ -40,4 +40,4 @@ Then, you can add it to layman::
 For now, I have created an ebuild for *opencv-2.4.8-r1*. If someone is
 interested in other versions, I'd be glad to create new ebuilds. 
 
-
+I hope that this ebuild will be helpful. 
