@@ -6,6 +6,9 @@ import time
 #!! This is the configuration of Nikola. !!#
 #!!  You should edit it to your liking.  !!#
 
+GITHUB_SOURCE_BRANCH = 'sources'
+GITHUB_DEPLOY_BRANCH = 'master'
+GITHUB_REMOTE_NAME = 'origin'
 
 # Data about this site
 BLOG_AUTHOR = "Baptiste Wicht"
