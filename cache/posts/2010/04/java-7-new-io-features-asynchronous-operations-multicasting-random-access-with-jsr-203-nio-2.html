@@ -1,0 +1,168 @@
+<p>Like I've said in other post, <a href="http://www.baptiste-wicht.com/2010/03/nio-2-path-api-java-7/">we will have a new API to access File System in Java 7</a>, but we'll have several others new features in NIO.2 that I've not covered</p>
+<p>So I'll try to cover them in that post. Indeed the <strong>JSR 203</strong> (also known as <strong>NIO.2</strong>) add several new classes that improve I/O code.</p>
+<p>In this post I cover the following features :</p>
+<ul>
+    <li>SeekableByteChannel : A random access channel</li>
+    <li>MulticastChannel : A channel that allow for IP multicasting</li>
+    <li>NetworkChannel : The new super interface for the network-oriented channels</li>
+    <li>Asynchronous I/O API : The new API to make I/O operations in an asynchronous way.</li>
+</ul>
+
+<!-- TEASER_END -->
+
+<p><strong>SeekableByteChannel</strong></p>
+<p>First of all, the Java 7 includes a new ByteChannel, the <strong>SeekableByteChannel</strong>. This Channel maintains a current position, so you can read and write from this position. That allows <strong>random access</strong> positions. With that type of Channel, you can even add several threads reading/writing the same threads at different positions.</p>
+<pre class="code literal-block"><span class="n">SeekableByteChannel</span> <span class="n">channel1</span> <span class="o">=</span> <span class="n">Paths</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="s">&quot;Path to file&quot;</span><span class="o">).</span><span class="na">newByteChannel</span><span class="o">();</span> <span class="c1">//Simply READ</span>
+<span class="n">SeekableByteChannel</span> <span class="n">channel2</span> <span class="o">=</span> <span class="n">Paths</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="s">&quot;Path to file&quot;</span><span class="o">).</span><span class="na">newByteChannel</span><span class="o">(</span><span class="n">StandardOpenOption</span><span class="o">.</span><span class="na">READ</span><span class="o">,</span> <span class="n">StandardOpenOption</span><span class="o">.</span><span class="na">WRITE</span><span class="o">);</span> <span class="c1">//READ and WRITE</span>
+</pre>
+
+
+<p>You can use these methods to manipulate the positions and size of the channel :</p>
+<ul>
+    <li>long position() : Return the current position</li>
+    <li>long size() : Return the current size of the entity this channel is connected to, by example the size of the file the channel is connecting to</li>
+    <li>position(long newPosition) : Move the current position to the given one</li>
+    <li>truncate(long size) : Truncates the entity to the given size.</li>
+</ul>
+
+<p>The position() and truncate() methods simply returns the current Channel to allow chained invocations.</p>
+<p>Now, <strong>FileChannel</strong> implements this new interface, so you can make random access with all FileChannels.</p>
+<p>You can of course read a file with that channel :</p>
+<pre class="code literal-block"><span class="n">SeekableByteChannel</span> <span class="n">channel</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+
+<span class="k">try</span> <span class="o">{</span>
+    <span class="n">channel</span> <span class="o">=</span> <span class="n">Paths</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="s">&quot;Path to file&quot;</span><span class="o">).</span><span class="na">newByteChannel</span><span class="o">(</span><span class="n">StandardOpenOption</span><span class="o">.</span><span class="na">READ</span><span class="o">);</span>
+    <span class="n">ByteBuffer</span> <span class="n">buffer</span> <span class="o">=</span> <span class="n">ByteBuffer</span><span class="o">.</span><span class="na">allocate</span><span class="o">(</span><span class="mi">4096</span><span class="o">);</span>
+
+    <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;File size: &quot;</span> <span class="o">+</span> <span class="n">channel</span><span class="o">.</span><span class="na">size</span><span class="o">());</span>
+
+    <span class="k">while</span> <span class="o">(</span><span class="n">channel</span><span class="o">.</span><span class="na">read</span><span class="o">(</span><span class="n">buffer</span><span class="o">)</span> <span class="o">&amp;</span><span class="n">amp</span><span class="o">;</span><span class="n">gt</span><span class="o">;</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">buffer</span><span class="o">.</span><span class="na">rewind</span><span class="o">();</span>
+
+        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">print</span><span class="o">(</span><span class="k">new</span> <span class="n">String</span><span class="o">(</span><span class="n">buffer</span><span class="o">.</span><span class="na">array</span><span class="o">(),</span> <span class="mi">0</span><span class="o">,</span> <span class="n">buffer</span><span class="o">.</span><span class="na">remaining</span><span class="o">()));</span>
+
+        <span class="n">buffer</span><span class="o">.</span><span class="na">flip</span><span class="o">();</span>
+
+        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;Current position : &quot;</span> <span class="o">+</span> <span class="n">channel</span><span class="o">.</span><span class="na">position</span><span class="o">());</span>
+    <span class="o">}</span>
+<span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;Expection when reading : &quot;</span> <span class="o">+</span> <span class="n">e</span><span class="o">.</span><span class="na">getMessage</span><span class="o">());</span>
+    <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+<span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">sbc</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">){</span>
+        <span class="n">channel</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</pre>
+
+
+<h3>MulticastChannel</h3>
+
+<p>This new interface enable to make Internet Protocol (IP) <strong>Multicasting</strong>. So you can send and receive IP datagrams from a complete group. The multicast implementations are directly bind to the native multicast facility. This interface is implement by DatagramChannel and AsynchronousDatagramChannel.</p>
+<p>A simple example taken from the Javadoc to open a DatagramChannel t :</p>
+<pre class="code literal-block"><span class="n">NetworkInterface</span> <span class="n">networkInterface</span> <span class="o">=</span> <span class="n">NetworkInterface</span><span class="o">.</span><span class="na">getByName</span><span class="o">(</span><span class="s">&quot;hme0&quot;</span><span class="o">);</span>
+
+<span class="n">DatagramChannel</span> <span class="n">dc</span> <span class="o">=</span> <span class="n">DatagramChannel</span><span class="o">.</span><span class="na">open</span><span class="o">(</span><span class="n">StandardProtocolFamily</span><span class="o">.</span><span class="na">INET</span><span class="o">)</span>
+         <span class="o">.</span><span class="na">setOption</span><span class="o">(</span><span class="n">StandardSocketOption</span><span class="o">.</span><span class="na">SO_REUSEADDR</span><span class="o">,</span> <span class="kc">true</span><span class="o">)</span>
+         <span class="o">.</span><span class="na">bind</span><span class="o">(</span><span class="k">new</span> <span class="n">InetSocketAddress</span><span class="o">(</span><span class="mi">5000</span><span class="o">))</span>
+         <span class="o">.</span><span class="na">setOption</span><span class="o">(</span><span class="n">StandardSocketOption</span><span class="o">.</span><span class="na">IP_MULTICAST_IF</span><span class="o">,</span> <span class="n">networkInterface</span><span class="o">);</span>
+
+<span class="n">InetAddress</span> <span class="n">group</span> <span class="o">=</span> <span class="n">InetAddress</span><span class="o">.</span><span class="na">getByName</span><span class="o">(</span><span class="s">&quot;225.4.5.6&quot;</span><span class="o">);</span>
+
+<span class="n">MembershipKey</span> <span class="n">key</span> <span class="o">=</span> <span class="n">dc</span><span class="o">.</span><span class="na">join</span><span class="o">(</span><span class="n">group</span><span class="o">,</span> <span class="n">networkInterface</span><span class="o">);</span>
+</pre>
+
+
+<p>With that, you can use your DatagramChannel as all others DatagramChannel you used in the past, but the operations are made with multicast, so you receive all the packets of the interface and you send packets to all the group.</p>
+<h3>NetworkChannel</h3>
+
+<p>Now, all the network-oriented channels implements the new <strong>NetworkChannel</strong> interface. With that, you easily bind the channel socket, set and query for socket options. Furthermore, the socket optioins are now extensible, so you can use operating system specific options, that could be interesting for high performances servers.</p>
+<h3>Asynchronous I/O</h3>
+
+<p>And after that little introduction, we go to the main new feature : The new <strong>Asynchronous I/O API</strong>. Its name indicate all the purpose of this new features, indeed enable Asynchronous I/O operations.This new channels provide <strong>asynchronous operations</strong> for both sockets and files.</p>
+<p>Of course, all that operations are non-blocking, but there is also blocking operations that you can do with all the asynchronous channels.</p>
+<p>All the asynchronous I/O operations have one of two forms :</p>
+<ul>
+    <li>The first one returns a java.util.concurrent.Future that represent the pending result. You can use that Future to wait for the I/O operations to finish.</li>
+    <li>The second one is created using  a CompletionHandler. That handler is invoked when the operation is has completed, like callbacks systems.</li>
+</ul>
+
+<p>So here are the examples of the two forms :</p>
+<p>The first form, using Future :</p>
+<pre class="code literal-block"><span class="n">AsynchronousFileChannel</span> <span class="n">channel</span> <span class="o">=</span><span class="err"> </span><span class="n">AsynchronousFileChannel</span><span class="o">.</span><span class="na">open</span><span class="o">(</span><span class="n">Paths</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="s">&quot;Path to file&quot;</span><span class="o">));</span>
+<span class="n">ByteBuffer</span> <span class="n">buffer</span> <span class="o">=</span> <span class="n">ByteBuffer</span><span class="o">.</span><span class="na">allocate</span><span class="o">(</span><span class="n">capacity</span><span class="o">);</span>
+<span class="n">Future</span> <span class="n">result</span> <span class="o">=</span> <span class="n">channel</span><span class="o">.</span><span class="na">read</span><span class="o">(</span><span class="n">buffer</span><span class="o">,</span> <span class="mi">100</span><span class="o">);</span> <span class="c1">//Read capacity bytes from the file starting at position 100</span>
+<span class="kt">boolean</span> <span class="n">done</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="na">isDone</span><span class="o">();</span> <span class="c1">//Indicate if the result is already terminated&amp;lt;/pre&amp;gt;</span>
+</pre>
+
+
+<p>You can also wait for completion :</p>
+<pre class="code literal-block"><span class="kt">int</span> <span class="n">bytesRead</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="na">get</span><span class="o">();</span>
+</pre>
+
+
+<p>Or wait with a timeout :</p>
+<pre class="code literal-block"><span class="kt">int</span> <span class="n">bytesRead</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="mi">10</span><span class="o">,</span> <span class="n">TimeUnit</span><span class="o">.</span><span class="na">SECONDS</span><span class="o">);</span> <span class="c1">//Wait at most 10 seconds on the result</span>
+</pre>
+
+
+<p>The second form, using CompletionHandler :</p>
+<pre class="code literal-block"><span class="n">Future</span> <span class="n">result</span> <span class="o">=</span> <span class="n">channel</span><span class="o">.</span><span class="na">read</span><span class="o">(</span><span class="n">buffer</span><span class="o">,</span> <span class="mi">100</span><span class="o">,</span> <span class="kc">null</span><span class="o">,</span> <span class="k">new</span> <span class="n">CompletionHandler</span><span class="o">(){</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">completed</span><span class="o">(</span><span class="n">Integer</span> <span class="n">result</span><span class="o">,</span> <span class="n">Object</span> <span class="n">attachement</span><span class="o">){</span>
+        <span class="c1">//Compute the result</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">failed</span><span class="o">(</span><span class="n">Throwable</span> <span class="n">exception</span><span class="o">,</span> <span class="n">Object</span> <span class="n">attachement</span><span class="o">){</span>
+        <span class="c1">//Answer to the fail</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</pre>
+
+
+<p>As you can see, you can give an attachement to the operation. This attachement is given to the CompletionHandler at the end of the operation. You can give null as attachement with no problem. But you can pass anything you want, like the Connection for a AsynchronousSocketChannel or the ByteBuffer for our read :</p>
+<pre class="code literal-block"><span class="n">Future</span> <span class="n">result</span> <span class="o">=</span> <span class="n">channel</span><span class="o">.</span><span class="na">read</span><span class="o">(</span><span class="n">buffer</span><span class="o">,</span> <span class="mi">100</span><span class="o">,</span> <span class="n">buffer</span><span class="o">,</span> <span class="k">new</span> <span class="n">CompletionHandler</span><span class="o">(){</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">completed</span><span class="o">(</span><span class="n">Integer</span> <span class="n">result</span><span class="o">,</span> <span class="n">ByteBuffer</span> <span class="n">buffer</span><span class="o">){</span>
+        <span class="c1">//Compute the result</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">failed</span><span class="o">(</span><span class="n">Throwable</span> <span class="n">exception</span><span class="o">,</span> <span class="n">ByteBuffer</span> <span class="n">buffer</span><span class="o">){</span>
+        <span class="c1">//Answer to the fail</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</pre>
+
+
+<p>And as you can see, the form with the CompletionHandle gives also you a Future element representing the pending result, so you can merge the two forms.</p>
+<p>Here, are all the asynchronous channels available in NIO.2 :</p>
+<ul>
+    <li>AsynchronousFileChannel : An asynchronous channel for reading and writing from and to a file. This channel has no global positions, so each read/write operations needs a position to operate. You can access concurrently to different parts of the file using different threads. You have to specify the options (READ, WRITE, but not APPEND) when you open this channel.</li>
+    <li>AsynchronousSocketChannel : A simple asynchronous channel to a Socket. The connect, read/write and scatter/gather methods are all asynchronous. The read/write method supports timeouts.</li>
+    <li>AsynchronousServerSocketChannel : An asynchronous channel to a ServerSocket. The accept() method is asynchronous and the CompletionHandler is called when a connection has been accepted. The result of this kind of connection is an AsynchronousSocketChannel.</li>
+    <li>AsynchronousDatagramChannel :</li>
+</ul>
+
+<p>An channel to datagram-oriented socket. The read/write (connected) and receive/send (unconnected) methods are asynchronous.</p>
+<h3>Groups</h3>
+
+<p>When you use AsynchronousChannels, there is of course threads that invoke the completion handlers. These threads are bound to an AsynchronousChannelGroup. This group contains a thread pool and encapsulates the resources shared by all the threads working for the channels. You can greate these groups using thread pool. The AsynchronousFileChannel can be created with its own group, passing an ExecutorService as argument to the open() method. The channels are created using an AsynchronousChannelGroup in the open method, if you don't give it a group or you pass null, the default group is used. The channel is said to be owned by the group, so, if the group is closed, the channel is closed too.</p>
+<p>You can create a group with a ThreadFactory :</p>
+<pre class="code literal-block"><span class="n">ThreadFactory</span> <span class="n">myThreadFactory</span> <span class="o">=</span> <span class="n">Executors</span><span class="o">.</span><span class="na">defaultThreadFactory</span><span class="o">();</span>
+<span class="n">AsynchronousChannelGroup</span> <span class="n">channelGroup</span> <span class="o">=</span> <span class="n">AsynchronousChannelGroup</span><span class="o">.</span><span class="na">withFixedThreadPool</span><span class="o">(</span><span class="mi">25</span><span class="o">,</span> <span class="n">myThreadFactory</span><span class="o">);</span>
+</pre>
+
+
+<p>Or with an ExecutorService :</p>
+<p>ExecutorService service = Executors.newFixedThreadPool(25);</p>
+<pre class="code literal-block"><span class="n">AsynchronousChannelGroup</span> <span class="n">channelGroup</span> <span class="o">=</span> <span class="n">AsynchronousChannelGroup</span><span class="o">.</span><span class="na">withThreadPool</span><span class="o">(</span><span class="n">service</span><span class="o">);</span>
+</pre>
+
+
+<p>And you easily use it :</p>
+<pre class="code literal-block"><span class="n">AsynchronousSocketChannel</span> <span class="n">socketChannel</span> <span class="o">=</span> <span class="n">AsynchronousSocketChannel</span><span class="o">.</span><span class="na">open</span><span class="o">(</span><span class="n">channelGroup</span><span class="o">);</span>
+</pre>
+
+
+<p>You can close the group using the shutdown() method on the group. After that, you cannot create more channels using this group and the group effectively terminates when all the channels are closed, the completion handlers terminated and the resources released.</p>
+<p>You must give attention to a points when you use any type of pools and CompletionHandler : DO NOT USE blocking or long operation inside a CompletionHandler. That can block the entire application if all the threads are blocking. If you've custom or cached thread pool, that can make the queue growing infinitely and cause OutOfMemoryError.</p>
+<p>I think (and I hope), I've covered the main news from this new Asynchronous I/O API. This is not simple stuff of course and that will not be used by every one but that can be useful in several cases and it's a good thing that Java will have this kind of I/O. I therefore apologize if I made some errors in my code or my explanations, is not a easy subject and I tried to explain it for everyone.</p>
+<p>You have also others informations in <a href="http://openjdk.java.net/projects/nio/presentations/TS-4222.pdf">the overview of Asynchronous I/O at JavaOne 2009</a>, by Alan Bateman and Jean-François Arcand.</p>

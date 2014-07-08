@@ -1,0 +1,58 @@
+<p>From the build 105, the compiler and runtime of Java 7 Releases have support for the new form of try : try-with-resources, also called ARM (Automatic Resource Management) blocks. </p>
+<p>This new statement make working with streams and all kind of closeable resources easier. By example, in Java, you can have this kind of code : </p>
+<pre class="code literal-block"><span class="kd">private</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">customBufferStreamCopy</span><span class="o">(</span><span class="n">File</span> <span class="n">source</span><span class="o">,</span> <span class="n">File</span> <span class="n">target</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">InputStream</span> <span class="n">fis</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+    <span class="n">OutputStream</span> <span class="n">fos</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+    <span class="k">try</span> <span class="o">{</span>
+        <span class="n">fis</span> <span class="o">=</span> <span class="k">new</span> <span class="n">FileInputStream</span><span class="o">(</span><span class="n">source</span><span class="o">);</span>
+        <span class="n">fos</span> <span class="o">=</span> <span class="k">new</span> <span class="n">FileOutputStream</span><span class="o">(</span><span class="n">target</span><span class="o">);</span>
+
+        <span class="kt">byte</span><span class="o">[]</span> <span class="n">buf</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">byte</span><span class="o">[</span><span class="mi">8192</span><span class="o">];</span>
+
+        <span class="kt">int</span> <span class="n">i</span><span class="o">;</span>
+        <span class="k">while</span> <span class="o">((</span><span class="n">i</span> <span class="o">=</span> <span class="n">fis</span><span class="o">.</span><span class="na">read</span><span class="o">(</span><span class="n">buf</span><span class="o">))</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">fos</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="n">buf</span><span class="o">,</span> <span class="mi">0</span><span class="o">,</span> <span class="n">i</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+    <span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+    <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+        <span class="n">close</span><span class="o">(</span><span class="n">fis</span><span class="o">);</span>
+        <span class="n">close</span><span class="o">(</span><span class="n">fos</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+
+<span class="kd">private</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">close</span><span class="o">(</span><span class="n">Closeable</span> <span class="n">closable</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">closable</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">try</span> <span class="o">{</span>
+            <span class="n">closable</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
+        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</pre>
+
+
+<p>A little bit heavy, isn't it ? This is only an example, here the management of exceptions is not good. </p>
+<p>So let's use try-with-resources statement to simplify this code, who becomes : </p>
+<pre class="code literal-block"><span class="kd">private</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">customBufferStreamCopy</span><span class="o">(</span><span class="n">File</span> <span class="n">source</span><span class="o">,</span> <span class="n">File</span> <span class="n">target</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">try</span> <span class="o">(</span><span class="n">InputStream</span> <span class="n">fis</span> <span class="o">=</span> <span class="k">new</span> <span class="n">FileInputStream</span><span class="o">(</span><span class="n">source</span><span class="o">);</span>
+        <span class="n">OutputStream</span> <span class="n">fos</span> <span class="o">=</span> <span class="k">new</span> <span class="n">FileOutputStream</span><span class="o">(</span><span class="n">target</span><span class="o">)){</span>
+
+        <span class="kt">byte</span><span class="o">[]</span> <span class="n">buf</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">byte</span><span class="o">[</span><span class="mi">8192</span><span class="o">];</span>
+
+        <span class="kt">int</span> <span class="n">i</span><span class="o">;</span>
+        <span class="k">while</span> <span class="o">((</span><span class="n">i</span> <span class="o">=</span> <span class="n">fis</span><span class="o">.</span><span class="na">read</span><span class="o">(</span><span class="n">buf</span><span class="o">))</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">fos</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="n">buf</span><span class="o">,</span> <span class="mi">0</span><span class="o">,</span> <span class="n">i</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+    <span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</pre>
+
+
+<p>A lot cleaner, no ? With that code, the resources are automatically closed after the try. In the try resources list, you can declare several resources, but all these resources must implement the java.lang.AutoCloseable interface. </p>
+<p>If you want more informations, about this new statement read <a target="_blank" href="http://blogs.sun.com/darcy/entry/project_coin_updated_arm_spec">try-with-resources specifications</a>.</p>

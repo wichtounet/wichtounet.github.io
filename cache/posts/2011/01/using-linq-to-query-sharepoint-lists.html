@@ -1,0 +1,89 @@
+<p>When I started using Sharepoint 2010 with .NET, I used the Sharepoint 2010 API to query the Sharepoint Lists, but when I come with lookup column with multiple values, it started to be really difficult to use.</p>
+<p>So I found that I can use LINQ to query Sharepoint lists and for what I saw on the internet, it was really simple to use. LINQ provide a complete API to query data and to update them. More than that, LINQ is also able to do mapping object-relational, what is really helpful in code lisibility.</p>
+<p>In this code, I will take as example a Sharepoint site with two lists :</p>
+<ul>
+    <li>departments : only a Title column</li>
+    <li>projects : Title, year, nbstudents and department, a lookup column to departments with multiple values</li>
+</ul>
+
+<p>So first of all, you need to create the entities and the data context, but you don't have to do it by hand. There is a tool that make all that for you, SPMetal.</p>
+<!-- TEASER_END -->
+
+<p>Open a command line and cd to "C:\Program Files\Common Files\Microsoft Shared\Web Server Extensions\14\bin", and then you can use the following command :</p>
+<pre>SPMetal.exe /web:http://localhost/ /code:C:\Projects.cs</pre>
+
+<p>You can use the URL of your Sharepoint site and you can change the name of the C# file. This will generate a long file containing the DataContext and the mapping objects. Here is a part of the code I get in this file :</p>
+<pre class="code literal-block"><span class="k">public</span> <span class="k">partial</span> <span class="k">class</span> <span class="nc">ProjectsDataContext</span> <span class="p">:</span> <span class="n">Microsoft</span><span class="p">.</span><span class="n">SharePoint</span><span class="p">.</span><span class="n">Linq</span><span class="p">.</span><span class="n">DataContext</span> <span class="p">{</span>
+
+    <span class="cp">#region Extensibility Method Definitions</span>
+    <span class="k">partial</span> <span class="k">void</span> <span class="nf">OnCreated</span><span class="p">();</span>
+    <span class="cp">#endregion</span>
+
+    <span class="k">public</span> <span class="nf">ProjectsDataContext</span><span class="p">(</span><span class="kt">string</span> <span class="n">requestUrl</span><span class="p">)</span> <span class="p">:</span> <span class="k">this</span><span class="p">(</span><span class="n">requestUrl</span><span class="p">,</span> <span class="k">true</span><span class="p">)</span> <span class="p">{</span>
+
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="nf">ProjectsDataContext</span><span class="p">(</span><span class="kt">string</span> <span class="n">requestUrl</span><span class="p">,</span> <span class="n">Boolean</span> <span class="n">tracking</span><span class="p">)</span> <span class="p">:</span> <span class="k">base</span><span class="p">(</span><span class="n">requestUrl</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">this</span><span class="p">.</span><span class="n">OnCreated</span><span class="p">();</span>
+        <span class="n">ObjectTrackingEnabled</span> <span class="p">=</span> <span class="n">tracking</span><span class="p">;</span>
+    <span class="p">}</span>
+
+<span class="na">    [Microsoft.SharePoint.Linq.ListAttribute(Name=&quot;departments&quot;)]</span>
+    <span class="k">public</span> <span class="n">Microsoft</span><span class="p">.</span><span class="n">SharePoint</span><span class="p">.</span><span class="n">Linq</span><span class="p">.</span><span class="n">EntityList</span><span class="p">&lt;</span><span class="n">item</span><span class="p">&gt;</span> <span class="n">Departments</span> <span class="p">{</span>
+        <span class="k">get</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="n">GetList</span><span class="p">&lt;</span><span class="n">item</span><span class="p">&gt;(</span><span class="s">&quot;departments&quot;</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+        <span class="c1">//...</span>
+</pre>
+
+
+<p>Add this file to your Visual Studio Project. You will have some errors because, you must include the reference to LINQ for Sharepoint. Right click the preferences of your project, choose "Add reference" and add the Microsoft.SharePoint.Linq.dll and now you're ready to use LINQ for Sharepoint in your project. </p>
+<h4>Query Data</h4>
+
+<p>First, you can query data using LINQ, by example, getting all the projects : </p>
+<pre class="code literal-block"><span class="k">using</span> <span class="p">(</span><span class="n">ProjectsDataContext</span> <span class="n">context</span> <span class="p">=</span> <span class="k">new</span> <span class="n">ProjectsDataContext</span><span class="p">(</span><span class="n">SPContext</span><span class="p">.</span><span class="n">Current</span><span class="p">.</span><span class="n">Web</span><span class="p">.</span><span class="n">Url</span><span class="p">))</span>
+<span class="p">{</span>
+    <span class="kt">var</span> <span class="n">query</span> <span class="p">=</span> <span class="k">from</span> <span class="n">c</span> <span class="k">in</span> <span class="n">context</span><span class="p">.</span><span class="n">Projects</span> <span class="k">select</span> <span class="n">c</span><span class="p">;</span>
+
+    <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">project</span> <span class="k">in</span> <span class="n">query</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">console</span><span class="p">.</span><span class="n">writeLine</span><span class="p">(</span><span class="s">&quot;Title : &quot;</span> <span class="p">+</span> <span class="n">project</span><span class="p">.</span><span class="n">Title</span><span class="p">.</span><span class="n">ToString</span><span class="p">());</span>
+        <span class="n">console</span><span class="p">.</span><span class="n">writeLine</span><span class="p">(</span><span class="s">&quot;Year: &quot;</span> <span class="p">+</span> <span class="n">project</span><span class="p">.</span><span class="n">Year</span><span class="p">.</span><span class="n">ToString</span><span class="p">());</span>
+        <span class="n">console</span><span class="p">.</span><span class="n">writeLine</span><span class="p">(</span><span class="s">&quot;Nb of students : &quot;</span> <span class="p">+</span> <span class="n">project</span><span class="p">.</span><span class="n">Nbstudents</span><span class="p">.</span><span class="n">ToString</span><span class="p">());</span>
+
+        <span class="kt">string</span> <span class="n">str</span> <span class="p">=</span> <span class="s">&quot;&quot;</span><span class="p">;</span>
+
+        <span class="kt">int</span> <span class="n">index</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span>
+        <span class="k">foreach</span> <span class="p">(</span><span class="n">Item</span> <span class="n">item</span> <span class="k">in</span> <span class="n">project</span><span class="p">.</span><span class="n">Department</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">str</span> <span class="p">+=</span> <span class="n">index</span><span class="p">++</span> <span class="p">&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="m">0</span> <span class="p">?</span> <span class="s">&quot;, &quot;</span> <span class="p">+</span> <span class="n">item</span><span class="p">.</span><span class="n">Title</span> <span class="p">:</span> <span class="n">item</span><span class="p">.</span><span class="n">Title</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="n">console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">str</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre>
+
+
+<p>You can see that it's really simple and a lot easier than the way with Sharepoint API. More than that, the mapping to Object is just great :)</p>
+<h4>Update Data</h4>
+
+<p>You can also insert data, really easily with LINQ : </p>
+<pre class="code literal-block"><span class="k">using</span> <span class="p">(</span><span class="n">ProjectsDataContext</span> <span class="n">context</span> <span class="p">=</span> <span class="k">new</span> <span class="n">ProjectsDataContext</span><span class="p">(</span><span class="n">SPContext</span><span class="p">.</span><span class="n">Current</span><span class="p">.</span><span class="n">Web</span><span class="p">.</span><span class="n">Url</span><span class="p">))</span>
+<span class="p">{</span>
+    <span class="n">Item</span> <span class="n">department</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Item</span><span class="p">();</span>
+    <span class="n">department</span><span class="p">.</span><span class="n">Title</span> <span class="p">=</span> <span class="s">&quot;New department&quot;</span><span class="p">;</span>
+
+    <span class="n">context</span><span class="p">.</span><span class="n">Departments</span><span class="p">.</span><span class="n">InsertOnSubmit</span><span class="p">(</span><span class="n">department</span><span class="p">);</span>
+
+    <span class="n">context</span><span class="p">.</span><span class="n">SubmitChanges</span><span class="p">();</span>
+<span class="p">}</span>
+</pre>
+
+
+<p>To delete a Data, you can query it and then use DeleteOnSubmit to delete it. To update a data, it's even more simple, you just have to edit the item and then use SubmitChanges() to commit them. </p>
+<p>As you can see, using LINQ allows you to write code simple, readable and all that faster than if you use Sharepoint API. </p>
+<p>I hope this can be useful to someone.</p>

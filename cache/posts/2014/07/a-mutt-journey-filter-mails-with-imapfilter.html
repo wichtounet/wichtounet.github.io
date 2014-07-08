@@ -1,0 +1,104 @@
+<p>About a month ago, I decided to switch to Mutt to read my emails. I kept my
+GMail account, but I don't use the web interface anymore. It took me a long time
+to prepare a complete enviromnent.</p>
+<p>Currently, i'm using:</p>
+<ul class="simple">
+<li>imapfilter to filter mails</li>
+<li>offlineimap to download my mails</li>
+<li>notmuch to quickly search all my mails</li>
+</ul>
+<p>And of course Mutt. To be precise, I use mutt-kz, a fork of mutt with very good
+notmuch integration.</p>
+<p>I'll try to explain each part of my environment in a series of articles on this
+blog. The first one will be about imapfilter.</p>
+<p>imapfilter is a mail filtering utility. It connects to a remote server using
+IMAP and is then able to move, copy or delete mails around. You can use it for
+several tasks:</p>
+<ul class="simple">
+<li>Delete unwanted mail</li>
+<li>Move mails into folders according to rules</li>
+</ul>
+<p>What is pretty cool is that the configuration is entirely made in Lua. It is
+quite easy to write rules and then apply them to several mailboxes as if you
+were programming.</p>
+<p>Another advantage of imapfilter is that it works at the server level. Therefore,
+even if you use your web client from time to time or check your mail on your
+phone, the changes will still be viewable.</p>
+<p>The configuration is done in the ~/.imapfilter/config.lua file. The
+configuration is quite easy, you have to declare an IMAP object as the account.</p>
+<pre class="code lua literal-block">
+<span class="kd">local</span> <span class="n">account</span> <span class="o">=</span> <span class="n">IMAP</span> <span class="p">{</span>
+    <span class="n">server</span> <span class="o">=</span> <span class="s1">'</span><span class="s">imap_sever'</span><span class="p">,</span>
+    <span class="n">username</span> <span class="o">=</span> <span class="s1">'</span><span class="s">username'</span><span class="p">,</span>
+    <span class="n">password</span> <span class="o">=</span> <span class="s1">'</span><span class="s">password'</span><span class="p">,</span>
+    <span class="n">ssl</span> <span class="o">=</span> <span class="s1">'</span><span class="s">ssl3'</span><span class="p">,</span>
+<span class="p">}</span>
+</pre>
+<p>As the configuration is in Lua, you can easily get the password from another
+file. For instance, here is my account declaration:</p>
+<pre class="code lua literal-block">
+<span class="kd">local</span> <span class="n">account</span> <span class="o">=</span> <span class="n">IMAP</span> <span class="p">{</span>
+    <span class="n">server</span> <span class="o">=</span> <span class="s1">'</span><span class="s">imap.gmail.com'</span><span class="p">,</span>
+    <span class="n">username</span> <span class="o">=</span> <span class="s1">'</span><span class="s">baptiste.wicht&#64;gmail.com'</span><span class="p">,</span>
+    <span class="n">password</span> <span class="o">=</span> <span class="n">get_imap_password</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">.password.offlineimaprc&quot;</span><span class="p">),</span>
+    <span class="n">ssl</span> <span class="o">=</span> <span class="s1">'</span><span class="s">ssl3'</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="c1">-- Utility function to get IMAP password from file</span>
+<span class="k">function</span> <span class="nf">get_imap_password</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+    <span class="kd">local</span> <span class="n">home</span> <span class="o">=</span> <span class="nb">os.getenv</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">HOME&quot;</span><span class="p">)</span>
+    <span class="kd">local</span> <span class="n">file</span> <span class="o">=</span> <span class="n">home</span> <span class="o">..</span> <span class="s2">&quot;</span><span class="s">/&quot;</span> <span class="o">..</span> <span class="n">file</span>
+    <span class="kd">local</span> <span class="n">str</span> <span class="o">=</span> <span class="nb">io.open</span><span class="p">(</span><span class="n">file</span><span class="p">):</span><span class="n">read</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">str</span><span class="p">;</span>
+<span class="k">end</span>
+</pre>
+<p>It gets the password by reading a file in the home directory.</p>
+<p>Once, you have the account, you can check the status of a folder with the
+check_status() function. For instance:</p>
+<pre class="code lua literal-block">
+<span class="n">account</span><span class="p">.</span><span class="n">INBOX</span><span class="p">:</span><span class="n">check_status</span><span class="p">()</span>
+<span class="n">account</span><span class="p">[</span><span class="s1">'</span><span class="s">[Gmail]/Trash'</span><span class="p">]:</span><span class="n">check_status</span><span class="p">()</span>
+</pre>
+<p>You can run imapfilter simply by launching imapfilter on the command line. Once
+imapfilter is run, it will print the status of the folder you choses:</p>
+<pre class="literal-block">
+38 messages, 0 recent, 6 unseen, in baptiste.wicht&#64;gmail.com&#64;imap.gmail.com/INBOX.
+70 messages, 0 recent, 67 unseen, in baptiste.wicht&#64;gmail.com&#64;imap.gmail.com/[Gmail]/Trash.
+</pre>
+<p>Several functions are important:</p>
+<ul class="simple">
+<li>select_all() on a folder allows you to get messages from an account to them
+perform action on them</li>
+<li>contain_subject('subject') on a list of mails allows you to keep only the mails
+that contains 'subject' in their subject</li>
+<li>contain_from('from') on a list of mails allows you to keep only the mails
+that comes from 'from'</li>
+<li>contain_to('to') on a list of mails allows you to keep only the mails
+that are addressed to 'to'</li>
+<li>delete_messages() on a collection of mails deletes all of them</li>
+<li>move_messages(folder) on a collection of mails moves all of them to another
+folder.</li>
+</ul>
+<p>You can also mix different IMAP accounts, you don't have to use only one.</p>
+<p>For instance, if you would delete all the mail coming from me, you could do:</p>
+<pre class="code lua literal-block">
+<span class="n">mails</span> <span class="o">=</span> <span class="n">account</span><span class="p">.</span><span class="n">INBOX</span><span class="p">:</span><span class="n">select_all</span><span class="p">()</span>
+<span class="n">filtered</span> <span class="o">=</span> <span class="n">mails</span><span class="p">:</span><span class="n">contains_from</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">baptiste.wicht&#64;gmail.com&quot;</span><span class="p">)</span>
+<span class="n">filtered</span><span class="p">:</span><span class="n">delete_messages</span><span class="p">()</span>
+</pre>
+<p>Or you could move all the mails containing Urgent in the subject line to an IMAP
+folder:</p>
+<pre class="code lua literal-block">
+<span class="n">mails</span> <span class="o">=</span> <span class="n">account</span><span class="p">.</span><span class="n">INBOX</span><span class="p">:</span><span class="n">select_all</span><span class="p">()</span>
+<span class="n">filtered</span> <span class="o">=</span> <span class="n">mails</span><span class="p">:</span><span class="n">contains_subject</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">Urgent&quot;</span><span class="p">)</span>
+<span class="n">filtered</span><span class="p">:</span><span class="n">move_messages</span><span class="p">(</span><span class="n">account</span><span class="p">[</span><span class="s2">&quot;</span><span class="s">urgent_mails&quot;</span><span class="p">])</span>
+</pre>
+<p>If you want some more examples, you can take a look at <a class="reference external" href="https://github.com/wichtounet/dotfiles/blob/master/.imapfilter/config.lua">my imapfilter
+configuration</a>.</p>
+<p>The best way to start using it is to look at examples, there are plenty of them
+in the internet, especially in Github dotfiles repositories.</p>
+<p>The reference documentation is available using 'man imapfilter_config', there is
+plenty more to see.</p>
+<p>For more information, you can also consult the <a class="reference external" href="https://github.com/lefcha/imapfilter">offical site</a>.</p>
+<p>That is it for this part of the mutt series. In the next post about mutt, I'll
+talk about how I use offlineimap to get my mails.</p>

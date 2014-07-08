@@ -1,0 +1,79 @@
+<p>One week ago, I searched a way <strong>to launch a Java application</strong> from an other Java application without loosing portability. And I found a post on StackOverflow explaining how achieve that goal using <strong>Apache Ant</strong>.</p>
+<p>It's really easy. It use the Ant classes and simulate a project launching and a build task. In this post, we'll see a simple method to launch an application from Java.</p>
+<!-- TEASER_END -->
+
+<p>Here is a simple method that launch an application using Ant :</p>
+<pre class="code literal-block"><span class="kn">package</span> <span class="n">org</span><span class="o">.</span><span class="na">jtheque</span><span class="o">.</span><span class="na">osgi</span><span class="o">;</span>
+
+<span class="kn">import</span> <span class="nn">org.apache.tools.ant.BuildException</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">org.apache.tools.ant.BuildLogger</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">org.apache.tools.ant.DefaultLogger</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">org.apache.tools.ant.DemuxOutputStream</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">org.apache.tools.ant.Project</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">org.apache.tools.ant.taskdefs.Java</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">java.io.PrintStream</span><span class="o">;</span>
+
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">Launcher</span> <span class="o">{</span>
+    <span class="kd">private</span> <span class="kd">static</span> <span class="kt">int</span> <span class="nf">launchApplication</span><span class="o">(</span><span class="n">Class</span> <span class="n">mainClass</span><span class="o">,</span> <span class="n">String</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+        <span class="kt">int</span> <span class="n">returnCode</span><span class="o">;</span>
+
+        <span class="n">Project</span> <span class="n">project</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Project</span><span class="o">();</span>
+
+        <span class="n">project</span><span class="o">.</span><span class="na">setBasedir</span><span class="o">(</span><span class="n">System</span><span class="o">.</span><span class="na">getProperty</span><span class="o">(</span><span class="s">&quot;user.dir&quot;</span><span class="o">));</span>
+        <span class="n">project</span><span class="o">.</span><span class="na">init</span><span class="o">();</span>
+
+        <span class="n">PrintStream</span> <span class="n">out</span> <span class="o">=</span> <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">;</span>
+        <span class="n">PrintStream</span> <span class="n">err</span> <span class="o">=</span> <span class="n">System</span><span class="o">.</span><span class="na">err</span><span class="o">;</span>
+
+        <span class="n">BuildLogger</span> <span class="n">logger</span> <span class="o">=</span> <span class="k">new</span> <span class="n">DefaultLogger</span><span class="o">();</span>
+        <span class="n">logger</span><span class="o">.</span><span class="na">setOutputPrintStream</span><span class="o">(</span><span class="n">out</span><span class="o">);</span>
+        <span class="n">logger</span><span class="o">.</span><span class="na">setErrorPrintStream</span><span class="o">(</span><span class="n">err</span><span class="o">);</span>
+        <span class="n">logger</span><span class="o">.</span><span class="na">setMessageOutputLevel</span><span class="o">(</span><span class="n">Project</span><span class="o">.</span><span class="na">MSG_INFO</span><span class="o">);</span>
+
+        <span class="n">project</span><span class="o">.</span><span class="na">addBuildListener</span><span class="o">(</span><span class="n">logger</span><span class="o">);</span>
+
+        <span class="n">System</span><span class="o">.</span><span class="na">setOut</span><span class="o">(</span><span class="k">new</span> <span class="n">PrintStream</span><span class="o">(</span><span class="k">new</span> <span class="n">DemuxOutputStream</span><span class="o">(</span><span class="n">project</span><span class="o">,</span> <span class="kc">false</span><span class="o">)));</span>
+        <span class="n">System</span><span class="o">.</span><span class="na">setErr</span><span class="o">(</span><span class="k">new</span> <span class="n">PrintStream</span><span class="o">(</span><span class="k">new</span> <span class="n">DemuxOutputStream</span><span class="o">(</span><span class="n">project</span><span class="o">,</span> <span class="kc">true</span><span class="o">)));</span>
+
+        <span class="n">project</span><span class="o">.</span><span class="na">fireBuildStarted</span><span class="o">();</span>
+
+        <span class="n">Throwable</span> <span class="n">caught</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+        <span class="k">try</span> <span class="o">{</span>
+            <span class="n">project</span><span class="o">.</span><span class="na">log</span><span class="o">(</span><span class="s">&quot;Launch Application&quot;</span><span class="o">);</span>
+
+            <span class="n">Java</span> <span class="n">javaTask</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Java</span><span class="o">();</span>
+            <span class="n">javaTask</span><span class="o">.</span><span class="na">setTaskName</span><span class="o">(</span><span class="s">&quot;Application Launcher&quot;</span><span class="o">);</span>
+            <span class="n">javaTask</span><span class="o">.</span><span class="na">setProject</span><span class="o">(</span><span class="n">project</span><span class="o">);</span>
+            <span class="n">javaTask</span><span class="o">.</span><span class="na">setFork</span><span class="o">(</span><span class="kc">true</span><span class="o">);</span>
+            <span class="n">javaTask</span><span class="o">.</span><span class="na">setFailonerror</span><span class="o">(</span><span class="kc">true</span><span class="o">);</span>
+            <span class="n">javaTask</span><span class="o">.</span><span class="na">setCloneVm</span><span class="o">(</span><span class="kc">true</span><span class="o">);</span>
+            <span class="n">javaTask</span><span class="o">.</span><span class="na">setClassname</span><span class="o">(</span><span class="n">mainClass</span><span class="o">.</span><span class="na">getName</span><span class="o">());</span>
+            <span class="n">javaTask</span><span class="o">.</span><span class="na">setArgs</span><span class="o">(</span><span class="n">args</span><span class="o">);</span>
+            <span class="n">javaTask</span><span class="o">.</span><span class="na">init</span><span class="o">();</span>
+
+            <span class="n">returnCode</span> <span class="o">=</span> <span class="n">javaTask</span><span class="o">.</span><span class="na">executeJava</span><span class="o">();</span>
+        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">BuildException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">caught</span> <span class="o">=</span> <span class="n">e</span><span class="o">;</span>
+
+            <span class="n">returnCode</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="o">;</span>
+        <span class="o">}</span>
+
+        <span class="n">project</span><span class="o">.</span><span class="na">fireBuildFinished</span><span class="o">(</span><span class="n">caught</span><span class="o">);</span>
+
+        <span class="n">System</span><span class="o">.</span><span class="na">setOut</span><span class="o">(</span><span class="n">out</span><span class="o">);</span>
+        <span class="n">System</span><span class="o">.</span><span class="na">setErr</span><span class="o">(</span><span class="n">err</span><span class="o">);</span>
+
+        <span class="k">return</span> <span class="n">returnCode</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</pre>
+
+
+<p>Here are some explanations :</p>
+<p></p><ul>
+    <li>First, we create a new Project using the user directory as base directory and init it.</li>
+    <li>Then, we create a simple logger using the System.out and System.err streams and replace then with demux streams</li>
+    <li>After that, we create the Java task. By using setCloneVm(true), the new virtual machine will clone the properties of the current virtual machine. We must use a fork virtual machine to get the return code of the application. We set also the name of the class and the args of the launch. Finally we init and execute the task</li>
+    <li>Once the application is finished, we get the return code and restore the old System.out and System.err streams</li>
+</ul></p>
+<p>It's extremely simple and portable and the code is, I think, very clean.</p>

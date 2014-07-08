@@ -1,0 +1,182 @@
+<p>For <a title="EDDI Compiler 1.1.1 – Dynamic Memory Allocation and Constructors/Destructors" href="http://www.baptiste-wicht.com/2012/07/eddi-compiler-1-1-1-dynamic-memory-allocation-constructors-destructors/">the last version of the EDDI Compiler</a>, it has been necessary to extend the dynamic memory allocator, to support free memory. In this post, we will see how to write a simple Memory Manager in Intel Assembly for Linux.</p>
+<p>In the past, we've seen <a title="Dynamic memory allocation in Intel Assembly on Linux" href="http://www.baptiste-wicht.com/2011/11/dynamic-memory-allocation-intel-assembly-linux/">how to write a basic memory allocator</a>, this time, we will write a more complete version.</p>
+<p>The implementation is made in 64bits Intel Assembly.</p>
+<h3>Memory Manager specification</h3>
+
+<p>The memory will be allocated by blocks. Each block will contain a header with two information:</p>
+<ul>
+    <li>A boolean flag indicating if the block is free or not</li>
+    <li>The size of the block (including the header)</li>
+</ul>
+
+<p>Each time some memory is asked, the blocks are tested one by one until an available one is found. If no available block is found, a new block is allocated after the last one and this block is returned.</p>
+<p>The memory manager consists of three functions:</p>
+<ul>
+    <li>memory_init: Init the memory manager</li>
+    <li>memory_alloc: Allocate the given number of bytes of memory</li>
+    <li>memory_free: Release the given block</li>
+</ul>
+
+<p>The parameter is passed in the <strong>r14</strong> register. The return value is returned in the <strong>rax</strong> register.</p>
+<h3>Global State</h3>
+
+<p>This implementation needs two global variables. One for the start address of memory and the other one for the last:</p>
+<pre class="code literal-block"><span class="k">section</span> <span class="nv">.data</span>
+<span class="nf">mem_last</span> <span class="nv">dq</span> <span class="mi">0</span>
+<span class="nf">mem_start</span> <span class="nv">dq</span> <span class="mi">0</span>
+</pre>
+
+
+<h3>Init memory Manager</h3>
+
+<p>The init function is very simple to implement:</p>
+<pre class="code literal-block"><span class="nl">init:</span>
+<span class="nf">push</span> <span class="nb">rbp</span>
+<span class="nf">mov</span> <span class="nb">rbp</span><span class="p">,</span> <span class="nb">rsp</span>
+<span class="nf">mov</span> <span class="nb">rax</span><span class="p">,</span> <span class="mi">12</span>
+<span class="nf">xor</span> <span class="nb">rdi</span><span class="p">,</span> <span class="nb">rdi</span>
+<span class="nf">syscall</span>
+<span class="nf">mov</span> <span class="p">[</span><span class="nv">mem_start</span><span class="p">],</span> <span class="nb">rax</span>
+<span class="nf">mov</span> <span class="p">[</span><span class="nv">mem_last</span><span class="p">],</span> <span class="nb">rax</span>
+<span class="nf">leave</span>
+<span class="nf">ret</span>
+</pre>
+
+
+<p>We just have to call sys_brk in order to get the location of <em>program break</em>. Then, the start and the last addresses are the same.</p>
+<h3>Free memory</h3>
+
+<p>The free function is the simplest one:</p>
+<pre class="code literal-block"><span class="nl">free:</span>
+<span class="nf">push</span> <span class="nb">rbp</span>
+<span class="nf">mov</span> <span class="nb">rbp</span><span class="p">,</span> <span class="nb">rsp</span>
+<span class="nf">mov</span> <span class="kt">qword</span> <span class="p">[</span><span class="nv">r14</span> <span class="o">-</span> <span class="mi">16</span><span class="p">],</span> <span class="mi">1</span>
+<span class="nf">leave</span>
+<span class="nf">ret</span>
+</pre>
+
+
+<p>The address to free is passed in the <strong>r14</strong> register. We have to go back 16 bytes (size of the control block) to go to the start of the block. The availability flag is set to 1 (the block is free).</p>
+<h3>The alloc function</h3>
+
+<p>The alloc function is the most complex:</p>
+<pre class="code literal-block"><span class="nl">alloc:</span>
+<span class="nf">push</span> <span class="nb">rbp</span>
+<span class="nf">mov</span> <span class="nb">rbp</span><span class="p">,</span> <span class="nb">rsp</span>
+<span class="nf">push</span> <span class="nb">rdi</span>
+<span class="nf">push</span> <span class="nv">r10</span>
+<span class="nf">push</span> <span class="nv">r11</span>
+<span class="nf">push</span> <span class="nv">r12</span>
+<span class="nf">push</span> <span class="nv">r13</span>
+<span class="nf">push</span> <span class="nv">r14</span>
+<span class="nf">add</span> <span class="nv">r14</span><span class="p">,</span> <span class="mi">16</span>
+<span class="nf">mov</span> <span class="nv">r12</span><span class="p">,</span> <span class="p">[</span><span class="nv">mem_start</span><span class="p">]</span>
+<span class="nf">mov</span> <span class="nv">r13</span><span class="p">,</span> <span class="p">[</span><span class="nv">mem_last</span><span class="p">]</span>
+<span class="nl">.start:</span>
+<span class="nf">cmp</span> <span class="nv">r12</span><span class="p">,</span> <span class="nv">r13</span>
+<span class="nf">je</span> <span class="nv">.alloc</span>
+<span class="nf">mov</span> <span class="nv">r10</span><span class="p">,</span> <span class="p">[</span><span class="nv">r12</span><span class="p">]</span>
+<span class="nf">mov</span> <span class="nv">r11</span><span class="p">,</span> <span class="p">[</span><span class="nv">r12</span> <span class="o">+</span> <span class="mi">8</span><span class="p">]</span>
+<span class="nf">cmp</span> <span class="nv">r10</span><span class="p">,</span> <span class="mi">1</span>
+<span class="nf">jne</span> <span class="nv">.move</span>
+<span class="nf">cmp</span> <span class="nv">r11</span><span class="p">,</span> <span class="nv">r14</span>
+<span class="nf">jl</span> <span class="nv">.move</span>
+<span class="nf">mov</span> <span class="kt">qword</span> <span class="p">[</span><span class="nv">r12</span><span class="p">],</span> <span class="mi">0</span>
+<span class="nf">lea</span> <span class="nb">rax</span><span class="p">,</span> <span class="p">[</span><span class="nv">r12</span> <span class="o">+</span> <span class="mi">16</span><span class="p">]</span>
+<span class="nf">pop</span> <span class="nv">r14</span>
+<span class="nf">pop</span> <span class="nv">r13</span>
+<span class="nf">pop</span> <span class="nv">r12</span>
+<span class="nf">pop</span> <span class="nv">r11</span>
+<span class="nf">pop</span> <span class="nv">r10</span>
+<span class="nf">pop</span> <span class="nb">rdi</span>
+<span class="nf">leave</span>
+<span class="nf">ret</span>
+
+<span class="nl">.move:</span>
+<span class="nf">add</span> <span class="nv">r12</span><span class="p">,</span> <span class="nv">r11</span>
+<span class="nf">jmp</span> <span class="nv">.start</span>
+
+<span class="nl">.alloc:</span>
+<span class="nf">lea</span> <span class="nb">rdi</span><span class="p">,</span> <span class="p">[</span><span class="nv">r12</span> <span class="o">+</span> <span class="nv">r14</span><span class="p">]</span>
+<span class="nf">mov</span> <span class="nb">rax</span><span class="p">,</span> <span class="mi">12</span>
+<span class="nf">syscall</span>
+<span class="nf">mov</span> <span class="p">[</span><span class="nv">mem_last</span><span class="p">],</span> <span class="nb">rdi</span>
+<span class="nf">mov</span> <span class="kt">qword</span> <span class="p">[</span><span class="nv">r12</span><span class="p">],</span> <span class="mi">0</span>
+<span class="nf">mov</span> <span class="kt">qword</span> <span class="p">[</span><span class="nv">r12</span> <span class="o">+</span> <span class="mi">8</span><span class="p">],</span> <span class="nv">r14</span>
+<span class="nf">lea</span> <span class="nb">rax</span><span class="p">,</span> <span class="p">[</span><span class="nv">r12</span> <span class="o">+</span> <span class="mi">16</span><span class="p">]</span>
+<span class="nf">pop</span> <span class="nv">r14</span>
+<span class="nf">pop</span> <span class="nv">r13</span>
+<span class="nf">pop</span> <span class="nv">r12</span>
+<span class="nf">pop</span> <span class="nv">r11</span>
+<span class="nf">pop</span> <span class="nv">r10</span>
+<span class="nf">pop</span> <span class="nb">rdi</span>
+<span class="nf">leave</span>
+<span class="nf">ret</span>
+</pre>
+
+
+<p>As the function is a bit complex, I will detail it in part:</p>
+<pre class="code literal-block"><span class="nf">add</span> <span class="nv">r14</span><span class="p">,</span> <span class="mi">16</span>
+<span class="nf">mov</span> <span class="nv">r12</span><span class="p">,</span> <span class="p">[</span><span class="nv">mem_start</span><span class="p">]</span>
+<span class="nf">mov</span> <span class="nv">r13</span><span class="p">,</span> <span class="p">[</span><span class="nv">mem_last</span><span class="p">]</span>
+<span class="nl">.start:</span>
+<span class="nf">cmp</span> <span class="nv">r12</span><span class="p">,</span> <span class="nv">r13</span>
+<span class="nf">je</span> <span class="nv">.alloc</span>
+<span class="nf">mov</span> <span class="nv">r10</span><span class="p">,</span> <span class="p">[</span><span class="nv">r12</span><span class="p">]</span>
+<span class="nf">mov</span> <span class="nv">r11</span><span class="p">,</span> <span class="p">[</span><span class="nv">r12</span> <span class="o">+</span> <span class="mi">8</span><span class="p">]</span>
+<span class="nf">cmp</span> <span class="nv">r10</span><span class="p">,</span> <span class="mi">1</span>
+<span class="nf">jne</span> <span class="nv">.move</span>
+<span class="nf">cmp</span> <span class="nv">r11</span><span class="p">,</span> <span class="nv">r14</span>
+<span class="nf">jl</span> <span class="nv">.move</span>
+<span class="nf">mov</span> <span class="kt">qword</span> <span class="p">[</span><span class="nv">r12</span><span class="p">],</span> <span class="mi">0</span>
+<span class="nf">lea</span> <span class="nb">rax</span><span class="p">,</span> <span class="p">[</span><span class="nv">r12</span> <span class="o">+</span> <span class="mi">16</span><span class="p">]</span>
+</pre>
+
+
+<p>The necessary number of bytes is passed in the <strong>r14</strong> register. We add 16 bytes (size of the control group) to the size as we also need some place for the header. Then, we load the start and last addresses. If both addresses are equal, we need to allocate more memory (detailed later). Then, we check the size and the availability of the current block. If the size is enough to fit the needs and the block is available, we set it to unavailable. We return the address past the control block (16 bytes).</p>
+<pre class="code literal-block"><span class="nl">.move:</span>
+<span class="nf">add</span> <span class="nv">r12</span><span class="p">,</span> <span class="nv">r11</span>
+<span class="nf">jmp</span> <span class="nv">.start</span>
+</pre>
+
+
+<p>To move to the next block, we just have to add the size of the current block to the current block address.</p>
+<pre class="code literal-block"><span class="nl">.alloc:</span>
+<span class="nf">lea</span> <span class="nb">rdi</span><span class="p">,</span> <span class="p">[</span><span class="nv">r12</span> <span class="o">+</span> <span class="nv">r14</span><span class="p">]</span>
+<span class="nf">mov</span> <span class="nb">rax</span><span class="p">,</span> <span class="mi">12</span>
+<span class="nf">syscall</span>
+<span class="nf">mov</span> <span class="p">[</span><span class="nv">V_mem_last</span><span class="p">],</span> <span class="nb">rdi</span>
+<span class="nf">mov</span> <span class="kt">qword</span> <span class="p">[</span><span class="nv">r12</span><span class="p">],</span> <span class="mi">0</span>
+<span class="nf">mov</span> <span class="kt">qword</span> <span class="p">[</span><span class="nv">r12</span> <span class="o">+</span> <span class="mi">8</span><span class="p">],</span> <span class="nv">r14</span>
+<span class="nf">lea</span> <span class="nb">rax</span><span class="p">,</span> <span class="p">[</span><span class="nv">r12</span> <span class="o">+</span> <span class="mi">16</span><span class="p">]</span>
+</pre>
+
+
+<p>To allocate memory, we compute the new <em>program break</em> and call <em>sys_brk</em> again to set the new <em>program break</em>. The block is then set to not available and the size is set. We return the address past the control block (16 bytes).</p>
+<p>The rest of the program is just here to save and restore the registers and compute the stack frames.</p>
+<h3>Wrap-Up</h3>
+
+<p>In this article, we saw how to implement a very simple memory manager in 64bits Intel Assembly on Linux. This memory manager is very simple, but has several drawbacks:</p>
+<ul>
+    <li>The overhead for small blocks is important. For example, allocating an 8 bytes integer needs a 24 bytes block, thrice the size of the int.</li>
+    <li>In the worst-case scenario, all of the process memory need to be walked across to find a new free block</li>
+    <li>The functions are not thread-safe</li>
+    <li>This algorithm can lead to a lot of memory fragmentation</li>
+</ul>
+
+<p>In the future I will try to make a more powerful version of this memory manager.</p>
+<h3>Download</h3>
+
+<p>All the functions are available online on the Github Repository:</p>
+<ul>
+    <li><a href="https://github.com/wichtounet/eddic/blob/develop/functions/x86_64_alloc.s">alloc</a></li>
+    <li><a href="https://github.com/wichtounet/eddic/blob/develop/functions/x86_64_free.s">free</a></li>
+    <li><a href="https://github.com/wichtounet/eddic/blob/develop/functions/x86_64_init.s">init</a></li>
+</ul>
+
+<p>They are also available in 32bits Intel Assembly:</p>
+<ul>
+    <li><a href="https://github.com/wichtounet/eddic/blob/develop/functions/x86_32_alloc.s">alloc</a></li>
+    <li><a href="https://github.com/wichtounet/eddic/blob/develop/functions/x86_32_free.s">free</a></li>
+    <li><a href="https://github.com/wichtounet/eddic/blob/develop/functions/x86_32_init.s">init</a></li>
+</ul>

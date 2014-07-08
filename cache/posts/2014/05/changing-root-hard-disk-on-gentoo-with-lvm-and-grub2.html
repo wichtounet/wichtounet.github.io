@@ -1,0 +1,55 @@
+<p>I recently changed my hard disk on one of my servers and I didn't found a simple
+and up to date tutorial to do that, so I decided to post here how I did it. </p>
+<p>I do not claim that is the best method, or the easiest or the safest method, but
+that is the one I used and it worked quite well. You could do it online with LVM, 
+but when changing the boot hard disk, I'd rather be safe. Especially because you
+need to reinstall Grub on the new hard disk and probably alter its
+configuration. But, doing it online directly with LVM should work. </p>
+<p>My server is using LVM and Grub2. You will need a Gentoo Live CD (or DVD, or
+USB, or any other Linux live installation with the necessary tools). If you do
+not use LVM, this guide is not for you. Even if I wrote this guide for Gentoo,
+this is also gonna work with another system as long as you use LVM and Grub2,
+just use your distribution live cd. </p>
+<p>Here I will assume /dev/sda is your old disk and /dev/sdb is your new disk.
+I will also assume that you previous VG was vg0. If it is, you'll have to
+replace them in the commands. </p>
+<p>1. Obviously, shutdown your computer. </p>
+<p>2. Install the new hard disk in it. </p>
+<p>3. Reboot on the Live CD:</p>
+<ul>
+<li>Activate LVM: vgchange -a y</li>
+<li>Create the LVM partition on the new disk (/dev/sdb) with fdisk. </li>
+<li>Create a new PV: pvcreate /dev/sdb1</li>
+<li>Create a new VG: vgcreate vg1 /dev/sdb1</li>
+<li>Recreate all your LV with lvcreate. In my case, I have /dev/vg0/root and
+/dev/vg0/data </li>
+</ul>
+<p>Now, you'll need to copy your data. Here is an example with my root: </p>
+<pre class="code literal-block">mkdir old
+mkdir new
+mount /dev/vg0/root/ old
+mount /dev/vg1/root/ new
+cp -ax old/* new
+umount old
+umount new
+</pre>
+
+
+<p>You have to do that with for LV you have. </p>
+<p>4. Shutdown the computer</p>
+<p>5. Remove the old hard disk and use the connector of the old hard disk to
+connect the new one. </p>
+<p>6. Reboot on the Live CD: </p>
+<ul>
+<li>Activate LVM: vchange -a y</li>
+<li>Rename the VG: vgrename vg0 </li>
+<li>Chroot in the new hard disk</li>
+<li>Install grub on the hard disk: grub2-install /dev/sda</li>
+<li>Regenerate the Grub config: grub2-mkconfig -o /boot/grub/grub.cfg</li>
+<li>Exit from chroot</li>
+</ul>
+<p>7. Reboot on Gentoo</p>
+<p>8. You now have switched hard disk. </p>
+<p>At any point, if something goes wrong, you still have the previous hard disk
+completely ready at hand. </p>
+<p>I hope this would useful to some Linux users. </p>

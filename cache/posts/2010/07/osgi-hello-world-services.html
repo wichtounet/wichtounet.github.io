@@ -1,0 +1,289 @@
+<p>In this post, we'll develop a simple Hello World application with <strong>OSGi</strong>. We will use <strong>Felix</strong> as <strong>OSGi container</strong>. In the next post, we'll continue with this application and use <strong>Spring Dynamic Modules</strong> to improve it. </p>
+<p>To make the development interesting, we will create two bundles :</p>
+<ul>
+    <li>A bundle providing a service of HelloWorld</li>
+    <li>A bundle consuming the service to print hello at regular interval time.</li>
+</ul>
+
+<!-- TEASER_END -->
+
+<p>So let's start with the first bundle. What we need first is a very simple service providing a simple print in the console :</p>
+<pre class="code literal-block"><span class="kn">package</span> <span class="n">com</span><span class="o">.</span><span class="na">bw</span><span class="o">.</span><span class="na">osgi</span><span class="o">.</span><span class="na">provider</span><span class="o">.</span><span class="na">able</span><span class="o">;</span>
+
+<span class="kd">public</span> <span class="kd">interface</span> <span class="nc">HelloWorldService</span> <span class="o">{</span>
+    <span class="kt">void</span> <span class="nf">hello</span><span class="o">();</span>
+<span class="o">}</span>
+</pre>
+
+
+<pre class="code literal-block"><span class="kn">package</span> <span class="n">com</span><span class="o">.</span><span class="na">bw</span><span class="o">.</span><span class="na">osgi</span><span class="o">.</span><span class="na">provider</span><span class="o">.</span><span class="na">impl</span><span class="o">;</span>
+
+<span class="kn">import</span> <span class="nn">com.bw.osgi.provider.able.HelloWorldService</span><span class="o">;</span>
+
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">HelloWorldServiceImpl</span> <span class="kd">implements</span> <span class="n">HelloWorldService</span> <span class="o">{</span>
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">hello</span><span class="o">(){</span>
+        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;Hello World !&quot;</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</pre>
+
+
+<p>We cannot make easier. Then, we need to export the Service using an activator : </p>
+<pre class="code literal-block"><span class="kn">package</span> <span class="n">com</span><span class="o">.</span><span class="na">bw</span><span class="o">.</span><span class="na">osgi</span><span class="o">.</span><span class="na">provider</span><span class="o">;</span>
+
+<span class="kn">import</span> <span class="nn">org.osgi.framework.BundleActivator</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">org.osgi.framework.BundleContext</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">org.osgi.framework.ServiceRegistration</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">com.bw.osgi.provider.able.HelloWorldService</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">com.bw.osgi.provider.impl.HelloWorldServiceImpl</span><span class="o">;</span>
+
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">ProviderActivator</span> <span class="kd">implements</span> <span class="n">BundleActivator</span> <span class="o">{</span>
+    <span class="kd">private</span> <span class="n">ServiceRegistration</span> <span class="n">registration</span><span class="o">;</span>
+
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">start</span><span class="o">(</span><span class="n">BundleContext</span> <span class="n">bundleContext</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+        <span class="n">registration</span> <span class="o">=</span> <span class="n">bundleContext</span><span class="o">.</span><span class="na">registerService</span><span class="o">(</span>
+                <span class="n">HelloWorldService</span><span class="o">.</span><span class="na">class</span><span class="o">.</span><span class="na">getName</span><span class="o">(),</span>
+                <span class="k">new</span> <span class="nf">HelloWorldServiceImpl</span><span class="o">(),</span>
+                <span class="kc">null</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">stop</span><span class="o">(</span><span class="n">BundleContext</span> <span class="n">bundleContext</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+        <span class="n">registration</span><span class="o">.</span><span class="na">unregister</span><span class="o">();</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</pre>
+
+
+<p>A lot more code here. For those who aren't confident with OSGi, some explanations. The start method will be called when the module is started and the stop when it's stopped. In the start method, we register our service in the bundle context using the name of the interface as the name of the exported service. The third parameter, null, indicate that we doesn't give any configuration for this service. In the stop method, we just unregister the service. </p>
+<p>Now, our first bundle is ready. We can build it. For that we'll use Maven and the maven-bundle-plugin to build the OSGi Bundle directly. Here is the pom.xml file for the project. </p>
+<pre class="code literal-block"><span class="cp">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;</span>
+
+<span class="nt">&lt;project</span> <span class="na">xmlns=</span><span class="s">&quot;http://maven.apache.org/POM/4.0.0&quot;</span>
+         <span class="na">xmlns:xsi=</span><span class="s">&quot;http://www.w3.org/2001/XMLSchema-instance&quot;</span>
+         <span class="na">xsi:schemaLocation=</span><span class="s">&quot;http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;modelVersion&gt;</span>4.0.0<span class="nt">&lt;/modelVersion&gt;</span>
+
+    <span class="nt">&lt;groupId&gt;</span>OSGiDmHelloWorldProvider<span class="nt">&lt;/groupId&gt;</span>
+    <span class="nt">&lt;artifactId&gt;</span>OSGiDmHelloWorldProvider<span class="nt">&lt;/artifactId&gt;</span>
+    <span class="nt">&lt;version&gt;</span>1.0<span class="nt">&lt;/version&gt;</span>
+
+    <span class="nt">&lt;dependencies&gt;</span>
+        <span class="nt">&lt;dependency&gt;</span>
+            <span class="nt">&lt;groupId&gt;</span>org.apache.felix<span class="nt">&lt;/groupId&gt;</span>
+            <span class="nt">&lt;artifactId&gt;</span>org.osgi.core<span class="nt">&lt;/artifactId&gt;</span>
+            <span class="nt">&lt;version&gt;</span>1.4.0<span class="nt">&lt;/version&gt;</span>
+        <span class="nt">&lt;/dependency&gt;</span>
+    <span class="nt">&lt;/dependencies&gt;</span>
+
+    <span class="nt">&lt;build&gt;</span>
+        <span class="nt">&lt;plugins&gt;</span>
+            <span class="nt">&lt;plugin&gt;</span>
+                <span class="nt">&lt;groupId&gt;</span>org.apache.maven.plugins<span class="nt">&lt;/groupId&gt;</span>
+                <span class="nt">&lt;artifactId&gt;</span>maven-compiler-plugin<span class="nt">&lt;/artifactId&gt;</span>
+                <span class="nt">&lt;version&gt;</span>2.0.2<span class="nt">&lt;/version&gt;</span>
+                <span class="nt">&lt;configuration&gt;</span>
+                    <span class="nt">&lt;source&gt;</span>1.6<span class="nt">&lt;/source&gt;</span>
+                    <span class="nt">&lt;target&gt;</span>1.6<span class="nt">&lt;/target&gt;</span>
+                <span class="nt">&lt;/configuration&gt;</span>
+            <span class="nt">&lt;/plugin&gt;</span>
+
+            <span class="nt">&lt;plugin&gt;</span>
+                <span class="nt">&lt;groupId&gt;</span>org.apache.felix<span class="nt">&lt;/groupId&gt;</span>
+                <span class="nt">&lt;artifactId&gt;</span>maven-bundle-plugin<span class="nt">&lt;/artifactId&gt;</span>
+                <span class="nt">&lt;extensions&gt;</span>true<span class="nt">&lt;/extensions&gt;</span>
+                <span class="nt">&lt;configuration&gt;</span>
+                    <span class="nt">&lt;instructions&gt;</span>
+                        <span class="nt">&lt;Bundle-SymbolicName&gt;</span>OSGiDmHelloWorldProvider<span class="nt">&lt;/Bundle-SymbolicName&gt;</span>
+                        <span class="nt">&lt;Export-Package&gt;</span>com.bw.osgi.provider.able<span class="nt">&lt;/Export-Package&gt;</span>
+                        <span class="nt">&lt;Bundle-Activator&gt;</span>com.bw.osgi.provider.ProviderActivator<span class="nt">&lt;/Bundle-Activator&gt;</span>
+                        <span class="nt">&lt;Bundle-Vendor&gt;</span>Baptiste Wicht<span class="nt">&lt;/Bundle-Vendor&gt;</span>
+                    <span class="nt">&lt;/instructions&gt;</span>
+                <span class="nt">&lt;/configuration&gt;</span>
+            <span class="nt">&lt;/plugin&gt;</span>
+        <span class="nt">&lt;/plugins&gt;</span>
+    <span class="nt">&lt;/build&gt;</span> 
+<span class="nt">&lt;/project&gt;</span>
+</pre>
+
+
+<p>And then, use mvn install to build it. </p>
+<p>We'll work in a folder called osgi, so we'll copy this new bundle in the osgi folder. </p>
+<p>We can already test it in the OSGi container. If you dont' have already Felix, let's download it <a href="http://felix.apache.org/site/downloads.html">here</a>. You have to choose the "Felix Distribution". </p>
+<p>Then extract it to the osgi folder we created before. You must now have this folder structure : </p>
+<pre>osgi
+  - felix 
+  - OSGiDmHelloWorldProvider-1.0.jar</pre>
+
+<p>So we can go in the felix folder and launch Felix : </p>
+<pre>wichtounet@Linux-Desktop:~/Desktop/osgi/felix$ java -jar bin/felix.jar 
+_______________
+Welcome to Apache Felix Gogo
+g! </pre>
+
+<p>And install our bundle : </p>
+<pre>g! install file:../OSGiDmHelloWorldProvider-1.0.jar         
+Bundle ID: 5</pre>
+
+<p>The install is good installed, we can try to start it and see its status : </p>
+<pre>g! start 5
+g! bundle 5
+Location             file:../OSGiDmHelloWorldProvider-1.0.jar
+State                32
+Version              1.0.0
+LastModified         1279124741320
+Headers              [Tool=Bnd-0.0.357, Bundle-Activator=com.bw.osgi.provider.ProviderActivator, Export-Package=com.bw.osgi.provider.able, Build-Jdk=1.6.0_20, Bundle-Version=1.0.0, Created-By=Apache Maven Bundle Plugin, Bundle-ManifestVersion=2, Manifest-Version=1.0, Bundle-Vendor=Baptiste Wicht, Bnd-LastModified=1279124686551, Bundle-Name=Unnamed - OSGiDmHelloWorldProvider:OSGiDmHelloWorldProvider:bundle:1.0, Built-By=wichtounet, Bundle-SymbolicName=OSGiDmHelloWorldProvider, Import-Package=com.bw.osgi.provider.able,org.osgi.framework;version="1.5"]
+BundleContext        org.apache.felix.framework.BundleContextImpl@2353f67e
+BundleId             5
+SymbolicName         OSGiDmHelloWorldProvider
+RegisteredServices   [HelloWorldService]
+ServicesInUse        null</pre>
+
+<p>All is fine. Our service is good registered :)</p>
+<p>Now we'll try to consume this service in our second bundle. Our consumer class will be very simple : </p>
+<pre class="code literal-block"><span class="kn">package</span> <span class="n">com</span><span class="o">.</span><span class="na">bw</span><span class="o">.</span><span class="na">osgi</span><span class="o">.</span><span class="na">consumer</span><span class="o">;</span>
+
+<span class="kn">import</span> <span class="nn">javax.swing.Timer</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">java.awt.event.ActionEvent</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">java.awt.event.ActionListener</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">com.bw.osgi.provider.able.HelloWorldService</span><span class="o">;</span>
+
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">HelloWorldConsumer</span> <span class="kd">implements</span> <span class="n">ActionListener</span> <span class="o">{</span>
+    <span class="kd">private</span> <span class="kd">final</span> <span class="n">HelloWorldService</span> <span class="n">service</span><span class="o">;</span>
+    <span class="kd">private</span> <span class="kd">final</span> <span class="n">Timer</span> <span class="n">timer</span><span class="o">;</span>
+
+    <span class="kd">public</span> <span class="nf">HelloWorldConsumer</span><span class="o">(</span><span class="n">HelloWorldService</span> <span class="n">service</span><span class="o">)</span> <span class="o">{</span>
+        <span class="kd">super</span><span class="o">();</span>
+
+        <span class="k">this</span><span class="o">.</span><span class="na">service</span> <span class="o">=</span> <span class="n">service</span><span class="o">;</span>
+
+        <span class="n">timer</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Timer</span><span class="o">(</span><span class="mi">1000</span><span class="o">,</span> <span class="k">this</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">startTimer</span><span class="o">(){</span>
+        <span class="n">timer</span><span class="o">.</span><span class="na">start</span><span class="o">();</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">stopTimer</span><span class="o">()</span> <span class="o">{</span>
+        <span class="n">timer</span><span class="o">.</span><span class="na">stop</span><span class="o">();</span>
+    <span class="o">}</span>
+
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">actionPerformed</span><span class="o">(</span><span class="n">ActionEvent</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">service</span><span class="o">.</span><span class="na">hello</span><span class="o">();</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</pre>
+
+
+<p>And now, we must create the activator to get the service and then give it to the consumer. That will give use something like this : </p>
+<pre class="code literal-block"><span class="kn">package</span> <span class="n">com</span><span class="o">.</span><span class="na">bw</span><span class="o">.</span><span class="na">osgi</span><span class="o">.</span><span class="na">consumer</span><span class="o">;</span>
+
+<span class="kn">import</span> <span class="nn">org.osgi.framework.BundleActivator</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">org.osgi.framework.BundleContext</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">org.osgi.framework.ServiceReference</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">com.bw.osgi.provider.able.HelloWorldService</span><span class="o">;</span>
+
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">HelloWorldActivator</span> <span class="kd">implements</span> <span class="n">BundleActivator</span> <span class="o">{</span>
+    <span class="kd">private</span> <span class="n">HelloWorldConsumer</span> <span class="n">consumer</span><span class="o">;</span>
+
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">start</span><span class="o">(</span><span class="n">BundleContext</span> <span class="n">bundleContext</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+        <span class="n">ServiceReference</span> <span class="n">reference</span> <span class="o">=</span> <span class="n">bundleContext</span><span class="o">.</span><span class="na">getServiceReference</span><span class="o">(</span><span class="n">HelloWorldService</span><span class="o">.</span><span class="na">class</span><span class="o">.</span><span class="na">getName</span><span class="o">());</span>
+
+        <span class="n">consumer</span> <span class="o">=</span> <span class="k">new</span> <span class="n">HelloWorldConsumer</span><span class="o">((</span><span class="n">HelloWorldService</span><span class="o">)</span> <span class="n">bundleContext</span><span class="o">.</span><span class="na">getService</span><span class="o">(</span><span class="n">reference</span><span class="o">));</span>
+        <span class="n">consumer</span><span class="o">.</span><span class="na">startTimer</span><span class="o">();</span>
+    <span class="o">}</span>
+
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">stop</span><span class="o">(</span><span class="n">BundleContext</span> <span class="n">bundleContext</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+        <span class="n">consumer</span><span class="o">.</span><span class="na">stopTimer</span><span class="o">();</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</pre>
+
+
+<p>We get a service reference from the bundle context using the name of the class. After that, we get the service instance from the bundle context. </p>
+<p>We create also a little pom.xml file to build the bundle : </p>
+<pre class="code literal-block"><span class="cp">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;</span>
+
+<span class="nt">&lt;project</span> <span class="na">xmlns=</span><span class="s">&quot;http://maven.apache.org/POM/4.0.0&quot;</span>
+         <span class="na">xmlns:xsi=</span><span class="s">&quot;http://www.w3.org/2001/XMLSchema-instance&quot;</span>
+         <span class="na">xsi:schemaLocation=</span><span class="s">&quot;http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;modelVersion&gt;</span>4.0.0<span class="nt">&lt;/modelVersion&gt;</span>
+    <span class="nt">&lt;groupId&gt;</span>OSGiDmHelloWorldConsumer<span class="nt">&lt;/groupId&gt;</span>
+    <span class="nt">&lt;artifactId&gt;</span>OSGiDmHelloWorldConsumer<span class="nt">&lt;/artifactId&gt;</span>
+    <span class="nt">&lt;version&gt;</span>1.0<span class="nt">&lt;/version&gt;</span>
+    <span class="nt">&lt;packaging&gt;</span>bundle<span class="nt">&lt;/packaging&gt;</span>
+
+    <span class="nt">&lt;dependencies&gt;</span>
+        <span class="nt">&lt;dependency&gt;</span>
+            <span class="nt">&lt;groupId&gt;</span>org.apache.felix<span class="nt">&lt;/groupId&gt;</span>
+            <span class="nt">&lt;artifactId&gt;</span>org.osgi.core<span class="nt">&lt;/artifactId&gt;</span>
+            <span class="nt">&lt;version&gt;</span>1.0.0<span class="nt">&lt;/version&gt;</span>
+        <span class="nt">&lt;/dependency&gt;</span>
+
+        <span class="nt">&lt;dependency&gt;</span>
+            <span class="nt">&lt;groupId&gt;</span>OSGiDmHelloWorldProvider<span class="nt">&lt;/groupId&gt;</span>
+            <span class="nt">&lt;artifactId&gt;</span>OSGiDmHelloWorldProvider<span class="nt">&lt;/artifactId&gt;</span>
+            <span class="nt">&lt;version&gt;</span>1.0<span class="nt">&lt;/version&gt;</span>
+        <span class="nt">&lt;/dependency&gt;</span>
+    <span class="nt">&lt;/dependencies&gt;</span>
+
+    <span class="nt">&lt;build&gt;</span>
+        <span class="nt">&lt;plugins&gt;</span>
+            <span class="nt">&lt;plugin&gt;</span>
+                <span class="nt">&lt;groupId&gt;</span>org.apache.maven.plugins<span class="nt">&lt;/groupId&gt;</span>
+                <span class="nt">&lt;artifactId&gt;</span>maven-compiler-plugin<span class="nt">&lt;/artifactId&gt;</span>
+                <span class="nt">&lt;version&gt;</span>2.0.2<span class="nt">&lt;/version&gt;</span>
+                <span class="nt">&lt;configuration&gt;</span>
+                    <span class="nt">&lt;source&gt;</span>1.6<span class="nt">&lt;/source&gt;</span>
+                    <span class="nt">&lt;target&gt;</span>1.6<span class="nt">&lt;/target&gt;</span>
+                <span class="nt">&lt;/configuration&gt;</span>
+            <span class="nt">&lt;/plugin&gt;</span>
+
+            <span class="nt">&lt;plugin&gt;</span>
+                <span class="nt">&lt;groupId&gt;</span>org.apache.felix<span class="nt">&lt;/groupId&gt;</span>
+                <span class="nt">&lt;artifactId&gt;</span>maven-bundle-plugin<span class="nt">&lt;/artifactId&gt;</span>
+                <span class="nt">&lt;extensions&gt;</span>true<span class="nt">&lt;/extensions&gt;</span>
+                <span class="nt">&lt;configuration&gt;</span>
+                    <span class="nt">&lt;instructions&gt;</span>
+                        <span class="nt">&lt;Bundle-SymbolicName&gt;</span>OSGiDmHelloWorldConsumer<span class="nt">&lt;/Bundle-SymbolicName&gt;</span>
+                        <span class="nt">&lt;Bundle-Activator&gt;</span>com.bw.osgi.consumer.HelloWorldActivator<span class="nt">&lt;/Bundle-Activator&gt;</span>
+                        <span class="nt">&lt;Bundle-Vendor&gt;</span>Baptiste Wicht<span class="nt">&lt;/Bundle-Vendor&gt;</span>
+                    <span class="nt">&lt;/instructions&gt;</span>
+                <span class="nt">&lt;/configuration&gt;</span>
+            <span class="nt">&lt;/plugin&gt;</span>
+        <span class="nt">&lt;/plugins&gt;</span>
+    <span class="nt">&lt;/build&gt;</span>
+<span class="nt">&lt;/project&gt;</span>
+</pre>
+
+
+<p>Then, we use mvn install to create the bundle and we install it in the container : </p>
+<pre>g! start 6
+g! Hello World !
+Hello World !
+Hello World !
+Hello World !
+Hello World !
+Hello World !
+Hello World !
+Hello World !
+Hello World !
+Hello World !
+Hello World !
+Hello World !
+Hello World !
+Hello World !
+g! stop 6</pre>
+
+<p>And here we are :) We've created our first application using OSGi. With that technology you can build modules really independant. </p>
+<p>In the next post about OSGi, we'll see how to use Spring to make the OSGi development easier and to concentrate our effort on the application not OSGi.  </p>
+<p>The sources of the two bundles are available here : </p>
+<ul>
+    <li><a href="/wp-content/uploads/2010/07/OSGiDmHelloWorldProvider.tar.gz">OSGiDmHelloWorldProvider sources</a></li>
+    <li><a href="/wp-content/uploads/2010/07/OSGiDmHelloWorldConsumer.tar.gz">OSGiDmHelloWorldConsumer</a></li>
+</ul>
