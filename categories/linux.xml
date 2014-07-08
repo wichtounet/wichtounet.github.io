@@ -1,5 +1,108 @@
 <?xml version="1.0" encoding="utf-8"?>
-<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>@Blog("Baptiste Wicht") (Linux)</title><link>http://baptiste-wicht.com/</link><description></description><language>en</language><lastBuildDate>Sun, 06 Jul 2014 12:06:24 GMT</lastBuildDate><generator>http://getnikola.com/</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>budgetwarrior 0.4 - Enhanced wish list and aggregate</title><link>http://baptiste-wicht.com/posts/2014/07/budgetwarrior-04-enhanced-wish-list-and-aggregate.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;I've just released a new version of my command-line budget manager:
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>@Blog("Baptiste Wicht") (Linux)</title><link>http://baptiste-wicht.com/</link><description></description><language>en</language><lastBuildDate>Tue, 08 Jul 2014 22:10:07 GMT</lastBuildDate><generator>http://getnikola.com/</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>A Mutt Journey: Filter mails with imapfilter</title><link>http://baptiste-wicht.com/posts/2014/07/a-mutt-journey-filter-mails-with-imapfilter.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;About a month ago, I decided to switch to Mutt to read my emails. I kept my
+GMail account, but I don't use the web interface anymore. It took me a long time
+to prepare a complete enviromnent.&lt;/p&gt;
+&lt;p&gt;Currently, i'm using:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;imapfilter to filter mails&lt;/li&gt;
+&lt;li&gt;offlineimap to download my mails&lt;/li&gt;
+&lt;li&gt;notmuch to quickly search all my mails&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;And of course Mutt. To be precise, I use mutt-kz, a fork of mutt with very good
+notmuch integration.&lt;/p&gt;
+&lt;p&gt;I'll try to explain each part of my environment in a series of articles on this
+blog. The first one will be about imapfilter.&lt;/p&gt;
+&lt;p&gt;imapfilter is a mail filtering utility. It connects to a remote server using
+IMAP and is then able to move, copy or delete mails around. You can use it for
+several tasks:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;Delete unwanted mail&lt;/li&gt;
+&lt;li&gt;Move mails into folders according to rules&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;What is pretty cool is that the configuration is entirely made in Lua. It is
+quite easy to write rules and then apply them to several mailboxes as if you
+were programming.&lt;/p&gt;
+&lt;p&gt;Another advantage of imapfilter is that it works at the server level. Therefore,
+even if you use your web client from time to time or check your mail on your
+phone, the changes will still be viewable.&lt;/p&gt;
+&lt;p&gt;The configuration is done in the ~/.imapfilter/config.lua file. The
+configuration is quite easy, you have to declare an IMAP object as the account.&lt;/p&gt;
+&lt;pre class="code lua literal-block"&gt;
+&lt;span class="kd"&gt;local&lt;/span&gt; &lt;span class="n"&gt;account&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;IMAP&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="n"&gt;server&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s1"&gt;'&lt;/span&gt;&lt;span class="s"&gt;imap_sever'&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+    &lt;span class="n"&gt;username&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s1"&gt;'&lt;/span&gt;&lt;span class="s"&gt;username'&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+    &lt;span class="n"&gt;password&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s1"&gt;'&lt;/span&gt;&lt;span class="s"&gt;password'&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+    &lt;span class="n"&gt;ssl&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s1"&gt;'&lt;/span&gt;&lt;span class="s"&gt;ssl3'&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;
+&lt;p&gt;As the configuration is in Lua, you can easily get the password from another
+file. For instance, here is my account declaration:&lt;/p&gt;
+&lt;pre class="code lua literal-block"&gt;
+&lt;span class="kd"&gt;local&lt;/span&gt; &lt;span class="n"&gt;account&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;IMAP&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="n"&gt;server&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s1"&gt;'&lt;/span&gt;&lt;span class="s"&gt;imap.gmail.com'&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+    &lt;span class="n"&gt;username&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s1"&gt;'&lt;/span&gt;&lt;span class="s"&gt;baptiste.wicht@gmail.com'&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+    &lt;span class="n"&gt;password&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;get_imap_password&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;"&lt;/span&gt;&lt;span class="s"&gt;.password.offlineimaprc"&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt;
+    &lt;span class="n"&gt;ssl&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s1"&gt;'&lt;/span&gt;&lt;span class="s"&gt;ssl3'&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="c1"&gt;-- Utility function to get IMAP password from file&lt;/span&gt;
+&lt;span class="k"&gt;function&lt;/span&gt; &lt;span class="nf"&gt;get_imap_password&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;file&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+    &lt;span class="kd"&gt;local&lt;/span&gt; &lt;span class="n"&gt;home&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nb"&gt;os.getenv&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;"&lt;/span&gt;&lt;span class="s"&gt;HOME"&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+    &lt;span class="kd"&gt;local&lt;/span&gt; &lt;span class="n"&gt;file&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;home&lt;/span&gt; &lt;span class="o"&gt;..&lt;/span&gt; &lt;span class="s2"&gt;"&lt;/span&gt;&lt;span class="s"&gt;/"&lt;/span&gt; &lt;span class="o"&gt;..&lt;/span&gt; &lt;span class="n"&gt;file&lt;/span&gt;
+    &lt;span class="kd"&gt;local&lt;/span&gt; &lt;span class="n"&gt;str&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nb"&gt;io.open&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;file&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;&lt;span class="n"&gt;read&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;str&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="k"&gt;end&lt;/span&gt;
+&lt;/pre&gt;
+&lt;p&gt;It gets the password by reading a file in the home directory.&lt;/p&gt;
+&lt;p&gt;Once, you have the account, you can check the status of a folder with the
+check_status() function. For instance:&lt;/p&gt;
+&lt;pre class="code lua literal-block"&gt;
+&lt;span class="n"&gt;account&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;INBOX&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;check_status&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+&lt;span class="n"&gt;account&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s1"&gt;'&lt;/span&gt;&lt;span class="s"&gt;[Gmail]/Trash'&lt;/span&gt;&lt;span class="p"&gt;]:&lt;/span&gt;&lt;span class="n"&gt;check_status&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+&lt;/pre&gt;
+&lt;p&gt;You can run imapfilter simply by launching imapfilter on the command line. Once
+imapfilter is run, it will print the status of the folder you choses:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+38 messages, 0 recent, 6 unseen, in baptiste.wicht@gmail.com@imap.gmail.com/INBOX.
+70 messages, 0 recent, 67 unseen, in baptiste.wicht@gmail.com@imap.gmail.com/[Gmail]/Trash.
+&lt;/pre&gt;
+&lt;p&gt;Several functions are important:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;select_all() on a folder allows you to get messages from an account to them
+perform action on them&lt;/li&gt;
+&lt;li&gt;contain_subject('subject') on a list of mails allows you to keep only the mails
+that contains 'subject' in their subject&lt;/li&gt;
+&lt;li&gt;contain_from('from') on a list of mails allows you to keep only the mails
+that comes from 'from'&lt;/li&gt;
+&lt;li&gt;contain_to('to') on a list of mails allows you to keep only the mails
+that are addressed to 'to'&lt;/li&gt;
+&lt;li&gt;delete_messages() on a collection of mails deletes all of them&lt;/li&gt;
+&lt;li&gt;move_messages(folder) on a collection of mails moves all of them to another
+folder.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;You can also mix different IMAP accounts, you don't have to use only one.&lt;/p&gt;
+&lt;p&gt;For instance, if you would delete all the mail coming from me, you could do:&lt;/p&gt;
+&lt;pre class="code lua literal-block"&gt;
+&lt;span class="n"&gt;mails&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;account&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;INBOX&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;select_all&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+&lt;span class="n"&gt;filtered&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;mails&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;contains_from&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;"&lt;/span&gt;&lt;span class="s"&gt;baptiste.wicht@gmail.com"&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="n"&gt;filtered&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;delete_messages&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+&lt;/pre&gt;
+&lt;p&gt;Or you could move all the mails containing Urgent in the subject line to an IMAP
+folder:&lt;/p&gt;
+&lt;pre class="code lua literal-block"&gt;
+&lt;span class="n"&gt;mails&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;account&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;INBOX&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;select_all&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+&lt;span class="n"&gt;filtered&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;mails&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;contains_subject&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;"&lt;/span&gt;&lt;span class="s"&gt;Urgent"&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="n"&gt;filtered&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;move_messages&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;account&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s2"&gt;"&lt;/span&gt;&lt;span class="s"&gt;urgent_mails"&lt;/span&gt;&lt;span class="p"&gt;])&lt;/span&gt;
+&lt;/pre&gt;
+&lt;p&gt;If you want some more examples, you can take a look at &lt;a class="reference external" href="https://github.com/wichtounet/dotfiles/blob/master/.imapfilter/config.lua"&gt;my imapfilter
+configuration&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;The best way to start using it is to look at examples, there are plenty of them
+in the internet, especially in Github dotfiles repositories.&lt;/p&gt;
+&lt;p&gt;The reference documentation is available using 'man imapfilter_config', there is
+plenty more to see.&lt;/p&gt;
+&lt;p&gt;For more information, you can also consult the &lt;a class="reference external" href="https://github.com/lefcha/imapfilter"&gt;offical site&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;That is it for this part of the mutt series. In the next post about mutt, I'll
+talk about how I use offlineimap to get my mails.&lt;/p&gt;</description><category>Gentoo</category><category>Linux</category><category>Mutt</category><guid>http://baptiste-wicht.com/posts/2014/07/a-mutt-journey-filter-mails-with-imapfilter.html</guid><pubDate>Tue, 08 Jul 2014 18:58:32 GMT</pubDate></item><item><title>budgetwarrior 0.4 - Enhanced wish list and aggregate</title><link>http://baptiste-wicht.com/posts/2014/07/budgetwarrior-04-enhanced-wish-list-and-aggregate.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;I've just released a new version of my command-line budget manager:
 budgetwarrior 0.4.&lt;/p&gt;
 &lt;div class="section" id="enhanced-aggregate-overview"&gt;
 &lt;h2&gt;Enhanced aggregate overview&lt;/h2&gt;
@@ -906,13 +1009,4 @@ ln -s ~/src/external/git-flow-completion/git-flow-completion.bash ./git-flow-com
 &lt;p&gt;Then add a simple command in your .bashrc file:&lt;/p&gt;
 &lt;pre&gt;source ~/bin/git-flow-completion.sh&lt;/pre&gt;
 
-&lt;p&gt;If you want an introduction of git-flow, I recommend you this blog post : &lt;a href="http://jeffkreeftmeijer.com/2010/why-arent-you-using-git-flow/" title="Why aren't you using git-flow ?"&gt;Why aren't you using git-flow ?&lt;/a&gt;&lt;/p&gt;</description><category>EDDI</category><category>Git</category><category>Linux</category><guid>http://baptiste-wicht.com/posts/2011/10/install-git-flow-linux.html</guid><pubDate>Thu, 06 Oct 2011 05:10:24 GMT</pubDate></item><item><title>Diploma Thesis : Inlining Assistance for large-scale object-oriented applications</title><link>http://baptiste-wicht.com/posts/2011/10/diploma-thesis-inlining-assistance-for-large-scale-object-oriented-applications.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;One month ago, my diploma thesis has been accepted and I got my Bachelor of Science in Computer Science.&lt;/p&gt;
-&lt;p&gt;I made my diploma thesis at Lawrence Berkeley National Laboratory, Berkeley, California. I was in the team responsible of the developmenet of the ATLAS Software for the LHC in Cern. The title of my thesis is &lt;strong&gt;Inlining Assistance for large-scale object-oriented applications&lt;/strong&gt;&lt;/p&gt;
-&lt;p&gt;The goal of this project was to create a C++ analyzer to find the best functions and call sites to inline. The input of the analyzer is a call graph generated by CallGrind of the Valgrind project.&lt;/p&gt;
-&lt;p&gt;The functions and call sites to inline are computed using a heuristic, called the temperature. This heuristic is based on the cost of calling the given function, the frequency of calls and the size of the function. The cost of calling a function is based on the number of parameters, the virtuality of the function and the shared object the function is located in.&lt;/p&gt;
-&lt;p&gt;The analyzer is also able to find clusters of call sites. A cluster is a set of hot call sites related to each other. It can also finds the functions that should be moved from one library to the other or the function that should not be virtual by testing the use of each function in a class hierarchy.&lt;/p&gt;
-&lt;p&gt;To achieve this project, it has been necessary to study in details how a function is called on the Linux platform. The inlining optimization has also been studied to know what were the advantages and the problems of this technique.&lt;/p&gt;
-&lt;p&gt;To retrieve the information about the sizes and the virtuality of the function, it has been necessary to read the shared libraries and executables files. For that, we used &lt;em&gt;libelf&lt;/em&gt;. The virtuality of a function is calculated by reading each virtual table and searching for the function in the virtual tables content.&lt;/p&gt;
-&lt;p&gt;The graph manipulation is made by the &lt;em&gt;Boost Graph Library&lt;/em&gt;. As it was an advanced library, it has helped me improving my skills in specific topics like templates, traits or Template Metaprogramming.&lt;/p&gt;
-&lt;p&gt;The analyzer is able to run on the Linux platform on any program that has been compiled using gcc.&lt;/p&gt;
-&lt;p class="more"&gt;&lt;a href="http://baptiste-wicht.com/posts/2011/10/diploma-thesis-inlining-assistance-for-large-scale-object-oriented-applications.html"&gt;Read more…&lt;/a&gt;&lt;/p&gt;</description><category>Boost</category><category>C++</category><category>Compilers</category><category>Linux</category><category>Optimization</category><category>Performances</category><category>Personal</category><category>gcc</category><guid>http://baptiste-wicht.com/posts/2011/10/diploma-thesis-inlining-assistance-for-large-scale-object-oriented-applications.html</guid><pubDate>Mon, 03 Oct 2011 06:44:17 GMT</pubDate></item></channel></rss>
+&lt;p&gt;If you want an introduction of git-flow, I recommend you this blog post : &lt;a href="http://jeffkreeftmeijer.com/2010/why-arent-you-using-git-flow/" title="Why aren't you using git-flow ?"&gt;Why aren't you using git-flow ?&lt;/a&gt;&lt;/p&gt;</description><category>EDDI</category><category>Git</category><category>Linux</category><guid>http://baptiste-wicht.com/posts/2011/10/install-git-flow-linux.html</guid><pubDate>Thu, 06 Oct 2011 05:10:24 GMT</pubDate></item></channel></rss>
