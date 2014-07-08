@@ -212,7 +212,7 @@ REDIRECTIONS = [["2011/06/eddi-0-2-1-integer-operations-and-optimizations/index.
 # Where the output site should be located
 # If you don't use an absolute path, it will be considered as relative
 # to the location of conf.py
-OUTPUT_FOLDER = '..'
+OUTPUT_FOLDER = 'target'
 
 # where the "cache" of partial generated content should be located
 # default: 'cache'
