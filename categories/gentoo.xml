@@ -1,5 +1,165 @@
 <?xml version="1.0" encoding="utf-8"?>
-<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>@Blog("Baptiste Wicht") (Gentoo)</title><link>http://baptiste-wicht.com/</link><description></description><language>en</language><lastBuildDate>Tue, 08 Jul 2014 22:28:22 GMT</lastBuildDate><generator>http://getnikola.com/</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>A Mutt Journey: Filter mails with imapfilter</title><link>http://baptiste-wicht.com/posts/2014/07/a-mutt-journey-filter-mails-with-imapfilter.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;About a month ago, I decided to switch to Mutt to read my emails. I kept my
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>@Blog("Baptiste Wicht") (Gentoo)</title><link>http://baptiste-wicht.com/</link><description></description><language>en</language><lastBuildDate>Wed, 16 Jul 2014 21:36:32 GMT</lastBuildDate><generator>http://getnikola.com/</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>A Mutt Journey: Download mails with offlineimap</title><link>http://baptiste-wicht.com/posts/2014/07/a-mutt-journey-download-mails-with-offlineimap.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;In the series of posts about Mutt, I recently presented how I was &lt;a class="reference external" href="http://baptiste-wicht.com/posts/2014/07/a-mutt-journey-filter-mails-with-imapfilter.html"&gt;filtering my email&lt;/a&gt;. In this
+post, I'll show how I download my emails locally using offlineimap. This is the
+perfect companion for Mutt.&lt;/p&gt;
+&lt;p&gt;With Mutt, you can easily directly query an IMAP server and keep the views up to
+date with it. There are a few problem with this approach:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;First, you wont' be able to read your mails when you'are offline. It is
+rarely an issue in these days, but it can be useful.&lt;/li&gt;
+&lt;li&gt;Opening an IMAP folder with a large number of mails (&amp;gt;1000) can be quite
+slow. I've several large folders and it was a pain opening them.&lt;/li&gt;
+&lt;li&gt;When Mutt synchronizes with the state of the IMAP server, you'll encounter a
+freeze. If you want to synchronize often, it is quite boring.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Having your mails offline on your computers solves all these problems. Moreover,
+it is also a good way to have a backup of your mails. I'm gonna talk here about
+the usage for Mutt, but you can use offlineimap just for backup or for migration
+reasons. The downside is that you have to store it locally. My mails takes
+around 5GB on my computer.&lt;/p&gt;
+&lt;p&gt;offlineimap is a very simple tool to synchronize emails from IMAP servers. It
+only supports IMAP, but in those days it is not a limitation. The
+synchronization is made both ways, it will upload your local changes to the IMAP
+server. It is very powerful when paired with a MUA such as Mutt.&lt;/p&gt;
+&lt;p&gt;To use offlineimap, you have to put your configuration in the ~/.offlineimaprc.
+You can synchronize several accounts at once, in this post, we'll focus on one,
+but the process is the same for several accounts. I'll focus on Gmail too, but
+again it is the same with a bit different parameters for other mail accounts.&lt;/p&gt;
+&lt;div class="section" id="configuration"&gt;
+&lt;h2&gt;Configuration&lt;/h2&gt;
+&lt;p&gt;First, we have to declare the account:&lt;/p&gt;
+&lt;pre class="code literal-block"&gt;
+[general]
+accounts = Gmail
+
+[Account Gmail]
+localrepository = Gmail-Local
+remoterepository = Gmail-Remote
+&lt;/pre&gt;
+&lt;p&gt;&lt;strong&gt;accounts&lt;/strong&gt; is the list of accounts that we have, here only one. Then, in
+account, repositories are just names of the repositories we'll declare now.&lt;/p&gt;
+&lt;p&gt;The local repository has to be configured:&lt;/p&gt;
+&lt;pre class="code literal-block"&gt;
+[Repository Gmail-Local]
+type = Maildir
+localfolders = /data/oi/Gmail/
+sep = /
+&lt;/pre&gt;
+&lt;p&gt;The first important point is &lt;strong&gt;localfolders&lt;/strong&gt; that sets where the mail will be
+put on your computer. &lt;strong&gt;sep&lt;/strong&gt; defines the separator used for nested IMAP
+folders. I recommend / since Mutt will nest them automatically if / is used as
+separator.&lt;/p&gt;
+&lt;p&gt;Then, the remote repository has to be configured:&lt;/p&gt;
+&lt;pre class="code literal-block"&gt;
+[Repository Gmail-Remote]
+type = Gmail
+remoteuser = USER
+remotepass = PASSWORD
+realdelete = no
+folderfilter = lambda folder: folder not in ['[Gmail]/All Mail',
+                                             '[Gmail]/Important',
+                                             '[Gmail]/Starred',
+                                             ]
+sslcacertfile = /etc/ssl/certs/ca-certificates.crt
+&lt;/pre&gt;
+&lt;p&gt;&lt;strong&gt;remotepass&lt;/strong&gt; and &lt;strong&gt;remoteuser&lt;/strong&gt; are your user names and password. You can also
+use &lt;strong&gt;remotepassfile&lt;/strong&gt; to read the password from a file. &lt;strong&gt;realdelete=no&lt;/strong&gt;
+indicates that we only want to remove all the labels of deleted mails. For
+Gmail, it means that the mail will still be in the All Mail folder. The last
+line (sslcacertfile) is mandatory for recent versions of offlineimap. The
+&lt;strong&gt;folderfilter&lt;/strong&gt; is a function that filters some folders. In my case, I do not
+want to get the "All Mail", "Important" and "Starred" of my Gmail account
+because it is only a duplicata of the mails in other labels. What is pretty cool
+with offlineimap is that you can write Python directly in it for some of the
+configuration options. Here is rule for filter is plain Python, so you can
+complicated filtering if you want.&lt;/p&gt;
+&lt;p&gt;Last, but not least, offlineimap can generates a list of mailboxes (one for each
+folder in every account). It is pretty useful since Mutt can then read this file
+and you'll find your mailboxes directly configured in Mutt :)&lt;/p&gt;
+&lt;p&gt;This code will generate a file ~/.mutt/mailboxes that you can source in your
+Mutt configuration and get the complete list of available mailboxes. This will
+be kept up to date if you add new IMAP folders on the server for instance.&lt;/p&gt;
+&lt;pre class="code literal-block"&gt;
+[mbnames]
+enabled = yes
+filename = ~/.mutt/mailboxes
+header = "mailboxes "
+peritem = "+%(accountname)s/%(foldername)s"
+sep = " "
+footer = "\n"
+&lt;/pre&gt;
+&lt;/div&gt;
+&lt;div class="section" id="translate-names"&gt;
+&lt;h2&gt;Translate names&lt;/h2&gt;
+&lt;p&gt;You may have seen in the previous section some weird folder name like
+"[Gmail]/All mail", this is how Gmail names folders that are not labels. This is
+quite ugly and will create odd looking folders on your computer. You can
+configure offlineimap to rename these names to better ones. For that, you'll
+need to rule (in Python ;) ), one to translate from remote to local and one to
+do the reverse.&lt;/p&gt;
+&lt;p&gt;Here is what I did:&lt;/p&gt;
+&lt;pre class="code literal-block"&gt;
+[Repository Gmail-Local]
+nametrans = lambda folder: {'drafts':   '[Gmail]/Drafts',
+                            'sent':     '[Gmail]/Sent Mail',
+                            'important':'[Gmail]/Important',
+                            'spam':     '[Gmail]/Spam',
+                            'starred':  '[Gmail]/Starred',
+                            'trash':    '[Gmail]/Trash',
+                            'archive':  '[Gmail]/All Mail',
+                            }.get(folder, folder)
+
+[Repository Gmail-Remote]
+nametrans = lambda folder: {'[Gmail]/Drafts':    'drafts',
+                            '[Gmail]/Sent Mail': 'sent',
+                            '[Gmail]/Starred':   'flagged',
+                            '[Gmail]/Important':   'important',
+                            '[Gmail]/Spam':   'spam',
+                            '[Gmail]/Trash':     'trash',
+                            '[Gmail]/All Mail':  'archive',
+                            }.get(folder, folder)
+&lt;/pre&gt;
+&lt;p&gt;I simply renamed all "[Gmail]" folders into something more readable and that
+makes more sense to me. It is not limited to special Gmail folders of course,
+this can also be applied to rename a folder X into a folder Y in the same. As it
+is Python, you can do sophisticated stuff if necessary.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="speed-up-things"&gt;
+&lt;h2&gt;Speed up things&lt;/h2&gt;
+&lt;p&gt;If you happen to sync your mails often, you may want to speed things up. There
+are several ways to do that.&lt;/p&gt;
+&lt;p&gt;The first thing you can do is use several connections to the server. You can set
+maxconnections to a number higher than 1 in the remote repository configuration.
+I tested several values and for Gmail 2 was the fastest choice. You can try some
+values with your server to see what value is good.&lt;/p&gt;
+&lt;p&gt;Instead of plain old text files for the status of the mails, offlineimap can use
+a sqlite backend. This is much faster since the complete file is not rewritten
+for each update of the flags. For that behaviour, you have to set
+&lt;strong&gt;status_backend = sqlite&lt;/strong&gt; in the Account configuration.&lt;/p&gt;
+&lt;p&gt;Another thing you can do is reduce the I/O involved during sync by setting
+general.fsync to false. With that, offlineimap won't have to wait for disk
+operation completion after each operation.&lt;/p&gt;
+&lt;p&gt;You can run offlineimap in quick mode with -q option. With this option, change
+in flags of remote messages will not be updated locally. Changes on the local
+side will be uploaded corectly. It is generally a good idea is to run
+offlineimap in quick mode often (every X minutes) and run it in normal mode once
+or twice a day.&lt;/p&gt;
+&lt;p&gt;You can also specify which folder to sync with the -f option. Sometimes it is
+enough to sync INBOX for instance. It may be much faster.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="conclusion"&gt;
+&lt;h2&gt;Conclusion&lt;/h2&gt;
+&lt;p&gt;Now that you have fully configured offlineimap, you can make it run by hand or
+in a cron job. I personally run it every 5 minutes, you can choose your
+favourite frequency according to your workflow. I think I'll reduce the
+frequency further, it is more comfortable to get mails only by batch and not
+too much of them.&lt;/p&gt;
+&lt;p&gt;If you're interested, you can take a look at &lt;a class="reference external" href="https://github.com/wichtounet/dotfiles/blob/master/.offlineimaprc"&gt;my .offlineimaprc configuration&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;If you want more information about this awesome tool, you can take a look at the
+&lt;a class="reference external" href="http://docs.offlineimap.org/en/latest/"&gt;reference documentation&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;This is it for this part of this series. In the next post, I'll present my Mutt
+configuration and how I use it.&lt;/p&gt;
+&lt;/div&gt;</description><category>Gentoo</category><category>Gmail</category><category>Linux</category><category>Mutt</category><category>Python</category><guid>http://baptiste-wicht.com/posts/2014/07/a-mutt-journey-download-mails-with-offlineimap.html</guid><pubDate>Wed, 16 Jul 2014 17:54:40 GMT</pubDate></item><item><title>A Mutt Journey: Filter mails with imapfilter</title><link>http://baptiste-wicht.com/posts/2014/07/a-mutt-journey-filter-mails-with-imapfilter.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;About a month ago, I decided to switch to Mutt to read my emails. I kept my
 GMail account, but I don't use the web interface anymore. It took me a long time
 to prepare a complete enviromnent.&lt;/p&gt;
 &lt;p&gt;Currently, i'm using:&lt;/p&gt;
@@ -102,7 +262,7 @@ in the internet, especially in Github dotfiles repositories.&lt;/p&gt;
 plenty more to see.&lt;/p&gt;
 &lt;p&gt;For more information, you can also consult the &lt;a class="reference external" href="https://github.com/lefcha/imapfilter"&gt;offical site&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;That is it for this part of the mutt series. In the next post about mutt, I'll
-talk about how I use offlineimap to get my mails.&lt;/p&gt;</description><category>Gentoo</category><category>Linux</category><category>Mutt</category><guid>http://baptiste-wicht.com/posts/2014/07/a-mutt-journey-filter-mails-with-imapfilter.html</guid><pubDate>Tue, 08 Jul 2014 18:58:32 GMT</pubDate></item><item><title>budgetwarrior 0.4 - Enhanced wish list and aggregate</title><link>http://baptiste-wicht.com/posts/2014/07/budgetwarrior-04-enhanced-wish-list-and-aggregate.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;I've just released a new version of my command-line budget manager:
+talk about how I use offlineimap to get my mails.&lt;/p&gt;</description><category>Gentoo</category><category>Gmail</category><category>Linux</category><category>Mutt</category><guid>http://baptiste-wicht.com/posts/2014/07/a-mutt-journey-filter-mails-with-imapfilter.html</guid><pubDate>Tue, 08 Jul 2014 18:58:32 GMT</pubDate></item><item><title>budgetwarrior 0.4 - Enhanced wish list and aggregate</title><link>http://baptiste-wicht.com/posts/2014/07/budgetwarrior-04-enhanced-wish-list-and-aggregate.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;I've just released a new version of my command-line budget manager:
 budgetwarrior 0.4.&lt;/p&gt;
 &lt;div class="section" id="enhanced-aggregate-overview"&gt;
 &lt;h2&gt;Enhanced aggregate overview&lt;/h2&gt;
