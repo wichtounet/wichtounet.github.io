@@ -76,21 +76,36 @@ void read_metadata(const std::vector<std::string>& files, std::vector<std::strin
         auto file = files[i];
 
         file.replace(file.begin() + file.rfind('.'), file.end(), ".meta");
-        
+
         std::ifstream stream(file);
         std::string line;
+        std::string slug;
 
-        getline(stream, line);
-        titles[i] = line;
-        
-        getline(stream, line);
-        auto slug = line;
-        
-        //Ignore the date
-        getline(stream, line);
+        if(files[i].find(".rst") == std::string::npos){
+            getline(stream, line);
+            titles[i] = line;
 
-        getline(stream, line);
-        keywords[i] = line;
+            getline(stream, line);
+            slug = line;
+
+            //Ignore the date
+            getline(stream, line);
+
+            getline(stream, line);
+            keywords[i] = line;
+        } else {
+            getline(stream, line);
+            titles[i] = line.substr(10);
+
+            getline(stream, line);
+            slug = line.substr(9);
+
+            //Ignore the date
+            getline(stream, line);
+
+            getline(stream, line);
+            keywords[i] = line.substr(9);
+        }
 
         std::string url = file;
         url.replace(url.begin(), url.begin() + 2, "");
