@@ -1,5 +1,147 @@
 <?xml version="1.0" encoding="utf-8"?>
-<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>@Blog("Baptiste Wicht") (C++14)</title><link>http://baptiste-wicht.com/</link><description></description><language>en</language><lastBuildDate>Wed, 23 Jul 2014 16:32:01 GMT</lastBuildDate><generator>http://getnikola.com/</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>Compile integer Square Roots at compile-time in C++</title><link>http://baptiste-wicht.com/posts/2014/07/compile-integer-square-roots-at-compile-time-in-cpp.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;For one of my projects, I needed to evaluate a square root at compile-time.
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>@Blog("Baptiste Wicht") (C++14)</title><link>http://baptiste-wicht.com/</link><description></description><language>en</language><lastBuildDate>Fri, 25 Jul 2014 11:37:27 GMT</lastBuildDate><generator>http://getnikola.com/</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>ETL - C++ library for vector and matrix computations</title><link>http://baptiste-wicht.com/posts/2014/07/etl-cpp-library-for-vector-and-matrix-computations.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;When working on Machine Learning algorithms, I was in need of a simple library
+to ease working with vectors and matrix. This is the reason why I started
+developing ETL (Expression Template Library).&lt;/p&gt;
+&lt;p&gt;ETL is a small header only library for C++ that provides vector and matrix
+classes with support for Expression Templates to perform very efficient
+operations on them.&lt;/p&gt;
+&lt;p&gt;The library supports statically sized and dynamically sized vector and matrix
+structures with efficient element-wise operations. All the operations are
+implemented lazily with Expression Templates, they are only implemented once the
+expression is assigned to a concrete structure.&lt;/p&gt;
+&lt;div class="section" id="data-structures"&gt;
+&lt;h2&gt;Data structures&lt;/h2&gt;
+&lt;p&gt;Several structures are available:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;&lt;code&gt;fast_vector&amp;lt;T, Rows&amp;gt;&lt;/code&gt;: A vector of size Rows with elements of type T. This must
+be used when you know the size of the vector at compile-time.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;dyn_vector&amp;lt;T&amp;gt;&lt;/code&gt;: A vector with element of type T. The size of the vector can be
+set at runtime.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;fast_matrix&amp;lt;T, Rows,Columns&amp;gt;&lt;/code&gt;: A matrix of size Rows x Columns with elements of
+type T. This must be used when you know the size of the matrix at
+compile-time.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;dyn_vector&amp;lt;T&amp;gt;&lt;/code&gt;: A matrix with element of type T. The size of the matrix can be
+set at runtime.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;All the structures are size-invariant, once set they cannot be grown or
+shrinked.&lt;/p&gt;
+&lt;p&gt;In every operations that involves fast version of the structures, all the sizes
+are known at compile-time, this gives the compiler a lot of opportunities for
+optimization.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="element-wise-operations"&gt;
+&lt;h2&gt;Element-wise operations&lt;/h2&gt;
+&lt;p&gt;Classic element-wise operations can be done on vector and matrix as if it was
+done on scalars. Matrices and vectors can also be added, subtracted, divided,
+...  by scalars.&lt;/p&gt;
+&lt;p&gt;Here is an example of what can be done:&lt;/p&gt;
+&lt;pre class="code cpp literal-block"&gt;
+&lt;span class="n"&gt;etl&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;dyn_vector&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="kt"&gt;double&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;({&lt;/span&gt;&lt;span class="mf"&gt;1.0&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="mf"&gt;2.0&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="mf"&gt;3.0&lt;/span&gt;&lt;span class="p"&gt;});&lt;/span&gt;
+&lt;span class="n"&gt;etl&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;dyn_vector&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="kt"&gt;double&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;b&lt;/span&gt;&lt;span class="p"&gt;({&lt;/span&gt;&lt;span class="mf"&gt;3.0&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="mf"&gt;2.0&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="mf"&gt;1.0&lt;/span&gt;&lt;span class="p"&gt;});&lt;/span&gt;
+
+&lt;span class="n"&gt;etl&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;dyn_vector&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="kt"&gt;double&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;c&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mf"&gt;1.4&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;b&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;/&lt;/span&gt; &lt;span class="n"&gt;b&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;b&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;/&lt;/span&gt; &lt;span class="mf"&gt;1.2&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/pre&gt;
+&lt;p&gt;All the operations are only executed once the expression is evaluated to
+construct the dyn_vector. No temporaries are involved. This is as efficient as
+if a single for loop was used and each element was computed directly.&lt;/p&gt;
+&lt;p&gt;You can easily assign the same value to a structure by using the operator = on
+it.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="unary-operators"&gt;
+&lt;h2&gt;Unary operators&lt;/h2&gt;
+&lt;p&gt;Several unary operators are available. Each operation is performed on every
+element of the vector or the matrix.&lt;/p&gt;
+&lt;p&gt;Available operators:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;&lt;code&gt;log&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;abs&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;sign&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;max/min&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;sigmoid&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;noise&lt;/code&gt;: Add standard normal noise to each element&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;logistic_noise&lt;/code&gt;: Add normal noise of mean zero and variance sigmoid(x) to each
+element&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;exp&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;softplus&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;bernoulli&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Several transformations are also available:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;&lt;code&gt;hflip&lt;/code&gt;: Flip the vector or the matrix horizontally&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;vflip&lt;/code&gt;: Flip the vector or the matrix vertically&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;fflip&lt;/code&gt;: Flip the vector or the matrix horizontally and vertically. It is the
+equivalent of &lt;code&gt;hflip(vflip(x))&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;dim/row/col&lt;/code&gt;: Return a vector representing a sub part of a matrix (a row or a
+col)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;reshape&lt;/code&gt;: Interpret a vector as a matrix&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Again, all these operations are performed lazily, they are only executed when the
+expression is assigned to something.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="lazy-evaluation"&gt;
+&lt;h2&gt;Lazy evaluation&lt;/h2&gt;
+&lt;p&gt;All binary and unary operations are applied lazily, only when they are assigned
+to a concrete vector or matrix class.&lt;/p&gt;
+&lt;p&gt;The expression can be evaluated using the &lt;code&gt;s(x)&lt;/code&gt; function that returns a
+concrete class (fast_vector,fast_matrix,dyn_vector,dyn_matrix) based on the
+expression.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="reduction"&gt;
+&lt;h2&gt;Reduction&lt;/h2&gt;
+&lt;p&gt;Several reduction functions are available:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;sum: Return the sum of a vector or matrix&lt;/li&gt;
+&lt;li&gt;mean: Return the sum of a vector or matrix&lt;/li&gt;
+&lt;li&gt;dot: Return the dot product of two vector or matrices&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div class="section" id="functions"&gt;
+&lt;h2&gt;Functions&lt;/h2&gt;
+&lt;p&gt;The header &lt;em&gt;convolution.hpp&lt;/em&gt; provides several convolution operations both in 1D
+(vector) and 2D (matrix). All the convolution are available in valid, full and
+same versions.&lt;/p&gt;
+&lt;p&gt;The header &lt;em&gt;mutiplication.hpp&lt;/em&gt; provides the matrix multiplication operation
+(&lt;code&gt;mmult&lt;/code&gt;). For now on, only the naive algorithm is available. I'll
+probably add support for Strassen algorithm in the near future.&lt;/p&gt;
+&lt;p&gt;It is possible to pass an expression rather than an data structure to functions.
+You have to keep in mind that expression are lazy, therefore if you pass a + b
+to a matrix multiplication, an addition will be run each time an element is
+accessed (n^3 times), therefore, it is rarely efficient.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="examples"&gt;
+&lt;h2&gt;Examples&lt;/h2&gt;
+&lt;p&gt;Here are some examples of these operators (taken from my Machine Learning
+Library):&lt;/p&gt;
+&lt;pre class="code cpp literal-block"&gt;
+&lt;span class="n"&gt;h_a&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;sigmoid&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;b&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;mmul&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;reshape&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;num_visible&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;v_a&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt; &lt;span class="n"&gt;w&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;t&lt;/span&gt;&lt;span class="p"&gt;));&lt;/span&gt;
+&lt;span class="n"&gt;h_s&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;bernoulli&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;h_a&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/pre&gt;
+&lt;pre class="code cpp literal-block"&gt;
+&lt;span class="n"&gt;h_a&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;min&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;max&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;b&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;mmul&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;reshape&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;num_visible&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;v_a&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt; &lt;span class="n"&gt;w&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;t&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt; &lt;span class="mf"&gt;0.0&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt; &lt;span class="mf"&gt;6.0&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="n"&gt;h_s&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;ranged_noise&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;h_a&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mf"&gt;6.0&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/pre&gt;
+&lt;pre class="code cpp literal-block"&gt;
+&lt;span class="n"&gt;weight&lt;/span&gt; &lt;span class="n"&gt;exp_sum&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;sum&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;exp&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;b&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;mmul&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;reshape&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;num_visible&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;v_a&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt; &lt;span class="n"&gt;w&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;t&lt;/span&gt;&lt;span class="p"&gt;)));&lt;/span&gt;
+
+&lt;span class="n"&gt;h_a&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;exp&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;b&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;mmul&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;reshape&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;num_visible&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;v_a&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt; &lt;span class="n"&gt;w&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;t&lt;/span&gt;&lt;span class="p"&gt;))&lt;/span&gt; &lt;span class="o"&gt;/&lt;/span&gt; &lt;span class="n"&gt;exp_sum&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+&lt;span class="k"&gt;auto&lt;/span&gt; &lt;span class="n"&gt;max&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;max_element&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;h_a&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;begin&lt;/span&gt;&lt;span class="p"&gt;(),&lt;/span&gt; &lt;span class="n"&gt;h_a&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;end&lt;/span&gt;&lt;span class="p"&gt;());&lt;/span&gt;
+
+&lt;span class="n"&gt;h_s&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mf"&gt;0.0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="n"&gt;h_s&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;distance&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;h_a&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;begin&lt;/span&gt;&lt;span class="p"&gt;(),&lt;/span&gt; &lt;span class="n"&gt;max&lt;/span&gt;&lt;span class="p"&gt;))&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mf"&gt;1.0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/pre&gt;
+&lt;/div&gt;
+&lt;div class="section" id="conclusion"&gt;
+&lt;h2&gt;Conclusion&lt;/h2&gt;
+&lt;p&gt;This library is available on Github: &lt;a class="reference external" href="https://github.com/wichtounet/etl"&gt;etl&lt;/a&gt;.
+It is licensed under MIT license.&lt;/p&gt;
+&lt;p&gt;It is header-only, therefore you don't have to build it. However, it uses some
+recent C++14 stuff, you'll need a recent version of Clang or G++ to be able to
+use it.&lt;/p&gt;
+&lt;p&gt;If you find an issue or have an idea to improve it, just post it on Github or
+as a comment here and I'll do my best to work on that. If you have any question
+on the usage of the library, I'd be glad to answer them.&lt;/p&gt;
+&lt;/div&gt;</description><category>C++11</category><category>C++14</category><category>C++</category><category>Libraries</category><guid>http://baptiste-wicht.com/posts/2014/07/etl-cpp-library-for-vector-and-matrix-computations.html</guid><pubDate>Fri, 25 Jul 2014 08:46:33 GMT</pubDate></item><item><title>Compile integer Square Roots at compile-time in C++</title><link>http://baptiste-wicht.com/posts/2014/07/compile-integer-square-roots-at-compile-time-in-cpp.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;For one of my projects, I needed to evaluate a square root at compile-time.
 There are several ways to implement it and some are better than the others.&lt;/p&gt;
 &lt;p&gt;In this post, I'll show several versions, both with Template Metaprogramming
 (TMP) and constexpr functions.&lt;/p&gt;
