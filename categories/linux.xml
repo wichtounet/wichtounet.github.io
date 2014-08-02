@@ -1,5 +1,87 @@
 <?xml version="1.0" encoding="utf-8"?>
-<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>@Blog("Baptiste Wicht") (Linux)</title><link>http://baptiste-wicht.com/</link><description></description><language>en</language><lastBuildDate>Mon, 28 Jul 2014 14:18:39 GMT</lastBuildDate><generator>http://getnikola.com/</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>A Mutt journey: Mutt configuration</title><link>http://baptiste-wicht.com/posts/2014/07/a-mutt-journey-my-mutt-configuration.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;If you've followed my Mutt posts, you'll know that I'm &lt;a class="reference external" href="http://baptiste-wicht.com/posts/2014/07/a-mutt-journey-filter-mails-with-imapfilter.html"&gt;filtering my mails with
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>@Blog("Baptiste Wicht") (Linux)</title><link>http://baptiste-wicht.com/</link><description></description><language>en</language><lastBuildDate>Sat, 02 Aug 2014 22:46:51 GMT</lastBuildDate><generator>http://getnikola.com/</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>A Mutt journey: Search mails with notmuch</title><link>http://baptiste-wicht.com/posts/2014/08/a-mutt-journey-search-mails-with-notmuch.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;In the previous installment in the Mutt series, &lt;a class="reference external" href="http://baptiste-wicht.com/posts/2014/07/a-mutt-journey-my-mutt-configuration.html"&gt;I've talked about my Mutt
+configuration&lt;/a&gt;.
+In this post, I'll talk about notmuch and how to use it to search through mails.&lt;/p&gt;
+&lt;p&gt;By default, you can search mails in Mutt by using the / key. By doing that, you
+can only search in the current folder. This is very fast, but this is not always
+what you want. When you don't know in which folder the mail you are looking for
+is, you don't want to test each folder. By default, there are no feature to
+achieve global searching in Mutt.&lt;/p&gt;
+&lt;p&gt;That is where notmuch comes to the rescue. notmuch is a very simple tool that
+allows you to search through your mail. As its name indicates, it does not do
+much. It doesn't download your mails, you have to have them locally, which is
+perfect &lt;a class="reference external" href="http://baptiste-wicht.com/posts/2014/07/a-mutt-journey-download-mails-with-offlineimap.html"&gt;if you use offlineimap&lt;/a&gt;.
+It does not provide a user interface, but you can query it from the command line
+and it can be used from other tools. It should be available in most of the
+distributions.&lt;/p&gt;
+&lt;div class="section" id="configuration"&gt;
+&lt;h2&gt;Configuration&lt;/h2&gt;
+&lt;p&gt;The configuration of notmuch is fairly simple. You can write your
+&lt;code&gt;.notmuch-config&lt;/code&gt; directly or run &lt;code&gt;notmuch setup&lt;/code&gt; that will
+interactively help you to fill the configuration.&lt;/p&gt;
+&lt;p&gt;Here is my configuration:&lt;/p&gt;
+&lt;pre class="code literal-block"&gt;
+[database]
+path=/data/oi/Gmail/
+
+[user]
+name=Baptiste Wicht
+primary_email=baptiste.wicht@gmail.com
+
+[new]
+tags=inbox
+ignore=
+
+[search]
+exclude_tags=deleted;
+
+[maildir]
+synchronize_flags=true
+&lt;/pre&gt;
+&lt;p&gt;It needs of cours the place where your mails are stored. Then, some information
+about you. The next section is to specify which tags you want to add to new
+mails. Here, I specified that each new mail must be tagged with &lt;cite&gt;inbox&lt;/cite&gt;. You can
+add several tags to new mails. In the &lt;cite&gt;[search]&lt;/cite&gt; section, the excluded tags are
+specified.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="usage"&gt;
+&lt;h2&gt;Usage&lt;/h2&gt;
+&lt;p&gt;Once you have configured notmuch, you can run &lt;cite&gt;notmuch new&lt;/cite&gt; to process all
+existing mails. The first run may take some time (in minutes, it is still quite
+fast), but the subsequent runs will be very fast. You should run notmuch after
+each offlineimap run. I personally run it in a shell script that is run by cron.
+You could also use one of the hooks of offlineimap to run notmuch.&lt;/p&gt;
+&lt;p&gt;Once indexing has been done, you can start searching your mails. The first
+option to search mail is simply to use &lt;cite&gt;notmuch search &amp;lt;query&amp;gt;&lt;/cite&gt; from the command
+line. This will directly displays the results. Search is instant on my mails.&lt;/p&gt;
+&lt;p&gt;If you use mutt-kz like me, notmuch support is directly integrated. You can type
+X, and then type your query like &lt;code&gt;notmuch://?query=X&lt;/code&gt; and the results will
+be displayed as a normal Mutt folder. You can open mails directly from here and
+you can also edit the mails as if you were in their source folders. This is
+really practical.&lt;/p&gt;
+&lt;p&gt;If you use mutt, you can have the same experience, by using the &lt;cite&gt;notmuch-mutt&lt;/cite&gt;
+patch (&lt;cite&gt;here &amp;lt;http://notmuchmail.org/notmuch-mutt/&amp;gt;&lt;/cite&gt;). In several distributions,
+there is an option to build it with this support or another package to add the
+feature.&lt;/p&gt;
+&lt;p&gt;Another feature of notmuch is its ability to tag mails. It automatically tags
+new mails and deleted mails. But you can also explicitely tag messages by using
+&lt;code&gt;notmuch tag&lt;/code&gt;. For instance, to tag all messages from the notmuch mailing
+list:&lt;/p&gt;
+&lt;pre class="code literal-block"&gt;
+notmuch tag +notmuch -- tag:new and to:notmuch@notmuchmail.org
+&lt;/pre&gt;
+&lt;p&gt;I personally don't use this feature since I use imapfilter and IMAP folders to
+sort my mail, but it can be very useful. You can run these commands in the
+cronjob and always have you tags up to date. Tags can then be used in notmuch to
+search or to create virtual folder in Mutt.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="conclusion"&gt;
+&lt;h2&gt;Conclusion&lt;/h2&gt;
+&lt;p&gt;That is already more or less everything that there is to know about notmuch. It
+does not do a lot of thing, but it does them really well.&lt;/p&gt;
+&lt;p&gt;That concludes the series of posts on Mutt. If you have any question on my Mutt
+configuration, I'd be glad to extend on the comments.&lt;/p&gt;
+&lt;/div&gt;</description><category>Gentoo</category><category>Gmail</category><category>Linux</category><category>Mutt</category><guid>http://baptiste-wicht.com/posts/2014/08/a-mutt-journey-search-mails-with-notmuch.html</guid><pubDate>Sat, 02 Aug 2014 15:24:12 GMT</pubDate></item><item><title>A Mutt journey: Mutt configuration</title><link>http://baptiste-wicht.com/posts/2014/07/a-mutt-journey-my-mutt-configuration.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;If you've followed my Mutt posts, you'll know that I'm &lt;a class="reference external" href="http://baptiste-wicht.com/posts/2014/07/a-mutt-journey-filter-mails-with-imapfilter.html"&gt;filtering my mails with
 imapfilter&lt;/a&gt; and
 &lt;a class="reference external" href="http://baptiste-wicht.com/posts/2014/07/a-mutt-journey-download-mails-with-offlineimap.html"&gt;downloading them with offlineimap&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;In this post, I'll share my Mutt configuration. I'm not using Mutt directly, but
@@ -1238,122 +1320,4 @@ sudo apt-get install cinnamon-session&lt;/pre&gt;
 
 &lt;p&gt;Then, you have to logout and select Cinnamon in the Logon screen as the desktop environment. &lt;/p&gt;
 &lt;p&gt;Personally, I still prefer MGSE, because I like having two bars, but that will perhaps change with some more tests on Cinnamon. And you, what do you think about Cinnamon ? Or about MGSE ? &lt;/p&gt;
-&lt;p&gt;If you want more informations about this new shell, you can read &lt;a href="http://cinnamon.linuxmint.com/" title="Cinnamon Official Site" target="_blank"&gt;the official site&lt;/a&gt;.&lt;/p&gt;</description><category>Linux</category><category>Mint</category><category>Releases</category><guid>http://baptiste-wicht.com/posts/2012/01/install-cinnamon-linux-mint.html</guid><pubDate>Thu, 05 Jan 2012 07:11:19 GMT</pubDate></item><item><title>Dynamic memory allocation in Intel Assembly on Linux</title><link>http://baptiste-wicht.com/posts/2011/11/dynamic-memory-allocation-intel-assembly-linux.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;For the version 0.6.0 of the EDDI Compiler, I have written a simple dynamic memory allocation function in assembly. I did that to avoid using malloc in my assembly code. As this is not an easy subject, this article will explain the main parts of writing this function.&lt;/p&gt;
-&lt;p&gt;As the EDDI Compiler creates program for Linux platform, this article will focus on writing a little memory allocator for Linux in Intel Assembly.&lt;/p&gt;
-&lt;p&gt;In this article I will follow the &lt;em&gt;AT&amp;amp;T notation&lt;/em&gt;.&lt;/p&gt;
-&lt;h4&gt;Specifications&lt;/h4&gt;
-
-&lt;p&gt;The function works like malloc but is simpler. The specifications are the following ones:&lt;/p&gt;
-&lt;ul&gt;
-    &lt;li&gt;We call the function with one argument: the dynamic memory size we need&lt;/li&gt;
-    &lt;li&gt;The function returns the start address of the allocated memory in the &lt;strong&gt;%eax&lt;/strong&gt; register&lt;/li&gt;
-    &lt;li&gt;There is no need to deallocate the allocated memory&lt;/li&gt;
-    &lt;li&gt;The size that we ask will generally small and always less than 16384 octets&lt;/li&gt;
-    &lt;li&gt;Having some gaps in the memory is not a problem for now&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;So as you can see there are several limitations to this memory allocator. These limitations are the one I had for EDDI, so I'll follow them in this article.&lt;/p&gt;
-&lt;h4&gt;Dynamic memory allocation&lt;/h4&gt;
-
-&lt;p&gt;In Linux, there are two ways for performing dynamic memory allocation:&lt;/p&gt;
-&lt;ul&gt;
-    &lt;li&gt;&lt;strong&gt;brk&lt;/strong&gt;: Increment the size of the data segment after the end of the program. This memory is directly after the program and is always contiguous. It's the easiest way for allocating memory. This technique is not perfect for large blocks of data.&lt;/li&gt;
-    &lt;li&gt;&lt;strong&gt;mmap&lt;/strong&gt;: Creates a new memory mapping in the virtual address space. The kernel gives you memory in virtually every place of the memory.&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;In our case, as we need only small blocks, we will use &lt;strong&gt;brk&lt;/strong&gt; to dynamically allocate memory.&lt;/p&gt;
-&lt;p&gt;We can call these procedures using system calls. In assembly, you can use system calls with interruptions (0x80).&lt;/p&gt;
-&lt;h4&gt;Implementation&lt;/h4&gt;
-
-&lt;p&gt;We need two variables for this function. One to keep track of the remaining size and another one to keep track of the current address of the allocated memory.&lt;/p&gt;
-&lt;pre class="code literal-block"&gt;&lt;span class="na"&gt;.data&lt;/span&gt;
-&lt;span class="na"&gt;.size&lt;/span&gt; &lt;span class="no"&gt;VIeddi_remaining&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;4&lt;/span&gt;
-
-&lt;span class="nl"&gt;VIeddi_remaining:&lt;/span&gt;
-&lt;span class="na"&gt;.long&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;
-&lt;span class="na"&gt;.size&lt;/span&gt; &lt;span class="no"&gt;VIeddi_current&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;4&lt;/span&gt;
-
-&lt;span class="nl"&gt;VIeddi_current:&lt;/span&gt;
-&lt;span class="na"&gt;.long&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;
-&lt;/pre&gt;
-
-
-&lt;p&gt;Both variables are initialized to 0.&lt;/p&gt;
-&lt;p&gt;And here is the function I've developed :&lt;/p&gt;
-&lt;pre class="code literal-block"&gt;&lt;span class="nl"&gt;eddi_alloc:&lt;/span&gt;
-&lt;span class="nf"&gt;pushl&lt;/span&gt; &lt;span class="nv"&gt;%ebp&lt;/span&gt;
-&lt;span class="nf"&gt;movl&lt;/span&gt; &lt;span class="nv"&gt;%esp&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nv"&gt;%ebp&lt;/span&gt;
-&lt;span class="nf"&gt;movl&lt;/span&gt; &lt;span class="mi"&gt;8&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nv"&gt;%ebp&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt; &lt;span class="nv"&gt;%ecx&lt;/span&gt;
-&lt;span class="nf"&gt;movl&lt;/span&gt; &lt;span class="no"&gt;VIeddi_remaining&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nv"&gt;%ebx&lt;/span&gt;
-&lt;span class="nf"&gt;cmpl&lt;/span&gt; &lt;span class="nv"&gt;%ebx&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nv"&gt;%ecx&lt;/span&gt;
-&lt;span class="nf"&gt;jle&lt;/span&gt; &lt;span class="no"&gt;alloc_normal&lt;/span&gt;
-&lt;span class="nf"&gt;movl&lt;/span&gt; &lt;span class="no"&gt;$45&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nv"&gt;%eax&lt;/span&gt;
-&lt;span class="nf"&gt;xorl&lt;/span&gt; &lt;span class="nv"&gt;%ebx&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nv"&gt;%ebx&lt;/span&gt;
-&lt;span class="nf"&gt;int&lt;/span&gt;  &lt;span class="no"&gt;$0x80&lt;/span&gt;
-&lt;span class="nf"&gt;movl&lt;/span&gt; &lt;span class="nv"&gt;%eax&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nv"&gt;%esi&lt;/span&gt;
-&lt;span class="nf"&gt;movl&lt;/span&gt; &lt;span class="nv"&gt;%eax&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nv"&gt;%ebx&lt;/span&gt;
-&lt;span class="nf"&gt;addl&lt;/span&gt; &lt;span class="no"&gt;$16384&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nv"&gt;%ebx&lt;/span&gt;
-&lt;span class="nf"&gt;movl&lt;/span&gt; &lt;span class="no"&gt;$45&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nv"&gt;%eax&lt;/span&gt;
-&lt;span class="nf"&gt;int&lt;/span&gt;  &lt;span class="no"&gt;$0x80&lt;/span&gt;
-&lt;span class="nf"&gt;movl&lt;/span&gt; &lt;span class="nv"&gt;%esi&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nv"&gt;%eax&lt;/span&gt;
-&lt;span class="nf"&gt;movl&lt;/span&gt; &lt;span class="no"&gt;$16384&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="no"&gt;VIeddi_remaining&lt;/span&gt;
-&lt;span class="nf"&gt;movl&lt;/span&gt; &lt;span class="nv"&gt;%esi&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="no"&gt;VIeddi_current&lt;/span&gt;
-
-&lt;span class="nl"&gt;alloc_normal:&lt;/span&gt;
-&lt;span class="nf"&gt;movl&lt;/span&gt; &lt;span class="no"&gt;VIeddi_current&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nv"&gt;%eax&lt;/span&gt;
-&lt;span class="nf"&gt;movl&lt;/span&gt; &lt;span class="no"&gt;VIeddi_current&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nv"&gt;%ebx&lt;/span&gt;
-&lt;span class="nf"&gt;addl&lt;/span&gt; &lt;span class="nv"&gt;%ecx&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nv"&gt;%ebx&lt;/span&gt;
-&lt;span class="nf"&gt;movl&lt;/span&gt; &lt;span class="nv"&gt;%ebx&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="no"&gt;VIeddi_current&lt;/span&gt;
-&lt;span class="nf"&gt;movl&lt;/span&gt; &lt;span class="no"&gt;VIeddi_remaining&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nv"&gt;%ebx&lt;/span&gt;
-&lt;span class="nf"&gt;subl&lt;/span&gt; &lt;span class="nv"&gt;%ecx&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nv"&gt;%ebx&lt;/span&gt;
-&lt;span class="nf"&gt;movl&lt;/span&gt; &lt;span class="nv"&gt;%ebx&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="no"&gt;VIeddi_remaining&lt;/span&gt;
-&lt;span class="nf"&gt;leave&lt;/span&gt;
-&lt;span class="nf"&gt;ret&lt;/span&gt;
-&lt;/pre&gt;
-
-
-&lt;p&gt;I will describe now each part of the alloc function.&lt;/p&gt;
-&lt;pre class="code literal-block"&gt;&lt;span class="nf"&gt;movl&lt;/span&gt; &lt;span class="mi"&gt;8&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nv"&gt;%ebp&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt; &lt;span class="nv"&gt;%ecx&lt;/span&gt;
-&lt;span class="nf"&gt;movl&lt;/span&gt; &lt;span class="no"&gt;VIeddi_remaining&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nv"&gt;%ebx&lt;/span&gt;
-&lt;span class="nf"&gt;cmpl&lt;/span&gt; &lt;span class="nv"&gt;%ebx&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nv"&gt;%ecx&lt;/span&gt;
-&lt;span class="nf"&gt;jle&lt;/span&gt; &lt;span class="no"&gt;alloc_normal&lt;/span&gt;
-&lt;/pre&gt;
-
-
-&lt;p&gt;In this part we test if there is enough remaining size for the dynamic memory allocation request. It's equivalent to &lt;em&gt;if(remaining &amp;gt;= size)&lt;/em&gt;. If there is enough size, we jump to the normal allocation part :&lt;/p&gt;
-&lt;pre class="code literal-block"&gt;&lt;span class="nl"&gt;alloc_normal:&lt;/span&gt;
-&lt;span class="nf"&gt;movl&lt;/span&gt; &lt;span class="no"&gt;VIeddi_current&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nv"&gt;%eax&lt;/span&gt;
-&lt;span class="nf"&gt;movl&lt;/span&gt; &lt;span class="no"&gt;VIeddi_current&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nv"&gt;%ebx&lt;/span&gt;
-&lt;span class="nf"&gt;addl&lt;/span&gt; &lt;span class="nv"&gt;%ecx&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nv"&gt;%ebx&lt;/span&gt;
-&lt;span class="nf"&gt;movl&lt;/span&gt; &lt;span class="nv"&gt;%ebx&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="no"&gt;VIeddi_current&lt;/span&gt;
-&lt;span class="nf"&gt;movl&lt;/span&gt; &lt;span class="no"&gt;VIeddi_remaining&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nv"&gt;%ebx&lt;/span&gt;
-&lt;span class="nf"&gt;subl&lt;/span&gt; &lt;span class="nv"&gt;%ecx&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nv"&gt;%ebx&lt;/span&gt;
-&lt;span class="nf"&gt;movl&lt;/span&gt; &lt;span class="nv"&gt;%ebx&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="no"&gt;VIeddi_remaining&lt;/span&gt;
-&lt;/pre&gt;
-
-
-&lt;p&gt;First, we move the current address of memory into the &lt;strong&gt;%eax&lt;/strong&gt; register for the return value. Then we add the size of the new allocated block to the current address. Finally we remove the size of the new allocated block from the remaining size. After that, we can leave the function.&lt;/p&gt;
-&lt;p&gt;The most interesting part is what we do when we have to allocate more memory :&lt;/p&gt;
-&lt;pre class="code literal-block"&gt;&lt;span class="nf"&gt;movl&lt;/span&gt; &lt;span class="no"&gt;$45&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nv"&gt;%eax&lt;/span&gt;
-&lt;span class="nf"&gt;xorl&lt;/span&gt; &lt;span class="nv"&gt;%ebx&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nv"&gt;%ebx&lt;/span&gt;
-&lt;span class="nf"&gt;int&lt;/span&gt;  &lt;span class="no"&gt;$0x80&lt;/span&gt;
-&lt;span class="nf"&gt;movl&lt;/span&gt; &lt;span class="nv"&gt;%eax&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nv"&gt;%esi&lt;/span&gt;
-&lt;span class="nf"&gt;movl&lt;/span&gt; &lt;span class="nv"&gt;%eax&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nv"&gt;%ebx&lt;/span&gt;
-&lt;span class="nf"&gt;addl&lt;/span&gt; &lt;span class="no"&gt;$16384&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nv"&gt;%ebx&lt;/span&gt;
-&lt;span class="nf"&gt;movl&lt;/span&gt; &lt;span class="no"&gt;$45&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nv"&gt;%eax&lt;/span&gt;
-&lt;span class="nf"&gt;int&lt;/span&gt;  &lt;span class="no"&gt;$0x80&lt;/span&gt;
-&lt;span class="nf"&gt;movl&lt;/span&gt; &lt;span class="no"&gt;$16384&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="no"&gt;VIeddi_remaining&lt;/span&gt;
-&lt;span class="nf"&gt;movl&lt;/span&gt; &lt;span class="nv"&gt;%esi&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="no"&gt;VIeddi_current&lt;/span&gt;
-&lt;/pre&gt;
-
-
-&lt;p&gt;We start by doing an interruption to execute a system call. The &lt;strong&gt;45&lt;/strong&gt; in the &lt;strong&gt;%eax&lt;/strong&gt; register indicates a &lt;strong&gt;sys_brk&lt;/strong&gt; call. The 0 in the &lt;strong&gt;%ebx&lt;/strong&gt; register, indicates that we want the current position of brk space. We save this current position into the &lt;strong&gt;%esi&lt;/strong&gt; register. Then we add 16384 bits (4K octets) to this address. We call again the &lt;strong&gt;sys_brk&lt;/strong&gt; routine to set the address of the brk space to the calculated address. This is the way to dynamically allocates 4K of memory. Finally, we add 4K to the remaining size in octets and we put the current address (before the add) as the current address.&lt;/p&gt;
-&lt;h4&gt;Possible improvements&lt;/h4&gt;
-
-&lt;p&gt;We should make some optimization if this function has to be invoked frequently. The first interruption (call to sys_brk) has only to be done once. The very first time we need to get the start address. Then, we can use the current address as the base address when we do the new allocation.&lt;/p&gt;
-&lt;p&gt;Another improvement is to avoid having gaps between the used blocks. For that, we can avoid setting the current address directly to the newly allocated address but just add 4K to the remaining size. The blocks will overlap 2 allocated blocks.&lt;/p&gt;
-&lt;p&gt;We could also check that the value returned by the &lt;strong&gt;sys_brk&lt;/strong&gt; is valid. On error, the procedure can return -1.&lt;/p&gt;
-&lt;h4&gt;Conclusion&lt;/h4&gt;
-
-&lt;p&gt;In this post, we developed a basic dynamic memory allocation function in Intel assembly on the Linux platform. I hope that this information can helps some of you.&lt;/p&gt;
-&lt;p&gt;Don't hesitate if you have a question or a comment on my implementation.&lt;/p&gt;</description><category>Assembly</category><category>EDDI</category><category>Intel</category><category>Linux</category><guid>http://baptiste-wicht.com/posts/2011/11/dynamic-memory-allocation-intel-assembly-linux.html</guid><pubDate>Tue, 29 Nov 2011 08:16:26 GMT</pubDate></item></channel></rss>
+&lt;p&gt;If you want more informations about this new shell, you can read &lt;a href="http://cinnamon.linuxmint.com/" title="Cinnamon Official Site" target="_blank"&gt;the official site&lt;/a&gt;.&lt;/p&gt;</description><category>Linux</category><category>Mint</category><category>Releases</category><guid>http://baptiste-wicht.com/posts/2012/01/install-cinnamon-linux-mint.html</guid><pubDate>Thu, 05 Jan 2012 07:11:19 GMT</pubDate></item></channel></rss>

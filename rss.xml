@@ -1,5 +1,87 @@
 <?xml version="1.0" encoding="utf-8"?>
-<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>@Blog("Baptiste Wicht")</title><link>http://baptiste-wicht.com/</link><description>Website about vtechnologies Java, Spring, OSGi, Hardware,...</description><language>en</language><lastBuildDate>Mon, 28 Jul 2014 14:31:17 GMT</lastBuildDate><generator>http://getnikola.com/</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>Catch: A powerful yet simple C++ test framework</title><link>http://baptiste-wicht.com/posts/2014/07/catch-powerful-yet-simple-cpp-test-framework.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;Recently, I came accross a new test framework for C++ program: Catch.&lt;/p&gt;
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>@Blog("Baptiste Wicht")</title><link>http://baptiste-wicht.com/</link><description>Website about vtechnologies Java, Spring, OSGi, Hardware,...</description><language>en</language><lastBuildDate>Sat, 02 Aug 2014 22:47:03 GMT</lastBuildDate><generator>http://getnikola.com/</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>A Mutt journey: Search mails with notmuch</title><link>http://baptiste-wicht.com/posts/2014/08/a-mutt-journey-search-mails-with-notmuch.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;In the previous installment in the Mutt series, &lt;a class="reference external" href="http://baptiste-wicht.com/posts/2014/07/a-mutt-journey-my-mutt-configuration.html"&gt;I've talked about my Mutt
+configuration&lt;/a&gt;.
+In this post, I'll talk about notmuch and how to use it to search through mails.&lt;/p&gt;
+&lt;p&gt;By default, you can search mails in Mutt by using the / key. By doing that, you
+can only search in the current folder. This is very fast, but this is not always
+what you want. When you don't know in which folder the mail you are looking for
+is, you don't want to test each folder. By default, there are no feature to
+achieve global searching in Mutt.&lt;/p&gt;
+&lt;p&gt;That is where notmuch comes to the rescue. notmuch is a very simple tool that
+allows you to search through your mail. As its name indicates, it does not do
+much. It doesn't download your mails, you have to have them locally, which is
+perfect &lt;a class="reference external" href="http://baptiste-wicht.com/posts/2014/07/a-mutt-journey-download-mails-with-offlineimap.html"&gt;if you use offlineimap&lt;/a&gt;.
+It does not provide a user interface, but you can query it from the command line
+and it can be used from other tools. It should be available in most of the
+distributions.&lt;/p&gt;
+&lt;div class="section" id="configuration"&gt;
+&lt;h2&gt;Configuration&lt;/h2&gt;
+&lt;p&gt;The configuration of notmuch is fairly simple. You can write your
+&lt;code&gt;.notmuch-config&lt;/code&gt; directly or run &lt;code&gt;notmuch setup&lt;/code&gt; that will
+interactively help you to fill the configuration.&lt;/p&gt;
+&lt;p&gt;Here is my configuration:&lt;/p&gt;
+&lt;pre class="code literal-block"&gt;
+[database]
+path=/data/oi/Gmail/
+
+[user]
+name=Baptiste Wicht
+primary_email=baptiste.wicht@gmail.com
+
+[new]
+tags=inbox
+ignore=
+
+[search]
+exclude_tags=deleted;
+
+[maildir]
+synchronize_flags=true
+&lt;/pre&gt;
+&lt;p&gt;It needs of cours the place where your mails are stored. Then, some information
+about you. The next section is to specify which tags you want to add to new
+mails. Here, I specified that each new mail must be tagged with &lt;cite&gt;inbox&lt;/cite&gt;. You can
+add several tags to new mails. In the &lt;cite&gt;[search]&lt;/cite&gt; section, the excluded tags are
+specified.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="usage"&gt;
+&lt;h2&gt;Usage&lt;/h2&gt;
+&lt;p&gt;Once you have configured notmuch, you can run &lt;cite&gt;notmuch new&lt;/cite&gt; to process all
+existing mails. The first run may take some time (in minutes, it is still quite
+fast), but the subsequent runs will be very fast. You should run notmuch after
+each offlineimap run. I personally run it in a shell script that is run by cron.
+You could also use one of the hooks of offlineimap to run notmuch.&lt;/p&gt;
+&lt;p&gt;Once indexing has been done, you can start searching your mails. The first
+option to search mail is simply to use &lt;cite&gt;notmuch search &amp;lt;query&amp;gt;&lt;/cite&gt; from the command
+line. This will directly displays the results. Search is instant on my mails.&lt;/p&gt;
+&lt;p&gt;If you use mutt-kz like me, notmuch support is directly integrated. You can type
+X, and then type your query like &lt;code&gt;notmuch://?query=X&lt;/code&gt; and the results will
+be displayed as a normal Mutt folder. You can open mails directly from here and
+you can also edit the mails as if you were in their source folders. This is
+really practical.&lt;/p&gt;
+&lt;p&gt;If you use mutt, you can have the same experience, by using the &lt;cite&gt;notmuch-mutt&lt;/cite&gt;
+patch (&lt;cite&gt;here &amp;lt;http://notmuchmail.org/notmuch-mutt/&amp;gt;&lt;/cite&gt;). In several distributions,
+there is an option to build it with this support or another package to add the
+feature.&lt;/p&gt;
+&lt;p&gt;Another feature of notmuch is its ability to tag mails. It automatically tags
+new mails and deleted mails. But you can also explicitely tag messages by using
+&lt;code&gt;notmuch tag&lt;/code&gt;. For instance, to tag all messages from the notmuch mailing
+list:&lt;/p&gt;
+&lt;pre class="code literal-block"&gt;
+notmuch tag +notmuch -- tag:new and to:notmuch@notmuchmail.org
+&lt;/pre&gt;
+&lt;p&gt;I personally don't use this feature since I use imapfilter and IMAP folders to
+sort my mail, but it can be very useful. You can run these commands in the
+cronjob and always have you tags up to date. Tags can then be used in notmuch to
+search or to create virtual folder in Mutt.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="conclusion"&gt;
+&lt;h2&gt;Conclusion&lt;/h2&gt;
+&lt;p&gt;That is already more or less everything that there is to know about notmuch. It
+does not do a lot of thing, but it does them really well.&lt;/p&gt;
+&lt;p&gt;That concludes the series of posts on Mutt. If you have any question on my Mutt
+configuration, I'd be glad to extend on the comments.&lt;/p&gt;
+&lt;/div&gt;</description><category>Gentoo</category><category>Gmail</category><category>Linux</category><category>Mutt</category><guid>http://baptiste-wicht.com/posts/2014/08/a-mutt-journey-search-mails-with-notmuch.html</guid><pubDate>Sat, 02 Aug 2014 15:24:12 GMT</pubDate></item><item><title>Catch: A powerful yet simple C++ test framework</title><link>http://baptiste-wicht.com/posts/2014/07/catch-powerful-yet-simple-cpp-test-framework.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;Recently, I came accross a new test framework for C++ program: Catch.&lt;/p&gt;
 &lt;p&gt;Until I found Catch, I was using Boost Test Framework. It is working quite well,
 but the problem is that you need to build Boost and link to the Boost Test
 Framework, which is not highly convenient. I wanter something lighter and easier
@@ -1033,38 +1115,4 @@ Open Source Project Royalty Scheme, Packt Publishing supports Open Source
 project and already has awarded more than $400'000.&lt;/p&gt;
 &lt;p&gt;If you need something to read or just want to use this occasion to pile some
 ebooks, don't hesitate to profit from this superb offer.&lt;/p&gt;
-&lt;p&gt;More information on the official site: &lt;a class="reference external" href="http://bit.ly/1mE9FUz"&gt;http://bit.ly/1mE9FUz&lt;/a&gt;&lt;/p&gt;</description><category>Books</category><category>Promotion</category><category>Releases</category><guid>http://baptiste-wicht.com/posts/2014/07/all-packt-publishing-ebooks-at-10-for-10-years-anniversary.html</guid><pubDate>Tue, 01 Jul 2014 20:56:04 GMT</pubDate></item><item><title>Build OpenCV with libc++ on Gentoo and static-libs</title><link>http://baptiste-wicht.com/posts/2014/06/build-opencv-with-libcxx-on-gentoo-and-static-libs.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;When you build C++ projects with CLang, you have the choice between using the
-stdlibc++ that is provided along G++ and the new libc++ that is provided by
-CLang.&lt;/p&gt;
-&lt;p&gt;libc++ is another implementation of the C++ Standard Library. This
-implementation is dual-licensed under the MIT license and UIUC license. It is
-especially targeting C++11 and has already 100% support for C++14. This
-last point is the reason that I use libc++ on several of my projects. Moreover,
-it is also the default on Mac OS X.&lt;/p&gt;
-&lt;p&gt;The problem with linking with another library is that you can only works with
-libraries that have been compiled with libc++ support. For instance, if you want
-to use Boost dynamic libraries, you'll have to compile Boost from sources with
-libc++.&lt;/p&gt;
-&lt;p&gt;For one of my project, I'm using OpenCV and libc++. To simplify the installation
-of OpenCV, I created a new ebuild with a &lt;em&gt;libcxx&lt;/em&gt; use flag to selectively build the
-library with libc++. This requires LLVM/CLang on the build machine. Moreover, by
-default, the Gentoo ebuild does not have support for building the static
-libraries. The reason for that is that OpenCV build is not able to build dynamic
-and static libraries. I added a &lt;em&gt;static-libs&lt;/em&gt; use flag that build the static
-libraries by building OpenCV a second time after the first. That will likely
-double the compile time (unless ccache is used). Anyhow, it is simple easier
-than to build that by hand on several machine.&lt;/p&gt;
-&lt;p&gt;The ebuild is available on &lt;a class="reference external" href="https://github.com/wichtounet/wichtounet-overlay"&gt;my overlay&lt;/a&gt;. You can add the overlay to
-your machine by modifying &lt;em&gt;/etc/layman/layman.cfg&lt;/em&gt;:&lt;/p&gt;
-&lt;pre class="literal-block"&gt;
-overlays: http://www.gentoo.org/proj/en/overlays/repositories.xml
-          http://github.com/wichtounet/wichtounet-overlay/raw/master/repository.xml
-&lt;/pre&gt;
-&lt;p&gt;Then, you can add it to layman:&lt;/p&gt;
-&lt;pre class="literal-block"&gt;
-layman -S
-layman -a wichtounet
-&lt;/pre&gt;
-&lt;p&gt;For now, I have created an ebuild for &lt;em&gt;opencv-2.4.8-r1&lt;/em&gt;. If someone is
-interested in other versions, I'd be glad to create new ebuilds.&lt;/p&gt;
-&lt;p&gt;I hope that this ebuild will be helpful.&lt;/p&gt;</description><category>Gentoo</category><category>clang</category><category>libc++</category><category>opencv</category><guid>http://baptiste-wicht.com/posts/2014/06/build-opencv-with-libcxx-on-gentoo-and-static-libs.html</guid><pubDate>Tue, 10 Jun 2014 12:09:29 GMT</pubDate></item></channel></rss>
+&lt;p&gt;More information on the official site: &lt;a class="reference external" href="http://bit.ly/1mE9FUz"&gt;http://bit.ly/1mE9FUz&lt;/a&gt;&lt;/p&gt;</description><category>Books</category><category>Promotion</category><category>Releases</category><guid>http://baptiste-wicht.com/posts/2014/07/all-packt-publishing-ebooks-at-10-for-10-years-anniversary.html</guid><pubDate>Tue, 01 Jul 2014 20:56:04 GMT</pubDate></item></channel></rss>
