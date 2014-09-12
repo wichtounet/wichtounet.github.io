@@ -23,7 +23,7 @@ Several structures are available:
 * :code:`fast_matrix<T, Rows,Columns>`: A matrix of size Rows x Columns with elements of
   type T. This must be used when you know the size of the matrix at
   compile-time.
-* :code:`dyn_vector<T>`: A matrix with element of type T. The size of the matrix can be
+* :code:`dyn_matrix<T>`: A matrix with element of type T. The size of the matrix can be
   set at runtime.
 
 All the structures are size-invariant, once set they cannot be grown or
