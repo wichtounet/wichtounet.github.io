@@ -1,5 +1,72 @@
 <?xml version="1.0" encoding="utf-8"?>
-<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>@Blog("Baptiste Wicht") (Network)</title><link>http://baptiste-wicht.com/</link><description></description><language>en</language><lastBuildDate>Sun, 21 Sep 2014 21:21:06 GMT</lastBuildDate><generator>http://getnikola.com/</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>ZyXEL GS1910-24 Managed Gigabit Switch Review</title><link>http://baptiste-wicht.com/posts/2013/07/zyxel-gs1910-managed-gigabit-switch-review.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;A short time ago, &lt;a title="Home Server Adventure – Step 1" href="http://www.baptiste-wicht.com/2013/07/home-server-adventure-step-1/"&gt;I decided to install servers in a rack at my home&lt;/a&gt;. Although working very well, my 3Com managed was too much noisy for being at home. That is why I decided to change it for fanless switch. After some research, I finally chose a ZyXEL GS1910-24. It is a web-manageable gigabit switch. I chose the 24 ports version. This version has also 4 SFPs that replace 4 normal ports if enabled. I don't think I will ever need the SFPs, but it is nice to know that there are here if necessary. This switch has a lot of cool features, it supports IPV6, QoS, VLANs, filtering, RADIUS and so on.&lt;/p&gt;
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>@Blog("Baptiste Wicht") (Network)</title><link>http://baptiste-wicht.com/</link><description></description><language>en</language><lastBuildDate>Wed, 01 Oct 2014 21:03:18 GMT</lastBuildDate><generator>http://getnikola.com/</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>Linux tip: Force systemd networkd to wait for DHCP</title><link>http://baptiste-wicht.com/posts/2014/10/linux-tip-force-systemd-networkd-to-wait-for-dhcp.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;Recently, I started using systemd-networkd to manage my network. It works really
+good for static address configuration, but I experienced some problem with DHCP.
+There is DHCP client support integrated into systemd, so I wanted to use this
+instead of using another DHCP client.&lt;/p&gt;
+&lt;p&gt;(If you are not familiar with systemd-networkd, you can have a look at the last
+section of this article)&lt;/p&gt;
+&lt;p&gt;The problem with that is that services are not waiting for DHCP leases to be
+obtained. Most services (sshd for instance), are waiting for network.target,
+however, network.target does not wait for the DHCP lease to be obtained from the
+server. If you configured ssh on a specific IP and this IP is obtained with
+DHCP, it will fail at startup. The same is true for NFS mounts for instance.&lt;/p&gt;
+&lt;div class="section" id="force-services-to-wait-for-the-network-to-be-configured"&gt;
+&lt;h2&gt;Force services to wait for the network to be configured&lt;/h2&gt;
+&lt;p&gt;The solution is to make services like sshd waits for network-online.target
+instead of network.target. There is a simple way in systemd to override default
+service files. For a X.service, systemd will also parse all the
+/etc/systemd/X.service.d/*.conf files.&lt;/p&gt;
+&lt;p&gt;For instance, to make sshd be started only after DHCP is finished&lt;/p&gt;
+&lt;p&gt;/etc/systemd/systemd/sshd.service.d/network.conf:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+[Unit]
+Wants=network-online.target
+After=network-online.target
+&lt;/pre&gt;
+&lt;p&gt;However, by default, network-online.target does not wait for anything. You'll
+have to enable another service to make it work:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+systemctl enable systemd-networkd-wait-online
+&lt;/pre&gt;
+&lt;p&gt;And another note, at least on Gentoo, I had to use systemd-216 for it to work:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+emerge -a "=sys-apps/systemd-216"
+&lt;/pre&gt;
+&lt;p&gt;And after this, it worked like a charm at startup.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="force-nfs-mounts-to-wait-for-the-network"&gt;
+&lt;h2&gt;Force NFS mounts to wait for the network&lt;/h2&gt;
+&lt;p&gt;There is no service file for nfs mounts, but there is a target remote-fs.target
+that groups the remote file systems mounts. You can override its configuration
+in the same as a service:&lt;/p&gt;
+&lt;p&gt;/etc/systemd/systemd/remote-fs.target.d/network.conf:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+[Unit]
+Wants=network-online.target
+After=network-online.target
+&lt;/pre&gt;
+&lt;/div&gt;
+&lt;div class="section" id="conclusion"&gt;
+&lt;h2&gt;Conclusion&lt;/h2&gt;
+&lt;p&gt;Here we are, I hope this tip will be useful to some of you ;)&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="appendix-configure-interface-with-dhcp-with-systemd"&gt;
+&lt;h2&gt;Appendix. Configure interface with DHCP with systemd&lt;/h2&gt;
+&lt;p&gt;To configure an interface with DHCP, you have to create a .network file in
+/etc/systemd/network/. For instance, here is my
+/etc/systemd/network/local.network file:&lt;/p&gt;
+&lt;pre class="code literal-block"&gt;
+[Match]
+Name=enp3s0
+
+[Network]
+DHCP=v4
+&lt;/pre&gt;
+&lt;p&gt;and you have to enable systemd-networkd:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+systemctl enable systemd-networkd
+&lt;/pre&gt;
+&lt;/div&gt;</description><category>Gentoo</category><category>Linux</category><category>Network</category><category>Tips</category><category>systemd</category><guid>http://baptiste-wicht.com/posts/2014/10/linux-tip-force-systemd-networkd-to-wait-for-dhcp.html</guid><pubDate>Wed, 01 Oct 2014 18:18:55 GMT</pubDate></item><item><title>ZyXEL GS1910-24 Managed Gigabit Switch Review</title><link>http://baptiste-wicht.com/posts/2013/07/zyxel-gs1910-managed-gigabit-switch-review.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;A short time ago, &lt;a title="Home Server Adventure – Step 1" href="http://www.baptiste-wicht.com/2013/07/home-server-adventure-step-1/"&gt;I decided to install servers in a rack at my home&lt;/a&gt;. Although working very well, my 3Com managed was too much noisy for being at home. That is why I decided to change it for fanless switch. After some research, I finally chose a ZyXEL GS1910-24. It is a web-manageable gigabit switch. I chose the 24 ports version. This version has also 4 SFPs that replace 4 normal ports if enabled. I don't think I will ever need the SFPs, but it is nice to know that there are here if necessary. This switch has a lot of cool features, it supports IPV6, QoS, VLANs, filtering, RADIUS and so on.&lt;/p&gt;
 &lt;h4&gt;The package&lt;/h4&gt;
 
 &lt;p&gt;The package does not contains a lot of things, but does contain the essential:&lt;/p&gt;
