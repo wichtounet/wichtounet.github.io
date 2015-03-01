@@ -443,3 +443,4 @@ We now have a set of template that allow us to configure a class at compile-time
 I hope that this article interested you and that you learned something. 
 
 The code of this article is available on Github: https://github.com/wichtounet/articles/blob/master/src/named_template_par/configurable.cpp 
+It has been tested on Clang 3.5 and GCC 4.9.1. 
