@@ -86,13 +86,13 @@ There are several solutions to fix this problem:
 	<li>etc.</li>
 </ul>
 
-In this blog post we will learn how to use semaphores to fix this problem. As a matter of fact, we will a special kind of semaphores called mutexes. A mutex is a very object. Only one thread can obtain the lock on a mutex at the same time. This simple (and powerful) property of a mutex allow us to use it to fix synchronization problems. 
+In this blog post we will learn how to use semaphores to fix this problem. As a matter of fact, we will a special kind of semaphores called mutexes. A mutex is a very simple object. Only one thread can obtain the lock on a mutex at the same time. This simple (and powerful) property of a mutex allow us to use it to fix synchronization problems. 
 
 <h3>Use a mutex to make our Counter thread-safe</h3>
 
 In the C++11 threading library, the mutexes are in the mutex header and the class representing a mutex is the std::mutex class. There are two important methods on a mutex: lock() and unlock(). As their names indicate, the first one enable a thread to obtain the lock and the second releases the lock. The lock() method is blocking. The thread will only return from the lock() method when the lock has been obtained. 
 
-To make our Counter struct thread-safe, we have to add a set::mutex member to it and then to lock()/unlock() the mutex in every function of the object: 
+To make our Counter struct thread-safe, we have to add a std::mutex member to it and then to lock()/unlock() the mutex in every function of the object: 
 
 ```cpp
 struct Counter {
@@ -109,7 +109,7 @@ struct Counter {
 };
 ```
 
-If we test now this implementation with the same code as before for starting the threads, the program will always displays 500. 
+If we now test this implementation with the same code as before for starting the threads, the program will always display 500. 
 
 <h3>Exceptions and locks</h3>
 
@@ -156,7 +156,7 @@ struct ConcurrentCounter {
 };
 ```
 
-This wrapper works well in most of the cases, but when an exception occurs in the decrement method, you have a big problem. Indeed, if an exception occurs, the unlock() function is not called and so the lock is not released. As a consequence, you program is completely blocked. To fix this problem, you have to use a try/catch structure to unlock the lock before throwing again the exception:
+This wrapper works well in most of the cases, but when an exception occurs in the decrement method, you have a big problem. Indeed, if an exception occurs, the unlock() function is not called and so the lock is left in a blocked state. Then, you program is completely blocked. To fix this problem, you have to use a try/catch structure to unlock the lock before throwing again the exception:
 
 ```cpp
 void decrement(){
