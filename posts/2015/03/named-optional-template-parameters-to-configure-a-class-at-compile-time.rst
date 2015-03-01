@@ -196,9 +196,11 @@ Making *get_value_char* could be achieved by replacing each *int* by *char* but 
     template<typename D>
     struct get_value<D> : std::integral_constant<decltype(D::value), D::value> {};
 
-    This code is almost the same as get_value_int except that the return type is deduced from the value of the parameters. I used *decltype* and *auto* to automatically gets the correct types for the values. This is the only thing that changed.
+This code is almost the same as get_value_int except that the return type is deduced from the value of the parameters. I used *decltype* and *auto* to automatically gets the correct types for the values. This is the only thing that changed.
 
-    With that we are ready the parameter c as well: 
+With that we are ready the parameter c as well: 
+
+.. code:: c++
 
     template<typename... Args>
     struct configurable_v2 {
