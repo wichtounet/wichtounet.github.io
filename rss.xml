@@ -1,5 +1,76 @@
 <?xml version="1.0" encoding="utf-8"?>
-<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>@Blog("Baptiste Wicht")</title><link>http://baptiste-wicht.com/</link><description>Website about vtechnologies Java, Spring, OSGi, Hardware,...</description><language>en</language><lastBuildDate>Sat, 07 Mar 2015 16:18:10 GMT</lastBuildDate><generator>http://getnikola.com/</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>How to speed up RAID (5-6) growing with mdadm ?</title><link>http://baptiste-wicht.com/posts/2015/03/how-to-speed-up-raid-5-6-growing-with-mdadm.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;Yesterday, I added my 11th disk to my RAID 6 array. As the last time it took my more than 20 hours, I spent some time investigating how to speed things up and this post contains some tips on how to achieve good grow performances. With these tips, I have been able to reach a speed of about 55K in average during reshape. It did finish in about 13 hours.&lt;/p&gt;
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>@Blog("Baptiste Wicht")</title><link>http://baptiste-wicht.com/</link><description>Website about vtechnologies Java, Spring, OSGi, Hardware,...</description><language>en</language><lastBuildDate>Thu, 14 May 2015 18:22:58 GMT</lastBuildDate><generator>http://getnikola.com/</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>Sonar C++ Community Plugin Review</title><link>http://baptiste-wicht.com/posts/2015/05/sonar-cpp-community-plugin-review.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;It's been a long time since I have written on this blog. I have had quite a lot of work between my Ph.D and my teaching. I have several projects going on, I'll try to write updates on them later on.&lt;/p&gt;
+&lt;p&gt;Some time ago, I wrote an article &lt;cite&gt;about the official C++ plugin for Sonar &amp;lt;http://baptiste-wicht.com/posts/2014/10/sonarqube-inspections-for-cpp-projects.html&amp;gt;&lt;/cite&gt;. I was quite disappointed by the quality of a plugin. I was expecting more from an expensive official plugin.&lt;/p&gt;
+&lt;p&gt;There is an open-source alternative to the commercial plugin: &lt;cite&gt;sonar-cxx-plugin &amp;lt;https://github.com/wenns/sonar-cxx&amp;gt;&lt;/cite&gt;. I already tested it quite some time ago (a development version of the 0.9.1 version) and the results were quite bad. I'm using C++11 and C++14 in almost all of my projects and the support was quite bad at that time. Happily, this support has now gotten much better :) In this article, I'll talk about the version 0.9.2.&lt;/p&gt;
+&lt;div class="section" id="usage"&gt;
+&lt;h2&gt;Usage&lt;/h2&gt;
+&lt;p&gt;The usage of this plugin is very easy, you don't need any complicated build wrapping techniques for it. You simply need to complete a &lt;em&gt;sonar-project.properties&lt;/em&gt; file:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+sonar.projectKey=etl
+sonar.projectName=etl
+sonar.projectVersion=1.0
+
+sonar.sourceEncoding=UTF-8
+sonar.sources=include,test,workbench
+sonar.language=c++
+&lt;/pre&gt;
+&lt;p&gt;After that, you simply have to use &lt;em&gt;sonar-runner&lt;/em&gt; as for any other Sonar project:&lt;/p&gt;
+&lt;blockquote&gt;
+sonar-runner&lt;/blockquote&gt;
+&lt;p&gt;And the analysis will be run.&lt;/p&gt;
+&lt;p&gt;I haven't had any issues with the analysis. However, the plugin is not yet completely C++11/C++14 compatible, therefore I'm encountering a lot of parser errors during the analysis. When an error is encountered by the parser, the line is skipped and the parser goes to the next line. This means that the analysis of the line is incomplete, which may lead to false positives or to missing issues. This comes from that sonar-cxx uses its own parser, which is to on par with clang-compatible parsers for instance.&lt;/p&gt;
+&lt;p&gt;Here is the Sonar summary of my ETL project:&lt;/p&gt;
+&lt;img alt="/images/sonar_summary.png" src="http://baptiste-wicht.com/images/sonar_summary.png"&gt;
+&lt;/div&gt;
+&lt;div class="section" id="inspections"&gt;
+&lt;h2&gt;Inspections&lt;/h2&gt;
+&lt;p&gt;This plugin supports some inspections on itself. Nevertheless, you have to enable since it seems that most of them are disable by default. Code duplication is also automatically generated during the analysis:&lt;/p&gt;
+&lt;img alt="/images/sonar_duplicated.png" src="http://baptiste-wicht.com/images/sonar_duplicated.png"&gt;
+&lt;p&gt;The philosophy of this project is not to develop all inspections, but to integrate with other tools. For instance, cppcheck is already supported and the integration works perfectly. Here are the tools that sonar-cxx supports for quality analysis:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;cppcheck&lt;/li&gt;
+&lt;li&gt;valgrind&lt;/li&gt;
+&lt;li&gt;Vera++&lt;/li&gt;
+&lt;li&gt;RATS&lt;/li&gt;
+&lt;li&gt;PC-Lint&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;I have only tested cppcheck for now. I plan to use valgrind running on my tests in the future. I don't plan to use the others.&lt;/p&gt;
+&lt;p&gt;It should also be noted that the plugin supports compiler warnings coming from G++ and Visual Studio. I don't use this since I compile all my projects with -Werror.&lt;/p&gt;
+&lt;p&gt;The biggest absent here is Clang, there is no support for its warnings, its static-analyzer or its advanced clang-tidy tool. If clang-tidy support does not come in the near future, I'm planning to try to add it myself, provided I find some time.&lt;/p&gt;
+&lt;p&gt;You can have to some inspections on one of my project:&lt;/p&gt;
+&lt;img alt="/images/sonar_inspections.png" src="http://baptiste-wicht.com/images/sonar_inspections.png"&gt;
+&lt;p&gt;As with any Sonar projects, you have access to the Hotsposts view:&lt;/p&gt;
+&lt;img alt="/images/sonar_hotspots.png" src="http://baptiste-wicht.com/images/sonar_hotspots.png"&gt;
+&lt;/div&gt;
+&lt;div class="section" id="unit-tests-integration"&gt;
+&lt;h2&gt;Unit Tests Integration&lt;/h2&gt;
+&lt;p&gt;I have been able to integrate my unit tests results inside Sonar. The plugin expects JUnit compatible format. Several of C++ unit test libraries already generates compatible format. In my case, I used Catch and it worked very well.&lt;/p&gt;
+&lt;p&gt;What is even more interesting is the support for code coverage. You have to run your coverage-enabled executable and then use gcovr to generate an XML file that the plugin can read.&lt;/p&gt;
+&lt;p&gt;This support works quite well. The only thing I haven't been able to make work is the execution time computation of the unit tests, but that is not something I really care about.&lt;/p&gt;
+&lt;p&gt;Here are the coverage results for one of my files:&lt;/p&gt;
+&lt;img alt="/images/sonar_coverage.png" src="http://baptiste-wicht.com/images/sonar_coverage.png"&gt;
+&lt;/div&gt;
+&lt;div class="section" id="conclusion"&gt;
+&lt;h2&gt;Conclusion&lt;/h2&gt;
+&lt;p&gt;&lt;strong&gt;Pros&lt;/strong&gt;&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;Support of a lot of external tools&lt;/li&gt;
+&lt;li&gt;Very easy to use&lt;/li&gt;
+&lt;li&gt;Duplicated code analysis&lt;/li&gt;
+&lt;li&gt;Very good code coverage analysis integration&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;Cons&lt;/strong&gt;&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;Too few integrated inspections&lt;/li&gt;
+&lt;li&gt;Limited parsing of C++&lt;/li&gt;
+&lt;li&gt;Not fully compatible with C++11/C++14&lt;/li&gt;
+&lt;li&gt;False positives&lt;/li&gt;
+&lt;li&gt;Not enough love for clang (compiler warnings, clang-tidy, tooling, static-analyzer, ...)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;The provided metrics are really good, the usage is quite simple and this plugin supports some external tools adding interesting inspections. Even if this plugin is not perfect, it is a very good way to do Continuous Quality Analysis of your C++ projects. I personally find it superior to the official plugin. The usage is more simple (no build-wrapper that does not work), it supports more external tools and supports JUnit reports. On the other hand, it has much less integrated inspections and rely more on external tools. Both have problems with modern C++ features.&lt;/p&gt;
+&lt;p&gt;What I would really like in this plugin is the support of the clang-tidy analyzer (and other Clang analysis tools) and also complete C++11/C++14 support. I honestly think that the only way to fix the latter is to switch to Clang parsing with libtooling rather than developing an in-house parser, but that is not up to me.&lt;/p&gt;
+&lt;p&gt;I will definitely continue to use this plugin to generate metrics for my C++ projects. I use it with Jenkins which launch the analysis every time I push to one my git repositories. This plugin definitely shows promises.&lt;/p&gt;
+&lt;/div&gt;</description><category>C++</category><category>Review</category><category>Sonar</category><category>Tools</category><guid>http://baptiste-wicht.com/posts/2015/05/sonar-cpp-community-plugin-review.html</guid><pubDate>Thu, 14 May 2015 15:09:59 GMT</pubDate></item><item><title>How to speed up RAID (5-6) growing with mdadm ?</title><link>http://baptiste-wicht.com/posts/2015/03/how-to-speed-up-raid-5-6-growing-with-mdadm.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;Yesterday, I added my 11th disk to my RAID 6 array. As the last time it took my more than 20 hours, I spent some time investigating how to speed things up and this post contains some tips on how to achieve good grow performances. With these tips, I have been able to reach a speed of about 55K in average during reshape. It did finish in about 13 hours.&lt;/p&gt;
 &lt;p&gt;First, take into account that some of these tips may depend on your configuration. In my case, this server is only used for this RAID, so I don't care if the CPU is used a lot during rebuild or if other processes are suffering from the load. This may not be the case with your configuration. Moreover, I speak only of hard disks, if you use SSD RAID, there are probably better way of tuning the rebuild (or perhaps it is fast enough). Finally, you have know that a RAID reshape is going to be slow, there is no way you'll grow a 10+ RAID array in one hour. G&lt;/p&gt;
 &lt;p&gt;In the examples, I use /dev/md0 as the raid array, you'll have to change this to your array name.&lt;/p&gt;
 &lt;p&gt;The first 3 tips can be used even after the rebuild has started and you should the differences in real-time. But, these 3 tips will also be erased after each reboot.&lt;/p&gt;
@@ -1069,236 +1140,4 @@ use it.&lt;/p&gt;
 &lt;p&gt;If you find an issue or have an idea to improve it, just post it on Github or
 as a comment here and I'll do my best to work on that. If you have any question
 on the usage of the library, I'd be glad to answer them.&lt;/p&gt;
-&lt;/div&gt;</description><category>C++11</category><category>C++14</category><category>C++</category><category>Libraries</category><guid>http://baptiste-wicht.com/posts/2014/07/etl-cpp-library-for-vector-and-matrix-computations.html</guid><pubDate>Fri, 25 Jul 2014 08:46:33 GMT</pubDate></item><item><title>A Mutt journey: Mutt configuration</title><link>http://baptiste-wicht.com/posts/2014/07/a-mutt-journey-my-mutt-configuration.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;If you've followed my Mutt posts, you'll know that I'm &lt;a class="reference external" href="http://baptiste-wicht.com/posts/2014/07/a-mutt-journey-filter-mails-with-imapfilter.html"&gt;filtering my mails with
-imapfilter&lt;/a&gt; and
-&lt;a class="reference external" href="http://baptiste-wicht.com/posts/2014/07/a-mutt-journey-download-mails-with-offlineimap.html"&gt;downloading them with offlineimap&lt;/a&gt;.&lt;/p&gt;
-&lt;p&gt;In this post, I'll share my Mutt configuration. I'm not using Mutt directly, but
-mutt-kz which is a fork with good notmuch integration. For this post, it won't
-change anything.&lt;/p&gt;
-&lt;div class="section" id="configuration"&gt;
-&lt;h2&gt;Configuration&lt;/h2&gt;
-&lt;p&gt;The complete configuration is made in the .muttrc file. Mutt configuration
-supports the source command so that you can put some of your settings in another
-files and source them from the .muttrc file. You'll see that the configuration
-can soon grow large and therefore, splitting it in several files will save you a
-lot of maintenance issues ;)&lt;/p&gt;
-&lt;p&gt;First, let's tell Mutt who we are:&lt;/p&gt;
-&lt;pre class="literal-block"&gt;
-set from = "baptiste.wicht@gmail.com"
-set realname = "Baptiste Wicht"
-&lt;/pre&gt;
-&lt;/div&gt;
-&lt;div class="section" id="receive-mail"&gt;
-&lt;h2&gt;Receive mail&lt;/h2&gt;
-&lt;p&gt;As I'm using offlineimap to get my mails, there is no IMAP settings in my
-configuration. But you need to tell Mutt where the mails are:&lt;/p&gt;
-&lt;pre class="literal-block"&gt;
-set folder = /data/oi/
-
-set spoolfile = "+Gmail/INBOX"
-set postponed = "+Gmail/drafts"
-
-source ~/.mutt/mailboxes
-&lt;/pre&gt;
-&lt;p&gt;The spoolfile and postponed are specifying the inbox and draft mailboxes. The
-.mutt/mailboxes file is generated by offlineimap.&lt;/p&gt;
-&lt;p&gt;By default, Mutt will ask you to move read messages from INBOX to another
-mailbox (set by mbox). I personally let my read messages in my inbox and move
-them myself in a folder. For that, you have to disable the move:&lt;/p&gt;
-&lt;pre class="literal-block"&gt;
-set move = no
-&lt;/pre&gt;
-&lt;p&gt;If you move a mail from a mailbox to another, Mutt will ask for confirmation,
-you can disable this confirmation:&lt;/p&gt;
-&lt;pre class="literal-block"&gt;
-set confirmappend = no
-&lt;/pre&gt;
-&lt;p&gt;If you use Mutt, you want to read plaintext messages rather than monstruous
-HTML. You can tell Mutt to always open text plain if any:&lt;/p&gt;
-&lt;pre class="literal-block"&gt;
-alternative_order text/plain text/html
-&lt;/pre&gt;
-&lt;p&gt;If the mail has no text/plain part, you can manage to read HTML in Mutt in an
-almost sane format. First, you need to tell Mutt to open html messages:&lt;/p&gt;
-&lt;pre class="literal-block"&gt;
-auto_view text/html
-&lt;/pre&gt;
-&lt;p&gt;And then, you need to tell it how to open it. Mutt reads a mailcap file to know
-how to open content. You can tell Mutt where it is:&lt;/p&gt;
-&lt;pre class="literal-block"&gt;
-set mailcap_path = ~/.mailcap
-&lt;/pre&gt;
-&lt;p&gt;And then, you have to edit the .mailcap file:&lt;/p&gt;
-&lt;pre class="literal-block"&gt;
-text/html; w3m -I %{charset} -T text/html; copiousoutput;
-&lt;/pre&gt;
-&lt;p&gt;That will use w3m to output the message inside Mutt. It works quite well. You
-can also use linx if you prefer.&lt;/p&gt;
-&lt;/div&gt;
-&lt;div class="section" id="send-mail"&gt;
-&lt;h2&gt;Send mail&lt;/h2&gt;
-&lt;p&gt;You need to indicate Mutt how to send mail:&lt;/p&gt;
-&lt;pre class="literal-block"&gt;
-set smtp_url = "smtp://baptistewicht@smtp.gmail.com:587/"
-set smtp_pass = "SECRET"
-&lt;/pre&gt;
-&lt;p&gt;Some people prefer to use another SMTP client instead of Mutt builtin SMTP
-support, you can also do that by setting sendmail to the mailer program.&lt;/p&gt;
-&lt;p&gt;It is generally a good idea to enforce the charset of sent mail:&lt;/p&gt;
-&lt;pre class="literal-block"&gt;
-set send_charset="utf-8"
-&lt;/pre&gt;
-&lt;p&gt;You can choose another charset if you prefer ;)&lt;/p&gt;
-&lt;p&gt;You need to configure vim to correctly handle mail editing:&lt;/p&gt;
-&lt;pre class="literal-block"&gt;
-set editor='vim + -c "set textwidth=72" -c "set wrap" -c "set spell spelllang=en"'
-&lt;/pre&gt;
-&lt;p&gt;It sets the width of the text, enable wrap and configure spelling.&lt;/p&gt;
-&lt;p&gt;By default, Mutt will ask you if you want to include the body of the message you
-reply to in your answer and the reply subject. You can make that faster by using
-these two lines:&lt;/p&gt;
-&lt;pre class="literal-block"&gt;
-set include=yes
-set fast_reply
-&lt;/pre&gt;
-&lt;p&gt;Once mail are sent, they are copied in your outgoing mailbox. If you use GMail,
-the STMP server already does that for you, therefore you should disable this
-behavior:&lt;/p&gt;
-&lt;pre class="literal-block"&gt;
-set copy = no
-&lt;/pre&gt;
-&lt;/div&gt;
-&lt;div class="section" id="appearance"&gt;
-&lt;h2&gt;Appearance&lt;/h2&gt;
-&lt;p&gt;Many things can also be configured in the appearance of Mutt. If you like the
-threaded view of GMail, you want to configure Mutt in a similar way:&lt;/p&gt;
-&lt;pre class="literal-block"&gt;
-set sort = 'threads'
-set sort_aux = 'reverse-last-date-received'
-&lt;/pre&gt;
-&lt;p&gt;It is not as good as the GMail view, but it does the job :)&lt;/p&gt;
-&lt;p&gt;You can make reading mail more comfortable using smart wrapping:&lt;/p&gt;
-&lt;pre class="literal-block"&gt;
-set smart_wrap
-&lt;/pre&gt;
-&lt;p&gt;A mail has many many headers and you don't want to see them all:&lt;/p&gt;
-&lt;pre class="literal-block"&gt;
-ignore *
-unignore From To Reply-To Cc Bcc Subject Date Organization X-Label X-Mailer User-Agent
-&lt;/pre&gt;
-&lt;p&gt;With that, you just configure which headers you're interested in.&lt;/p&gt;
-&lt;p&gt;If you're using the sidebar patch (and you should be ;), you can configure the
-sidebar:&lt;/p&gt;
-&lt;pre class="literal-block"&gt;
-set sidebar_visible = yes
-set sidebar_width = 35
-set sort_sidebar = desc
-
-color sidebar_new yellow default
-&lt;/pre&gt;
-&lt;p&gt;It makes the sidebar always visible with a width of 35 and sort the mailboxes.
-The last line makes yellow the mailboxes that have unread mails.&lt;/p&gt;
-&lt;p&gt;The index_format allows you to set what will shown for every mail in the index
-view:&lt;/p&gt;
-&lt;pre class="literal-block"&gt;
-set index_format = "%4C %Z %{%b %d} %-15.15L %?M?(#%03M)&amp;amp;(%4l)? %?y?{%.20y}? %?g?{%.20g} ?%s (%c)"
-&lt;/pre&gt;
-&lt;p&gt;This is a classical example that display the sender, the flags, the date, the
-subject, the size of the mail and so on. You will need to look at the &lt;a class="reference external" href="http://www.mutt.org/doc/manual/manual-6.html"&gt;Reference&lt;/a&gt; to have more information on
-what you can do with the format variables. There are plenty of information that
-can be shown.&lt;/p&gt;
-&lt;p&gt;You can also configure the text that is present on the status bar:&lt;/p&gt;
-&lt;pre class="literal-block"&gt;
-set status_chars  = " *%A"
-set status_format = "───[ Folder: %f ]───[%r%m messages%?n? (%n new)?%?d? (%d to delete)?%?t? (%t tagged)? ]───%&amp;gt;─%?p?( %p postponed )?───"
-&lt;/pre&gt;
-&lt;p&gt;The example here displays the current folder, the number of mails in it with
-some details on deleted and unread mails and finally the number of postponed
-mail. Again, if you want more information, you can read the reference.&lt;/p&gt;
-&lt;p&gt;You can configure Mutt so that the index view is always visible when you read
-mails. For instance, to always show 8 mails in the index:&lt;/p&gt;
-&lt;pre class="literal-block"&gt;
-set pager_index_lines=8
-&lt;/pre&gt;
-&lt;p&gt;Another important thing you can configure is the colors of Mutt. I'm not gonna
-cover everything, since Mutt is very powerful on this part. For instance, here
-are some examples from my configuration:&lt;/p&gt;
-&lt;p&gt;color index         red             white           "~v~(~F)!~N"                # collapsed thread with flagged, no unread
-color index         yellow          white           "~v~(~F~N)"                 # collapsed thread with some unread &amp;amp; flagged
-color index_subject brightred       default         "~z &amp;gt;100K"
-color header        blue            default         "^(Subject)"&lt;/p&gt;
-&lt;p&gt;Unless you are really wanting to spend time on this part, I recommend to pick an
-existing theme. I took a Solarized theme &lt;a class="reference external" href="https://github.com/altercation/mutt-colors-solarized"&gt;here&lt;/a&gt;. It looks quite good
-and works well. There other themes available, you'll surely find the one that
-looks best for you.&lt;/p&gt;
-&lt;/div&gt;
-&lt;div class="section" id="bindings"&gt;
-&lt;h2&gt;Bindings&lt;/h2&gt;
-&lt;p&gt;Bindings are always very important. If like me, you're a vim aficionado, you'll
-want your Mutt bindings to be as close as possible to vim. The default settings
-are quite good, but not always close to vim.&lt;/p&gt;
-&lt;p&gt;Something that is important to know when you configure Mutt bindings is that
-they are relative to the current view open (index, pager,browser,attach, ...).
-You can bind a keystroke to a different action in each view. You can also select
-several views in which the keystroke is valid.&lt;/p&gt;
-&lt;p&gt;If you are using the sidebar patch (and again, you should ;) ), you'll want to
-configure fast bindings for it. Here are mine:&lt;/p&gt;
-&lt;pre class="literal-block"&gt;
-bind index,pager \Ck sidebar-prev
-bind index,pager \Cj sidebar-next
-bind index,pager \Cl sidebar-open
-bind index,pager \Cn sidebar-scroll-up
-bind index,pager \Cv sidebar-scroll-down
-bind index,pager \Ct sidebar-toggle
-&lt;/pre&gt;
-&lt;p&gt;I use Ctrl+j,k to move inside the sidebar. I use Ctrl+l to open a folder and
-Ctrl+n,v to scroll up and down. The last one is to toggle between multiple
-sidebars for instance if you use notmuch.&lt;/p&gt;
-&lt;p&gt;I find l very good to open messages in the index too:&lt;/p&gt;
-&lt;pre class="literal-block"&gt;
-bind index l display-message
-bind index gg first-entry
-bind index G last-entry
-bind index h noop               # Disable h
-&lt;/pre&gt;
-&lt;p&gt;gg and G are used to go to the first and last element. Here I disabled h which
-had a not often used command.&lt;/p&gt;
-&lt;p&gt;The pager is the view where you read mail:&lt;/p&gt;
-&lt;pre class="literal-block"&gt;
-bind pager h exit
-bind pager gg top
-bind pager G bottom
-bind pager J next-line
-bind pager K previous-line
-&lt;/pre&gt;
-&lt;p&gt;In this view, I use h to get out of the pager, gg and G as usual. As I always
-let the index open, I already use j and k to move in the index, so I chose J and
-K to move in the pager.&lt;/p&gt;
-&lt;p&gt;The browser is the view where you select folders for instance:&lt;/p&gt;
-&lt;pre class="literal-block"&gt;
-bind browser l select-entry
-bind browser L view-file
-bind browser gg first-entry
-bind browser G last-entry
-bind browser h exit
-&lt;/pre&gt;
-&lt;p&gt;Again, I use l and h to go back and forth and gg and G to go first and last. j
-and k are already used here to go up and down.&lt;/p&gt;
-&lt;p&gt;In the attach view:&lt;/p&gt;
-&lt;pre class="literal-block"&gt;
-bind attach h exit
-bind attach e edit-type # Edit MIME Types
-bind attach l view-attach
-&lt;/pre&gt;
-&lt;p&gt;I use h to exit and l to view an attachment.&lt;/p&gt;
-&lt;p&gt;That is it for my bindings, but you configure a lot more of them.&lt;/p&gt;
-&lt;/div&gt;
-&lt;div class="section" id="conclusion"&gt;
-&lt;h2&gt;Conclusion&lt;/h2&gt;
-&lt;p&gt;This is the end of this post. I have covered my complete Mutt configuration
-here. My .muttrc is available &lt;a class="reference external" href="https://github.com/wichtounet/dotfiles/blob/master/.muttrc"&gt;online&lt;/a&gt;.&lt;/p&gt;
-&lt;p&gt;If you have comments on my configuration, you're welcome to let a comment on
-this post ;)&lt;/p&gt;
-&lt;p&gt;In the next blog post about my "Mutt journey", I'll talk about notmuch and this
-will likely be the last post on this series.&lt;/p&gt;
-&lt;/div&gt;</description><category>Gentoo</category><category>Gmail</category><category>Linux</category><category>Mutt</category><guid>http://baptiste-wicht.com/posts/2014/07/a-mutt-journey-my-mutt-configuration.html</guid><pubDate>Tue, 22 Jul 2014 20:14:32 GMT</pubDate></item></channel></rss>
+&lt;/div&gt;</description><category>C++11</category><category>C++14</category><category>C++</category><category>Libraries</category><guid>http://baptiste-wicht.com/posts/2014/07/etl-cpp-library-for-vector-and-matrix-computations.html</guid><pubDate>Fri, 25 Jul 2014 08:46:33 GMT</pubDate></item></channel></rss>
