@@ -1,5 +1,64 @@
 <?xml version="1.0" encoding="utf-8"?>
-<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>@Blog("Baptiste Wicht")</title><link>http://baptiste-wicht.com/</link><description>Website about vtechnologies Java, Spring, OSGi, Hardware,...</description><language>en</language><lastBuildDate>Thu, 14 May 2015 18:22:58 GMT</lastBuildDate><generator>http://getnikola.com/</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>Sonar C++ Community Plugin Review</title><link>http://baptiste-wicht.com/posts/2015/05/sonar-cpp-community-plugin-review.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;It's been a long time since I have written on this blog. I have had quite a lot of work between my Ph.D and my teaching. I have several projects going on, I'll try to write updates on them later on.&lt;/p&gt;
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>@Blog("Baptiste Wicht")</title><link>http://baptiste-wicht.com/</link><description>Website about vtechnologies Java, Spring, OSGi, Hardware,...</description><language>en</language><lastBuildDate>Sat, 23 May 2015 20:09:31 GMT</lastBuildDate><generator>http://getnikola.com/</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>C++17 Fold Expressions</title><link>http://baptiste-wicht.com/posts/2015/05/cpp17-fold-expressions.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div class="section" id="variadic-templates"&gt;
+&lt;h2&gt;Variadic Templates&lt;/h2&gt;
+&lt;p&gt;C++11 introduced variadic template to the languages. This new feature allows to write template functions and classes taking an arbitrary number of template parameters. This a feature I really like and I already used it quite a lot in my different libraries. Here is a very simple example computing the sum of the parameters:&lt;/p&gt;
+&lt;pre class="code c++ literal-block"&gt;
+&lt;span class="k"&gt;auto&lt;/span&gt; &lt;span class="nf"&gt;old_sum&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="k"&gt;template&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="k"&gt;typename&lt;/span&gt; &lt;span class="n"&gt;T1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="k"&gt;typename&lt;/span&gt;&lt;span class="p"&gt;...&lt;/span&gt; &lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;span class="k"&gt;auto&lt;/span&gt; &lt;span class="n"&gt;old_sum&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;T1&lt;/span&gt; &lt;span class="n"&gt;s&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="p"&gt;...&lt;/span&gt; &lt;span class="n"&gt;ts&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;s&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;old_sum&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;ts&lt;/span&gt;&lt;span class="p"&gt;...);&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;
+&lt;p&gt;What can be seen here is a typical use of variadic templates. Almost all the time, is is necessary to use recursion and several functions to unpack the parameters and process them. There is only one way to unpack the arguments, by using the ... operator that simply put comma between arguments. Even if it works well, it is a bit heavy on the code. This will likely be completely optimized to a series of addition by the compiler, but it may still happen in more complicated functions that this is not done. Moreover, the intent is not always clear with that.&lt;/p&gt;
+&lt;p&gt;That is why C++17 introduced an extension for the variadic template, fold expressions.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="fold-expressions"&gt;
+&lt;h2&gt;Fold expressions&lt;/h2&gt;
+&lt;p&gt;Fold expressions are a new way to unpack variadic parameters with operators. For now, only Clang 3.6 supports C++17 fold expression, with the -std=c++1z flag. That is the compiler I used to validate the examples of this post.&lt;/p&gt;
+&lt;p&gt;The syntax is bit disturbing at first but quite logical:&lt;/p&gt;
+&lt;pre class="code c++ literal-block"&gt;
+&lt;span class="p"&gt;(&lt;/span&gt; &lt;span class="n"&gt;pack&lt;/span&gt; &lt;span class="n"&gt;op&lt;/span&gt; &lt;span class="p"&gt;...&lt;/span&gt; &lt;span class="p"&gt;)&lt;/span&gt;             &lt;span class="c1"&gt;//(1)
+&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt; &lt;span class="p"&gt;...&lt;/span&gt; &lt;span class="n"&gt;op&lt;/span&gt; &lt;span class="n"&gt;pack&lt;/span&gt; &lt;span class="p"&gt;)&lt;/span&gt;             &lt;span class="c1"&gt;//(2)
+&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt; &lt;span class="n"&gt;pack&lt;/span&gt; &lt;span class="n"&gt;op&lt;/span&gt; &lt;span class="p"&gt;...&lt;/span&gt; &lt;span class="n"&gt;op&lt;/span&gt; &lt;span class="n"&gt;init&lt;/span&gt; &lt;span class="p"&gt;)&lt;/span&gt;     &lt;span class="c1"&gt;//(3)
+&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt; &lt;span class="n"&gt;init&lt;/span&gt; &lt;span class="n"&gt;op&lt;/span&gt; &lt;span class="p"&gt;...&lt;/span&gt; &lt;span class="n"&gt;op&lt;/span&gt; &lt;span class="n"&gt;pack&lt;/span&gt; &lt;span class="p"&gt;)&lt;/span&gt;     &lt;span class="c1"&gt;//(4)&lt;/span&gt;
+&lt;/pre&gt;
+&lt;p&gt;Where &lt;em&gt;pack&lt;/em&gt; is an unexpanded parameter pack, &lt;em&gt;op&lt;/em&gt; an operator and &lt;em&gt;init&lt;/em&gt; a value. The version (1) is a right fold that is expanded like (P1 op (P2 op (P3 ... (PN-1 op PN)))). The version (2) is a left fold where the expansion is taken from the left. The (3) and (4) versions are almost the value except for an init value. Only some operators (+,*,&amp;amp;,|,&amp;amp;&amp;amp;,||, ,) have defined init values and can be used with the versions (1) and (2). The other operators can only be used with an init value.&lt;/p&gt;
+&lt;p&gt;For instance, here is how we could write the sum functions with fold expressions:&lt;/p&gt;
+&lt;pre class="code c++ literal-block"&gt;
+&lt;span class="k"&gt;template&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="k"&gt;typename&lt;/span&gt;&lt;span class="p"&gt;...&lt;/span&gt; &lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;span class="k"&gt;auto&lt;/span&gt; &lt;span class="n"&gt;fold_sum_1&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="p"&gt;...&lt;/span&gt; &lt;span class="n"&gt;s&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="p"&gt;(...&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;s&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;
+&lt;p&gt;I personally think it is much better, it clearly states our intent and does not need recursion. By default, the init value used for addition is 0, but you can change it:&lt;/p&gt;
+&lt;pre class="code c++ literal-block"&gt;
+&lt;span class="k"&gt;template&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="k"&gt;typename&lt;/span&gt;&lt;span class="p"&gt;...&lt;/span&gt; &lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;span class="k"&gt;auto&lt;/span&gt; &lt;span class="n"&gt;fold_sum_2&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="p"&gt;...&lt;/span&gt; &lt;span class="n"&gt;s&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="p"&gt;...&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;s&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;
+&lt;p&gt;This will yield the sum of the elements plus one.&lt;/p&gt;
+&lt;p&gt;This can be also very practical to print some elements for instance:&lt;/p&gt;
+&lt;pre class="code c++ literal-block"&gt;
+&lt;span class="k"&gt;template&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="k"&gt;typename&lt;/span&gt; &lt;span class="p"&gt;...&lt;/span&gt;&lt;span class="n"&gt;Args&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;print_1&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;Args&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&amp;amp;&lt;/span&gt;&lt;span class="p"&gt;...&lt;/span&gt; &lt;span class="n"&gt;args&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;cout&lt;/span&gt; &lt;span class="o"&gt;&amp;lt;&amp;lt;&lt;/span&gt; &lt;span class="p"&gt;...&lt;/span&gt; &lt;span class="o"&gt;&amp;lt;&amp;lt;&lt;/span&gt; &lt;span class="n"&gt;args&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;&amp;lt;&amp;lt;&lt;/span&gt; &lt;span class="sc"&gt;'\n'&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;
+&lt;p&gt;And this can even be used when doing Template Metaprogramming, for instance here is a TMP version of the and operator:&lt;/p&gt;
+&lt;pre class="code c++ literal-block"&gt;
+&lt;span class="k"&gt;template&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="kt"&gt;bool&lt;/span&gt;&lt;span class="p"&gt;...&lt;/span&gt; &lt;span class="n"&gt;B&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="n"&gt;fold_and&lt;/span&gt; &lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;integral_constant&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="kt"&gt;bool&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;B&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class="p"&gt;...)&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="p"&gt;{};&lt;/span&gt;
+&lt;/pre&gt;
+&lt;/div&gt;
+&lt;div class="section" id="conclusion"&gt;
+&lt;h2&gt;Conclusion&lt;/h2&gt;
+&lt;p&gt;C++17 fold expressions are a really nice additions to the language that makes working with variadic templates much easier. This already makes me wish for C++17 release :)&lt;/p&gt;
+&lt;p&gt;The source code for the examples are available on Github: &lt;a class="reference external" href="https://github.com/wichtounet/articles/blob/master/src/fold_expressions.cpp"&gt;https://github.com/wichtounet/articles/blob/master/src/fold_expressions.cpp&lt;/a&gt;&lt;/p&gt;
+&lt;/div&gt;</description><category>C++17</category><category>C++</category><guid>http://baptiste-wicht.com/posts/2015/05/cpp17-fold-expressions.html</guid><pubDate>Sat, 23 May 2015 17:08:20 GMT</pubDate></item><item><title>Sonar C++ Community Plugin Review</title><link>http://baptiste-wicht.com/posts/2015/05/sonar-cpp-community-plugin-review.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;It's been a long time since I have written on this blog. I have had quite a lot of work between my Ph.D and my teaching. I have several projects going on, I'll try to write updates on them later on.&lt;/p&gt;
 &lt;p&gt;Some time ago, I wrote an article &lt;cite&gt;about the official C++ plugin for Sonar &amp;lt;http://baptiste-wicht.com/posts/2014/10/sonarqube-inspections-for-cpp-projects.html&amp;gt;&lt;/cite&gt;. I was quite disappointed by the quality of a plugin. I was expecting more from an expensive official plugin.&lt;/p&gt;
 &lt;p&gt;There is an open-source alternative to the commercial plugin: &lt;cite&gt;sonar-cxx-plugin &amp;lt;https://github.com/wenns/sonar-cxx&amp;gt;&lt;/cite&gt;. I already tested it quite some time ago (a development version of the 0.9.1 version) and the results were quite bad. I'm using C++11 and C++14 in almost all of my projects and the support was quite bad at that time. Happily, this support has now gotten much better :) In this article, I'll talk about the version 0.9.2.&lt;/p&gt;
 &lt;div class="section" id="usage"&gt;
@@ -998,146 +1057,4 @@ information you can read the &lt;a class="reference external" href="https://gith
 you are interested. You can download Catch &lt;a class="reference external" href="https://github.com/philsquared/Catch"&gt;on Github&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;If you want more examples, you can take a look at the &lt;a class="reference external" href="https://github.com/wichtounet/etl/tree/master/test"&gt;ETL&lt;/a&gt; tests that are all
 made with Catch.&lt;/p&gt;
-&lt;/div&gt;</description><guid>http://baptiste-wicht.com/posts/2014/07/catch-powerful-yet-simple-cpp-test-framework.html</guid><pubDate>Mon, 28 Jul 2014 11:21:49 GMT</pubDate></item><item><title>ETL - C++ library for vector and matrix computations</title><link>http://baptiste-wicht.com/posts/2014/07/etl-cpp-library-for-vector-and-matrix-computations.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;When working on Machine Learning algorithms, I was in need of a simple library
-to ease working with vectors and matrix. This is the reason why I started
-developing ETL (Expression Template Library).&lt;/p&gt;
-&lt;p&gt;ETL is a small header only library for C++ that provides vector and matrix
-classes with support for Expression Templates to perform very efficient
-operations on them.&lt;/p&gt;
-&lt;p&gt;The library supports statically sized and dynamically sized vector and matrix
-structures with efficient element-wise operations. All the operations are
-implemented lazily with Expression Templates, they are only implemented once the
-expression is assigned to a concrete structure.&lt;/p&gt;
-&lt;div class="section" id="data-structures"&gt;
-&lt;h2&gt;Data structures&lt;/h2&gt;
-&lt;p&gt;Several structures are available:&lt;/p&gt;
-&lt;ul class="simple"&gt;
-&lt;li&gt;&lt;code&gt;fast_vector&amp;lt;T, Rows&amp;gt;&lt;/code&gt;: A vector of size Rows with elements of type T. This must
-be used when you know the size of the vector at compile-time.&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;dyn_vector&amp;lt;T&amp;gt;&lt;/code&gt;: A vector with element of type T. The size of the vector can be
-set at runtime.&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;fast_matrix&amp;lt;T, Rows,Columns&amp;gt;&lt;/code&gt;: A matrix of size Rows x Columns with elements of
-type T. This must be used when you know the size of the matrix at
-compile-time.&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;dyn_matrix&amp;lt;T&amp;gt;&lt;/code&gt;: A matrix with element of type T. The size of the matrix can be
-set at runtime.&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;All the structures are size-invariant, once set they cannot be grown or
-shrinked.&lt;/p&gt;
-&lt;p&gt;In every operations that involves fast version of the structures, all the sizes
-are known at compile-time, this gives the compiler a lot of opportunities for
-optimization.&lt;/p&gt;
-&lt;/div&gt;
-&lt;div class="section" id="element-wise-operations"&gt;
-&lt;h2&gt;Element-wise operations&lt;/h2&gt;
-&lt;p&gt;Classic element-wise operations can be done on vector and matrix as if it was
-done on scalars. Matrices and vectors can also be added, subtracted, divided,
-...  by scalars.&lt;/p&gt;
-&lt;p&gt;Here is an example of what can be done:&lt;/p&gt;
-&lt;pre class="code cpp literal-block"&gt;
-&lt;span class="n"&gt;etl&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;dyn_vector&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="kt"&gt;double&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;({&lt;/span&gt;&lt;span class="mf"&gt;1.0&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="mf"&gt;2.0&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="mf"&gt;3.0&lt;/span&gt;&lt;span class="p"&gt;});&lt;/span&gt;
-&lt;span class="n"&gt;etl&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;dyn_vector&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="kt"&gt;double&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;b&lt;/span&gt;&lt;span class="p"&gt;({&lt;/span&gt;&lt;span class="mf"&gt;3.0&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="mf"&gt;2.0&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="mf"&gt;1.0&lt;/span&gt;&lt;span class="p"&gt;});&lt;/span&gt;
-
-&lt;span class="n"&gt;etl&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;dyn_vector&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="kt"&gt;double&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;c&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mf"&gt;1.4&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;b&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;/&lt;/span&gt; &lt;span class="n"&gt;b&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;b&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;/&lt;/span&gt; &lt;span class="mf"&gt;1.2&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
-&lt;/pre&gt;
-&lt;p&gt;All the operations are only executed once the expression is evaluated to
-construct the dyn_vector. No temporaries are involved. This is as efficient as
-if a single for loop was used and each element was computed directly.&lt;/p&gt;
-&lt;p&gt;You can easily assign the same value to a structure by using the operator = on
-it.&lt;/p&gt;
-&lt;/div&gt;
-&lt;div class="section" id="unary-operators"&gt;
-&lt;h2&gt;Unary operators&lt;/h2&gt;
-&lt;p&gt;Several unary operators are available. Each operation is performed on every
-element of the vector or the matrix.&lt;/p&gt;
-&lt;p&gt;Available operators:&lt;/p&gt;
-&lt;ul class="simple"&gt;
-&lt;li&gt;&lt;code&gt;log&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;abs&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;sign&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;max/min&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;sigmoid&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;noise&lt;/code&gt;: Add standard normal noise to each element&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;logistic_noise&lt;/code&gt;: Add normal noise of mean zero and variance sigmoid(x) to each
-element&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;exp&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;softplus&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;bernoulli&lt;/code&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;Several transformations are also available:&lt;/p&gt;
-&lt;ul class="simple"&gt;
-&lt;li&gt;&lt;code&gt;hflip&lt;/code&gt;: Flip the vector or the matrix horizontally&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;vflip&lt;/code&gt;: Flip the vector or the matrix vertically&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;fflip&lt;/code&gt;: Flip the vector or the matrix horizontally and vertically. It is the
-equivalent of &lt;code&gt;hflip(vflip(x))&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;dim/row/col&lt;/code&gt;: Return a vector representing a sub part of a matrix (a row or a
-col)&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;reshape&lt;/code&gt;: Interpret a vector as a matrix&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;Again, all these operations are performed lazily, they are only executed when the
-expression is assigned to something.&lt;/p&gt;
-&lt;/div&gt;
-&lt;div class="section" id="lazy-evaluation"&gt;
-&lt;h2&gt;Lazy evaluation&lt;/h2&gt;
-&lt;p&gt;All binary and unary operations are applied lazily, only when they are assigned
-to a concrete vector or matrix class.&lt;/p&gt;
-&lt;p&gt;The expression can be evaluated using the &lt;code&gt;s(x)&lt;/code&gt; function that returns a
-concrete class (fast_vector,fast_matrix,dyn_vector,dyn_matrix) based on the
-expression.&lt;/p&gt;
-&lt;/div&gt;
-&lt;div class="section" id="reduction"&gt;
-&lt;h2&gt;Reduction&lt;/h2&gt;
-&lt;p&gt;Several reduction functions are available:&lt;/p&gt;
-&lt;ul class="simple"&gt;
-&lt;li&gt;sum: Return the sum of a vector or matrix&lt;/li&gt;
-&lt;li&gt;mean: Return the sum of a vector or matrix&lt;/li&gt;
-&lt;li&gt;dot: Return the dot product of two vector or matrices&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/div&gt;
-&lt;div class="section" id="functions"&gt;
-&lt;h2&gt;Functions&lt;/h2&gt;
-&lt;p&gt;The header &lt;em&gt;convolution.hpp&lt;/em&gt; provides several convolution operations both in 1D
-(vector) and 2D (matrix). All the convolution are available in valid, full and
-same versions.&lt;/p&gt;
-&lt;p&gt;The header &lt;em&gt;mutiplication.hpp&lt;/em&gt; provides the matrix multiplication operation
-(&lt;code&gt;mmult&lt;/code&gt;). For now on, only the naive algorithm is available. I'll
-probably add support for Strassen algorithm in the near future.&lt;/p&gt;
-&lt;p&gt;It is possible to pass an expression rather than an data structure to functions.
-You have to keep in mind that expression are lazy, therefore if you pass a + b
-to a matrix multiplication, an addition will be run each time an element is
-accessed (n^3 times), therefore, it is rarely efficient.&lt;/p&gt;
-&lt;/div&gt;
-&lt;div class="section" id="examples"&gt;
-&lt;h2&gt;Examples&lt;/h2&gt;
-&lt;p&gt;Here are some examples of these operators (taken from my Machine Learning
-Library):&lt;/p&gt;
-&lt;pre class="code cpp literal-block"&gt;
-&lt;span class="n"&gt;h_a&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;sigmoid&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;b&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;mmul&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;reshape&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;num_visible&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;v_a&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt; &lt;span class="n"&gt;w&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;t&lt;/span&gt;&lt;span class="p"&gt;));&lt;/span&gt;
-&lt;span class="n"&gt;h_s&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;bernoulli&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;h_a&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
-&lt;/pre&gt;
-&lt;pre class="code cpp literal-block"&gt;
-&lt;span class="n"&gt;h_a&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;min&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;max&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;b&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;mmul&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;reshape&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;num_visible&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;v_a&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt; &lt;span class="n"&gt;w&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;t&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt; &lt;span class="mf"&gt;0.0&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt; &lt;span class="mf"&gt;6.0&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
-&lt;span class="n"&gt;h_s&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;ranged_noise&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;h_a&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mf"&gt;6.0&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
-&lt;/pre&gt;
-&lt;pre class="code cpp literal-block"&gt;
-&lt;span class="n"&gt;weight&lt;/span&gt; &lt;span class="n"&gt;exp_sum&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;sum&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;exp&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;b&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;mmul&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;reshape&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;num_visible&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;v_a&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt; &lt;span class="n"&gt;w&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;t&lt;/span&gt;&lt;span class="p"&gt;)));&lt;/span&gt;
-
-&lt;span class="n"&gt;h_a&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;exp&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;b&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;mmul&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;reshape&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;num_visible&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;v_a&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt; &lt;span class="n"&gt;w&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;t&lt;/span&gt;&lt;span class="p"&gt;))&lt;/span&gt; &lt;span class="o"&gt;/&lt;/span&gt; &lt;span class="n"&gt;exp_sum&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
-
-&lt;span class="k"&gt;auto&lt;/span&gt; &lt;span class="n"&gt;max&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;max_element&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;h_a&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;begin&lt;/span&gt;&lt;span class="p"&gt;(),&lt;/span&gt; &lt;span class="n"&gt;h_a&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;end&lt;/span&gt;&lt;span class="p"&gt;());&lt;/span&gt;
-
-&lt;span class="n"&gt;h_s&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mf"&gt;0.0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
-&lt;span class="n"&gt;h_s&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;distance&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;h_a&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;begin&lt;/span&gt;&lt;span class="p"&gt;(),&lt;/span&gt; &lt;span class="n"&gt;max&lt;/span&gt;&lt;span class="p"&gt;))&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mf"&gt;1.0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
-&lt;/pre&gt;
-&lt;/div&gt;
-&lt;div class="section" id="conclusion"&gt;
-&lt;h2&gt;Conclusion&lt;/h2&gt;
-&lt;p&gt;This library is available on Github: &lt;a class="reference external" href="https://github.com/wichtounet/etl"&gt;etl&lt;/a&gt;.
-It is licensed under MIT license.&lt;/p&gt;
-&lt;p&gt;It is header-only, therefore you don't have to build it. However, it uses some
-recent C++14 stuff, you'll need a recent version of Clang or G++ to be able to
-use it.&lt;/p&gt;
-&lt;p&gt;If you find an issue or have an idea to improve it, just post it on Github or
-as a comment here and I'll do my best to work on that. If you have any question
-on the usage of the library, I'd be glad to answer them.&lt;/p&gt;
-&lt;/div&gt;</description><category>C++11</category><category>C++14</category><category>C++</category><category>Libraries</category><guid>http://baptiste-wicht.com/posts/2014/07/etl-cpp-library-for-vector-and-matrix-computations.html</guid><pubDate>Fri, 25 Jul 2014 08:46:33 GMT</pubDate></item></channel></rss>
+&lt;/div&gt;</description><guid>http://baptiste-wicht.com/posts/2014/07/catch-powerful-yet-simple-cpp-test-framework.html</guid><pubDate>Mon, 28 Jul 2014 11:21:49 GMT</pubDate></item></channel></rss>

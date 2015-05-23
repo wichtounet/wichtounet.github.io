@@ -1,5 +1,64 @@
 <?xml version="1.0" encoding="utf-8"?>
-<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>@Blog("Baptiste Wicht") (C++)</title><link>http://baptiste-wicht.com/</link><description></description><language>en</language><lastBuildDate>Thu, 14 May 2015 18:23:00 GMT</lastBuildDate><generator>http://getnikola.com/</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>Sonar C++ Community Plugin Review</title><link>http://baptiste-wicht.com/posts/2015/05/sonar-cpp-community-plugin-review.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;It's been a long time since I have written on this blog. I have had quite a lot of work between my Ph.D and my teaching. I have several projects going on, I'll try to write updates on them later on.&lt;/p&gt;
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>@Blog("Baptiste Wicht") (C++)</title><link>http://baptiste-wicht.com/</link><description></description><language>en</language><lastBuildDate>Sat, 23 May 2015 20:09:32 GMT</lastBuildDate><generator>http://getnikola.com/</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>C++17 Fold Expressions</title><link>http://baptiste-wicht.com/posts/2015/05/cpp17-fold-expressions.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div class="section" id="variadic-templates"&gt;
+&lt;h2&gt;Variadic Templates&lt;/h2&gt;
+&lt;p&gt;C++11 introduced variadic template to the languages. This new feature allows to write template functions and classes taking an arbitrary number of template parameters. This a feature I really like and I already used it quite a lot in my different libraries. Here is a very simple example computing the sum of the parameters:&lt;/p&gt;
+&lt;pre class="code c++ literal-block"&gt;
+&lt;span class="k"&gt;auto&lt;/span&gt; &lt;span class="nf"&gt;old_sum&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
+    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="k"&gt;template&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="k"&gt;typename&lt;/span&gt; &lt;span class="n"&gt;T1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="k"&gt;typename&lt;/span&gt;&lt;span class="p"&gt;...&lt;/span&gt; &lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;span class="k"&gt;auto&lt;/span&gt; &lt;span class="n"&gt;old_sum&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;T1&lt;/span&gt; &lt;span class="n"&gt;s&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="p"&gt;...&lt;/span&gt; &lt;span class="n"&gt;ts&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;s&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;old_sum&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;ts&lt;/span&gt;&lt;span class="p"&gt;...);&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;
+&lt;p&gt;What can be seen here is a typical use of variadic templates. Almost all the time, is is necessary to use recursion and several functions to unpack the parameters and process them. There is only one way to unpack the arguments, by using the ... operator that simply put comma between arguments. Even if it works well, it is a bit heavy on the code. This will likely be completely optimized to a series of addition by the compiler, but it may still happen in more complicated functions that this is not done. Moreover, the intent is not always clear with that.&lt;/p&gt;
+&lt;p&gt;That is why C++17 introduced an extension for the variadic template, fold expressions.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="fold-expressions"&gt;
+&lt;h2&gt;Fold expressions&lt;/h2&gt;
+&lt;p&gt;Fold expressions are a new way to unpack variadic parameters with operators. For now, only Clang 3.6 supports C++17 fold expression, with the -std=c++1z flag. That is the compiler I used to validate the examples of this post.&lt;/p&gt;
+&lt;p&gt;The syntax is bit disturbing at first but quite logical:&lt;/p&gt;
+&lt;pre class="code c++ literal-block"&gt;
+&lt;span class="p"&gt;(&lt;/span&gt; &lt;span class="n"&gt;pack&lt;/span&gt; &lt;span class="n"&gt;op&lt;/span&gt; &lt;span class="p"&gt;...&lt;/span&gt; &lt;span class="p"&gt;)&lt;/span&gt;             &lt;span class="c1"&gt;//(1)
+&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt; &lt;span class="p"&gt;...&lt;/span&gt; &lt;span class="n"&gt;op&lt;/span&gt; &lt;span class="n"&gt;pack&lt;/span&gt; &lt;span class="p"&gt;)&lt;/span&gt;             &lt;span class="c1"&gt;//(2)
+&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt; &lt;span class="n"&gt;pack&lt;/span&gt; &lt;span class="n"&gt;op&lt;/span&gt; &lt;span class="p"&gt;...&lt;/span&gt; &lt;span class="n"&gt;op&lt;/span&gt; &lt;span class="n"&gt;init&lt;/span&gt; &lt;span class="p"&gt;)&lt;/span&gt;     &lt;span class="c1"&gt;//(3)
+&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt; &lt;span class="n"&gt;init&lt;/span&gt; &lt;span class="n"&gt;op&lt;/span&gt; &lt;span class="p"&gt;...&lt;/span&gt; &lt;span class="n"&gt;op&lt;/span&gt; &lt;span class="n"&gt;pack&lt;/span&gt; &lt;span class="p"&gt;)&lt;/span&gt;     &lt;span class="c1"&gt;//(4)&lt;/span&gt;
+&lt;/pre&gt;
+&lt;p&gt;Where &lt;em&gt;pack&lt;/em&gt; is an unexpanded parameter pack, &lt;em&gt;op&lt;/em&gt; an operator and &lt;em&gt;init&lt;/em&gt; a value. The version (1) is a right fold that is expanded like (P1 op (P2 op (P3 ... (PN-1 op PN)))). The version (2) is a left fold where the expansion is taken from the left. The (3) and (4) versions are almost the value except for an init value. Only some operators (+,*,&amp;amp;,|,&amp;amp;&amp;amp;,||, ,) have defined init values and can be used with the versions (1) and (2). The other operators can only be used with an init value.&lt;/p&gt;
+&lt;p&gt;For instance, here is how we could write the sum functions with fold expressions:&lt;/p&gt;
+&lt;pre class="code c++ literal-block"&gt;
+&lt;span class="k"&gt;template&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="k"&gt;typename&lt;/span&gt;&lt;span class="p"&gt;...&lt;/span&gt; &lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;span class="k"&gt;auto&lt;/span&gt; &lt;span class="n"&gt;fold_sum_1&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="p"&gt;...&lt;/span&gt; &lt;span class="n"&gt;s&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="p"&gt;(...&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;s&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;
+&lt;p&gt;I personally think it is much better, it clearly states our intent and does not need recursion. By default, the init value used for addition is 0, but you can change it:&lt;/p&gt;
+&lt;pre class="code c++ literal-block"&gt;
+&lt;span class="k"&gt;template&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="k"&gt;typename&lt;/span&gt;&lt;span class="p"&gt;...&lt;/span&gt; &lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;span class="k"&gt;auto&lt;/span&gt; &lt;span class="n"&gt;fold_sum_2&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="p"&gt;...&lt;/span&gt; &lt;span class="n"&gt;s&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="p"&gt;...&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;s&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;
+&lt;p&gt;This will yield the sum of the elements plus one.&lt;/p&gt;
+&lt;p&gt;This can be also very practical to print some elements for instance:&lt;/p&gt;
+&lt;pre class="code c++ literal-block"&gt;
+&lt;span class="k"&gt;template&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="k"&gt;typename&lt;/span&gt; &lt;span class="p"&gt;...&lt;/span&gt;&lt;span class="n"&gt;Args&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;print_1&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;Args&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&amp;amp;&lt;/span&gt;&lt;span class="p"&gt;...&lt;/span&gt; &lt;span class="n"&gt;args&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;cout&lt;/span&gt; &lt;span class="o"&gt;&amp;lt;&amp;lt;&lt;/span&gt; &lt;span class="p"&gt;...&lt;/span&gt; &lt;span class="o"&gt;&amp;lt;&amp;lt;&lt;/span&gt; &lt;span class="n"&gt;args&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;&amp;lt;&amp;lt;&lt;/span&gt; &lt;span class="sc"&gt;'\n'&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;
+&lt;p&gt;And this can even be used when doing Template Metaprogramming, for instance here is a TMP version of the and operator:&lt;/p&gt;
+&lt;pre class="code c++ literal-block"&gt;
+&lt;span class="k"&gt;template&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="kt"&gt;bool&lt;/span&gt;&lt;span class="p"&gt;...&lt;/span&gt; &lt;span class="n"&gt;B&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="n"&gt;fold_and&lt;/span&gt; &lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;integral_constant&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="kt"&gt;bool&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;B&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class="p"&gt;...)&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="p"&gt;{};&lt;/span&gt;
+&lt;/pre&gt;
+&lt;/div&gt;
+&lt;div class="section" id="conclusion"&gt;
+&lt;h2&gt;Conclusion&lt;/h2&gt;
+&lt;p&gt;C++17 fold expressions are a really nice additions to the language that makes working with variadic templates much easier. This already makes me wish for C++17 release :)&lt;/p&gt;
+&lt;p&gt;The source code for the examples are available on Github: &lt;a class="reference external" href="https://github.com/wichtounet/articles/blob/master/src/fold_expressions.cpp"&gt;https://github.com/wichtounet/articles/blob/master/src/fold_expressions.cpp&lt;/a&gt;&lt;/p&gt;
+&lt;/div&gt;</description><category>C++17</category><category>C++</category><guid>http://baptiste-wicht.com/posts/2015/05/cpp17-fold-expressions.html</guid><pubDate>Sat, 23 May 2015 17:08:20 GMT</pubDate></item><item><title>Sonar C++ Community Plugin Review</title><link>http://baptiste-wicht.com/posts/2015/05/sonar-cpp-community-plugin-review.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;It's been a long time since I have written on this blog. I have had quite a lot of work between my Ph.D and my teaching. I have several projects going on, I'll try to write updates on them later on.&lt;/p&gt;
 &lt;p&gt;Some time ago, I wrote an article &lt;cite&gt;about the official C++ plugin for Sonar &amp;lt;http://baptiste-wicht.com/posts/2014/10/sonarqube-inspections-for-cpp-projects.html&amp;gt;&lt;/cite&gt;. I was quite disappointed by the quality of a plugin. I was expecting more from an expensive official plugin.&lt;/p&gt;
 &lt;p&gt;There is an open-source alternative to the commercial plugin: &lt;cite&gt;sonar-cxx-plugin &amp;lt;https://github.com/wenns/sonar-cxx&amp;gt;&lt;/cite&gt;. I already tested it quite some time ago (a development version of the 0.9.1 version) and the results were quite bad. I'm using C++11 and C++14 in almost all of my projects and the support was quite bad at that time. Happily, this support has now gotten much better :) In this article, I'll talk about the version 0.9.2.&lt;/p&gt;
 &lt;div class="section" id="usage"&gt;
@@ -2103,62 +2162,4 @@ ctest -I FailedTests.log&lt;/the&gt;&lt;/pre&gt;
 &lt;pre&gt;ctest -j 8&lt;/pre&gt;
 
 &lt;p&gt;In my case, my tests are completed 6x faster ! This is very valuable when you often run your tests. &lt;/p&gt;
-&lt;p&gt;For more information on how to integrate your Boost Test Library tests with CMake, you can consult the &lt;a href="https://github.com/rpavlik/cmake-modules/" title="cmake-modules Github repository"&gt;The cmake-modules repository&lt;/a&gt;&lt;/p&gt;</description><category>Boost</category><category>C++</category><category>Concurrency</category><category>EDDI</category><category>Performances</category><category>Tests</category><category>cmake</category><guid>http://baptiste-wicht.com/posts/2012/10/run-boost-test-parallel-cmake.html</guid><pubDate>Mon, 15 Oct 2012 06:57:43 GMT</pubDate></item><item><title>EDDI Compiler 1.1.3 - Templates</title><link>http://baptiste-wicht.com/posts/2012/09/eddi-compiler-1-1-3-templates.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;I finished the &lt;strong&gt;version 1.1.3 of the EDDI Compiler (eddic)&lt;/strong&gt;.&lt;/p&gt;
-&lt;p&gt;The main improvement to the language is the support of templates. The syntax is more or less the same as the syntax of C++ templates, but the features are much more limited. In EDDI, you can declare class templates and function templates. Class templates can also includes member function templates.&lt;/p&gt;
-&lt;p&gt;Here is an example of the use of templates in EDDI:&lt;/p&gt;
-&lt;pre class="code literal-block"&gt;&lt;span class="k"&gt;template&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;type&lt;/span&gt; &lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
-&lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="n"&gt;node&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
-    &lt;span class="n"&gt;T&lt;/span&gt; &lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
-
-    &lt;span class="k"&gt;this&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;T&lt;/span&gt; &lt;span class="n"&gt;init&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
-        &lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"C1|"&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
-        &lt;span class="k"&gt;this&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;init&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
-    &lt;span class="p"&gt;}&lt;/span&gt;
-
-    &lt;span class="n"&gt;T&lt;/span&gt; &lt;span class="n"&gt;get_value&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
-        &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="k"&gt;this&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
-    &lt;span class="p"&gt;}&lt;/span&gt;
-
-    &lt;span class="k"&gt;template&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;type&lt;/span&gt; &lt;span class="n"&gt;U&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
-    &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;print_value&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;U&lt;/span&gt; &lt;span class="n"&gt;v&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
-        &lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;v&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
-        &lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"|"&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
-    &lt;span class="p"&gt;}&lt;/span&gt;
-&lt;span class="p"&gt;}&lt;/span&gt;
-
-&lt;span class="k"&gt;template&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;type&lt;/span&gt; &lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
-&lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;debug&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;T&lt;/span&gt; &lt;span class="n"&gt;t&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
-    &lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;t&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
-    &lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"|"&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
-&lt;span class="p"&gt;}&lt;/span&gt;
-
-&lt;span class="k"&gt;template&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;type&lt;/span&gt; &lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
-&lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;test&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;node&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;*&lt;/span&gt; &lt;span class="n"&gt;node&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
-    &lt;span class="n"&gt;debug&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;node&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
-    &lt;span class="n"&gt;debug&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;node&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get_value&lt;/span&gt;&lt;span class="p"&gt;());&lt;/span&gt;
-&lt;span class="p"&gt;}&lt;/span&gt;
-
-&lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;main&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
-    &lt;span class="n"&gt;node&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;first_node&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;100&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
-    &lt;span class="n"&gt;node&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="kt"&gt;float&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;second_node&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mf"&gt;13.3&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
-
-    &lt;span class="n"&gt;test&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;first_node&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
-    &lt;span class="n"&gt;test&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="kt"&gt;float&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;second_node&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
-
-    &lt;span class="n"&gt;first_node&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;print_value&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="kt"&gt;float&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mf"&gt;1.0&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
-    &lt;span class="n"&gt;second_node&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;print_value&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;10&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
-&lt;span class="p"&gt;}&lt;/span&gt;
-&lt;/pre&gt;
-
-
-&lt;p&gt;This new feature adds generic programming capabilities to the language.&lt;/p&gt;
-&lt;p&gt;This version also adds other language improvements. The first one is the support of the ! operator for a bool, to test if a bool is false. This version also includes support for iterating through all the chars of a string with a foreach loop. And finally, the this pointer is now implicit to access member fields of a struct from member functions.&lt;/p&gt;
-&lt;p&gt;The optimization engine has been greatly improved. The pointers are much better handled and some regression due to new features have been fixed. The Constant Propagation optimization can take default values of struct and arrays into account. Finally, the functions with char parameters can now be inlined.&lt;/p&gt;
-&lt;p&gt;Finally, the compiler use a new logging system, that can be completely removed at compile-time for release versions.&lt;/p&gt;
-&lt;h4&gt;Future Work&lt;/h4&gt;
-
-&lt;p&gt;The next version of the EDDI compiler (eddic) will be the version 1.1.4. This version will add support for some basic pointer manipulation. It will also add support for dynamically allocated arrays. Finally, the version will includes several new optimization techniques regarding to loops: Loop Invariant Code Motion, Loop Strength Reduction and perhaps some basic Loop Unrolling.&lt;/p&gt;
-&lt;h4&gt;Download&lt;/h4&gt;
-
-&lt;p&gt;You can find the EDDI Compiler sources on the Github repository: &lt;a title="Github repository of eddic" href="https://github.com/wichtounet/eddic"&gt;https://github.com/wichtounet/eddic&lt;/a&gt;&lt;/p&gt;
-&lt;p&gt;The exact version I refer to is the v1.1.3 available in the GitHub tags or directly as the release branch.&lt;/p&gt;</description><category>C++</category><category>Compilers</category><category>EDDI</category><guid>http://baptiste-wicht.com/posts/2012/09/eddi-compiler-1-1-3-templates.html</guid><pubDate>Wed, 05 Sep 2012 05:25:42 GMT</pubDate></item></channel></rss>
+&lt;p&gt;For more information on how to integrate your Boost Test Library tests with CMake, you can consult the &lt;a href="https://github.com/rpavlik/cmake-modules/" title="cmake-modules Github repository"&gt;The cmake-modules repository&lt;/a&gt;&lt;/p&gt;</description><category>Boost</category><category>C++</category><category>Concurrency</category><category>EDDI</category><category>Performances</category><category>Tests</category><category>cmake</category><guid>http://baptiste-wicht.com/posts/2012/10/run-boost-test-parallel-cmake.html</guid><pubDate>Mon, 15 Oct 2012 06:57:43 GMT</pubDate></item></channel></rss>
