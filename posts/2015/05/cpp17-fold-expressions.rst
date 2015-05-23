@@ -4,6 +4,7 @@ Variadic Templates
 C++11 introduced variadic template to the languages. This new feature allows to write template functions and classes taking an arbitrary number of template parameters. This a feature I really like and I already used it quite a lot in my different libraries. Here is a very simple example computing the sum of the parameters: 
 
 .. code:: c++
+
     auto old_sum(){
         return 0;
     }
@@ -25,6 +26,7 @@ Fold expressions are a new way to unpack variadic parameters with operators. For
 The syntax is bit disturbing at first but quite logical: 
 
 .. code:: c++
+
     ( pack op ... )             //(1)
     ( ... op pack )             //(2)
     ( pack op ... op init )     //(3)
@@ -35,6 +37,7 @@ Where *pack* is an unexpanded parameter pack, *op* an operator and *init* a valu
 For instance, here is how we could write the sum functions with fold expressions: 
 
 .. code:: c++
+
     template<typename... T>
     auto fold_sum_1(T... s){
         return (... + s);
@@ -43,6 +46,7 @@ For instance, here is how we could write the sum functions with fold expressions
 I personally think it is much better, it clearly states our intent and does not need recursion. By default, the init value used for addition is 0, but you can change it: 
 
 .. code:: c++
+
     template<typename... T>
     auto fold_sum_2(T... s){
         return (1 + ... + s);
@@ -53,6 +57,7 @@ This will yield the sum of the elements plus one.
 This can be also very practical to print some elements for instance:
 
 .. code:: c++
+
     template<typename ...Args>
     void print_1(Args&&... args) {
         (std::cout << ... << args) << '\n';
@@ -61,6 +66,7 @@ This can be also very practical to print some elements for instance:
 And this can even be used when doing Template Metaprogramming, for instance here is a TMP version of the and operator: 
 
 .. code:: c++
+
     template<bool... B>
     struct fold_and : std::integral_constant<bool, (B && ...)> {};
 
