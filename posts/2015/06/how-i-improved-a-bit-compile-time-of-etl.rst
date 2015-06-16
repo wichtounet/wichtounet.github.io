@@ -4,7 +4,7 @@ As a disclaimer, don't expect fancy results from this post, I haven't been able 
 
 I've used g++-4.9.2 to perform these tests. 
 
-I'm compiling the complete test suite (around 6900 source lines of codes in 36 files). Each test file includes the ETL (around 10K SLOC). Each test is run with 8 threads (make -j8). For each result, I have run a complete build 5 times and taken the best result as the final result. Everything is run on a SSD and I have more than enough RAM to handle all the compilation in parallel.
+I'm compiling the complete test suite (around 6900 source lines of codes in 36 files) in release mode. Each test file includes the ETL (around 10K SLOC). Each test is run with 8 threads (make -j8). For each result, I have run a complete build 5 times and taken the best result as the final result. Everything is run on a SSD and I have more than enough RAM to handle all the compilation in parallel.
 
 The reference build time was 87.5 seconds.
 
@@ -17,10 +17,10 @@ My compilation rule in my makefile has now become:
 
 .. code:: makefile
 
-    debug/$(1)/%.cpp.o: $(1)/%.cpp
-        @ mkdir -p debug/$(1)/
-        $(CXX) $(CXX_FLAGS) $(DEBUG_FLAGS) $(2) -MD -MF debug/$(1)/$$*.cpp.d -o debug/$(1)/$$*.cpp.o -c $(1)/$$*.cpp
-        @ sed -i -e 's@^\(.*\)\.o:@\1.d \1.o:@' debug/$(1)/$$*.cpp.d
+    release/$(1)/%.cpp.o: $(1)/%.cpp
+        @ mkdir -p release/$(1)/
+        $(CXX) $(CXX_FLAGS) $(RELEASE_FLAGS) $(2) -MD -MF release/$(1)/$$*.cpp.d -o release/$(1)/$$*.cpp.o -c $(1)/$$*.cpp
+        @ sed -i -e 's@^\(.*\)\.o:@\1.d \1.o:@' release/$(1)/$$*.cpp.d
 
 This reduced the compilation time to 86.8 seconds. Not that much reduction, but it still is quite nice to know that. I would have expected this to reduce more the compile time.
 
@@ -57,10 +57,11 @@ Other techniques
 There are several other techniques that you can use to reduce compile time: 
 
 1. Precompiled Headers are supported by both Clang and GCC, altough not in a compatible. I haven't tested this in a while, but it is quite effective and a very interesting technique. The main problem with this is that is not standard and not compatible between compilers. But it probably is the most efficient techniques when you have lots of headers and lots of templates as in my case. 
-1. Unity builds can make full rebuild much faster. I personally don't like unity builds especially because it is only really good for full builds and you generally don't do full rebuilds that much (I know, I know, this is also the test done in this article :) ). Moreover, it also sucks at doing parallel builds. 
-1. Pimpl idioms and other type erasure techniques can reduce compile time a lot. If it is well done, it can be implemented without so much overhead.
-1. Explicit instantiation of templates can also help, but only in the case of a user program. In the case of a library itself, you cannot do anything.
-1. Reduce inclusions and use forward declarations, obviously...
-1. ...
-
-
+2. Unity builds can make full rebuild much faster. I personally don't like unity builds especially because it is only really good for full builds and you generally don't do full rebuilds that much (I know, I know, this is also the test done in this article :) ). Moreover, it also sucks at doing parallel builds. 
+3. Pimpl idioms and other type erasure techniques can reduce compile time a lot. If it is well done, it can be implemented without so much overhead.
+4. Explicit instantiation of templates can also help, but only in the case of a user program. In the case of a library itself, you cannot do anything.
+5. Reduce inclusions and use forward declarations, obviously...
+6. Use tools like distcc (I very rarely use it) and ccache (I generally use it).
+7. Update your compiler
+8. Upgrade your computer ;)
+9. ...
