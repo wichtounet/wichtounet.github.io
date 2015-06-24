@@ -131,8 +131,6 @@ COMPILERS = {
         "html": ('.html', '.htm')
         }
 
-WRITE_TAG_CLOUD=True
-
 
 # Create by default posts in one file format?
 # Set to False for two-file posts, with separate metadata.
@@ -225,14 +223,13 @@ from nikola import filters
 def html_minify(infile):
         return filters.runinplace(r'htmlmin -c -s %1 %2', infile)
 
-FILTERS = {}
-        # ".jpg": [filters.jpegoptim],
-       #  ".png": [filters.optipng],
-       #  ".js": [filters.yui_compressor],
-      # ".css": [filters.yui_compressor],
-       #  ".html": [html_minify],
-       #  }
-
+FILTERS = {
+        ".jpg": [filters.jpegoptim],
+        ".png": [filters.optipng],
+        ".css": [filters.yui_compressor],
+        ".js": [filters.yui_compressor],
+        ".html": [html_minify],
+        }
 
 # Expert setting! Create a gzipped copy of each generated file. Cheap server-
 # side optimization for very high traffic sites or low memory servers.
