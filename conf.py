@@ -107,7 +107,7 @@ POSTS = (
             ("posts/*.wp", "posts", "post.tmpl"),
         )
 PAGES = (
-            ("stories/*.rest", "stories", "story.tmpl"),
+            ("stories/*.rst", "stories", "story.tmpl"),
             ("stories/*.md", "stories", "story.tmpl"),
             ("stories/*.wp", "stories", "story.tmpl"),
         )
