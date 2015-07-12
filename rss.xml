@@ -1,5 +1,128 @@
 <?xml version="1.0" encoding="utf-8"?>
-<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>@Blog("Baptiste Wicht")</title><link>http://baptiste-wicht.com/</link><description>Website about vtechnologies Java, Spring, OSGi, Hardware,...</description><language>en</language><lastBuildDate>Sat, 20 Jun 2015 17:44:40 GMT</lastBuildDate><generator>http://getnikola.com/</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>Improve ETL compile-time with Precompiled Headers</title><link>http://baptiste-wicht.com/posts/improve-etl-compile-time-with-precompiled-headers.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;Very recently, I started trying to improve the compile-time of the ETL test suite. While not critical, it is always better to have tests that compile as fast as possible. In a &lt;a class="reference external" href="http://baptiste-wicht.com/posts/2015/06/how-i-improved-a-bit-compile-time-of-etl.html"&gt;previous post&lt;/a&gt;, I was able to improve the time a bit by improve the makefile, using pragra once and avoiding &lt;cite&gt;&amp;lt;iostream&amp;gt;&lt;/cite&gt; headers. With these techniques, I reduced the compile-time from 87.5 to 84.1, which is not bad, but not as good as I would have expected.&lt;/p&gt;
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>@Blog("Baptiste Wicht")</title><link>http://baptiste-wicht.com/</link><description>Website about vtechnologies Java, Spring, OSGi, Hardware,...</description><language>en</language><lastBuildDate>Sun, 12 Jul 2015 16:57:30 GMT</lastBuildDate><generator>http://getnikola.com/</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>Simulate static_if with C++11/C++14</title><link>http://baptiste-wicht.com/posts/2015/07/simulate-static_if-with-c11c14.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;If you are doing a lot of template metaprogramming and other template magic stuff, you are likely to miss a &lt;code&gt;static_if&lt;/code&gt; in the language. Unfortunately, it didn't make the cut for C++11 and it seems unlikely that it will make it in C++17.&lt;/p&gt;
+&lt;div class="section" id="static-if"&gt;
+&lt;h2&gt;static_if&lt;/h2&gt;
+&lt;p&gt;As its name indicates, &lt;code&gt;static_if&lt;/code&gt; is an if statement but that is done at compile-time. At first, it could seem that the main point is performance, but that is not the case. With recent compilers, if you have an if statement with a compile-time constant, it will never be executed at runtime and only the correct branch will be included in the final executable code. However, even if the compiler knows that a branch will never be executed, it still has to ensure that this branch compiles. This is not the case with &lt;code&gt;static_if&lt;/code&gt;. With &lt;code&gt;static_if&lt;/code&gt;, only the valid branch is compiled, the other can contains invalid code. The most common reason to use a &lt;code&gt;static_if&lt;/code&gt; is inside a template where you perform a test on a template argument and execute code based on this test. &lt;code&gt;static_if&lt;/code&gt; has another advantage on standard if. Since only one branch is instantiated, it may save quite a lot of compile-time.&lt;/p&gt;
+&lt;p&gt;Let's say we have to write a template function that, if the template argument is a string, removes the last character of the string argument, otherwise decrement the argument (I know, stupid example, but simple). With &lt;code&gt;static_if&lt;/code&gt;, you can write it like this:&lt;/p&gt;
+&lt;pre class="code cpp literal-block"&gt;
+&lt;span class="k"&gt;template&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="k"&gt;typename&lt;/span&gt; &lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;decrement_kindof&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt; &lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="n"&gt;static_if&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;is_same&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;string&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;::&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+        &lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;pop_back&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="k"&gt;else&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="o"&gt;--&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;
+&lt;p&gt;I think it is quite elegant.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="the-problem"&gt;
+&lt;h2&gt;The problem&lt;/h2&gt;
+&lt;p&gt;Some may think, that we could do the same with C++ standard if statement:&lt;/p&gt;
+&lt;pre class="code cpp literal-block"&gt;
+&lt;span class="k"&gt;template&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="k"&gt;typename&lt;/span&gt; &lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;decrement_kindof&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt; &lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="k"&gt;if&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;is_same&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;string&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;::&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+        &lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;pop_back&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="k"&gt;else&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="o"&gt;--&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;
+&lt;p&gt;However, this won't work. This template cannot be instantiated for &lt;code&gt;std::string&lt;/code&gt; since it doesn't have an operator -- and it cannot be instantiated for int since it doesn't have a &lt;code&gt;pop_back()&lt;/code&gt; function.&lt;/p&gt;
+&lt;p&gt;There are two solutions in plain C++: specialization and SFINAE. Let's start with specialization:&lt;/p&gt;
+&lt;pre class="code cpp literal-block"&gt;
+&lt;span class="k"&gt;template&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="k"&gt;typename&lt;/span&gt; &lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;decrement_kindof&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt; &lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="o"&gt;--&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="k"&gt;template&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&amp;gt;&lt;/span&gt;
+&lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;decrement_kindof&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;string&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt; &lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;pop_back&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;
+&lt;p&gt;We do a specialization for &lt;code&gt;std::string&lt;/code&gt; case so that in the general case it uses -- and in the &lt;code&gt;std::string&lt;/code&gt; case, it uses &lt;code&gt;pop_back()&lt;/code&gt;. And the SFINAE version:&lt;/p&gt;
+&lt;pre class="code cpp literal-block"&gt;
+&lt;span class="k"&gt;template&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="k"&gt;typename&lt;/span&gt; &lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;enable_if_t&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;!&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;is_same&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;string&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;::&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;42&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;decrement_kindof&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt; &lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="o"&gt;--&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="k"&gt;template&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="k"&gt;typename&lt;/span&gt; &lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;enable_if_t&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;is_same&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;string&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;::&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;42&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;decrement_kindof&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt; &lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;pop_back&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;
+&lt;p&gt;The first function is enabled when the type is not a &lt;code&gt;std::string&lt;/code&gt; and the second function is enabled when the type is a &lt;code&gt;std::string&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;Both solutions needs two functions to make it work. In this particular case, specialization is easier since the condition states exactly one type. If the condition was more complex for instance testing that a constant inside the type is equals to some value, we could only do it with SFINAE.&lt;/p&gt;
+&lt;p&gt;Even if both solutions work, both solutions are more complicated than the static_if version and both solutions are creating more functions than what should be necessary.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="one-solution"&gt;
+&lt;h2&gt;One solution&lt;/h2&gt;
+&lt;p&gt;There is one way to emulate a kind of &lt;code&gt;static_if&lt;/code&gt; with C++14 generic lambdas. It is kind of using anonymous template function to emulate what we did with the previous solutions but does it behind the scene. Here the code I'm using for this emulation:&lt;/p&gt;
+&lt;pre class="code cpp literal-block"&gt;
+&lt;span class="k"&gt;namespace&lt;/span&gt; &lt;span class="n"&gt;static_if_detail&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+
+&lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="n"&gt;identity&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="k"&gt;template&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="k"&gt;typename&lt;/span&gt; &lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+    &lt;span class="n"&gt;T&lt;/span&gt; &lt;span class="k"&gt;operator&lt;/span&gt;&lt;span class="p"&gt;()(&lt;/span&gt;&lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="k"&gt;const&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;forward&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;};&lt;/span&gt;
+
+&lt;span class="k"&gt;template&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="kt"&gt;bool&lt;/span&gt; &lt;span class="n"&gt;Cond&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="n"&gt;statement&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="k"&gt;template&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="k"&gt;typename&lt;/span&gt; &lt;span class="n"&gt;F&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+    &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;then&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="k"&gt;const&lt;/span&gt; &lt;span class="n"&gt;F&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt; &lt;span class="n"&gt;f&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+        &lt;span class="n"&gt;f&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;identity&lt;/span&gt;&lt;span class="p"&gt;());&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+
+    &lt;span class="k"&gt;template&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="k"&gt;typename&lt;/span&gt; &lt;span class="n"&gt;F&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+    &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;else_&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="k"&gt;const&lt;/span&gt; &lt;span class="n"&gt;F&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="p"&gt;){}&lt;/span&gt;
+&lt;span class="p"&gt;};&lt;/span&gt;
+
+&lt;span class="k"&gt;template&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&amp;gt;&lt;/span&gt;
+&lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="n"&gt;statement&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="nb"&gt;false&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="k"&gt;template&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="k"&gt;typename&lt;/span&gt; &lt;span class="n"&gt;F&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+    &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;then&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="k"&gt;const&lt;/span&gt; &lt;span class="n"&gt;F&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="p"&gt;){}&lt;/span&gt;
+
+    &lt;span class="k"&gt;template&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="k"&gt;typename&lt;/span&gt; &lt;span class="n"&gt;F&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+    &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;else_&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="k"&gt;const&lt;/span&gt; &lt;span class="n"&gt;F&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt; &lt;span class="n"&gt;f&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+        &lt;span class="n"&gt;f&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;identity&lt;/span&gt;&lt;span class="p"&gt;());&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;};&lt;/span&gt;
+
+&lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="c1"&gt;//end of namespace static_if_detail
+&lt;/span&gt;
+&lt;span class="k"&gt;template&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="kt"&gt;bool&lt;/span&gt; &lt;span class="n"&gt;Cond&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="k"&gt;typename&lt;/span&gt; &lt;span class="n"&gt;F&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;span class="n"&gt;static_if_detail&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;statement&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;Cond&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;static_if&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;F&lt;/span&gt; &lt;span class="k"&gt;const&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt; &lt;span class="n"&gt;f&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="n"&gt;static_if_detail&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;statement&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;Cond&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;if_&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="n"&gt;if_&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;then&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;f&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;if_&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;
+&lt;p&gt;Note: I got the idea (and most of the code) from the &lt;a class="reference external" href="http://lists.boost.org/Archives/boost/2014/08/216607.php"&gt;Boost Mailing List&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;The condition is passed a non-type template parameter and the code for the branch is a passed a generic lambda functor. The &lt;code&gt;static_if&lt;/code&gt; function returns a statement structure. We could avoid returning a struct and directly execute, or not, the functor based on the condition, but using a structure allows for the &lt;code&gt;else_&lt;/code&gt; part which may be practical. The structure &lt;code&gt;statement&lt;/code&gt; is specialized on the condition. If the condition is true, the right part will execute the functor while the false part will not execute anything. The specialization when the condition is false willl do the contrary. A special point here is the use of the identity function. The function is passed to the lambda. The user can then use this function to make non-dependent type dependent. This is necessary if we want to call functions on non-dependent types and these functions may not exist. For instance, you may want to call a function on &lt;code&gt;this&lt;/code&gt;, which is not a dependent type.&lt;/p&gt;
+&lt;p&gt;Here is how the code will look using this solution:&lt;/p&gt;
+&lt;pre class="code cpp literal-block"&gt;
+&lt;span class="k"&gt;template&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="k"&gt;typename&lt;/span&gt; &lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;decrement_kindof&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt; &lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+    &lt;span class="n"&gt;static_if&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;is_same&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;string&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;::&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="p"&gt;([&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="p"&gt;](&lt;/span&gt;&lt;span class="k"&gt;auto&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+        &lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;pop_back&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+    &lt;span class="p"&gt;}).&lt;/span&gt;&lt;span class="n"&gt;else_&lt;/span&gt;&lt;span class="p"&gt;([&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="p"&gt;](&lt;/span&gt;&lt;span class="k"&gt;auto&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+        &lt;span class="o"&gt;--&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+    &lt;span class="p"&gt;});&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;
+&lt;p&gt;It is not as elegant as the "real" &lt;code&gt;static_if&lt;/code&gt; version, but it is closer than the other solutions. You see that we don't have to use the identity function here since value is a dependent type here.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="conclusion"&gt;
+&lt;h2&gt;Conclusion&lt;/h2&gt;
+&lt;p&gt;We saw that there are some solutions to emulate &lt;code&gt;static_if&lt;/code&gt; in C++ that you may use to make the code easier to read. I'm personally using this trick on branches with few lines of code and when I don't have to use the identity function too much, otherwise it is cleaner to use standard SFINAE functions to do the job. When you only have a if and no else, this trick is even better because that is where it saves the more code.&lt;/p&gt;
+&lt;p&gt;I hope this can be useful to some of you ;)&lt;/p&gt;
+&lt;p&gt;You can find my implementation &lt;a class="reference external" href="https://github.com/wichtounet/cpp_utils/blob/master/static_if.hpp"&gt;on Github&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;</description><category>C++11</category><category>C++14</category><category>C++</category><guid>http://baptiste-wicht.com/posts/2015/07/simulate-static_if-with-c11c14.html</guid><pubDate>Sun, 12 Jul 2015 13:23:34 GMT</pubDate></item><item><title>Improve ETL compile-time with Precompiled Headers</title><link>http://baptiste-wicht.com/posts/improve-etl-compile-time-with-precompiled-headers.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;Very recently, I started trying to improve the compile-time of the ETL test suite. While not critical, it is always better to have tests that compile as fast as possible. In a &lt;a class="reference external" href="http://baptiste-wicht.com/posts/2015/06/how-i-improved-a-bit-compile-time-of-etl.html"&gt;previous post&lt;/a&gt;, I was able to improve the time a bit by improve the makefile, using pragra once and avoiding &lt;cite&gt;&amp;lt;iostream&amp;gt;&lt;/cite&gt; headers. With these techniques, I reduced the compile-time from 87.5 to 84.1, which is not bad, but not as good as I would have expected.&lt;/p&gt;
 &lt;p&gt;In the previous, I had not tried to use Precompiled Headers (PCH) to improve the compile time, so I thought it would be a good time to do it.&lt;/p&gt;
 &lt;div class="section" id="precompiled-headers"&gt;
 &lt;h2&gt;Precompiled Headers&lt;/h2&gt;
@@ -1139,83 +1262,4 @@ DHCP=v4
 &lt;pre class="literal-block"&gt;
 systemctl enable systemd-networkd
 &lt;/pre&gt;
-&lt;/div&gt;</description><category>Gentoo</category><category>Linux</category><category>Network</category><category>Tips</category><category>systemd</category><guid>http://baptiste-wicht.com/posts/2014/10/linux-tip-force-systemd-networkd-to-wait-for-dhcp.html</guid><pubDate>Wed, 01 Oct 2014 18:18:55 GMT</pubDate></item><item><title>budgetwarrior 0.4.1 - Expense templates and year projection</title><link>http://baptiste-wicht.com/posts/2014/09/budgetwarrior-041-expense-templates-and-year-projection.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;I've been able to finish the version 0.4.1 of budgetwarrior before I though :)&lt;/p&gt;
-&lt;div class="section" id="expense-templates"&gt;
-&lt;h2&gt;Expense templates&lt;/h2&gt;
-&lt;p&gt;The "most useful" new feature of this release is the ability to create template
-for expenses.&lt;/p&gt;
-&lt;p&gt;For that, you can give an extra parameter to budget expense add:&lt;/p&gt;
-&lt;pre class="literal-block"&gt;
-budget expense add template name
-&lt;/pre&gt;
-&lt;p&gt;This will works exactly the same as creating a new expense expect that it will
-be saved as a template. Then, the next time you do:&lt;/p&gt;
-&lt;pre class="literal-block"&gt;
-budget expense add template name
-&lt;/pre&gt;
-&lt;p&gt;A new expense will be created with the date of the day and with the name and
-amount saved into the template. You can create as many templates as you want as
-long as they have different names. You can see all the templates you have by
-using 'budget expense template'. A template can be deleted the exact same as an
-expense with 'budget expense delete id'.&lt;/p&gt;
-&lt;p&gt;I think this is very useful for expense that are made several times a month, for
-instance a coffee at your workplace. The price should not change a lot and it is
-faster to just use the template name rather than entering all the information
-again.&lt;/p&gt;
-&lt;/div&gt;
-&lt;div class="section" id="year-prediction"&gt;
-&lt;h2&gt;Year prediction&lt;/h2&gt;
-&lt;p&gt;You can now see what would be next year if you changed a bit your expenses. For
-instance, how much would you still have at the end of the year if you increased
-your house expenses by 20% and reduced your insurances by 5% ?&lt;/p&gt;
-&lt;p&gt;The 'budget predict' can be used for that purpose. You can enter a multiplier
-for each account in your budget and a new year will be "predicted" based on
-the expenses of the current year multiplied by the specified multiplier:&lt;/p&gt;
-&lt;img alt="/images/budget_041_prediction.png" src="http://baptiste-wicht.com/images/budget_041_prediction.png"&gt;
-&lt;p&gt;I think that this feature can be very useful if you want to estimate how your
-budget will be for moving to a more expensive house or another insurance for
-instance.&lt;/p&gt;
-&lt;/div&gt;
-&lt;div class="section" id="various-changes"&gt;
-&lt;h2&gt;Various changes&lt;/h2&gt;
-&lt;p&gt;Two accounts can be merged together with the 'budget account migrate' command.
-This command will move all expenses from an account to another and adapt the
-amount of the target account. The source account will be deleted. This supports
-migrated accounts.&lt;/p&gt;
-&lt;p&gt;The 'budget wish list' command will now display the mean accuracy of your
-predictions.&lt;/p&gt;
-&lt;p&gt;You don't need Boost anymore for this project. The only remaining dependency is
-libuuid. I will perhaps remove it in the next version since the UUID are not
-used in the application for now.&lt;/p&gt;
-&lt;p&gt;The command 'budget gc' will clean the IDs of all your data in order to fill the
-holes and make all the IDs contiguous. It is mostly a feature for order-freaks
-like me who do not like to have holes in a sequence of identifiers ;)&lt;/p&gt;
-&lt;p&gt;There was a bug in the monthly report causing the scale to be displayed
-completely moved, it is now fixed:&lt;/p&gt;
-&lt;img alt="https://raw.githubusercontent.com/wichtounet/budgetwarrior/develop/screenshots/budget_report.png" src="https://raw.githubusercontent.com/wichtounet/budgetwarrior/develop/screenshots/budget_report.png"&gt;
-&lt;/div&gt;
-&lt;div class="section" id="installation"&gt;
-&lt;h2&gt;Installation&lt;/h2&gt;
-&lt;p&gt;If you are on Gentoo, you can install it using layman:&lt;/p&gt;
-&lt;pre class="literal-block"&gt;
-layman -a wichtounet
-emerge -a budgetwarrior
-&lt;/pre&gt;
-&lt;p&gt;If you are on Arch Linux, you can use this &lt;a class="reference external" href="https://github.com/StreakyCobra/aur"&gt;AUR repository&lt;/a&gt;.&lt;/p&gt;
-&lt;p&gt;For other systems, you'll have to install from sources:&lt;/p&gt;
-&lt;pre class="literal-block"&gt;
-git clone git://github.com/wichtounet/budgetwarrior.git
-cd budgetwarrior
-make
-sudo make install
-&lt;/pre&gt;
-&lt;/div&gt;
-&lt;div class="section" id="conclusion"&gt;
-&lt;h2&gt;Conclusion&lt;/h2&gt;
-&lt;p&gt;If you are interested by the sources, you can download them on Github:
-&lt;a class="reference external" href="https://github.com/wichtounet/budgetwarrior"&gt;budgetwarrior&lt;/a&gt;.&lt;/p&gt;
-&lt;p&gt;If you have a suggestion for a new features or you found a bug, please post an
-issue on Github, I'd be glad to help you.&lt;/p&gt;
-&lt;p&gt;If you have any comment, don't hesitate to contact me, either by letting a
-comment on this post or by email.&lt;/p&gt;
-&lt;/div&gt;</description><category>C++</category><category>Gentoo</category><category>Linux</category><category>Releases</category><category>budgetwarrior</category><guid>http://baptiste-wicht.com/posts/2014/09/budgetwarrior-041-expense-templates-and-year-projection.html</guid><pubDate>Sun, 21 Sep 2014 18:53:53 GMT</pubDate></item></channel></rss>
+&lt;/div&gt;</description><category>Gentoo</category><category>Linux</category><category>Network</category><category>Tips</category><category>systemd</category><guid>http://baptiste-wicht.com/posts/2014/10/linux-tip-force-systemd-networkd-to-wait-for-dhcp.html</guid><pubDate>Wed, 01 Oct 2014 18:18:55 GMT</pubDate></item></channel></rss>
