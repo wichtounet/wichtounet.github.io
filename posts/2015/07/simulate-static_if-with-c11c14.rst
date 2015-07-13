@@ -129,14 +129,16 @@ Here is how the code will look using this solution:
 
     template<typename T>
     void decrement_kindof(T& value){
-        static_if<std::is_same<std::string, T>::value>([&](auto){
-            value.pop_back();
-        }).else_([&](auto){
-            --value;
+        static_if<std::is_same<std::string, T>::value>([&](auto f){
+            f(value).pop_back();
+        }).else_([&](auto f){
+            --f(value);
         });
     }
 
-It is not as elegant as the "real" :code:`static_if` version, but it is closer than the other solutions. You see that we don't have to use the identity function here since value is a dependent type here.
+It is not as elegant as the "real" :code:`static_if` version, but it is closer than the other solutions.
+
+If you don't use the lazy identity function (f), it still works on g++, but not on clang for some reasons.
 
 Conclusion
 ##########
