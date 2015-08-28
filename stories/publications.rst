@@ -12,7 +12,7 @@ Deep Learning Feature Extraction for Natural Text Analysis
 
 Baptiste Wicht
 In Proceedings of Doctoral Workshop on Distributed Systems, 2015,
-`[url] <http://www.iam.unibe.ch/de/forschung/publikationen/techreports/2015/2015-doctoral-workshop-on-distributed-systems/at_download/file>`
+`[url] <http://www.iam.unibe.ch/de/forschung/publikationen/techreports/2015/2015-doctoral-workshop-on-distributed-systems/at_download/file>`_
 
 2014
 ####
