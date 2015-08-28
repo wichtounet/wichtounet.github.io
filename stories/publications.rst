@@ -1,9 +1,26 @@
+2015
+####
+
+Mixed handwritten and printed digit recognition in Sudoku with Convolutional Deep Belief Network
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Baptiste Wicht, Jean Hennebert
+In Proceedings of IAPR International Conference on Document Analysis and Recognition, 2015
+
+Deep Learning Feature Extraction for Natural Text Analysis
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Baptiste Wicht
+In Proceedings of Doctoral Workshop on Distributed Systems, 2015,
+`[url] <http://www.iam.unibe.ch/de/forschung/publikationen/techreports/2015/2015-doctoral-workshop-on-distributed-systems/at_download/file>`
+
 2014
 ####
 
 Camera-based Sudoku recognition with deep belief network
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+Baptiste Wicht, Jean Hennebert
 In Proceedings of IEEE Conference of the Soft Computing and Pattern Recognition (SoCPaR), 2014
 `[url] <http://ieeexplore.ieee.org/xpl/articleDetails.jsp?arnumber=7007986>`__
 
