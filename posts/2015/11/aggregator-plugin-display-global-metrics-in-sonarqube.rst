@@ -2,8 +2,9 @@ Recently, I wanted to know how many lines of code I had on my Sonar server with 
 
 This plugin is very simple, it only provides a global widgets that aggregates some stats over all your projects. For instance, here is the results on my Sonar server:
 
-.. image:: images/aggregator_widget.png
+.. image:: /images/aggregator_widget.png
    :align: center
+
 
 
 The plugin is freely available on Github: https://github.com/wichtounet/aggregator-plugin . However, it has only be tested on my Sonar server (4.5.2) and it is my first Sonar plugin, so it may not work everywhere. If you experience issues, don't hesitate to open an issue on Github or to propose a Pull Request.
