@@ -1,25 +1,15 @@
 <!DOCTYPE html>
 <html prefix="og: http://ogp.me/ns# article: http://ogp.me/ns/article# " lang="en">
-    <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width">
-    <title>Java Concurrency - Part 4 : Semaphores | @Blog("Baptiste Wicht")</title>
-
-    
-            <link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
-
-    
-            <link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
-
-      <link rel="canonical" href="http://baptiste-wicht.com/posts/2010/08/java-concurrency-part-4-semaphores.html">
-
-
-
-    
-        <!--[if lt IE 9]><script src="/assets/js/html5.js"></script><![endif]-->
-
-    
-<script type="text/javascript">
+<head>
+<meta charset="utf-8">
+<base href="http://baptiste-wicht.com/posts/2010/08/java-concurrency-part-4-semaphores.html">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Java Concurrency - Part 4 : Semaphores | @Blog("Baptiste Wicht")</title>
+<link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
+<meta content="#5670d4" name="theme-color">
+<link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
+<link rel="canonical" href="http://baptiste-wicht.com/posts/2010/08/java-concurrency-part-4-semaphores.html">
+<!--[if lt IE 9]><script src="../../../assets/js/html5.js"></script><![endif]--><script type="text/javascript">
   var _gaq = _gaq || [];
   _gaq.push(['_setAccount', 'UA-2175227-7']);
   _gaq.push(['_trackPageview']);
@@ -28,27 +18,18 @@
     ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
     var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
   })();
-</script>
-
-
-
-    
-
-    <meta name="author" content="Baptiste Wicht">
-    
-        <meta name="og:title" content="Java Concurrency - Part 4 : Semaphores">
-        <meta name="og:url" content="http://baptiste-wicht.com/posts/2010/08/java-concurrency-part-4-semaphores.html">
-            <meta name="og:description" content="We continue in Java Concurrency with the semaphores. Semaphores is also a way to synchronize threads.
+</script><meta name="author" content="Baptiste Wicht">
+<link rel="prev" href="java-concurrrency-synchronization-locks.html" title="Java Concurrency – Part 3 : Synchronization with intrinsic locks" type="text/html">
+<link rel="next" href="../09/java-synchronization-mutual-exclusion-benchmark.html" title="Java Synchronization (Mutual Exclusion) Benchmark" type="text/html">
+<meta property="og:site_name" content='@Blog("Baptiste Wicht")'>
+<meta property="og:title" content="Java Concurrency - Part 4 : Semaphores">
+<meta property="og:url" content="http://baptiste-wicht.com/posts/2010/08/java-concurrency-part-4-semaphores.html">
+<meta property="og:description" content="We continue in Java Concurrency with the semaphores. Semaphores is also a way to synchronize threads.
 Semaphores are a really simple concept, invented by the famous Dutch computer scientist Edsger Dij">
-        <meta name="og:site_name" content="@Blog(" baptiste wicht>
-        <meta name="og:type" content="article">
-
-    
-
-    
-
-
-
+<meta property="og:type" content="article">
+<meta property="article:published_time" content="2010-08-30T07:11:55+02:00">
+<meta property="article:tag" content="Concurrency">
+<meta property="article:tag" content="Java">
 <link href="../../../favicon.ico" rel="icon" type="image/x-icon">
 </head>
 <body>
@@ -67,8 +48,7 @@ Semaphores are a really simple concept, invented by the famous Dutch computer sc
 
 <!-- Menubar -->
 
-<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
-    <div class="container-fluid">
+<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation"><div class="container-fluid">
 <!-- This keeps the margins nice -->
         <div class="navbar-header">
             <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
@@ -85,8 +65,7 @@ Semaphores are a really simple concept, invented by the famous Dutch computer sc
         
         <div class="collapse navbar-collapse navbar-ex1-collapse">
             <ul class="nav navbar-nav">
-                
-                <li>
+<li>
 <a href="../../../stories/about.html">About</a>
                 </li>
 <li>
@@ -115,34 +94,27 @@ Semaphores are a really simple concept, invented by the famous Dutch computer sc
 
             </li>
 </ul>
-
-            <span class="navbar-form pull-left">
+<span class="navbar-form pull-left">
                 <form action="../../../stories/search.html">
                     <input type="text" name="q" id="tipue_search_input">
-                </form>
+</form>
             </span>
             
             <ul class="nav navbar-nav navbar-right">
-                <li>
+<li>
                     <a target="_blank" title="Follow @wichtounet on Twitter" href="https://twitter.com/wichtounet">
-                        <img src="../../../assets/img/twitter.svg" alt="Follow @wichtounet on Twitter">
-                    </a>
+                        <img src="../../../assets/img/twitter.svg" alt="Follow @wichtounet on Twitter"></a>
                 </li>
                 <li>
                     <a target="_blank" title="Follow +BaptisteWicht on Google+" href="https://plus.google.com/+BaptisteWicht">
-                        <img src="../../../assets/img/google_plus.svg" alt="Follow +BaptisteWicht on Google+">
-                    </a>
+                        <img src="../../../assets/img/google_plus.svg" alt="Follow +BaptisteWicht on Google+"></a>
                 </li>
             </ul>
-        </div>
+</div>
 <!-- /.navbar-collapse -->
     </div>
 <!-- /.container-fluid -->
-</nav>
-
-<!-- End of Menubar -->
-
-<div class="body-container">
+</nav><!-- End of Menubar --><div class="body-container">
 
     <!-- Sidebar -->
 
@@ -164,17 +136,15 @@ Semaphores are a really simple concept, invented by the famous Dutch computer sc
 <li><a href="../05/java-concurrency-part-1-threads.html">Java Concurrency - Part 1 : Threads</a></li>
 <li><a href="../09/java-concurrency-part-5-monitors-locks-and-conditions.html">Java Concurrency - Part 5 : Monitors (Locks and Conditions)</a></li>
 </ol>
-
-
-                </div>
+</div>
             </div>
         
         <div class="left-sidebar-widget">
             <h3>Recent comments</h3>
             <div class="left-sidebar-widget-content">
                 <div id="recentcomments" class="dsq-widget">
-                    <script type="text/javascript" src="http://blogwichtounet.disqus.com/recent_comments_widget.js?num_items=5&amp;hide_avatars=0&amp;avatar_size=28&amp;excerpt_length=50"></script> 
-                </div>
+                    <script type="text/javascript" src="http://blogwichtounet.disqus.com/recent_comments_widget.js?num_items=5&amp;hide_avatars=0&amp;avatar_size=28&amp;excerpt_length=50"></script>
+</div>
             </div>
         </div>
 
@@ -182,10 +152,10 @@ Semaphores are a really simple concept, invented by the famous Dutch computer sc
             <h3>Blogroll</h3>
             <div class="left-sidebar-widget-content">
                 <ul>
-                    <li><a target="_blank" href="http://www.asjava.com/">AsJava.com : Java Tutorial</a></li>
+<li><a target="_blank" href="http://www.asjava.com/">AsJava.com : Java Tutorial</a></li>
                     <li><a target="_blank" href="http://www.mkyong.com/">Mkyong : Java Tutorials</a></li>
                 </ul>
-            </div>
+</div>
         </div>
     </div>
 
@@ -196,15 +166,13 @@ Semaphores are a really simple concept, invented by the famous Dutch computer sc
         <div class="body-content">
             <div class="row">
                 
-<article class="post-text h-entry hentry postpage" itemscope="itemscope" itemtype="http://schema.org/Article">
-    
-    <header>
-        
-    <h1 class="p-name entry-title" itemprop="headline name"><a href="#" class="u-url">Java Concurrency - Part 4 : Semaphores</a></h1>
+<article class="post-text h-entry hentry postpage" itemscope="itemscope" itemtype="http://schema.org/Article"><header><h1 class="p-name entry-title" itemprop="headline name"><a href="#" class="u-url">Java Concurrency - Part 4 : Semaphores</a></h1>
 
         <div class="metadata">
-            <p class="byline author vcard"><span class="byline-name fn">Baptiste Wicht</span></p>
-            <p class="dateline"><a href="#" rel="bookmark"><time class="published dt-published" datetime="2010-08-30T07:11:55+02:00" itemprop="datePublished" title="Publication date">2010-08-30 07:11</time></a></p>
+            <p class="byline author vcard"><span class="byline-name fn">
+                    Baptiste Wicht
+            </span></p>
+            <p class="dateline"><a href="#" rel="bookmark"><time class="published dt-published" datetime="2010-08-30T07:11:55+02:00" itemprop="datePublished" title="2010-08-30 07:11">2010-08-30 07:11</time></a></p>
                 <p class="commentline">
         
     <a href="java-concurrency-part-4-semaphores.html#disqus_thread" data-disqus-identifier="cache/posts/2010/08/java-concurrency-part-4-semaphores.html">Comments</a>
@@ -217,10 +185,9 @@ Semaphores are a really simple concept, invented by the famous Dutch computer sc
         </div>
         
 
-    </header>
-
-    <div class="e-content entry-content" itemprop="articleBody text">
-    <p>We continue in Java Concurrency with the semaphores. Semaphores is also a way to synchronize threads.</p>
+    </header><div class="e-content entry-content" itemprop="articleBody text">
+    <div>
+<p>We continue in Java Concurrency with the semaphores. Semaphores is also a way to synchronize threads.</p>
 <p>Semaphores are a really simple concept, invented by the famous Dutch computer scientist Edsger Dijkstra. Basically a semaphore is a counter (integer) that allows a thread to get into a critical region if the value of the counter is greater than 0. If it's the case, the counter is decremented by one otherwise, the thread is waiting until it can go. And when the thread go away from the critical region, the counter is incremented by one to allow one more thread to pass the critical region. A semaphore is created with a certain value for its counter. So, you can execute two actions on a semaphore P and V.</p>
 <p>By example, if you have a critical that cannot be executed concurrently, you can use a semaphore :</p>
 <pre class="code literal-block"><span class="n">sem</span> <span class="n">mutex</span> <span class="o">=</span> <span class="k">new</span> <span class="n">sem</span><span class="o">(</span><span class="mi">1</span><span class="o">)</span>
@@ -258,29 +225,20 @@ Semaphores are a really simple concept, invented by the famous Dutch computer sc
 
 <p>For more informations about Semaphore in Java, the best is to consult <a href="http://download.oracle.com/javase/6/docs/api/java/util/concurrent/Semaphore.html">the Javadoc of the Semaphore class</a>.</p>
 <p>To conclude, semaphores are a powerful ways to solve concurrency problems, but this is not adapted to all problems. If you need only mutual exclusion, <a title="Java Concurrency – Part 3 : Synchronization with intrinsic locks" href="http://www.baptiste-wicht.com/2010/08/java-concurrrency-synchronization-locks/" target="_blank">synchronized blocks</a> are a better solutions. The problems with semaphores is that you can forget to call the release method and that can cause deadlock sometimes difficult to find.</p>
+</div>
     </div>
-    <aside class="postpromonav">
-    <nav>
-    
-        <ul itemprop="keywords" class="tags">
-           <li><a class="tag p-category" href="../../../categories/concurrency.html" rel="tag">Concurrency</a></li>
-           <li><a class="tag p-category" href="../../../categories/java.html" rel="tag">Java</a></li>
+    <aside class="postpromonav"><nav><ul itemprop="keywords" class="tags">
+<li><a class="tag p-category" href="../../../categories/concurrency.html" rel="tag">Concurrency</a></li>
+            <li><a class="tag p-category" href="../../../categories/java.html" rel="tag">Java</a></li>
         </ul>
-
-    
-        <ul class="pager">
-            <li class="previous">
+<ul class="pager hidden-print">
+<li class="previous">
                 <a href="java-concurrrency-synchronization-locks.html" rel="prev" title="Java Concurrency – Part 3 : Synchronization with intrinsic locks">Previous post</a>
             </li>
             <li class="next">
                 <a href="../09/java-synchronization-mutual-exclusion-benchmark.html" rel="next" title="Java Synchronization (Mutual Exclusion) Benchmark">Next post</a>
             </li>
-        </ul>
-
-    </nav>
-    </aside>
-        <section class="comments">
-        <h2>Comments</h2>
+        </ul></nav></aside><section class="comments hidden-print"><h2>Comments</h2>
         
         
         <div id="disqus_thread"></div>
@@ -297,23 +255,13 @@ Semaphores are a really simple concept, invented by the famous Dutch computer sc
             dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
             (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
         })();
-    </script>
-    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a>
+    </script><noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a>
 </noscript>
     <a href="//disqus.com" class="dsq-brlink" rel="nofollow">Comments powered by <span class="logo-disqus">Disqus</span></a>
 
 
-        </section>
-    
-
-</article>
-
-        
-       <script>var disqus_shortname="blogwichtounet";(function(){var a=document.createElement("script");a.async=true;a.src="//"+disqus_shortname+".disqus.com/count.js";(document.getElementsByTagName("head")[0]||document.getElementsByTagName("body")[0]).appendChild(a)}());</script>
-
-
-
-            </div>
+        </section></article><script>var disqus_shortname="blogwichtounet";(function(){var a=document.createElement("script");a.async=true;a.src="//"+disqus_shortname+".disqus.com/count.js";(document.getElementsByTagName("head")[0]||document.getElementsByTagName("body")[0]).appendChild(a)}());</script>
+</div>
         </div>
     </div>
 </div>
@@ -324,31 +272,10 @@ Semaphores are a really simple concept, invented by the famous Dutch computer sc
     Contents © 2015         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         
 <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="padding-left:5px;border-width:0" src="../../../assets/img/cc.png"></a>
         <ul class="footer_inline_ul">
-            
-    <li>
+<li>
     <a href="java-concurrency-part-4-semaphores.wp" id="sourcelink">Source</a>
     </li>
 
-        </ul>
-</footer>
-
-<!-- Late loading stuff  -->
-
-    
-            <script src="../../../assets/js/all-nocdn.js"></script>
-    
-
-
-
-<!-- Google platform JS -->
-    
-<script type="text/javascript" src="https://apis.google.com/js/platform.js"></script>
-
-
-
-
-
-
-
+        </ul></footer><!-- Late loading stuff  --><script src="../../../assets/js/all-nocdn.js"></script><!-- Google platform JS --><script type="text/javascript" src="https://apis.google.com/js/platform.js"></script>
 </body>
 </html>

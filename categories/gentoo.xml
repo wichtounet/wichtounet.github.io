@@ -1,43 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
-<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>@Blog("Baptiste Wicht") (Gentoo)</title><link>http://baptiste-wicht.com/</link><description></description><language>en</language><lastBuildDate>Fri, 28 Aug 2015 11:48:59 GMT</lastBuildDate><generator>http://getnikola.com/</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>How to speed up RAID (5-6) growing with mdadm ?</title><link>http://baptiste-wicht.com/posts/2015/03/how-to-speed-up-raid-5-6-growing-with-mdadm.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;Yesterday, I added my 11th disk to my RAID 6 array. As the last time it took my more than 20 hours, I spent some time investigating how to speed things up and this post contains some tips on how to achieve good grow performances. With these tips, I have been able to reach a speed of about 55K in average during reshape. It did finish in about 13 hours.&lt;/p&gt;
+<?xml-stylesheet type="text/xsl" href="../assets/xml/rss.xsl" media="all"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>@Blog("Baptiste Wicht") (Gentoo)</title><link>http://baptiste-wicht.com/</link><description></description><atom:link type="application/rss+xml" rel="self" href="http://baptiste-wicht.com/categories/gentoo.xml"></atom:link><language>en</language><lastBuildDate>Fri, 20 Nov 2015 10:20:14 GMT</lastBuildDate><generator>https://getnikola.com/</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>How to speed up RAID (5-6) growing with mdadm ?</title><link>http://baptiste-wicht.com/posts/2015/03/how-to-speed-up-raid-5-6-growing-with-mdadm.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;Yesterday, I added my 11th disk to my RAID 6 array. As the last time it took my more than 20 hours, I spent some time investigating how to speed things up and this post contains some tips on how to achieve good grow performances. With these tips, I have been able to reach a speed of about 55K in average during reshape. It did finish in about 13 hours.&lt;/p&gt;
 &lt;p&gt;First, take into account that some of these tips may depend on your configuration. In my case, this server is only used for this RAID, so I don't care if the CPU is used a lot during rebuild or if other processes are suffering from the load. This may not be the case with your configuration. Moreover, I speak only of hard disks, if you use SSD RAID, there are probably better way of tuning the rebuild (or perhaps it is fast enough). Finally, you have know that a RAID reshape is going to be slow, there is no way you'll grow a 10+ RAID array in one hour. G&lt;/p&gt;
 &lt;p&gt;In the examples, I use /dev/md0 as the raid array, you'll have to change this to your array name.&lt;/p&gt;
 &lt;p&gt;The first 3 tips can be used even after the rebuild has started and you should the differences in real-time. But, these 3 tips will also be erased after each reboot.&lt;/p&gt;
 &lt;div class="section" id="increase-speed-limits"&gt;
 &lt;h2&gt;Increase speed limits&lt;/h2&gt;
 &lt;p&gt;The easiest thing to do is to increase the system speed limits on raid. You can see the current limits on your system by using these commands:&lt;/p&gt;
-&lt;pre class="code bash literal-block"&gt;
-sysctl dev.raid.speed_limit_min
-sysctl dev.raid.speed_limit_max
-&lt;/pre&gt;
-&lt;p&gt;These values are set in Kibibytes per second (KiB/s).&lt;/p&gt;
+&lt;pre class="code bash"&gt;&lt;a name="rest_code_9eea383bdcde4a219c56903767e24e79-1"&gt;&lt;/a&gt;sysctl dev.raid.speed_limit_min
+&lt;a name="rest_code_9eea383bdcde4a219c56903767e24e79-2"&gt;&lt;/a&gt;sysctl dev.raid.speed_limit_max
+&lt;/pre&gt;&lt;p&gt;These values are set in Kibibytes per second (KiB/s).&lt;/p&gt;
 &lt;p&gt;You can put them to high values:&lt;/p&gt;
-&lt;pre class="code bash literal-block"&gt;
-sysctl -w dev.raid.speed_limit_min&lt;span class="o"&gt;=&lt;/span&gt;100000
-sysctl -w dev.raid.speed_limit_max&lt;span class="o"&gt;=&lt;/span&gt;500000
-&lt;/pre&gt;
-&lt;p&gt;At least with these values, you won't be limited by the system.&lt;/p&gt;
+&lt;pre class="code bash"&gt;&lt;a name="rest_code_a5f9b9dfdad44aa1900cb4a1aa1b5972-1"&gt;&lt;/a&gt;sysctl -w dev.raid.speed_limit_min&lt;span class="o"&gt;=&lt;/span&gt;100000
+&lt;a name="rest_code_a5f9b9dfdad44aa1900cb4a1aa1b5972-2"&gt;&lt;/a&gt;sysctl -w dev.raid.speed_limit_max&lt;span class="o"&gt;=&lt;/span&gt;500000
+&lt;/pre&gt;&lt;p&gt;At least with these values, you won't be limited by the system.&lt;/p&gt;
 &lt;/div&gt;
 &lt;div class="section" id="increase-stripe-cache-size"&gt;
 &lt;h2&gt;Increase stripe cache size&lt;/h2&gt;
 &lt;p&gt;By allowing the array to use more memory for its stripe cache, you may improve the performances. In some cases, it can improve performances by up to 6 times. By default, the size of the stripe cache is 256, in pages. By default, Linux uses 4096B pages. If you use 256 pages for the stripe cache and you have 10 disks, the cache would use 10*256*4096=10MiB of RAM. In my case, I have increased it to 4096:&lt;/p&gt;
-&lt;pre class="code bash literal-block"&gt;
-&lt;span class="nb"&gt;echo &lt;/span&gt;4096 &amp;gt; /sys/block/md0/md/stripe_cache_size
-&lt;/pre&gt;
-&lt;p&gt;The maximum value is 32768. If you have many disks, this may well take all your available memory. I don't think values higher than 4096 will improve performance, but feel free to try it ;)&lt;/p&gt;
+&lt;pre class="code bash"&gt;&lt;a name="rest_code_4d77b78636174bd3873c7db57e850900-1"&gt;&lt;/a&gt;&lt;span class="nb"&gt;echo &lt;/span&gt;&lt;span class="m"&gt;4096&lt;/span&gt; &amp;gt; /sys/block/md0/md/stripe_cache_size
+&lt;/pre&gt;&lt;p&gt;The maximum value is 32768. If you have many disks, this may well take all your available memory. I don't think values higher than 4096 will improve performance, but feel free to try it ;)&lt;/p&gt;
 &lt;/div&gt;
 &lt;div class="section" id="increase-read-ahead"&gt;
 &lt;h2&gt;Increase read-ahead&lt;/h2&gt;
 &lt;p&gt;If configured too low, the read-ahead of your array may make things slower.&lt;/p&gt;
 &lt;p&gt;You can see get the current read-ahead value with this command:&lt;/p&gt;
-&lt;pre class="code bash literal-block"&gt;
-blockdev --getra /dev/md0
-&lt;/pre&gt;
-&lt;p&gt;These values are in 512B sector. You can set it to 32MB to be sure:&lt;/p&gt;
-&lt;pre class="code bash literal-block"&gt;
-blockdev --setra 65536 /dev/md0
-&lt;/pre&gt;
-&lt;p&gt;This can improve the performances, but don't expect this to be a game-changer unless it was configured really low at the first place.&lt;/p&gt;
+&lt;pre class="code bash"&gt;&lt;a name="rest_code_80ece0d16a6341ac9e9d8a44eb957102-1"&gt;&lt;/a&gt;blockdev --getra /dev/md0
+&lt;/pre&gt;&lt;p&gt;These values are in 512B sector. You can set it to 32MB to be sure:&lt;/p&gt;
+&lt;pre class="code bash"&gt;&lt;a name="rest_code_efb08c5c48d547259c790a7bc8c74ee5-1"&gt;&lt;/a&gt;blockdev --setra &lt;span class="m"&gt;65536&lt;/span&gt; /dev/md0
+&lt;/pre&gt;&lt;p&gt;This can improve the performances, but don't expect this to be a game-changer unless it was configured really low at the first place.&lt;/p&gt;
 &lt;/div&gt;
 &lt;div class="section" id="bonus-speed-up-standard-resync-with-a-write-intent-bitmap"&gt;
 &lt;h2&gt;Bonus: Speed up standard resync with a write-intent bitmap&lt;/h2&gt;
@@ -48,56 +38,38 @@ blockdev --setra 65536 /dev/md0
 &lt;/ul&gt;
 &lt;p&gt;In these case, it may totally avoid the need of a rebuild which is great in my opinion. Moreover, it does not take any space on the array since it uses space that is not usable by the array.&lt;/p&gt;
 &lt;p&gt;Here is how to enable it:&lt;/p&gt;
-&lt;pre class="code bash literal-block"&gt;
-mdadm --grow --bitmap&lt;span class="o"&gt;=&lt;/span&gt;internal /dev/md0
-&lt;/pre&gt;
-&lt;p&gt;However, it may cause some write performance degradation. In my case, I haven't seen any noticeable degradation, but if it is the case, you may want to disable it:&lt;/p&gt;
-&lt;pre class="code bash literal-block"&gt;
-mdadm --grow --bitmap&lt;span class="o"&gt;=&lt;/span&gt;none /dev/md0
-&lt;/pre&gt;
-&lt;/div&gt;
+&lt;pre class="code bash"&gt;&lt;a name="rest_code_9b7260be080f46c89c92f63c5fbba1b9-1"&gt;&lt;/a&gt;mdadm --grow --bitmap&lt;span class="o"&gt;=&lt;/span&gt;internal /dev/md0
+&lt;/pre&gt;&lt;p&gt;However, it may cause some write performance degradation. In my case, I haven't seen any noticeable degradation, but if it is the case, you may want to disable it:&lt;/p&gt;
+&lt;pre class="code bash"&gt;&lt;a name="rest_code_98b66e1cf5b242fca95708e39a30f561-1"&gt;&lt;/a&gt;mdadm --grow --bitmap&lt;span class="o"&gt;=&lt;/span&gt;none /dev/md0
+&lt;/pre&gt;&lt;/div&gt;
 &lt;div class="section" id="bonus-monitor-rebuild-process"&gt;
 &lt;h2&gt;Bonus: Monitor rebuild process&lt;/h2&gt;
 &lt;p&gt;If you want to monitor the build process, you can use the watch command:&lt;/p&gt;
-&lt;pre class="code bash literal-block"&gt;
-watch cat /proc/mdstat
-&lt;/pre&gt;
-&lt;p&gt;With that you'll see the rebuild going in real-time.&lt;/p&gt;
+&lt;pre class="code bash"&gt;&lt;a name="rest_code_6f74c18609624d7c87df82e6510443b1-1"&gt;&lt;/a&gt;watch cat /proc/mdstat
+&lt;/pre&gt;&lt;p&gt;With that you'll see the rebuild going in real-time.&lt;/p&gt;
 &lt;p&gt;You can also monitor the I/O statistics:&lt;/p&gt;
-&lt;pre class="code bash literal-block"&gt;
-watch iostat -k 1 2
-&lt;/pre&gt;
-&lt;/div&gt;
+&lt;pre class="code bash"&gt;&lt;a name="rest_code_f855e450c76b4d9db0d95f75ea7ac64d-1"&gt;&lt;/a&gt;watch iostat -k &lt;span class="m"&gt;1&lt;/span&gt; 2
+&lt;/pre&gt;&lt;/div&gt;
 &lt;div class="section" id="bonus-how-to-grow-a-raid-5-6-array"&gt;
 &lt;h2&gt;Bonus: How to grow a RAID 5-6 array&lt;/h2&gt;
 &lt;p&gt;As a sidenote, this section indicates how to grow an array. If you  want to add the disk /dev/sdl to the array /dev/md0, you'll first have to add it:&lt;/p&gt;
-&lt;pre class="code bash literal-block"&gt;
-mdadm --add /dev/md0 /dev/sdl
-&lt;/pre&gt;
-&lt;p&gt;This will add the disk as a spare disk. If you had 5 disks before, you'll want to grow it to 6:&lt;/p&gt;
-&lt;pre class="code bash literal-block"&gt;
-mdadm --grow --backup-file&lt;span class="o"&gt;=&lt;/span&gt;/root/grow_md0_backup_file --raid-devices&lt;span class="o"&gt;=&lt;/span&gt;6 /dev/md0
-&lt;/pre&gt;
-&lt;p&gt;The backup file must be on another disk of course. The backup file is optional but improves the chance of success if you have a power shutdown or another form of unexpected shutdown. If you know what you're doing, you can grow it without backup-file:&lt;/p&gt;
-&lt;pre class="code bash literal-block"&gt;
-mdadm --grow --raid-devices&lt;span class="o"&gt;=&lt;/span&gt;6 /dev/md0
-&lt;/pre&gt;
-&lt;p&gt;This command will return almost instantly, but the actual reshape won't likely be finished for hours (maybe days). kkkkkkkkkkkkk&lt;/p&gt;
+&lt;pre class="code bash"&gt;&lt;a name="rest_code_b91aac4777f6470b936e700a9b9557b3-1"&gt;&lt;/a&gt;mdadm --add /dev/md0 /dev/sdl
+&lt;/pre&gt;&lt;p&gt;This will add the disk as a spare disk. If you had 5 disks before, you'll want to grow it to 6:&lt;/p&gt;
+&lt;pre class="code bash"&gt;&lt;a name="rest_code_7f0aa1d500e44ebfbba3a59bfbbde046-1"&gt;&lt;/a&gt;mdadm --grow --backup-file&lt;span class="o"&gt;=&lt;/span&gt;/root/grow_md0_backup_file --raid-devices&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="m"&gt;6&lt;/span&gt; /dev/md0
+&lt;/pre&gt;&lt;p&gt;The backup file must be on another disk of course. The backup file is optional but improves the chance of success if you have a power shutdown or another form of unexpected shutdown. If you know what you're doing, you can grow it without backup-file:&lt;/p&gt;
+&lt;pre class="code bash"&gt;&lt;a name="rest_code_18680cc432c94079896a81ca9d58eaa3-1"&gt;&lt;/a&gt;mdadm --grow --raid-devices&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="m"&gt;6&lt;/span&gt; /dev/md0
+&lt;/pre&gt;&lt;p&gt;This command will return almost instantly, but the actual reshape won't likely be finished for hours (maybe days). kkkkkkkkkkkkk&lt;/p&gt;
 &lt;p&gt;Once the rebuild is finished, you'll still have to extend the partitions with resize2fs. If you use LVM on top of the array, you'll have to resize the Physical Volume (PV) first:&lt;/p&gt;
-&lt;pre class="code bash literal-block"&gt;
-pvresize /dev/md0
-&lt;/pre&gt;
-&lt;p&gt;and then extend the Logical Volume (s) (LV). For instance, if you want to add 1T to a LV named /dev/vgraid/work:&lt;/p&gt;
-&lt;pre class="code bash literal-block"&gt;
-vgextend -r -L+1T /dev/vgraid/work
-&lt;/pre&gt;
-&lt;p&gt;The -r option will automatically resize the underlying filesystem. Otherwise, you'd still have to resize it with resize2fs.&lt;/p&gt;
+&lt;pre class="code bash"&gt;&lt;a name="rest_code_cc4effb3575b4dc49558466978383953-1"&gt;&lt;/a&gt;pvresize /dev/md0
+&lt;/pre&gt;&lt;p&gt;and then extend the Logical Volume (s) (LV). For instance, if you want to add 1T to a LV named /dev/vgraid/work:&lt;/p&gt;
+&lt;pre class="code bash"&gt;&lt;a name="rest_code_abff3c73e3b8418897150db4885bafbc-1"&gt;&lt;/a&gt;vgextend -r -L+1T /dev/vgraid/work
+&lt;/pre&gt;&lt;p&gt;The -r option will automatically resize the underlying filesystem. Otherwise, you'd still have to resize it with resize2fs.&lt;/p&gt;
 &lt;/div&gt;
 &lt;div class="section" id="conclusion"&gt;
 &lt;h2&gt;Conclusion&lt;/h2&gt;
 &lt;p&gt;These are the changes I have found that speed up the reshape process. There are others that you may test in your case. For instance, in some systems disabling NCQ on each disk may help.&lt;/p&gt;
 &lt;p&gt;I hope that these tips will help you doing fast rebuilds in your RAID array :)&lt;/p&gt;
-&lt;/div&gt;</description><category>Gentoo</category><category>Hardware</category><category>Home Server</category><category>LVM</category><category>Linux</category><guid>http://baptiste-wicht.com/posts/2015/03/how-to-speed-up-raid-5-6-growing-with-mdadm.html</guid><pubDate>Sat, 07 Mar 2015 14:01:56 GMT</pubDate></item><item><title>Linux tip: Force systemd networkd to wait for DHCP</title><link>http://baptiste-wicht.com/posts/2014/10/linux-tip-force-systemd-networkd-to-wait-for-dhcp.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;Recently, I started using systemd-networkd to manage my network. It works really
+&lt;/div&gt;&lt;/div&gt;</description><category>Gentoo</category><category>Hardware</category><category>Home Server</category><category>Linux</category><category>LVM</category><guid>http://baptiste-wicht.com/posts/2015/03/how-to-speed-up-raid-5-6-growing-with-mdadm.html</guid><pubDate>Sat, 07 Mar 2015 14:01:56 GMT</pubDate></item><item><title>Linux tip: Force systemd networkd to wait for DHCP</title><link>http://baptiste-wicht.com/posts/2014/10/linux-tip-force-systemd-networkd-to-wait-for-dhcp.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;Recently, I started using systemd-networkd to manage my network. It works really
 good for static address configuration, but I experienced some problem with DHCP.
 There is DHCP client support integrated into systemd, so I wanted to use this
 instead of using another DHCP client.&lt;/p&gt;
@@ -153,18 +125,16 @@ After=network-online.target
 &lt;p&gt;To configure an interface with DHCP, you have to create a .network file in
 /etc/systemd/network/. For instance, here is my
 /etc/systemd/network/local.network file:&lt;/p&gt;
-&lt;pre class="code literal-block"&gt;
-[Match]
-Name=enp3s0
-
-[Network]
-DHCP=v4
-&lt;/pre&gt;
-&lt;p&gt;and you have to enable systemd-networkd:&lt;/p&gt;
+&lt;pre class="code text"&gt;&lt;a name="rest_code_dc4a2742582247878225c7af0532b938-1"&gt;&lt;/a&gt;[Match]
+&lt;a name="rest_code_dc4a2742582247878225c7af0532b938-2"&gt;&lt;/a&gt;Name=enp3s0
+&lt;a name="rest_code_dc4a2742582247878225c7af0532b938-3"&gt;&lt;/a&gt;
+&lt;a name="rest_code_dc4a2742582247878225c7af0532b938-4"&gt;&lt;/a&gt;[Network]
+&lt;a name="rest_code_dc4a2742582247878225c7af0532b938-5"&gt;&lt;/a&gt;DHCP=v4
+&lt;/pre&gt;&lt;p&gt;and you have to enable systemd-networkd:&lt;/p&gt;
 &lt;pre class="literal-block"&gt;
 systemctl enable systemd-networkd
 &lt;/pre&gt;
-&lt;/div&gt;</description><category>Gentoo</category><category>Linux</category><category>Network</category><category>Tips</category><category>systemd</category><guid>http://baptiste-wicht.com/posts/2014/10/linux-tip-force-systemd-networkd-to-wait-for-dhcp.html</guid><pubDate>Wed, 01 Oct 2014 18:18:55 GMT</pubDate></item><item><title>budgetwarrior 0.4.1 - Expense templates and year projection</title><link>http://baptiste-wicht.com/posts/2014/09/budgetwarrior-041-expense-templates-and-year-projection.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;I've been able to finish the version 0.4.1 of budgetwarrior before I though :)&lt;/p&gt;
+&lt;/div&gt;&lt;/div&gt;</description><category>Gentoo</category><category>Linux</category><category>Network</category><category>systemd</category><category>Tips</category><guid>http://baptiste-wicht.com/posts/2014/10/linux-tip-force-systemd-networkd-to-wait-for-dhcp.html</guid><pubDate>Wed, 01 Oct 2014 18:18:55 GMT</pubDate></item><item><title>budgetwarrior 0.4.1 - Expense templates and year projection</title><link>http://baptiste-wicht.com/posts/2014/09/budgetwarrior-041-expense-templates-and-year-projection.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;I've been able to finish the version 0.4.1 of budgetwarrior before I though :)&lt;/p&gt;
 &lt;div class="section" id="expense-templates"&gt;
 &lt;h2&gt;Expense templates&lt;/h2&gt;
 &lt;p&gt;The "most useful" new feature of this release is the ability to create template
@@ -243,7 +213,7 @@ sudo make install
 issue on Github, I'd be glad to help you.&lt;/p&gt;
 &lt;p&gt;If you have any comment, don't hesitate to contact me, either by letting a
 comment on this post or by email.&lt;/p&gt;
-&lt;/div&gt;</description><category>C++</category><category>Gentoo</category><category>Linux</category><category>Releases</category><category>budgetwarrior</category><guid>http://baptiste-wicht.com/posts/2014/09/budgetwarrior-041-expense-templates-and-year-projection.html</guid><pubDate>Sun, 21 Sep 2014 18:53:53 GMT</pubDate></item><item><title>A Mutt journey: Search mails with notmuch</title><link>http://baptiste-wicht.com/posts/2014/08/a-mutt-journey-search-mails-with-notmuch.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;In the previous installment in the Mutt series, &lt;a class="reference external" href="http://baptiste-wicht.com/posts/2014/07/a-mutt-journey-my-mutt-configuration.html"&gt;I've talked about my Mutt
+&lt;/div&gt;&lt;/div&gt;</description><category>budgetwarrior</category><category>C++</category><category>Gentoo</category><category>Linux</category><category>Releases</category><guid>http://baptiste-wicht.com/posts/2014/09/budgetwarrior-041-expense-templates-and-year-projection.html</guid><pubDate>Sun, 21 Sep 2014 18:53:53 GMT</pubDate></item><item><title>A Mutt journey: Search mails with notmuch</title><link>http://baptiste-wicht.com/posts/2014/08/a-mutt-journey-search-mails-with-notmuch.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;In the previous installment in the Mutt series, &lt;a class="reference external" href="http://baptiste-wicht.com/posts/2014/07/a-mutt-journey-my-mutt-configuration.html"&gt;I've talked about my Mutt
 configuration&lt;/a&gt;.
 In this post, I'll talk about notmuch and how to use it to search through mails.&lt;/p&gt;
 &lt;p&gt;By default, you can search mails in Mutt by using the / key. By doing that, you
@@ -264,25 +234,23 @@ distributions.&lt;/p&gt;
 &lt;code&gt;.notmuch-config&lt;/code&gt; directly or run &lt;code&gt;notmuch setup&lt;/code&gt; that will
 interactively help you to fill the configuration.&lt;/p&gt;
 &lt;p&gt;Here is my configuration:&lt;/p&gt;
-&lt;pre class="code literal-block"&gt;
-[database]
-path=/data/oi/Gmail/
-
-[user]
-name=Baptiste Wicht
-primary_email=baptiste.wicht@gmail.com
-
-[new]
-tags=inbox
-ignore=
-
-[search]
-exclude_tags=deleted;
-
-[maildir]
-synchronize_flags=true
-&lt;/pre&gt;
-&lt;p&gt;It needs of cours the place where your mails are stored. Then, some information
+&lt;pre class="code text"&gt;&lt;a name="rest_code_5bf000f877424f35bfd96772327fedd4-1"&gt;&lt;/a&gt;[database]
+&lt;a name="rest_code_5bf000f877424f35bfd96772327fedd4-2"&gt;&lt;/a&gt;path=/data/oi/Gmail/
+&lt;a name="rest_code_5bf000f877424f35bfd96772327fedd4-3"&gt;&lt;/a&gt;
+&lt;a name="rest_code_5bf000f877424f35bfd96772327fedd4-4"&gt;&lt;/a&gt;[user]
+&lt;a name="rest_code_5bf000f877424f35bfd96772327fedd4-5"&gt;&lt;/a&gt;name=Baptiste Wicht
+&lt;a name="rest_code_5bf000f877424f35bfd96772327fedd4-6"&gt;&lt;/a&gt;primary_email=baptiste.wicht@gmail.com
+&lt;a name="rest_code_5bf000f877424f35bfd96772327fedd4-7"&gt;&lt;/a&gt;
+&lt;a name="rest_code_5bf000f877424f35bfd96772327fedd4-8"&gt;&lt;/a&gt;[new]
+&lt;a name="rest_code_5bf000f877424f35bfd96772327fedd4-9"&gt;&lt;/a&gt;tags=inbox
+&lt;a name="rest_code_5bf000f877424f35bfd96772327fedd4-10"&gt;&lt;/a&gt;ignore=
+&lt;a name="rest_code_5bf000f877424f35bfd96772327fedd4-11"&gt;&lt;/a&gt;
+&lt;a name="rest_code_5bf000f877424f35bfd96772327fedd4-12"&gt;&lt;/a&gt;[search]
+&lt;a name="rest_code_5bf000f877424f35bfd96772327fedd4-13"&gt;&lt;/a&gt;exclude_tags=deleted;
+&lt;a name="rest_code_5bf000f877424f35bfd96772327fedd4-14"&gt;&lt;/a&gt;
+&lt;a name="rest_code_5bf000f877424f35bfd96772327fedd4-15"&gt;&lt;/a&gt;[maildir]
+&lt;a name="rest_code_5bf000f877424f35bfd96772327fedd4-16"&gt;&lt;/a&gt;synchronize_flags=true
+&lt;/pre&gt;&lt;p&gt;It needs of cours the place where your mails are stored. Then, some information
 about you. The next section is to specify which tags you want to add to new
 mails. Here, I specified that each new mail must be tagged with &lt;cite&gt;inbox&lt;/cite&gt;. You can
 add several tags to new mails. In the &lt;cite&gt;[search]&lt;/cite&gt; section, the excluded tags are
@@ -311,10 +279,8 @@ feature.&lt;/p&gt;
 new mails and deleted mails. But you can also explicitely tag messages by using
 &lt;code&gt;notmuch tag&lt;/code&gt;. For instance, to tag all messages from the notmuch mailing
 list:&lt;/p&gt;
-&lt;pre class="code literal-block"&gt;
-notmuch tag +notmuch -- tag:new and to:notmuch@notmuchmail.org
-&lt;/pre&gt;
-&lt;p&gt;I personally don't use this feature since I use imapfilter and IMAP folders to
+&lt;pre class="code text"&gt;&lt;a name="rest_code_105422cdfb7d4b39bf2f0908d54e9102-1"&gt;&lt;/a&gt;notmuch tag +notmuch -- tag:new and to:notmuch@notmuchmail.org
+&lt;/pre&gt;&lt;p&gt;I personally don't use this feature since I use imapfilter and IMAP folders to
 sort my mail, but it can be very useful. You can run these commands in the
 cronjob and always have you tags up to date. Tags can then be used in notmuch to
 search or to create virtual folder in Mutt.&lt;/p&gt;
@@ -325,7 +291,7 @@ search or to create virtual folder in Mutt.&lt;/p&gt;
 does not do a lot of thing, but it does them really well.&lt;/p&gt;
 &lt;p&gt;That concludes the series of posts on Mutt. If you have any question on my Mutt
 configuration, I'd be glad to extend on the comments.&lt;/p&gt;
-&lt;/div&gt;</description><category>Gentoo</category><category>Gmail</category><category>Linux</category><category>Mutt</category><guid>http://baptiste-wicht.com/posts/2014/08/a-mutt-journey-search-mails-with-notmuch.html</guid><pubDate>Sat, 02 Aug 2014 15:24:12 GMT</pubDate></item><item><title>A Mutt journey: Mutt configuration</title><link>http://baptiste-wicht.com/posts/2014/07/a-mutt-journey-my-mutt-configuration.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;If you've followed my Mutt posts, you'll know that I'm &lt;a class="reference external" href="http://baptiste-wicht.com/posts/2014/07/a-mutt-journey-filter-mails-with-imapfilter.html"&gt;filtering my mails with
+&lt;/div&gt;&lt;/div&gt;</description><category>Gentoo</category><category>Gmail</category><category>Linux</category><category>Mutt</category><guid>http://baptiste-wicht.com/posts/2014/08/a-mutt-journey-search-mails-with-notmuch.html</guid><pubDate>Sat, 02 Aug 2014 15:24:12 GMT</pubDate></item><item><title>A Mutt journey: Mutt configuration</title><link>http://baptiste-wicht.com/posts/2014/07/a-mutt-journey-my-mutt-configuration.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;If you've followed my Mutt posts, you'll know that I'm &lt;a class="reference external" href="http://baptiste-wicht.com/posts/2014/07/a-mutt-journey-filter-mails-with-imapfilter.html"&gt;filtering my mails with
 imapfilter&lt;/a&gt; and
 &lt;a class="reference external" href="http://baptiste-wicht.com/posts/2014/07/a-mutt-journey-download-mails-with-offlineimap.html"&gt;downloading them with offlineimap&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;In this post, I'll share my Mutt configuration. I'm not using Mutt directly, but
@@ -557,7 +523,7 @@ here. My .muttrc is available &lt;a class="reference external" href="https://git
 this post ;)&lt;/p&gt;
 &lt;p&gt;In the next blog post about my "Mutt journey", I'll talk about notmuch and this
 will likely be the last post on this series.&lt;/p&gt;
-&lt;/div&gt;</description><category>Gentoo</category><category>Gmail</category><category>Linux</category><category>Mutt</category><guid>http://baptiste-wicht.com/posts/2014/07/a-mutt-journey-my-mutt-configuration.html</guid><pubDate>Tue, 22 Jul 2014 20:14:32 GMT</pubDate></item><item><title>A Mutt Journey: Download mails with offlineimap</title><link>http://baptiste-wicht.com/posts/2014/07/a-mutt-journey-download-mails-with-offlineimap.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;In the series of posts about Mutt, I recently presented how I was &lt;a class="reference external" href="http://baptiste-wicht.com/posts/2014/07/a-mutt-journey-filter-mails-with-imapfilter.html"&gt;filtering my email&lt;/a&gt;. In this
+&lt;/div&gt;&lt;/div&gt;</description><category>Gentoo</category><category>Gmail</category><category>Linux</category><category>Mutt</category><guid>http://baptiste-wicht.com/posts/2014/07/a-mutt-journey-my-mutt-configuration.html</guid><pubDate>Tue, 22 Jul 2014 20:14:32 GMT</pubDate></item><item><title>A Mutt Journey: Download mails with offlineimap</title><link>http://baptiste-wicht.com/posts/2014/07/a-mutt-journey-download-mails-with-offlineimap.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;In the series of posts about Mutt, I recently presented how I was &lt;a class="reference external" href="http://baptiste-wicht.com/posts/2014/07/a-mutt-journey-filter-mails-with-imapfilter.html"&gt;filtering my email&lt;/a&gt;. In this
 post, I'll show how I download my emails locally using offlineimap. This is the
 perfect companion for Mutt.&lt;/p&gt;
 &lt;p&gt;With Mutt, you can easily directly query an IMAP server and keep the views up to
@@ -586,41 +552,35 @@ again it is the same with a bit different parameters for other mail accounts.&lt
 &lt;div class="section" id="configuration"&gt;
 &lt;h2&gt;Configuration&lt;/h2&gt;
 &lt;p&gt;First, we have to declare the account:&lt;/p&gt;
-&lt;pre class="code literal-block"&gt;
-[general]
-accounts = Gmail
-
-[Account Gmail]
-localrepository = Gmail-Local
-remoterepository = Gmail-Remote
-&lt;/pre&gt;
-&lt;p&gt;&lt;strong&gt;accounts&lt;/strong&gt; is the list of accounts that we have, here only one. Then, in
+&lt;pre class="code text"&gt;&lt;a name="rest_code_47e2785583604273af51df52f10d1b2b-1"&gt;&lt;/a&gt;[general]
+&lt;a name="rest_code_47e2785583604273af51df52f10d1b2b-2"&gt;&lt;/a&gt;accounts = Gmail
+&lt;a name="rest_code_47e2785583604273af51df52f10d1b2b-3"&gt;&lt;/a&gt;
+&lt;a name="rest_code_47e2785583604273af51df52f10d1b2b-4"&gt;&lt;/a&gt;[Account Gmail]
+&lt;a name="rest_code_47e2785583604273af51df52f10d1b2b-5"&gt;&lt;/a&gt;localrepository = Gmail-Local
+&lt;a name="rest_code_47e2785583604273af51df52f10d1b2b-6"&gt;&lt;/a&gt;remoterepository = Gmail-Remote
+&lt;/pre&gt;&lt;p&gt;&lt;strong&gt;accounts&lt;/strong&gt; is the list of accounts that we have, here only one. Then, in
 account, repositories are just names of the repositories we'll declare now.&lt;/p&gt;
 &lt;p&gt;The local repository has to be configured:&lt;/p&gt;
-&lt;pre class="code literal-block"&gt;
-[Repository Gmail-Local]
-type = Maildir
-localfolders = /data/oi/Gmail/
-sep = /
-&lt;/pre&gt;
-&lt;p&gt;The first important point is &lt;strong&gt;localfolders&lt;/strong&gt; that sets where the mail will be
+&lt;pre class="code text"&gt;&lt;a name="rest_code_c2ccb8350aa7467589535a6f32efc264-1"&gt;&lt;/a&gt;[Repository Gmail-Local]
+&lt;a name="rest_code_c2ccb8350aa7467589535a6f32efc264-2"&gt;&lt;/a&gt;type = Maildir
+&lt;a name="rest_code_c2ccb8350aa7467589535a6f32efc264-3"&gt;&lt;/a&gt;localfolders = /data/oi/Gmail/
+&lt;a name="rest_code_c2ccb8350aa7467589535a6f32efc264-4"&gt;&lt;/a&gt;sep = /
+&lt;/pre&gt;&lt;p&gt;The first important point is &lt;strong&gt;localfolders&lt;/strong&gt; that sets where the mail will be
 put on your computer. &lt;strong&gt;sep&lt;/strong&gt; defines the separator used for nested IMAP
 folders. I recommend / since Mutt will nest them automatically if / is used as
 separator.&lt;/p&gt;
 &lt;p&gt;Then, the remote repository has to be configured:&lt;/p&gt;
-&lt;pre class="code literal-block"&gt;
-[Repository Gmail-Remote]
-type = Gmail
-remoteuser = USER
-remotepass = PASSWORD
-realdelete = no
-folderfilter = lambda folder: folder not in ['[Gmail]/All Mail',
-                                             '[Gmail]/Important',
-                                             '[Gmail]/Starred',
-                                             ]
-sslcacertfile = /etc/ssl/certs/ca-certificates.crt
-&lt;/pre&gt;
-&lt;p&gt;&lt;strong&gt;remotepass&lt;/strong&gt; and &lt;strong&gt;remoteuser&lt;/strong&gt; are your user names and password. You can also
+&lt;pre class="code text"&gt;&lt;a name="rest_code_fa2aa92e6c774d7fbd896d7b7982c2c4-1"&gt;&lt;/a&gt;[Repository Gmail-Remote]
+&lt;a name="rest_code_fa2aa92e6c774d7fbd896d7b7982c2c4-2"&gt;&lt;/a&gt;type = Gmail
+&lt;a name="rest_code_fa2aa92e6c774d7fbd896d7b7982c2c4-3"&gt;&lt;/a&gt;remoteuser = USER
+&lt;a name="rest_code_fa2aa92e6c774d7fbd896d7b7982c2c4-4"&gt;&lt;/a&gt;remotepass = PASSWORD
+&lt;a name="rest_code_fa2aa92e6c774d7fbd896d7b7982c2c4-5"&gt;&lt;/a&gt;realdelete = no
+&lt;a name="rest_code_fa2aa92e6c774d7fbd896d7b7982c2c4-6"&gt;&lt;/a&gt;folderfilter = lambda folder: folder not in ['[Gmail]/All Mail',
+&lt;a name="rest_code_fa2aa92e6c774d7fbd896d7b7982c2c4-7"&gt;&lt;/a&gt;                                             '[Gmail]/Important',
+&lt;a name="rest_code_fa2aa92e6c774d7fbd896d7b7982c2c4-8"&gt;&lt;/a&gt;                                             '[Gmail]/Starred',
+&lt;a name="rest_code_fa2aa92e6c774d7fbd896d7b7982c2c4-9"&gt;&lt;/a&gt;                                             ]
+&lt;a name="rest_code_fa2aa92e6c774d7fbd896d7b7982c2c4-10"&gt;&lt;/a&gt;sslcacertfile = /etc/ssl/certs/ca-certificates.crt
+&lt;/pre&gt;&lt;p&gt;&lt;strong&gt;remotepass&lt;/strong&gt; and &lt;strong&gt;remoteuser&lt;/strong&gt; are your user names and password. You can also
 use &lt;strong&gt;remotepassfile&lt;/strong&gt; to read the password from a file. &lt;strong&gt;realdelete=no&lt;/strong&gt;
 indicates that we only want to remove all the labels of deleted mails. For
 Gmail, it means that the mail will still be in the All Mail folder. The last
@@ -637,16 +597,14 @@ and you'll find your mailboxes directly configured in Mutt :)&lt;/p&gt;
 &lt;p&gt;This code will generate a file ~/.mutt/mailboxes that you can source in your
 Mutt configuration and get the complete list of available mailboxes. This will
 be kept up to date if you add new IMAP folders on the server for instance.&lt;/p&gt;
-&lt;pre class="code literal-block"&gt;
-[mbnames]
-enabled = yes
-filename = ~/.mutt/mailboxes
-header = "mailboxes "
-peritem = "+%(accountname)s/%(foldername)s"
-sep = " "
-footer = "\n"
-&lt;/pre&gt;
-&lt;/div&gt;
+&lt;pre class="code text"&gt;&lt;a name="rest_code_5b0fdfba1db745e186b7c3f091119ba5-1"&gt;&lt;/a&gt;[mbnames]
+&lt;a name="rest_code_5b0fdfba1db745e186b7c3f091119ba5-2"&gt;&lt;/a&gt;enabled = yes
+&lt;a name="rest_code_5b0fdfba1db745e186b7c3f091119ba5-3"&gt;&lt;/a&gt;filename = ~/.mutt/mailboxes
+&lt;a name="rest_code_5b0fdfba1db745e186b7c3f091119ba5-4"&gt;&lt;/a&gt;header = "mailboxes "
+&lt;a name="rest_code_5b0fdfba1db745e186b7c3f091119ba5-5"&gt;&lt;/a&gt;peritem = "+%(accountname)s/%(foldername)s"
+&lt;a name="rest_code_5b0fdfba1db745e186b7c3f091119ba5-6"&gt;&lt;/a&gt;sep = " "
+&lt;a name="rest_code_5b0fdfba1db745e186b7c3f091119ba5-7"&gt;&lt;/a&gt;footer = "\n"
+&lt;/pre&gt;&lt;/div&gt;
 &lt;div class="section" id="translate-names"&gt;
 &lt;h2&gt;Translate names&lt;/h2&gt;
 &lt;p&gt;You may have seen in the previous section some weird folder name like
@@ -656,28 +614,26 @@ configure offlineimap to rename these names to better ones. For that, you'll
 need to rule (in Python ;) ), one to translate from remote to local and one to
 do the reverse.&lt;/p&gt;
 &lt;p&gt;Here is what I did:&lt;/p&gt;
-&lt;pre class="code literal-block"&gt;
-[Repository Gmail-Local]
-nametrans = lambda folder: {'drafts':   '[Gmail]/Drafts',
-                            'sent':     '[Gmail]/Sent Mail',
-                            'important':'[Gmail]/Important',
-                            'spam':     '[Gmail]/Spam',
-                            'starred':  '[Gmail]/Starred',
-                            'trash':    '[Gmail]/Trash',
-                            'archive':  '[Gmail]/All Mail',
-                            }.get(folder, folder)
-
-[Repository Gmail-Remote]
-nametrans = lambda folder: {'[Gmail]/Drafts':    'drafts',
-                            '[Gmail]/Sent Mail': 'sent',
-                            '[Gmail]/Starred':   'flagged',
-                            '[Gmail]/Important':   'important',
-                            '[Gmail]/Spam':   'spam',
-                            '[Gmail]/Trash':     'trash',
-                            '[Gmail]/All Mail':  'archive',
-                            }.get(folder, folder)
-&lt;/pre&gt;
-&lt;p&gt;I simply renamed all "[Gmail]" folders into something more readable and that
+&lt;pre class="code text"&gt;&lt;a name="rest_code_37f4f77cd8b747299be18596e6a0f63f-1"&gt;&lt;/a&gt;[Repository Gmail-Local]
+&lt;a name="rest_code_37f4f77cd8b747299be18596e6a0f63f-2"&gt;&lt;/a&gt;nametrans = lambda folder: {'drafts':   '[Gmail]/Drafts',
+&lt;a name="rest_code_37f4f77cd8b747299be18596e6a0f63f-3"&gt;&lt;/a&gt;                            'sent':     '[Gmail]/Sent Mail',
+&lt;a name="rest_code_37f4f77cd8b747299be18596e6a0f63f-4"&gt;&lt;/a&gt;                            'important':'[Gmail]/Important',
+&lt;a name="rest_code_37f4f77cd8b747299be18596e6a0f63f-5"&gt;&lt;/a&gt;                            'spam':     '[Gmail]/Spam',
+&lt;a name="rest_code_37f4f77cd8b747299be18596e6a0f63f-6"&gt;&lt;/a&gt;                            'starred':  '[Gmail]/Starred',
+&lt;a name="rest_code_37f4f77cd8b747299be18596e6a0f63f-7"&gt;&lt;/a&gt;                            'trash':    '[Gmail]/Trash',
+&lt;a name="rest_code_37f4f77cd8b747299be18596e6a0f63f-8"&gt;&lt;/a&gt;                            'archive':  '[Gmail]/All Mail',
+&lt;a name="rest_code_37f4f77cd8b747299be18596e6a0f63f-9"&gt;&lt;/a&gt;                            }.get(folder, folder)
+&lt;a name="rest_code_37f4f77cd8b747299be18596e6a0f63f-10"&gt;&lt;/a&gt;
+&lt;a name="rest_code_37f4f77cd8b747299be18596e6a0f63f-11"&gt;&lt;/a&gt;[Repository Gmail-Remote]
+&lt;a name="rest_code_37f4f77cd8b747299be18596e6a0f63f-12"&gt;&lt;/a&gt;nametrans = lambda folder: {'[Gmail]/Drafts':    'drafts',
+&lt;a name="rest_code_37f4f77cd8b747299be18596e6a0f63f-13"&gt;&lt;/a&gt;                            '[Gmail]/Sent Mail': 'sent',
+&lt;a name="rest_code_37f4f77cd8b747299be18596e6a0f63f-14"&gt;&lt;/a&gt;                            '[Gmail]/Starred':   'flagged',
+&lt;a name="rest_code_37f4f77cd8b747299be18596e6a0f63f-15"&gt;&lt;/a&gt;                            '[Gmail]/Important':   'important',
+&lt;a name="rest_code_37f4f77cd8b747299be18596e6a0f63f-16"&gt;&lt;/a&gt;                            '[Gmail]/Spam':   'spam',
+&lt;a name="rest_code_37f4f77cd8b747299be18596e6a0f63f-17"&gt;&lt;/a&gt;                            '[Gmail]/Trash':     'trash',
+&lt;a name="rest_code_37f4f77cd8b747299be18596e6a0f63f-18"&gt;&lt;/a&gt;                            '[Gmail]/All Mail':  'archive',
+&lt;a name="rest_code_37f4f77cd8b747299be18596e6a0f63f-19"&gt;&lt;/a&gt;                            }.get(folder, folder)
+&lt;/pre&gt;&lt;p&gt;I simply renamed all "[Gmail]" folders into something more readable and that
 makes more sense to me. It is not limited to special Gmail folders of course,
 this can also be applied to rename a folder X into a folder Y in the same. As it
 is Python, you can do sophisticated stuff if necessary.&lt;/p&gt;
@@ -717,7 +673,7 @@ too much of them.&lt;/p&gt;
 &lt;a class="reference external" href="http://docs.offlineimap.org/en/latest/"&gt;reference documentation&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;This is it for this part of this series. In the next post, I'll present my Mutt
 configuration and how I use it.&lt;/p&gt;
-&lt;/div&gt;</description><category>Gentoo</category><category>Gmail</category><category>Linux</category><category>Mutt</category><category>Python</category><guid>http://baptiste-wicht.com/posts/2014/07/a-mutt-journey-download-mails-with-offlineimap.html</guid><pubDate>Wed, 16 Jul 2014 17:54:40 GMT</pubDate></item><item><title>A Mutt Journey: Filter mails with imapfilter</title><link>http://baptiste-wicht.com/posts/2014/07/a-mutt-journey-filter-mails-with-imapfilter.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;About a month ago, I decided to switch to Mutt to read my emails. I kept my
+&lt;/div&gt;&lt;/div&gt;</description><category>Gentoo</category><category>Gmail</category><category>Linux</category><category>Mutt</category><category>Python</category><guid>http://baptiste-wicht.com/posts/2014/07/a-mutt-journey-download-mails-with-offlineimap.html</guid><pubDate>Wed, 16 Jul 2014 17:54:40 GMT</pubDate></item><item><title>A Mutt Journey: Filter mails with imapfilter</title><link>http://baptiste-wicht.com/posts/2014/07/a-mutt-journey-filter-mails-with-imapfilter.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;About a month ago, I decided to switch to Mutt to read my emails. I kept my
 GMail account, but I don't use the web interface anymore. It took me a long time
 to prepare a complete enviromnent.&lt;/p&gt;
 &lt;p&gt;Currently, i'm using:&lt;/p&gt;
@@ -745,40 +701,34 @@ even if you use your web client from time to time or check your mail on your
 phone, the changes will still be viewable.&lt;/p&gt;
 &lt;p&gt;The configuration is done in the ~/.imapfilter/config.lua file. The
 configuration is quite easy, you have to declare an IMAP object as the account.&lt;/p&gt;
-&lt;pre class="code lua literal-block"&gt;
-&lt;span class="kd"&gt;local&lt;/span&gt; &lt;span class="n"&gt;account&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;IMAP&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
-    &lt;span class="n"&gt;server&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s1"&gt;'&lt;/span&gt;&lt;span class="s"&gt;imap_sever'&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
-    &lt;span class="n"&gt;username&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s1"&gt;'&lt;/span&gt;&lt;span class="s"&gt;username'&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
-    &lt;span class="n"&gt;password&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s1"&gt;'&lt;/span&gt;&lt;span class="s"&gt;password'&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
-    &lt;span class="n"&gt;ssl&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s1"&gt;'&lt;/span&gt;&lt;span class="s"&gt;ssl3'&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
-&lt;span class="p"&gt;}&lt;/span&gt;
-&lt;/pre&gt;
-&lt;p&gt;As the configuration is in Lua, you can easily get the password from another
+&lt;pre class="code lua"&gt;&lt;a name="rest_code_ab8d362a23de4c62ac583b4195dcd031-1"&gt;&lt;/a&gt;&lt;span class="kd"&gt;local&lt;/span&gt; &lt;span class="n"&gt;account&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;IMAP&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+&lt;a name="rest_code_ab8d362a23de4c62ac583b4195dcd031-2"&gt;&lt;/a&gt;    &lt;span class="n"&gt;server&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s1"&gt;'&lt;/span&gt;&lt;span class="s"&gt;imap_sever'&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;a name="rest_code_ab8d362a23de4c62ac583b4195dcd031-3"&gt;&lt;/a&gt;    &lt;span class="n"&gt;username&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s1"&gt;'&lt;/span&gt;&lt;span class="s"&gt;username'&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;a name="rest_code_ab8d362a23de4c62ac583b4195dcd031-4"&gt;&lt;/a&gt;    &lt;span class="n"&gt;password&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s1"&gt;'&lt;/span&gt;&lt;span class="s"&gt;password'&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;a name="rest_code_ab8d362a23de4c62ac583b4195dcd031-5"&gt;&lt;/a&gt;    &lt;span class="n"&gt;ssl&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s1"&gt;'&lt;/span&gt;&lt;span class="s"&gt;ssl3'&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;a name="rest_code_ab8d362a23de4c62ac583b4195dcd031-6"&gt;&lt;/a&gt;&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;p&gt;As the configuration is in Lua, you can easily get the password from another
 file. For instance, here is my account declaration:&lt;/p&gt;
-&lt;pre class="code lua literal-block"&gt;
-&lt;span class="kd"&gt;local&lt;/span&gt; &lt;span class="n"&gt;account&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;IMAP&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
-    &lt;span class="n"&gt;server&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s1"&gt;'&lt;/span&gt;&lt;span class="s"&gt;imap.gmail.com'&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
-    &lt;span class="n"&gt;username&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s1"&gt;'&lt;/span&gt;&lt;span class="s"&gt;baptiste.wicht@gmail.com'&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
-    &lt;span class="n"&gt;password&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;get_imap_password&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;"&lt;/span&gt;&lt;span class="s"&gt;.password.offlineimaprc"&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt;
-    &lt;span class="n"&gt;ssl&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s1"&gt;'&lt;/span&gt;&lt;span class="s"&gt;ssl3'&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
-&lt;span class="p"&gt;}&lt;/span&gt;
-
-&lt;span class="c1"&gt;-- Utility function to get IMAP password from file&lt;/span&gt;
-&lt;span class="k"&gt;function&lt;/span&gt; &lt;span class="nf"&gt;get_imap_password&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;file&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
-    &lt;span class="kd"&gt;local&lt;/span&gt; &lt;span class="n"&gt;home&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nb"&gt;os.getenv&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;"&lt;/span&gt;&lt;span class="s"&gt;HOME"&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
-    &lt;span class="kd"&gt;local&lt;/span&gt; &lt;span class="n"&gt;file&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;home&lt;/span&gt; &lt;span class="o"&gt;..&lt;/span&gt; &lt;span class="s2"&gt;"&lt;/span&gt;&lt;span class="s"&gt;/"&lt;/span&gt; &lt;span class="o"&gt;..&lt;/span&gt; &lt;span class="n"&gt;file&lt;/span&gt;
-    &lt;span class="kd"&gt;local&lt;/span&gt; &lt;span class="n"&gt;str&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nb"&gt;io.open&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;file&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;&lt;span class="n"&gt;read&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
-    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;str&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
-&lt;span class="k"&gt;end&lt;/span&gt;
-&lt;/pre&gt;
-&lt;p&gt;It gets the password by reading a file in the home directory.&lt;/p&gt;
+&lt;pre class="code lua"&gt;&lt;a name="rest_code_560f8fbe92064a73a9951112b612ee92-1"&gt;&lt;/a&gt;&lt;span class="kd"&gt;local&lt;/span&gt; &lt;span class="n"&gt;account&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;IMAP&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+&lt;a name="rest_code_560f8fbe92064a73a9951112b612ee92-2"&gt;&lt;/a&gt;    &lt;span class="n"&gt;server&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s1"&gt;'&lt;/span&gt;&lt;span class="s"&gt;imap.gmail.com'&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;a name="rest_code_560f8fbe92064a73a9951112b612ee92-3"&gt;&lt;/a&gt;    &lt;span class="n"&gt;username&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s1"&gt;'&lt;/span&gt;&lt;span class="s"&gt;baptiste.wicht@gmail.com'&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;a name="rest_code_560f8fbe92064a73a9951112b612ee92-4"&gt;&lt;/a&gt;    &lt;span class="n"&gt;password&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;get_imap_password&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;"&lt;/span&gt;&lt;span class="s"&gt;.password.offlineimaprc"&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt;
+&lt;a name="rest_code_560f8fbe92064a73a9951112b612ee92-5"&gt;&lt;/a&gt;    &lt;span class="n"&gt;ssl&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s1"&gt;'&lt;/span&gt;&lt;span class="s"&gt;ssl3'&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;a name="rest_code_560f8fbe92064a73a9951112b612ee92-6"&gt;&lt;/a&gt;&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;a name="rest_code_560f8fbe92064a73a9951112b612ee92-7"&gt;&lt;/a&gt;
+&lt;a name="rest_code_560f8fbe92064a73a9951112b612ee92-8"&gt;&lt;/a&gt;&lt;span class="c1"&gt;-- Utility function to get IMAP password from file&lt;/span&gt;
+&lt;a name="rest_code_560f8fbe92064a73a9951112b612ee92-9"&gt;&lt;/a&gt;&lt;span class="k"&gt;function&lt;/span&gt; &lt;span class="nf"&gt;get_imap_password&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;file&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;a name="rest_code_560f8fbe92064a73a9951112b612ee92-10"&gt;&lt;/a&gt;    &lt;span class="kd"&gt;local&lt;/span&gt; &lt;span class="n"&gt;home&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nb"&gt;os.getenv&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;"&lt;/span&gt;&lt;span class="s"&gt;HOME"&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;a name="rest_code_560f8fbe92064a73a9951112b612ee92-11"&gt;&lt;/a&gt;    &lt;span class="kd"&gt;local&lt;/span&gt; &lt;span class="n"&gt;file&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;home&lt;/span&gt; &lt;span class="o"&gt;..&lt;/span&gt; &lt;span class="s2"&gt;"&lt;/span&gt;&lt;span class="s"&gt;/"&lt;/span&gt; &lt;span class="o"&gt;..&lt;/span&gt; &lt;span class="n"&gt;file&lt;/span&gt;
+&lt;a name="rest_code_560f8fbe92064a73a9951112b612ee92-12"&gt;&lt;/a&gt;    &lt;span class="kd"&gt;local&lt;/span&gt; &lt;span class="n"&gt;str&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nb"&gt;io.open&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;file&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;&lt;span class="n"&gt;read&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+&lt;a name="rest_code_560f8fbe92064a73a9951112b612ee92-13"&gt;&lt;/a&gt;    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;str&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;a name="rest_code_560f8fbe92064a73a9951112b612ee92-14"&gt;&lt;/a&gt;&lt;span class="k"&gt;end&lt;/span&gt;
+&lt;/pre&gt;&lt;p&gt;It gets the password by reading a file in the home directory.&lt;/p&gt;
 &lt;p&gt;Once, you have the account, you can check the status of a folder with the
 check_status() function. For instance:&lt;/p&gt;
-&lt;pre class="code lua literal-block"&gt;
-&lt;span class="n"&gt;account&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;INBOX&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;check_status&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
-&lt;span class="n"&gt;account&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s1"&gt;'&lt;/span&gt;&lt;span class="s"&gt;[Gmail]/Trash'&lt;/span&gt;&lt;span class="p"&gt;]:&lt;/span&gt;&lt;span class="n"&gt;check_status&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
-&lt;/pre&gt;
-&lt;p&gt;You can run imapfilter simply by launching imapfilter on the command line. Once
+&lt;pre class="code lua"&gt;&lt;a name="rest_code_650f2f3d8a864bc38aaee871c71db933-1"&gt;&lt;/a&gt;&lt;span class="n"&gt;account&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;INBOX&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;check_status&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+&lt;a name="rest_code_650f2f3d8a864bc38aaee871c71db933-2"&gt;&lt;/a&gt;&lt;span class="n"&gt;account&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s1"&gt;'&lt;/span&gt;&lt;span class="s"&gt;[Gmail]/Trash'&lt;/span&gt;&lt;span class="p"&gt;]:&lt;/span&gt;&lt;span class="n"&gt;check_status&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+&lt;/pre&gt;&lt;p&gt;You can run imapfilter simply by launching imapfilter on the command line. Once
 imapfilter is run, it will print the status of the folder you choses:&lt;/p&gt;
 &lt;pre class="literal-block"&gt;
 38 messages, 0 recent, 6 unseen, in baptiste.wicht@gmail.com@imap.gmail.com/INBOX.
@@ -800,19 +750,15 @@ folder.&lt;/li&gt;
 &lt;/ul&gt;
 &lt;p&gt;You can also mix different IMAP accounts, you don't have to use only one.&lt;/p&gt;
 &lt;p&gt;For instance, if you would delete all the mail coming from me, you could do:&lt;/p&gt;
-&lt;pre class="code lua literal-block"&gt;
-&lt;span class="n"&gt;mails&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;account&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;INBOX&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;select_all&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
-&lt;span class="n"&gt;filtered&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;mails&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;contains_from&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;"&lt;/span&gt;&lt;span class="s"&gt;baptiste.wicht@gmail.com"&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
-&lt;span class="n"&gt;filtered&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;delete_messages&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
-&lt;/pre&gt;
-&lt;p&gt;Or you could move all the mails containing Urgent in the subject line to an IMAP
+&lt;pre class="code lua"&gt;&lt;a name="rest_code_20df9d05d1de4715901bd3eb95e22851-1"&gt;&lt;/a&gt;&lt;span class="n"&gt;mails&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;account&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;INBOX&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;select_all&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+&lt;a name="rest_code_20df9d05d1de4715901bd3eb95e22851-2"&gt;&lt;/a&gt;&lt;span class="n"&gt;filtered&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;mails&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;contains_from&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;"&lt;/span&gt;&lt;span class="s"&gt;baptiste.wicht@gmail.com"&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;a name="rest_code_20df9d05d1de4715901bd3eb95e22851-3"&gt;&lt;/a&gt;&lt;span class="n"&gt;filtered&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;delete_messages&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+&lt;/pre&gt;&lt;p&gt;Or you could move all the mails containing Urgent in the subject line to an IMAP
 folder:&lt;/p&gt;
-&lt;pre class="code lua literal-block"&gt;
-&lt;span class="n"&gt;mails&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;account&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;INBOX&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;select_all&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
-&lt;span class="n"&gt;filtered&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;mails&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;contains_subject&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;"&lt;/span&gt;&lt;span class="s"&gt;Urgent"&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
-&lt;span class="n"&gt;filtered&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;move_messages&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;account&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s2"&gt;"&lt;/span&gt;&lt;span class="s"&gt;urgent_mails"&lt;/span&gt;&lt;span class="p"&gt;])&lt;/span&gt;
-&lt;/pre&gt;
-&lt;p&gt;If you want some more examples, you can take a look at &lt;a class="reference external" href="https://github.com/wichtounet/dotfiles/blob/master/.imapfilter/config.lua"&gt;my imapfilter
+&lt;pre class="code lua"&gt;&lt;a name="rest_code_8fa24905bc1240eca13a4f8b1979e87d-1"&gt;&lt;/a&gt;&lt;span class="n"&gt;mails&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;account&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;INBOX&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;select_all&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+&lt;a name="rest_code_8fa24905bc1240eca13a4f8b1979e87d-2"&gt;&lt;/a&gt;&lt;span class="n"&gt;filtered&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;mails&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;contains_subject&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;"&lt;/span&gt;&lt;span class="s"&gt;Urgent"&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;a name="rest_code_8fa24905bc1240eca13a4f8b1979e87d-3"&gt;&lt;/a&gt;&lt;span class="n"&gt;filtered&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;move_messages&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;account&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s2"&gt;"&lt;/span&gt;&lt;span class="s"&gt;urgent_mails"&lt;/span&gt;&lt;span class="p"&gt;])&lt;/span&gt;
+&lt;/pre&gt;&lt;p&gt;If you want some more examples, you can take a look at &lt;a class="reference external" href="https://github.com/wichtounet/dotfiles/blob/master/.imapfilter/config.lua"&gt;my imapfilter
 configuration&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;The best way to start using it is to look at examples, there are plenty of them
 in the internet, especially in Github dotfiles repositories.&lt;/p&gt;
@@ -820,7 +766,7 @@ in the internet, especially in Github dotfiles repositories.&lt;/p&gt;
 plenty more to see.&lt;/p&gt;
 &lt;p&gt;For more information, you can also consult the &lt;a class="reference external" href="https://github.com/lefcha/imapfilter"&gt;offical site&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;That is it for this part of the mutt series. In the next post about mutt, I'll
-talk about how I use offlineimap to get my mails.&lt;/p&gt;</description><category>Gentoo</category><category>Gmail</category><category>Linux</category><category>Mutt</category><guid>http://baptiste-wicht.com/posts/2014/07/a-mutt-journey-filter-mails-with-imapfilter.html</guid><pubDate>Tue, 08 Jul 2014 18:58:32 GMT</pubDate></item><item><title>budgetwarrior 0.4 - Enhanced wish list and aggregate</title><link>http://baptiste-wicht.com/posts/2014/07/budgetwarrior-04-enhanced-wish-list-and-aggregate.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;I've just released a new version of my command-line budget manager:
+talk about how I use offlineimap to get my mails.&lt;/p&gt;&lt;/div&gt;</description><category>Gentoo</category><category>Gmail</category><category>Linux</category><category>Mutt</category><guid>http://baptiste-wicht.com/posts/2014/07/a-mutt-journey-filter-mails-with-imapfilter.html</guid><pubDate>Tue, 08 Jul 2014 18:58:32 GMT</pubDate></item><item><title>budgetwarrior 0.4 - Enhanced wish list and aggregate</title><link>http://baptiste-wicht.com/posts/2014/07/budgetwarrior-04-enhanced-wish-list-and-aggregate.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;I've just released a new version of my command-line budget manager:
 budgetwarrior 0.4.&lt;/p&gt;
 &lt;div class="section" id="enhanced-aggregate-overview"&gt;
 &lt;h2&gt;Enhanced aggregate overview&lt;/h2&gt;
@@ -888,7 +834,7 @@ sudo make install
 &lt;p&gt;If you have a suggestion or you found a bug, please post an issue on Github.&lt;/p&gt;
 &lt;p&gt;If you have any comment, don't hesitate to contact me, either by letting a
 comment on this post or by email.&lt;/p&gt;
-&lt;/div&gt;</description><category>C++</category><category>Gentoo</category><category>Git</category><category>Linux</category><category>Releases</category><category>budgetwarrior</category><guid>http://baptiste-wicht.com/posts/2014/07/budgetwarrior-04-enhanced-wish-list-and-aggregate.html</guid><pubDate>Sun, 06 Jul 2014 08:59:55 GMT</pubDate></item><item><title>Build OpenCV with libc++ on Gentoo and static-libs</title><link>http://baptiste-wicht.com/posts/2014/06/build-opencv-with-libcxx-on-gentoo-and-static-libs.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;When you build C++ projects with CLang, you have the choice between using the
+&lt;/div&gt;&lt;/div&gt;</description><category>budgetwarrior</category><category>C++</category><category>Gentoo</category><category>Git</category><category>Linux</category><category>Releases</category><guid>http://baptiste-wicht.com/posts/2014/07/budgetwarrior-04-enhanced-wish-list-and-aggregate.html</guid><pubDate>Sun, 06 Jul 2014 08:59:55 GMT</pubDate></item><item><title>Build OpenCV with libc++ on Gentoo and static-libs</title><link>http://baptiste-wicht.com/posts/2014/06/build-opencv-with-libcxx-on-gentoo-and-static-libs.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;When you build C++ projects with CLang, you have the choice between using the
 stdlibc++ that is provided along G++ and the new libc++ that is provided by
 CLang.&lt;/p&gt;
 &lt;p&gt;libc++ is another implementation of the C++ Standard Library. This
@@ -922,7 +868,7 @@ layman -a wichtounet
 &lt;/pre&gt;
 &lt;p&gt;For now, I have created an ebuild for &lt;em&gt;opencv-2.4.8-r1&lt;/em&gt;. If someone is
 interested in other versions, I'd be glad to create new ebuilds.&lt;/p&gt;
-&lt;p&gt;I hope that this ebuild will be helpful.&lt;/p&gt;</description><category>Gentoo</category><category>clang</category><category>libc++</category><category>opencv</category><guid>http://baptiste-wicht.com/posts/2014/06/build-opencv-with-libcxx-on-gentoo-and-static-libs.html</guid><pubDate>Tue, 10 Jun 2014 12:09:29 GMT</pubDate></item><item><title>Software Reliability Presentation</title><link>http://baptiste-wicht.com/posts/2014/06/software-reliability-presentation.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;In behalf of my school (College of Engineering and Architecture of Fribourg), I
+&lt;p&gt;I hope that this ebuild will be helpful.&lt;/p&gt;&lt;/div&gt;</description><category>clang</category><category>Gentoo</category><category>libc++</category><category>opencv</category><guid>http://baptiste-wicht.com/posts/2014/06/build-opencv-with-libcxx-on-gentoo-and-static-libs.html</guid><pubDate>Tue, 10 Jun 2014 12:09:29 GMT</pubDate></item><item><title>Software Reliability Presentation</title><link>http://baptiste-wicht.com/posts/2014/06/software-reliability-presentation.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;In behalf of my school (College of Engineering and Architecture of Fribourg), I
 presented a shoft presentation about Software Reliability. In this presentation,
 I outline the main issues about the subject and propose some solutions:&lt;/p&gt;
 &lt;ul class="simple"&gt;
@@ -937,7 +883,7 @@ also performed.&lt;/p&gt;
 &lt;p&gt;I thought that it could be of some interest to some of the readers, so here it
 is:&lt;/p&gt;
 &lt;div style="text-align:center;"&gt;&lt;iframe src="http://www.slideshare.net/slideshow/embed_code/35576524" width="597" height="486" frameborder="0" marginwidth="0" marginheight="0" scrolling="no" style="border:1px solid #CCC; border-width:1px 1px 0; margin-bottom:5px; max-width: 100%;" allowfullscreen&gt; &lt;/iframe&gt;&lt;/div&gt;&lt;p&gt;Don't hesitate if you have any comments or questions about the presentation ;)&lt;/p&gt;
-&lt;p&gt;The source code for the examples is available &lt;a class="reference external" href="https://github.com/wichtounet/analysis-examples"&gt;on Github&lt;/a&gt;.&lt;/p&gt;</description><category>Gentoo</category><category>Linux</category><category>Programming</category><category>Reliability</category><category>Tools</category><category>clang</category><guid>http://baptiste-wicht.com/posts/2014/06/software-reliability-presentation.html</guid><pubDate>Sat, 07 Jun 2014 14:45:33 GMT</pubDate></item><item><title>Changing root hard disk on Gentoo with LVM and Grub2</title><link>http://baptiste-wicht.com/posts/2014/05/changing-root-hard-disk-gentoo-lvm-grub2.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;I recently changed my hard disk on one of my servers and I didn't found a simple
+&lt;p&gt;The source code for the examples is available &lt;a class="reference external" href="https://github.com/wichtounet/analysis-examples"&gt;on Github&lt;/a&gt;.&lt;/p&gt;&lt;/div&gt;</description><category>clang</category><category>Gentoo</category><category>Linux</category><category>Programming</category><category>Reliability</category><category>Tools</category><guid>http://baptiste-wicht.com/posts/2014/06/software-reliability-presentation.html</guid><pubDate>Sat, 07 Jun 2014 14:45:33 GMT</pubDate></item><item><title>Changing root hard disk on Gentoo with LVM and Grub2</title><link>http://baptiste-wicht.com/posts/2014/05/changing-root-hard-disk-gentoo-lvm-grub2.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;I recently changed my hard disk on one of my servers and I didn't found a simple
 and up to date tutorial to do that, so I decided to post here how I did it. &lt;/p&gt;
 &lt;p&gt;I do not claim that is the best method, or the easiest or the safest method, but
 that is the one I used and it worked quite well. You could do it online with LVM, 
@@ -991,7 +937,7 @@ connect the new one. &lt;/p&gt;
 &lt;p&gt;8. You now have switched hard disk. &lt;/p&gt;
 &lt;p&gt;At any point, if something goes wrong, you still have the previous hard disk
 completely ready at hand. &lt;/p&gt;
-&lt;p&gt;I hope this would useful to some Linux users. &lt;/p&gt;</description><category>Gentoo</category><category>LVM</category><category>Tips</category><guid>http://baptiste-wicht.com/posts/2014/05/changing-root-hard-disk-gentoo-lvm-grub2.html</guid><pubDate>Tue, 06 May 2014 19:39:57 GMT</pubDate></item><item><title>budgetwarrior 0.2.1 - Minor changes and Gentoo ebuild</title><link>http://baptiste-wicht.com/posts/2014/01/budgetwarrior-0-2-1-minor-changes-gentoo-ebuild.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;I've released a new version of budgetwarrior, the release 0.2.1. budgetwarrior is a simple command line application to manage a personal budget.&lt;/p&gt;
+&lt;p&gt;I hope this would useful to some Linux users. &lt;/p&gt;&lt;/div&gt;</description><category>Gentoo</category><category>LVM</category><category>Tips</category><guid>http://baptiste-wicht.com/posts/2014/05/changing-root-hard-disk-gentoo-lvm-grub2.html</guid><pubDate>Tue, 06 May 2014 19:39:57 GMT</pubDate></item><item><title>budgetwarrior 0.2.1 - Minor changes and Gentoo ebuild</title><link>http://baptiste-wicht.com/posts/2014/01/budgetwarrior-0-2-1-minor-changes-gentoo-ebuild.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;I've released a new version of budgetwarrior, the release 0.2.1. budgetwarrior is a simple command line application to manage a personal budget.&lt;/p&gt;
 &lt;p&gt;The version 0.2.1 contains several bug fixes about archived accounts and bug fixes for budget across several years.&lt;/p&gt;
 &lt;p&gt;The application as well as the source code is available online: &lt;a href="https://github.com/wichtounet/budgetwarrior"&gt;https://github.com/wichtounet/budgetwarrior&lt;/a&gt;&lt;/p&gt;
 &lt;p&gt;I've created Gentoo ebuilds for this application. They are available on my Portage overlay: &lt;a href="https://github.com/wichtounet/portage-overlay"&gt;https://github.com/wichtounet/portage-overlay&lt;/a&gt;&lt;/p&gt;
@@ -1022,7 +968,7 @@ completely ready at hand. &lt;/p&gt;
 
 &lt;h4&gt;Conclusion&lt;/h4&gt;
 
-&lt;p&gt;If you find any issues with the tool, don't hesitate to post an issue on Github. If you have comments about it, you can post a comment on this post or contact me by email.&lt;/p&gt;</description><category>Gentoo</category><category>Linux</category><category>Tools</category><category>budgetwarrior</category><guid>http://baptiste-wicht.com/posts/2014/01/budgetwarrior-0-2-1-minor-changes-gentoo-ebuild.html</guid><pubDate>Thu, 16 Jan 2014 11:41:00 GMT</pubDate></item><item><title>Home Server Adventure – Step 3</title><link>http://baptiste-wicht.com/posts/2014/01/home-server-adventure-step-3.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;Here are some news about my &lt;a title="Home Server Adventure – Step 2" href="http://www.baptiste-wicht.com/2013/08/home-server-adventure-step-2/"&gt;home server installation project&lt;/a&gt;.In the past, I already installed a server in a custom Norco case. I wanted to replace my QNAP NAS with a better server, the QNAP being too slow and not extensible enough for my needs.&lt;/p&gt;
+&lt;p&gt;If you find any issues with the tool, don't hesitate to post an issue on Github. If you have comments about it, you can post a comment on this post or contact me by email.&lt;/p&gt;&lt;/div&gt;</description><category>budgetwarrior</category><category>Gentoo</category><category>Linux</category><category>Tools</category><guid>http://baptiste-wicht.com/posts/2014/01/budgetwarrior-0-2-1-minor-changes-gentoo-ebuild.html</guid><pubDate>Thu, 16 Jan 2014 11:41:00 GMT</pubDate></item><item><title>Home Server Adventure – Step 3</title><link>http://baptiste-wicht.com/posts/2014/01/home-server-adventure-step-3.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;Here are some news about my &lt;a title="Home Server Adventure – Step 2" href="http://www.baptiste-wicht.com/2013/08/home-server-adventure-step-2/"&gt;home server installation project&lt;/a&gt;.In the past, I already installed a server in a custom Norco case. I wanted to replace my QNAP NAS with a better server, the QNAP being too slow and not extensible enough for my needs.&lt;/p&gt;
 &lt;p&gt;Here is it how it looks right now (sorry about the photo qualitiy :( my phone does not seem to focus anymore...):&lt;/p&gt;
 &lt;p&gt;&lt;a href="http://baptiste-wicht.com/wp-content/uploads/2014/01/asdf1.png"&gt;&lt;img class="size-medium wp-image-2653" alt="My Home Rack of Server" src="http://baptiste-wicht.com/wp-content/uploads/2014/01/asdf1-168x300.png" width="168" height="300"&gt;&lt;/a&gt;&lt;/p&gt;
 &lt;p&gt;So I replaced my QNAP NAS with a custom-built NAS. Again, I bought a NORCO case, the RPC-4220. This case has 20 SATA/SAS bays. I bought it with a replacement of the SAS backplane by a SATA one. I also ordered some fan replacement to make it less noisy. I installed my 6 hard disk in Raid 5, managed with mdadm, with LVM partitions on top of the array.&lt;/p&gt;
@@ -1030,12 +976,12 @@ completely ready at hand. &lt;/p&gt;
 &lt;p&gt;I haven't added a lot of services on the server. I now run Owncloud on the server and that completely replaces my Dropbox account. I also improved by Sabnzbd installation with other newsgroup automation tools.&lt;/p&gt;
 &lt;p&gt;Not directly related to my rack, but I also installed a custom XBMC server for my TV. It reads from the NAS server. And of course, it runs Gentoo too.&lt;/p&gt;
 &lt;p&gt;In the future, I'll add a new simple server as a front firewall to manage security a bit more than here and avoid having to configure redirection in my shitty router (which I would like to replace, but there are not a lot of compatible rack router for my ISP unfortunately). It will probably use a Norco case too.&lt;/p&gt;
-&lt;p&gt;If you have any question about my build, don't hesitate ;)&lt;/p&gt;</description><category>Gentoo</category><category>Hardware</category><category>Home Server</category><category>Server</category><guid>http://baptiste-wicht.com/posts/2014/01/home-server-adventure-step-3.html</guid><pubDate>Fri, 10 Jan 2014 12:05:32 GMT</pubDate></item><item><title>Gentoo Tips: Avoid Gnome 3.8 from being emerged automatically</title><link>http://baptiste-wicht.com/posts/2013/12/gentoo-tips-avoid-gnome-3-8-emerged-automatically.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;Since Gnome 3.8 has been out in the portage tree, a lot of problems arise when you try to emerge something. If it was only when you update the system, it would be OK, but this arises every time you try to install something.&lt;/p&gt;
+&lt;p&gt;If you have any question about my build, don't hesitate ;)&lt;/p&gt;&lt;/div&gt;</description><category>Gentoo</category><category>Hardware</category><category>Home Server</category><category>Server</category><guid>http://baptiste-wicht.com/posts/2014/01/home-server-adventure-step-3.html</guid><pubDate>Fri, 10 Jan 2014 12:05:32 GMT</pubDate></item><item><title>Gentoo Tips: Avoid Gnome 3.8 from being emerged automatically</title><link>http://baptiste-wicht.com/posts/2013/12/gentoo-tips-avoid-gnome-3-8-emerged-automatically.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;Since Gnome 3.8 has been out in the portage tree, a lot of problems arise when you try to emerge something. If it was only when you update the system, it would be OK, but this arises every time you try to install something.&lt;/p&gt;
 &lt;p&gt;For instance, if I try to update vim on my system, it tries to update empathy to version 3.8 and then pulls some other dependencies causing blocks and other USE problems. I personally don't think empathy should be emerged when emerging vim. Fortunately, you can disable this behavior by using emerge in this way:&lt;/p&gt;
 &lt;pre&gt;emerge --ignore-built-slot-operator-deps=y ...&lt;/pre&gt;
 
 &lt;p&gt;With that, when you emerge vim, it doesn't emerge Gnome 3.8. It is very useful if you want to stay with Gnome 3.6 for the moment.&lt;/p&gt;
-&lt;p&gt;I already used this tip several times. I hope that this will be useful to other people.&lt;/p&gt;</description><category>Gentoo</category><category>Linux</category><category>Tips</category><guid>http://baptiste-wicht.com/posts/2013/12/gentoo-tips-avoid-gnome-3-8-emerged-automatically.html</guid><pubDate>Sat, 07 Dec 2013 05:24:17 GMT</pubDate></item><item><title>Home Server Adventure - Step 2</title><link>http://baptiste-wicht.com/posts/2013/08/home-server-adventure-step-2.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;If you remember, I talked about &lt;a title="Home Server Adventure – Step 1" href="http://www.baptiste-wicht.com/2013/07/home-server-adventure-step-1/"&gt;my home server project&lt;/a&gt; in a previous post. I had installed an old Dell Poweredge server, a 3com gigabit switch and a monitoring console. The problem with this configuration was that it was too noisy as the rack is installed in my apartment.&lt;/p&gt;
+&lt;p&gt;I already used this tip several times. I hope that this will be useful to other people.&lt;/p&gt;&lt;/div&gt;</description><category>Gentoo</category><category>Linux</category><category>Tips</category><guid>http://baptiste-wicht.com/posts/2013/12/gentoo-tips-avoid-gnome-3-8-emerged-automatically.html</guid><pubDate>Sat, 07 Dec 2013 05:24:17 GMT</pubDate></item><item><title>Home Server Adventure - Step 2</title><link>http://baptiste-wicht.com/posts/2013/08/home-server-adventure-step-2.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;If you remember, I talked about &lt;a title="Home Server Adventure – Step 1" href="http://www.baptiste-wicht.com/2013/07/home-server-adventure-step-1/"&gt;my home server project&lt;/a&gt; in a previous post. I had installed an old Dell Poweredge server, a 3com gigabit switch and a monitoring console. The problem with this configuration was that it was too noisy as the rack is installed in my apartment.&lt;/p&gt;
 &lt;p&gt;The first thing I did was to &lt;a title="ZyXEL GS1910-24 Managed Gigabit Switch Review" href="http://www.baptiste-wicht.com/2013/07/zyxel-gs1910-managed-gigabit-switch-review/"&gt;replace my old 3Com switch with a Zyxel managed fanless switch&lt;/a&gt;. Being fanless, this switch is completely silent which makes a good difference :)&lt;/p&gt;
 &lt;p&gt;After that, I have replaced the Dell server with &lt;a title="Norco RPC 230 Case Review" href="http://www.baptiste-wicht.com/2013/08/norco-rpc-230-case-review/"&gt;a custom installation in a Norco-RPC 230 case&lt;/a&gt;. The basic case comes with two 80mm fans in the front. These two fans are very powerful, but they are quite noisy. I replaced them with two Enermax T.B. Silence 80mm fans. They are almost silent, it is really great. It is probably not enough airflow for a large configuration, but in my case, I think that this will be largely enough.&lt;/p&gt;
 &lt;p&gt;I've already installed several services on my server:&lt;/p&gt;
@@ -1051,7 +997,7 @@ completely ready at hand. &lt;/p&gt;
 &lt;p&gt;&lt;a href="http://baptiste-wicht.com/wp-content/uploads/2013/08/2013-08-23-15.31.45.jpg"&gt;&lt;img class="size-medium wp-image-2610" alt="19 Rack" src="http://baptiste-wicht.com/wp-content/uploads/2013/08/2013-08-23-15.31.45-168x300.jpg" width="168" height="300"&gt;&lt;/a&gt;&lt;/p&gt;
 &lt;p&gt;I have also installed my router and the NAS on a layer in the rack.&lt;/p&gt;
 &lt;p&gt;You can't see it, but I have also added to rackable PDU on the back to have to organize a bit the cables. Even if it still not perfect, it is already better than before.&lt;/p&gt;
-&lt;p&gt;For now, I think that my system in in good shape. When I will have some more budget, I will replace QNAP NAS with a custom server, probably again with a Norco case.&lt;/p&gt;</description><category>Gentoo</category><category>Hardware</category><category>Home Server</category><category>Server</category><guid>http://baptiste-wicht.com/posts/2013/08/home-server-adventure-step-2.html</guid><pubDate>Tue, 27 Aug 2013 07:16:21 GMT</pubDate></item><item><title>Norco RPC 230 Case Review</title><link>http://baptiste-wicht.com/posts/2013/08/norco-rpc-230-case-review.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;As my previous Dell 1U server was &lt;a title="Home Server Adventure – Step 1" href="http://www.baptiste-wicht.com/2013/07/home-server-adventure-step-1/"&gt;too noisy for my home server installation&lt;/a&gt;. I invested in a case, a Norco RPC 230 model. This case is a 2U standard case for 19" rack. It supports micro-ATX motherboard and ATX power supply. These components are easy too find, so that makes it a very interesting case for a home server installation.&lt;/p&gt;
+&lt;p&gt;For now, I think that my system in in good shape. When I will have some more budget, I will replace QNAP NAS with a custom server, probably again with a Norco case.&lt;/p&gt;&lt;/div&gt;</description><category>Gentoo</category><category>Hardware</category><category>Home Server</category><category>Server</category><guid>http://baptiste-wicht.com/posts/2013/08/home-server-adventure-step-2.html</guid><pubDate>Tue, 27 Aug 2013 07:16:21 GMT</pubDate></item><item><title>Norco RPC 230 Case Review</title><link>http://baptiste-wicht.com/posts/2013/08/norco-rpc-230-case-review.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;As my previous Dell 1U server was &lt;a title="Home Server Adventure – Step 1" href="http://www.baptiste-wicht.com/2013/07/home-server-adventure-step-1/"&gt;too noisy for my home server installation&lt;/a&gt;. I invested in a case, a Norco RPC 230 model. This case is a 2U standard case for 19" rack. It supports micro-ATX motherboard and ATX power supply. These components are easy too find, so that makes it a very interesting case for a home server installation.&lt;/p&gt;
 &lt;p&gt;I ordered the case at &lt;a title="Ri-Vier Automatisering" href="https://ri-vier.eu/"&gt;Ri-Vier Automatisering&lt;/a&gt;, which is the Norco european distributor. I directly ordered it with the RL-26 rails for the rack and the ATX power supply that is provided by Ri-Vier. For the case, I also bought a micro-ATX Gigabyte G41M-Combo motherboard. I already had 4GB of DDR2 RAM and a Core 2 Duo processor from a previous configuration. I also took my old 120GB Samung SSD for this server. This would be largely sufficient for what I plan to run on this server.&lt;/p&gt;
 &lt;p&gt;The case has four 3.5" drive bays and one 5.25" drive bay. The air flow is provided with two 80mm fans on the front panel.&lt;/p&gt;
 &lt;h4&gt;Package&lt;/h4&gt;
@@ -1099,7 +1045,7 @@ completely ready at hand. &lt;/p&gt;
     &lt;li&gt;The provided rails seems to not slide smoothly&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;p&gt;To conclude, I would say that this case is very fit to a custom installation as all the components are standards. I would recommend it for a similar usage than mine.&lt;/p&gt;</description><category>Gentoo</category><category>Hardware</category><category>Home Server</category><category>Review</category><category>Server</category><guid>http://baptiste-wicht.com/posts/2013/08/norco-rpc-230-case-review.html</guid><pubDate>Wed, 21 Aug 2013 06:38:03 GMT</pubDate></item><item><title>Home Server Adventure - Step 1</title><link>http://baptiste-wicht.com/posts/2013/07/home-server-adventure-step-1.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;For years now, I've almost always had a server running at home. First it was an old desktop computer and then it was a QNAP NAS. The problem with the QNAP is that it is not fast at all and not as flexible as I would like it to be. Moreover, I was also running a Teamspeak server on my desktop for when my friends and I were playing together. So I decided to first install a simple server to replace my teamspeak server and I would services of my NAS with my new server. But this time, I decided to go for the complete option: A 19" rack :)&lt;/p&gt;
+&lt;p&gt;To conclude, I would say that this case is very fit to a custom installation as all the components are standards. I would recommend it for a similar usage than mine.&lt;/p&gt;&lt;/div&gt;</description><category>Gentoo</category><category>Hardware</category><category>Home Server</category><category>Review</category><category>Server</category><guid>http://baptiste-wicht.com/posts/2013/08/norco-rpc-230-case-review.html</guid><pubDate>Wed, 21 Aug 2013 06:38:03 GMT</pubDate></item><item><title>Home Server Adventure - Step 1</title><link>http://baptiste-wicht.com/posts/2013/07/home-server-adventure-step-1.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;For years now, I've almost always had a server running at home. First it was an old desktop computer and then it was a QNAP NAS. The problem with the QNAP is that it is not fast at all and not as flexible as I would like it to be. Moreover, I was also running a Teamspeak server on my desktop for when my friends and I were playing together. So I decided to first install a simple server to replace my teamspeak server and I would services of my NAS with my new server. But this time, I decided to go for the complete option: A 19" rack :)&lt;/p&gt;
 &lt;h4&gt;Hardware&lt;/h4&gt;
 
 &lt;p&gt;So I bought all I needed to install my 19" rack at home. I bought everything already used on auctions on Ricardo/Anibis (Switzerland Ebay equivalents) and Ebay. Here is what I got:&lt;/p&gt;
@@ -1137,7 +1083,7 @@ completely ready at hand. &lt;/p&gt;
 &lt;h4&gt;Conclusion&lt;/h4&gt;
 
 &lt;p&gt;It might sound crazy to have a complete rack at home, but I thing that it is a great way to experience with servers and network. It is also quite practical if you plan to have several servers.&lt;/p&gt;
-&lt;p&gt;I plan to post some posts on the subject on the future, so I hope  that it interests some people.&lt;/p&gt;</description><category>Gentoo</category><category>Hardware</category><category>Home Server</category><category>Network</category><category>Server</category><guid>http://baptiste-wicht.com/posts/2013/07/home-server-adventure-step-1.html</guid><pubDate>Mon, 08 Jul 2013 07:02:05 GMT</pubDate></item><item><title>Why and how I completely left Windows for Linux</title><link>http://baptiste-wicht.com/posts/2013/07/why-how-left-windows-for-linux.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;For years now, I always kept a dual-boot at home with a Linux system (currently Gentoo) and a Windows system. At work, I only use Gentoo. This week-end, I decided to completely remove it and migrate the applications I used on Windows to my Gentoo system.&lt;/p&gt;
+&lt;p&gt;I plan to post some posts on the subject on the future, so I hope  that it interests some people.&lt;/p&gt;&lt;/div&gt;</description><category>Gentoo</category><category>Hardware</category><category>Home Server</category><category>Network</category><category>Server</category><guid>http://baptiste-wicht.com/posts/2013/07/home-server-adventure-step-1.html</guid><pubDate>Mon, 08 Jul 2013 07:02:05 GMT</pubDate></item><item><title>Why and how I completely left Windows for Linux</title><link>http://baptiste-wicht.com/posts/2013/07/why-how-left-windows-for-linux.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;For years now, I always kept a dual-boot at home with a Linux system (currently Gentoo) and a Windows system. At work, I only use Gentoo. This week-end, I decided to completely remove it and migrate the applications I used on Windows to my Gentoo system.&lt;/p&gt;
 &lt;h4&gt;Why Windows ?&lt;/h4&gt;
 
 &lt;p&gt;So first things first, why was I keeping the Windows system ? For several reasons:&lt;/p&gt;
@@ -1163,7 +1109,7 @@ completely ready at hand. &lt;/p&gt;
 &lt;h4&gt;Conclusion&lt;/h4&gt;
 
 &lt;p&gt;Even if I lost a lot of time with all that, I think it is a great think. It makes one less configuration to maintain and some less costs on the future. Moreover, I will save some time, because I won't have to switch between Linux and Windows for different tasks. And now, I have a second SSD ready for something else, either for RAID 1 to ensure redundancy on Linux or to mount on a server, I'll see later.&lt;/p&gt;
-&lt;p&gt;I will probably have some more problems in the future, but I'm convinced that there will be Linux solutions to it :)&lt;/p&gt;</description><category>Gentoo</category><category>Linux</category><category>Others</category><category>Personal</category><category>Windows</category><guid>http://baptiste-wicht.com/posts/2013/07/why-how-left-windows-for-linux.html</guid><pubDate>Mon, 01 Jul 2013 06:24:25 GMT</pubDate></item><item><title>Install Valgrind on Gentoo Linux</title><link>http://baptiste-wicht.com/posts/2012/04/install-valgrind-on-gentoo-linux.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;&lt;strong&gt;Valgrind&lt;/strong&gt; is very powerful suite of software for dynamic analysis of binary programs. Valgrind is available in an ebuild on the Gentoo portage tree, but if you want to install valgrind on your Gentoo distribution, there is a problem with the build with the standard library. On Gentoo, the standard C library (glibc) is stripped and Valgrind needs the debug symbols to work. If you try to launch valgrind without the debug symbols, you will get the following error: &lt;/p&gt;
+&lt;p&gt;I will probably have some more problems in the future, but I'm convinced that there will be Linux solutions to it :)&lt;/p&gt;&lt;/div&gt;</description><category>Gentoo</category><category>Linux</category><category>Others</category><category>Personal</category><category>Windows</category><guid>http://baptiste-wicht.com/posts/2013/07/why-how-left-windows-for-linux.html</guid><pubDate>Mon, 01 Jul 2013 06:24:25 GMT</pubDate></item><item><title>Install Valgrind on Gentoo Linux</title><link>http://baptiste-wicht.com/posts/2012/04/install-valgrind-on-gentoo-linux.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;&lt;strong&gt;Valgrind&lt;/strong&gt; is very powerful suite of software for dynamic analysis of binary programs. Valgrind is available in an ebuild on the Gentoo portage tree, but if you want to install valgrind on your Gentoo distribution, there is a problem with the build with the standard library. On Gentoo, the standard C library (glibc) is stripped and Valgrind needs the debug symbols to work. If you try to launch valgrind without the debug symbols, you will get the following error: &lt;/p&gt;
 &lt;pre&gt;valgrind:  Fatal error at startup: a function redirection
 valgrind:  which is mandatory for this platform-tool combination
 valgrind:  cannot be set up.  Details of the redirection are:
@@ -1193,7 +1139,7 @@ valgrind:  Cannot continue -- exiting now.  Sorry.&lt;/pre&gt;
 &lt;p&gt;And finally, you can emerge valgrind: &lt;/p&gt;
 &lt;pre&gt;sudo emerge valgrind&lt;/pre&gt;
 
-&lt;p&gt;And everything will work fine.&lt;/p&gt;</description><category>Gentoo</category><category>Linux</category><category>Tools</category><guid>http://baptiste-wicht.com/posts/2012/04/install-valgrind-on-gentoo-linux.html</guid><pubDate>Fri, 13 Apr 2012 06:57:38 GMT</pubDate></item><item><title>Switching to Gentoo Linux</title><link>http://baptiste-wicht.com/posts/2012/04/switching-gentoo-linux.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;After having switched to Mint from Ubuntu, I'm on the verge of switching to &lt;strong&gt;Gentoo Linux&lt;/strong&gt;.&lt;/p&gt;
+&lt;p&gt;And everything will work fine.&lt;/p&gt;&lt;/div&gt;</description><category>Gentoo</category><category>Linux</category><category>Tools</category><guid>http://baptiste-wicht.com/posts/2012/04/install-valgrind-on-gentoo-linux.html</guid><pubDate>Fri, 13 Apr 2012 06:57:38 GMT</pubDate></item><item><title>Switching to Gentoo Linux</title><link>http://baptiste-wicht.com/posts/2012/04/switching-gentoo-linux.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;After having switched to Mint from Ubuntu, I'm on the verge of switching to &lt;strong&gt;Gentoo Linux&lt;/strong&gt;.&lt;/p&gt;
 &lt;p&gt;Gentoo is a powerful operating system base on Linux. This operating system provides extreme configurability and performance. Gentoo is very lightweight on its own, by default, there is not even a window manager installed. A big advantage of this system is that you can customize your system to your exact needs. You can use it as a server, a desktop distribution or whatever you needs. You install only the program you needs. This advantage leads to an inconvenient: you will need an advanced knowledge on Linux to install your system. Indeed, you will have to configure your kernel, choose compilation flags, choose your packages carefully and know your hardware as well.&lt;/p&gt;
 &lt;p&gt;Gentoo is based on a very powerful software distribution system, &lt;strong&gt;Portage&lt;/strong&gt;. Portage is used to install new packages, get the latest software for Gentoo or upgrade your system. Except for some proprietary software, all the packages are built from the sources. This allow to a deep customization of your software. The installation of some package can take a big amount of time to compile. Count at least several hours to install a system based on Gnome Shell for example.&lt;/p&gt;
 &lt;p&gt;If you plan to install a full installation of Gentoo, reserve some days for that. I've spent several days working on my installation before getting to something fully working.&lt;/p&gt;
@@ -1209,5 +1155,5 @@ valgrind:  Cannot continue -- exiting now.  Sorry.&lt;/pre&gt;
 
 &lt;p&gt;As I've stripped my kernel and my init scripts to the maximum, my boot time is much faster and my installation takes much less space than my Mint installation.&lt;/p&gt;
 &lt;p&gt;I said that I'm on the verge of switching because I still have some applications that are not installed on my new Gentoo distribution. For example, I have no multimedia support for now, but I already spent most of my time on my new distribution.&lt;/p&gt;
-&lt;p&gt;I will try to write some posts on Gentoo in the future.&lt;/p&gt;</description><category>Gentoo</category><category>Linux</category><category>Mint</category><guid>http://baptiste-wicht.com/posts/2012/04/switching-gentoo-linux.html</guid><pubDate>Tue, 10 Apr 2012 07:28:37 GMT</pubDate></item><item><title>Linux Kernel Tip : Do not disable System V IPC for X.Org and Chrome</title><link>http://baptiste-wicht.com/posts/2012/04/linux-kernel-tip-do-not-disable-system-v-ipc-for-x-org-and-chrome.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;p&gt;Yesterday I recompiled my Linux Kernel stripping it again and I found out that X.org was not working very anymore. Some windows were frozen and there was some troubles with the mouse. Another problem was that Google Chrome wouldn't display anything but blank pages. &lt;/p&gt;
-&lt;p&gt;The solution was easy: Do not disable the &lt;strong&gt;System V IPC&lt;/strong&gt; option on the kernel.&lt;/p&gt;</description><category>Gentoo</category><category>Linux</category><guid>http://baptiste-wicht.com/posts/2012/04/linux-kernel-tip-do-not-disable-system-v-ipc-for-x-org-and-chrome.html</guid><pubDate>Sat, 07 Apr 2012 07:02:01 GMT</pubDate></item></channel></rss>
+&lt;p&gt;I will try to write some posts on Gentoo in the future.&lt;/p&gt;&lt;/div&gt;</description><category>Gentoo</category><category>Linux</category><category>Mint</category><guid>http://baptiste-wicht.com/posts/2012/04/switching-gentoo-linux.html</guid><pubDate>Tue, 10 Apr 2012 07:28:37 GMT</pubDate></item><item><title>Linux Kernel Tip : Do not disable System V IPC for X.Org and Chrome</title><link>http://baptiste-wicht.com/posts/2012/04/linux-kernel-tip-do-not-disable-system-v-ipc-for-x-org-and-chrome.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;Yesterday I recompiled my Linux Kernel stripping it again and I found out that X.org was not working very anymore. Some windows were frozen and there was some troubles with the mouse. Another problem was that Google Chrome wouldn't display anything but blank pages. &lt;/p&gt;
+&lt;p&gt;The solution was easy: Do not disable the &lt;strong&gt;System V IPC&lt;/strong&gt; option on the kernel.&lt;/p&gt;&lt;/div&gt;</description><category>Gentoo</category><category>Linux</category><guid>http://baptiste-wicht.com/posts/2012/04/linux-kernel-tip-do-not-disable-system-v-ipc-for-x-org-and-chrome.html</guid><pubDate>Sat, 07 Apr 2012 07:02:01 GMT</pubDate></item></channel></rss>
