@@ -24,7 +24,7 @@ std::string clean_html(std::string html){
         html.erase(html.begin() + pos, html.begin() + html.find("</pre>") + 6);
         pos = html.find("<pre>");
     }
-    
+
     std::string clean;
 
     //Remove all HTML tags
@@ -37,7 +37,7 @@ std::string clean_html(std::string html){
             break;
         }
 
-        // handle the text before the tag    
+        // handle the text before the tag
         if(0 != startpos){
             clean += html.substr(0, startpos);
             html = html.substr(startpos, html.size() - startpos);
@@ -83,10 +83,10 @@ void read_metadata(const std::vector<std::string>& files, std::vector<std::strin
 
         if(files[i].find(".rst") == std::string::npos){
             getline(stream, line);
-            titles[i] = line;
+            titles[i] = std::string(line.begin() + 10, line.end());
 
             getline(stream, line);
-            slug = line;
+            slug = std::string(line.begin() + 9, line.end());
 
             //Ignore the date
             getline(stream, line);
@@ -196,7 +196,7 @@ int main(int argc, char* argv[]){
 
     std::vector<std::string> words;
     std::copy(word_set.begin(), word_set.end(), std::back_inserter(words));
-    
+
     std::vector<double> idf(words.size());
 
     std::vector<std::vector<std::size_t>> tf(files.size());
@@ -225,7 +225,7 @@ int main(int argc, char* argv[]){
     }
 
     //Compute TF-IDF
-        
+
     for(size_t i = 0; i < files.size(); ++i){
         for(size_t w = 0; w < words.size(); ++w){
             tf_idf[i][w] = tf[i][w] * idf[w];
@@ -235,7 +235,7 @@ int main(int argc, char* argv[]){
     //Compute the matrix of Cosine Similarities
 
     std::unique_ptr<double[]> similarities(new double[files.size() * files.size()]);
-    
+
     for(size_t i = 0; i < files.size(); ++i){
         similarities[i * files.size() + i] = 1;
 
@@ -258,10 +258,10 @@ int main(int argc, char* argv[]){
     }
 
     //Generate HTML
-        
+
     std::vector<std::size_t> related(files.size());
     std::iota(related.begin(), related.end(), 0);
-    
+
     for(size_t i = 0; i < files.size(); ++i){
         std::sort(related.begin(), related.end(), [i,&similarities, &files](size_t j1, size_t j2) -> bool {
             return similarities[i * files.size() + j1] > similarities[i * files.size() + j2];
