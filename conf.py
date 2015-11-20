@@ -22,6 +22,8 @@ SITE_URL = "http://baptiste-wicht.com/"
 BLOG_EMAIL = "baptistewicht@gmail.com"
 BLOG_DESCRIPTION = "Website about vtechnologies Java, Spring, OSGi, Hardware,..."
 
+WRITE_TAG_CLOUD = True
+
 DEFAULT_LANG = "en"
 
 # What other languages do you have?
@@ -126,9 +128,9 @@ PAGES = (
 # 'markdown' is MarkDown
 # 'html' assumes the file is html and just copies it
 COMPILERS = {
-        "rest": ('.rst'),
-        "markdown": ('.md', '.mdown', '.markdown', '.wp'),
-        "html": ('.html', '.htm')
+        "rest": ('.rst',),
+        "markdown": ('.md', '.mdown', '.markdown', '.wp',),
+        "html": ('.html', '.htm',)
         }
 
 
@@ -296,9 +298,9 @@ THEME = "wicht"
 # DATE_FORMAT = '%Y-%m-%d %H:%M'
 
 INDEX_TEASERS = True
-RSS_TEASERS = True
+FEED_TEASERS = True
 INDEX_READ_MORE_LINK = '<p class="more"><a href="{link}">{read_more}…</a></p>'
-RSS_READ_MORE_LINK = '<p class="more"><a href="{link}">{read_more}…</a></p>'
+FEED_READ_MORE_LINK = '<p class="more"><a href="{link}">{read_more}…</a></p>'
 
 LICENSE = """
 <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="padding-left:5px;border-width:0" src="/assets/img/cc.png" /></a>"""
