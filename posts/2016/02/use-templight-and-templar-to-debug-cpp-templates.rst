@@ -16,6 +16,7 @@ Unfortunately, the templight installation is not user-friendly at all. You need 
 The installation of Templar is much more convenient:
 
 .. code:: bash
+
     git clone https://github.com/schulmar/Templar.git
     git checkout feature/templight2
     cd Templar
@@ -31,6 +32,7 @@ Example
 Let's use the class Fibonacci function as an example:
 
 .. code:: cpp
+
     #include <iostream>
 
     template <std::size_t N>
@@ -57,6 +59,7 @@ Nothing fancy here, we're simply printing the fifth Fibonacci number on the cons
 You can compile it with templight++:
 
 .. code:: bash
+
     templight++ -Xtemplight -profiler -Xtemplight -memory -Xtemplight -ignore-system -std=c++14 main.cpp
 
 All the templight options starts with -Xtemplight and then you can use any clang++ options. This will generate a *a.memory.trace.pbf* file in the current directory. You can then run Templar. use File > Open Trace to open the trace file. This should open a window of this sort:
