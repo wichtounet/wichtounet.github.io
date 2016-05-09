@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<?xml-stylesheet type="text/xsl" href="../assets/xml/rss.xsl" media="all"?><rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>@Blog("Baptiste Wicht") (Gentoo)</title><link>http://baptiste-wicht.com/</link><description></description><atom:link href="http://baptiste-wicht.com/categories/gentoo.xml" type="application/rss+xml" rel="self"></atom:link><language>en</language><lastBuildDate>Fri, 29 Apr 2016 11:10:18 GMT</lastBuildDate><generator>https://getnikola.com/</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>How to speed up RAID (5-6) growing with mdadm ?</title><link>http://baptiste-wicht.com/posts/2015/03/how-to-speed-up-raid-5-6-growing-with-mdadm.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;Yesterday, I added my 11th disk to my RAID 6 array. As the last time it took my more than 20 hours, I spent some time investigating how to speed things up and this post contains some tips on how to achieve good grow performances. With these tips, I have been able to reach a speed of about 55K in average during reshape. It did finish in about 13 hours.&lt;/p&gt;
+<?xml-stylesheet type="text/xsl" href="../assets/xml/rss.xsl" media="all"?><rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>@Blog("Baptiste Wicht") (Gentoo)</title><link>http://baptiste-wicht.com/</link><description></description><atom:link href="http://baptiste-wicht.com/categories/gentoo.xml" type="application/rss+xml" rel="self"></atom:link><language>en</language><lastBuildDate>Mon, 09 May 2016 06:33:59 GMT</lastBuildDate><generator>https://getnikola.com/</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>How to speed up RAID (5-6) growing with mdadm ?</title><link>http://baptiste-wicht.com/posts/2015/03/how-to-speed-up-raid-5-6-growing-with-mdadm.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;Yesterday, I added my 11th disk to my RAID 6 array. As the last time it took my more than 20 hours, I spent some time investigating how to speed things up and this post contains some tips on how to achieve good grow performances. With these tips, I have been able to reach a speed of about 55K in average during reshape. It did finish in about 13 hours.&lt;/p&gt;
 &lt;p&gt;First, take into account that some of these tips may depend on your configuration. In my case, this server is only used for this RAID, so I don't care if the CPU is used a lot during rebuild or if other processes are suffering from the load. This may not be the case with your configuration. Moreover, I speak only of hard disks, if you use SSD RAID, there are probably better way of tuning the rebuild (or perhaps it is fast enough). Finally, you have know that a RAID reshape is going to be slow, there is no way you'll grow a 10+ RAID array in one hour. G&lt;/p&gt;
 &lt;p&gt;In the examples, I use /dev/md0 as the raid array, you'll have to change this to your array name.&lt;/p&gt;
 &lt;p&gt;The first 3 tips can be used even after the rebuild has started and you should the differences in real-time. But, these 3 tips will also be erased after each reboot.&lt;/p&gt;
@@ -87,7 +87,7 @@ instead of network.target. There is a simple way in systemd to override default
 service files. For a X.service, systemd will also parse all the
 /etc/systemd/X.service.d/*.conf files.&lt;/p&gt;
 &lt;p&gt;For instance, to make sshd be started only after DHCP is finished&lt;/p&gt;
-&lt;p&gt;/etc/systemd/systemd/sshd.service.d/network.conf:&lt;/p&gt;
+&lt;p&gt;/etc/systemd/system/sshd.service.d/network.conf:&lt;/p&gt;
 &lt;pre class="literal-block"&gt;
 [Unit]
 Wants=network-online.target
@@ -109,7 +109,7 @@ emerge -a "=sys-apps/systemd-216"
 &lt;p&gt;There is no service file for nfs mounts, but there is a target remote-fs.target
 that groups the remote file systems mounts. You can override its configuration
 in the same as a service:&lt;/p&gt;
-&lt;p&gt;/etc/systemd/systemd/remote-fs.target.d/network.conf:&lt;/p&gt;
+&lt;p&gt;/etc/systemd/system/remote-fs.target.d/network.conf:&lt;/p&gt;
 &lt;pre class="literal-block"&gt;
 [Unit]
 Wants=network-online.target
@@ -125,11 +125,11 @@ After=network-online.target
 &lt;p&gt;To configure an interface with DHCP, you have to create a .network file in
 /etc/systemd/network/. For instance, here is my
 /etc/systemd/network/local.network file:&lt;/p&gt;
-&lt;pre class="code text"&gt;&lt;a name="rest_code_3c2cc9be786d464b9f7078281890327f-1"&gt;&lt;/a&gt;[Match]
-&lt;a name="rest_code_3c2cc9be786d464b9f7078281890327f-2"&gt;&lt;/a&gt;Name=enp3s0
-&lt;a name="rest_code_3c2cc9be786d464b9f7078281890327f-3"&gt;&lt;/a&gt;
-&lt;a name="rest_code_3c2cc9be786d464b9f7078281890327f-4"&gt;&lt;/a&gt;[Network]
-&lt;a name="rest_code_3c2cc9be786d464b9f7078281890327f-5"&gt;&lt;/a&gt;DHCP=v4
+&lt;pre class="code text"&gt;&lt;a name="rest_code_3478b1b2151d40789ac4aa108baded7a-1"&gt;&lt;/a&gt;[Match]
+&lt;a name="rest_code_3478b1b2151d40789ac4aa108baded7a-2"&gt;&lt;/a&gt;Name=enp3s0
+&lt;a name="rest_code_3478b1b2151d40789ac4aa108baded7a-3"&gt;&lt;/a&gt;
+&lt;a name="rest_code_3478b1b2151d40789ac4aa108baded7a-4"&gt;&lt;/a&gt;[Network]
+&lt;a name="rest_code_3478b1b2151d40789ac4aa108baded7a-5"&gt;&lt;/a&gt;DHCP=v4
 &lt;/pre&gt;&lt;p&gt;and you have to enable systemd-networkd:&lt;/p&gt;
 &lt;pre class="literal-block"&gt;
 systemctl enable systemd-networkd
