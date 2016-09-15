@@ -557,10 +557,12 @@ LOGGING_HANDLERS = {
     #}
 }
 
-# Templates will use those filters, along with the defaults.
-# Consult your engine's documentation on filters if you need help defining
-# those.
-# TEMPLATE_FILTERS = {}
+from nikola import filters
+
+FILTERS = {
+  ".css": [filters.yui_compressor],
+  ".js": [filters.yui_compressor],
+}
 
 # Put in global_context things you want available on all your templates.
 # It can be anything, data, functions, modules, etc.
