@@ -13,14 +13,9 @@ GITHUB_REMOTE_NAME = 'origin'
 # Data about this site
 BLOG_AUTHOR = "Baptiste Wicht"
 BLOG_TITLE = "@Blog(\"Baptiste Wicht\")"
-# This is the main URL for your site. It will be used
-# in a prominent link
 SITE_URL = "http://baptiste-wicht.com/"
-# This is the URL where nikola's output will be deployed.
-# If not set, defaults to SITE_URL
-# BASE_URL = "http://www.baptiste-wicht.com/"
 BLOG_EMAIL = "baptistewicht@gmail.com"
-BLOG_DESCRIPTION = "Website about vtechnologies Java, Spring, OSGi, Hardware,..."
+BLOG_DESCRIPTION = "Tutorials and short posts about programming, C++, Java, Assembly, Operating Systems Development, Compilers, ..."
 
 WRITE_TAG_CLOUD = True
 
