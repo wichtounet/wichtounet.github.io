@@ -1,32 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
-<?xml-stylesheet type="text/xsl" href="../assets/xml/rss.xsl" media="all"?><rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>@Blog("Baptiste Wicht") (Gentoo)</title><link>http://baptiste-wicht.com/</link><description></description><atom:link href="http://baptiste-wicht.com/categories/gentoo.xml" type="application/rss+xml" rel="self"></atom:link><language>en</language><lastBuildDate>Fri, 16 Sep 2016 12:01:03 GMT</lastBuildDate><generator>https://getnikola.com/</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>How to speed up RAID (5-6) growing with mdadm ?</title><link>http://baptiste-wicht.com/posts/2015/03/how-to-speed-up-raid-5-6-growing-with-mdadm.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;Yesterday, I added my 11th disk to my RAID 6 array. As the last time it took my more than 20 hours, I spent some time investigating how to speed things up and this post contains some tips on how to achieve good grow performances. With these tips, I have been able to reach a speed of about 55K in average during reshape. It did finish in about 13 hours.&lt;/p&gt;
+<?xml-stylesheet type="text/xsl" href="../assets/xml/rss.xsl" media="all"?><rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>@Blog("Baptiste Wicht") (Gentoo)</title><link>http://baptiste-wicht.com/</link><description></description><atom:link href="http://baptiste-wicht.com/categories/gentoo.xml" type="application/rss+xml" rel="self"></atom:link><language>en</language><lastBuildDate>Wed, 21 Sep 2016 20:36:27 GMT</lastBuildDate><generator>https://getnikola.com/</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>How to speed up RAID (5-6) growing with mdadm ?</title><link>http://baptiste-wicht.com/posts/2015/03/how-to-speed-up-raid-5-6-growing-with-mdadm.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;Yesterday, I added my 11th disk to my RAID 6 array. As the last time it took my more than 20 hours, I spent some time investigating how to speed things up and this post contains some tips on how to achieve good grow performances. With these tips, I have been able to reach a speed of about 55K in average during reshape. It did finish in about 13 hours.&lt;/p&gt;
 &lt;p&gt;First, take into account that some of these tips may depend on your configuration. In my case, this server is only used for this RAID, so I don't care if the CPU is used a lot during rebuild or if other processes are suffering from the load. This may not be the case with your configuration. Moreover, I speak only of hard disks, if you use SSD RAID, there are probably better way of tuning the rebuild (or perhaps it is fast enough). Finally, you have know that a RAID reshape is going to be slow, there is no way you'll grow a 10+ RAID array in one hour. G&lt;/p&gt;
 &lt;p&gt;In the examples, I use /dev/md0 as the raid array, you'll have to change this to your array name.&lt;/p&gt;
 &lt;p&gt;The first 3 tips can be used even after the rebuild has started and you should the differences in real-time. But, these 3 tips will also be erased after each reboot.&lt;/p&gt;
 &lt;div class="section" id="increase-speed-limits"&gt;
 &lt;h2&gt;Increase speed limits&lt;/h2&gt;
 &lt;p&gt;The easiest thing to do is to increase the system speed limits on raid. You can see the current limits on your system by using these commands:&lt;/p&gt;
-&lt;pre class="code bash"&gt;&lt;a name="rest_code_6c9518d4884c4da0a8d872ebbe3f2b41-1"&gt;&lt;/a&gt;sysctl dev.raid.speed_limit_min
-&lt;a name="rest_code_6c9518d4884c4da0a8d872ebbe3f2b41-2"&gt;&lt;/a&gt;sysctl dev.raid.speed_limit_max
+&lt;pre class="code bash"&gt;&lt;a name="rest_code_a01c72a7b9a2418582fb7863ebaaa4ce-1"&gt;&lt;/a&gt;sysctl dev.raid.speed_limit_min
+&lt;a name="rest_code_a01c72a7b9a2418582fb7863ebaaa4ce-2"&gt;&lt;/a&gt;sysctl dev.raid.speed_limit_max
 &lt;/pre&gt;&lt;p&gt;These values are set in Kibibytes per second (KiB/s).&lt;/p&gt;
 &lt;p&gt;You can put them to high values:&lt;/p&gt;
-&lt;pre class="code bash"&gt;&lt;a name="rest_code_9bc9e3c37dab47929ec8aa38b2fe2226-1"&gt;&lt;/a&gt;sysctl -w dev.raid.speed_limit_min&lt;span class="o"&gt;=&lt;/span&gt;100000
-&lt;a name="rest_code_9bc9e3c37dab47929ec8aa38b2fe2226-2"&gt;&lt;/a&gt;sysctl -w dev.raid.speed_limit_max&lt;span class="o"&gt;=&lt;/span&gt;500000
+&lt;pre class="code bash"&gt;&lt;a name="rest_code_13a0080836064e9a97908227448edf05-1"&gt;&lt;/a&gt;sysctl -w dev.raid.speed_limit_min&lt;span class="o"&gt;=&lt;/span&gt;100000
+&lt;a name="rest_code_13a0080836064e9a97908227448edf05-2"&gt;&lt;/a&gt;sysctl -w dev.raid.speed_limit_max&lt;span class="o"&gt;=&lt;/span&gt;500000
 &lt;/pre&gt;&lt;p&gt;At least with these values, you won't be limited by the system.&lt;/p&gt;
 &lt;/div&gt;
 &lt;div class="section" id="increase-stripe-cache-size"&gt;
 &lt;h2&gt;Increase stripe cache size&lt;/h2&gt;
 &lt;p&gt;By allowing the array to use more memory for its stripe cache, you may improve the performances. In some cases, it can improve performances by up to 6 times. By default, the size of the stripe cache is 256, in pages. By default, Linux uses 4096B pages. If you use 256 pages for the stripe cache and you have 10 disks, the cache would use 10*256*4096=10MiB of RAM. In my case, I have increased it to 4096:&lt;/p&gt;
-&lt;pre class="code bash"&gt;&lt;a name="rest_code_28f81f531f6a431fb1ace3de3621827a-1"&gt;&lt;/a&gt;&lt;span class="nb"&gt;echo&lt;/span&gt; &lt;span class="m"&gt;4096&lt;/span&gt; &amp;gt; /sys/block/md0/md/stripe_cache_size
+&lt;pre class="code bash"&gt;&lt;a name="rest_code_67de1dbf5a5a40edae26aebb00f395a5-1"&gt;&lt;/a&gt;&lt;span class="nb"&gt;echo&lt;/span&gt; &lt;span class="m"&gt;4096&lt;/span&gt; &amp;gt; /sys/block/md0/md/stripe_cache_size
 &lt;/pre&gt;&lt;p&gt;The maximum value is 32768. If you have many disks, this may well take all your available memory. I don't think values higher than 4096 will improve performance, but feel free to try it ;)&lt;/p&gt;
 &lt;/div&gt;
 &lt;div class="section" id="increase-read-ahead"&gt;
 &lt;h2&gt;Increase read-ahead&lt;/h2&gt;
 &lt;p&gt;If configured too low, the read-ahead of your array may make things slower.&lt;/p&gt;
 &lt;p&gt;You can see get the current read-ahead value with this command:&lt;/p&gt;
-&lt;pre class="code bash"&gt;&lt;a name="rest_code_5ecd922a67784298a583ea44b28f119f-1"&gt;&lt;/a&gt;blockdev --getra /dev/md0
+&lt;pre class="code bash"&gt;&lt;a name="rest_code_75e7fb2b156848b08c9ce27cb57b501e-1"&gt;&lt;/a&gt;blockdev --getra /dev/md0
 &lt;/pre&gt;&lt;p&gt;These values are in 512B sector. You can set it to 32MB to be sure:&lt;/p&gt;
-&lt;pre class="code bash"&gt;&lt;a name="rest_code_aaa4f1752f844ad78b510938ea8130d9-1"&gt;&lt;/a&gt;blockdev --setra &lt;span class="m"&gt;65536&lt;/span&gt; /dev/md0
+&lt;pre class="code bash"&gt;&lt;a name="rest_code_af849c7afb7f4f64bbebe89bf535d231-1"&gt;&lt;/a&gt;blockdev --setra &lt;span class="m"&gt;65536&lt;/span&gt; /dev/md0
 &lt;/pre&gt;&lt;p&gt;This can improve the performances, but don't expect this to be a game-changer unless it was configured really low at the first place.&lt;/p&gt;
 &lt;/div&gt;
 &lt;div class="section" id="bonus-speed-up-standard-resync-with-a-write-intent-bitmap"&gt;
@@ -38,31 +38,31 @@
 &lt;/ul&gt;
 &lt;p&gt;In these case, it may totally avoid the need of a rebuild which is great in my opinion. Moreover, it does not take any space on the array since it uses space that is not usable by the array.&lt;/p&gt;
 &lt;p&gt;Here is how to enable it:&lt;/p&gt;
-&lt;pre class="code bash"&gt;&lt;a name="rest_code_f197164a30ab4c1e87daf7d44abf6946-1"&gt;&lt;/a&gt;mdadm --grow --bitmap&lt;span class="o"&gt;=&lt;/span&gt;internal /dev/md0
+&lt;pre class="code bash"&gt;&lt;a name="rest_code_673f1c6266a746b99765cd7f26a6f1e8-1"&gt;&lt;/a&gt;mdadm --grow --bitmap&lt;span class="o"&gt;=&lt;/span&gt;internal /dev/md0
 &lt;/pre&gt;&lt;p&gt;However, it may cause some write performance degradation. In my case, I haven't seen any noticeable degradation, but if it is the case, you may want to disable it:&lt;/p&gt;
-&lt;pre class="code bash"&gt;&lt;a name="rest_code_0ca7d9cc1991483780538d5465f16ea9-1"&gt;&lt;/a&gt;mdadm --grow --bitmap&lt;span class="o"&gt;=&lt;/span&gt;none /dev/md0
+&lt;pre class="code bash"&gt;&lt;a name="rest_code_b8c50422b2284dad99b539d4d99e43b0-1"&gt;&lt;/a&gt;mdadm --grow --bitmap&lt;span class="o"&gt;=&lt;/span&gt;none /dev/md0
 &lt;/pre&gt;&lt;/div&gt;
 &lt;div class="section" id="bonus-monitor-rebuild-process"&gt;
 &lt;h2&gt;Bonus: Monitor rebuild process&lt;/h2&gt;
 &lt;p&gt;If you want to monitor the build process, you can use the watch command:&lt;/p&gt;
-&lt;pre class="code bash"&gt;&lt;a name="rest_code_334ee7a07ea547ff810bae0e4022f559-1"&gt;&lt;/a&gt;watch cat /proc/mdstat
+&lt;pre class="code bash"&gt;&lt;a name="rest_code_fb85220756e64002a30460c8be294756-1"&gt;&lt;/a&gt;watch cat /proc/mdstat
 &lt;/pre&gt;&lt;p&gt;With that you'll see the rebuild going in real-time.&lt;/p&gt;
 &lt;p&gt;You can also monitor the I/O statistics:&lt;/p&gt;
-&lt;pre class="code bash"&gt;&lt;a name="rest_code_d5ea3bb538ef4e46b595d219ec575b48-1"&gt;&lt;/a&gt;watch iostat -k &lt;span class="m"&gt;1&lt;/span&gt; 2
+&lt;pre class="code bash"&gt;&lt;a name="rest_code_5792ecd7845c4c61a580c685d8c4cabf-1"&gt;&lt;/a&gt;watch iostat -k &lt;span class="m"&gt;1&lt;/span&gt; 2
 &lt;/pre&gt;&lt;/div&gt;
 &lt;div class="section" id="bonus-how-to-grow-a-raid-5-6-array"&gt;
 &lt;h2&gt;Bonus: How to grow a RAID 5-6 array&lt;/h2&gt;
 &lt;p&gt;As a sidenote, this section indicates how to grow an array. If you  want to add the disk /dev/sdl to the array /dev/md0, you'll first have to add it:&lt;/p&gt;
-&lt;pre class="code bash"&gt;&lt;a name="rest_code_2c1dacf9e5904e459dfd3893b1582d33-1"&gt;&lt;/a&gt;mdadm --add /dev/md0 /dev/sdl
+&lt;pre class="code bash"&gt;&lt;a name="rest_code_dc3e3a1099b349e682d168a3288408b0-1"&gt;&lt;/a&gt;mdadm --add /dev/md0 /dev/sdl
 &lt;/pre&gt;&lt;p&gt;This will add the disk as a spare disk. If you had 5 disks before, you'll want to grow it to 6:&lt;/p&gt;
-&lt;pre class="code bash"&gt;&lt;a name="rest_code_ce3188c03f8c47118d8e3cf464519e7a-1"&gt;&lt;/a&gt;mdadm --grow --backup-file&lt;span class="o"&gt;=&lt;/span&gt;/root/grow_md0_backup_file --raid-devices&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="m"&gt;6&lt;/span&gt; /dev/md0
+&lt;pre class="code bash"&gt;&lt;a name="rest_code_c54c2dcf873b41d9947cda0d7bf70b69-1"&gt;&lt;/a&gt;mdadm --grow --backup-file&lt;span class="o"&gt;=&lt;/span&gt;/root/grow_md0_backup_file --raid-devices&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="m"&gt;6&lt;/span&gt; /dev/md0
 &lt;/pre&gt;&lt;p&gt;The backup file must be on another disk of course. The backup file is optional but improves the chance of success if you have a power shutdown or another form of unexpected shutdown. If you know what you're doing, you can grow it without backup-file:&lt;/p&gt;
-&lt;pre class="code bash"&gt;&lt;a name="rest_code_0c068bbf284b4499a5c6eeaf6493c2fd-1"&gt;&lt;/a&gt;mdadm --grow --raid-devices&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="m"&gt;6&lt;/span&gt; /dev/md0
+&lt;pre class="code bash"&gt;&lt;a name="rest_code_f02539f96d2b4a60b34ece1661ede8e3-1"&gt;&lt;/a&gt;mdadm --grow --raid-devices&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="m"&gt;6&lt;/span&gt; /dev/md0
 &lt;/pre&gt;&lt;p&gt;This command will return almost instantly, but the actual reshape won't likely be finished for hours (maybe days). kkkkkkkkkkkkk&lt;/p&gt;
 &lt;p&gt;Once the rebuild is finished, you'll still have to extend the partitions with resize2fs. If you use LVM on top of the array, you'll have to resize the Physical Volume (PV) first:&lt;/p&gt;
-&lt;pre class="code bash"&gt;&lt;a name="rest_code_7388a9c7ed674fb3b4bd21fee8211677-1"&gt;&lt;/a&gt;pvresize /dev/md0
+&lt;pre class="code bash"&gt;&lt;a name="rest_code_c38cc4f7bcb748d19f185b5c5136a9e9-1"&gt;&lt;/a&gt;pvresize /dev/md0
 &lt;/pre&gt;&lt;p&gt;and then extend the Logical Volume (s) (LV). For instance, if you want to add 1T to a LV named /dev/vgraid/work:&lt;/p&gt;
-&lt;pre class="code bash"&gt;&lt;a name="rest_code_a84b59c525f94399b83a35729d0b1a68-1"&gt;&lt;/a&gt;vgextend -r -L+1T /dev/vgraid/work
+&lt;pre class="code bash"&gt;&lt;a name="rest_code_fa46061d54db41cca105f01a0346da2e-1"&gt;&lt;/a&gt;vgextend -r -L+1T /dev/vgraid/work
 &lt;/pre&gt;&lt;p&gt;The -r option will automatically resize the underlying filesystem. Otherwise, you'd still have to resize it with resize2fs.&lt;/p&gt;
 &lt;/div&gt;
 &lt;div class="section" id="conclusion"&gt;
@@ -125,11 +125,11 @@ After=network-online.target
 &lt;p&gt;To configure an interface with DHCP, you have to create a .network file in
 /etc/systemd/network/. For instance, here is my
 /etc/systemd/network/local.network file:&lt;/p&gt;
-&lt;pre class="code text"&gt;&lt;a name="rest_code_60f60bf523c24c0f84eb78c4afae3513-1"&gt;&lt;/a&gt;[Match]
-&lt;a name="rest_code_60f60bf523c24c0f84eb78c4afae3513-2"&gt;&lt;/a&gt;Name=enp3s0
-&lt;a name="rest_code_60f60bf523c24c0f84eb78c4afae3513-3"&gt;&lt;/a&gt;
-&lt;a name="rest_code_60f60bf523c24c0f84eb78c4afae3513-4"&gt;&lt;/a&gt;[Network]
-&lt;a name="rest_code_60f60bf523c24c0f84eb78c4afae3513-5"&gt;&lt;/a&gt;DHCP=v4
+&lt;pre class="code text"&gt;&lt;a name="rest_code_bbc604ae7dca4cffb7dbf6fc7e9e6832-1"&gt;&lt;/a&gt;[Match]
+&lt;a name="rest_code_bbc604ae7dca4cffb7dbf6fc7e9e6832-2"&gt;&lt;/a&gt;Name=enp3s0
+&lt;a name="rest_code_bbc604ae7dca4cffb7dbf6fc7e9e6832-3"&gt;&lt;/a&gt;
+&lt;a name="rest_code_bbc604ae7dca4cffb7dbf6fc7e9e6832-4"&gt;&lt;/a&gt;[Network]
+&lt;a name="rest_code_bbc604ae7dca4cffb7dbf6fc7e9e6832-5"&gt;&lt;/a&gt;DHCP=v4
 &lt;/pre&gt;&lt;p&gt;and you have to enable systemd-networkd:&lt;/p&gt;
 &lt;pre class="literal-block"&gt;
 systemctl enable systemd-networkd
@@ -234,22 +234,22 @@ distributions.&lt;/p&gt;
 &lt;code&gt;.notmuch-config&lt;/code&gt; directly or run &lt;code&gt;notmuch setup&lt;/code&gt; that will
 interactively help you to fill the configuration.&lt;/p&gt;
 &lt;p&gt;Here is my configuration:&lt;/p&gt;
-&lt;pre class="code text"&gt;&lt;a name="rest_code_dc2b1b258000414986c8c5113a12ec4d-1"&gt;&lt;/a&gt;[database]
-&lt;a name="rest_code_dc2b1b258000414986c8c5113a12ec4d-2"&gt;&lt;/a&gt;path=/data/oi/Gmail/
-&lt;a name="rest_code_dc2b1b258000414986c8c5113a12ec4d-3"&gt;&lt;/a&gt;
-&lt;a name="rest_code_dc2b1b258000414986c8c5113a12ec4d-4"&gt;&lt;/a&gt;[user]
-&lt;a name="rest_code_dc2b1b258000414986c8c5113a12ec4d-5"&gt;&lt;/a&gt;name=Baptiste Wicht
-&lt;a name="rest_code_dc2b1b258000414986c8c5113a12ec4d-6"&gt;&lt;/a&gt;primary_email=baptiste.wicht@gmail.com
-&lt;a name="rest_code_dc2b1b258000414986c8c5113a12ec4d-7"&gt;&lt;/a&gt;
-&lt;a name="rest_code_dc2b1b258000414986c8c5113a12ec4d-8"&gt;&lt;/a&gt;[new]
-&lt;a name="rest_code_dc2b1b258000414986c8c5113a12ec4d-9"&gt;&lt;/a&gt;tags=inbox
-&lt;a name="rest_code_dc2b1b258000414986c8c5113a12ec4d-10"&gt;&lt;/a&gt;ignore=
-&lt;a name="rest_code_dc2b1b258000414986c8c5113a12ec4d-11"&gt;&lt;/a&gt;
-&lt;a name="rest_code_dc2b1b258000414986c8c5113a12ec4d-12"&gt;&lt;/a&gt;[search]
-&lt;a name="rest_code_dc2b1b258000414986c8c5113a12ec4d-13"&gt;&lt;/a&gt;exclude_tags=deleted;
-&lt;a name="rest_code_dc2b1b258000414986c8c5113a12ec4d-14"&gt;&lt;/a&gt;
-&lt;a name="rest_code_dc2b1b258000414986c8c5113a12ec4d-15"&gt;&lt;/a&gt;[maildir]
-&lt;a name="rest_code_dc2b1b258000414986c8c5113a12ec4d-16"&gt;&lt;/a&gt;synchronize_flags=true
+&lt;pre class="code text"&gt;&lt;a name="rest_code_5f3a8cc03c134cc0aec576da3f7d344b-1"&gt;&lt;/a&gt;[database]
+&lt;a name="rest_code_5f3a8cc03c134cc0aec576da3f7d344b-2"&gt;&lt;/a&gt;path=/data/oi/Gmail/
+&lt;a name="rest_code_5f3a8cc03c134cc0aec576da3f7d344b-3"&gt;&lt;/a&gt;
+&lt;a name="rest_code_5f3a8cc03c134cc0aec576da3f7d344b-4"&gt;&lt;/a&gt;[user]
+&lt;a name="rest_code_5f3a8cc03c134cc0aec576da3f7d344b-5"&gt;&lt;/a&gt;name=Baptiste Wicht
+&lt;a name="rest_code_5f3a8cc03c134cc0aec576da3f7d344b-6"&gt;&lt;/a&gt;primary_email=baptiste.wicht@gmail.com
+&lt;a name="rest_code_5f3a8cc03c134cc0aec576da3f7d344b-7"&gt;&lt;/a&gt;
+&lt;a name="rest_code_5f3a8cc03c134cc0aec576da3f7d344b-8"&gt;&lt;/a&gt;[new]
+&lt;a name="rest_code_5f3a8cc03c134cc0aec576da3f7d344b-9"&gt;&lt;/a&gt;tags=inbox
+&lt;a name="rest_code_5f3a8cc03c134cc0aec576da3f7d344b-10"&gt;&lt;/a&gt;ignore=
+&lt;a name="rest_code_5f3a8cc03c134cc0aec576da3f7d344b-11"&gt;&lt;/a&gt;
+&lt;a name="rest_code_5f3a8cc03c134cc0aec576da3f7d344b-12"&gt;&lt;/a&gt;[search]
+&lt;a name="rest_code_5f3a8cc03c134cc0aec576da3f7d344b-13"&gt;&lt;/a&gt;exclude_tags=deleted;
+&lt;a name="rest_code_5f3a8cc03c134cc0aec576da3f7d344b-14"&gt;&lt;/a&gt;
+&lt;a name="rest_code_5f3a8cc03c134cc0aec576da3f7d344b-15"&gt;&lt;/a&gt;[maildir]
+&lt;a name="rest_code_5f3a8cc03c134cc0aec576da3f7d344b-16"&gt;&lt;/a&gt;synchronize_flags=true
 &lt;/pre&gt;&lt;p&gt;It needs of cours the place where your mails are stored. Then, some information
 about you. The next section is to specify which tags you want to add to new
 mails. Here, I specified that each new mail must be tagged with &lt;cite&gt;inbox&lt;/cite&gt;. You can
@@ -279,7 +279,7 @@ feature.&lt;/p&gt;
 new mails and deleted mails. But you can also explicitely tag messages by using
 &lt;code&gt;notmuch tag&lt;/code&gt;. For instance, to tag all messages from the notmuch mailing
 list:&lt;/p&gt;
-&lt;pre class="code text"&gt;&lt;a name="rest_code_1ef643ae8a13409f9e10455402df3d0f-1"&gt;&lt;/a&gt;notmuch tag +notmuch -- tag:new and to:notmuch@notmuchmail.org
+&lt;pre class="code text"&gt;&lt;a name="rest_code_9dd68f5e45af42cbbdfd768eb824177c-1"&gt;&lt;/a&gt;notmuch tag +notmuch -- tag:new and to:notmuch@notmuchmail.org
 &lt;/pre&gt;&lt;p&gt;I personally don't use this feature since I use imapfilter and IMAP folders to
 sort my mail, but it can be very useful. You can run these commands in the
 cronjob and always have you tags up to date. Tags can then be used in notmuch to
@@ -552,34 +552,34 @@ again it is the same with a bit different parameters for other mail accounts.&lt
 &lt;div class="section" id="configuration"&gt;
 &lt;h2&gt;Configuration&lt;/h2&gt;
 &lt;p&gt;First, we have to declare the account:&lt;/p&gt;
-&lt;pre class="code text"&gt;&lt;a name="rest_code_d2a5bb48aa02495d8fbe3ca2c0b36ff8-1"&gt;&lt;/a&gt;[general]
-&lt;a name="rest_code_d2a5bb48aa02495d8fbe3ca2c0b36ff8-2"&gt;&lt;/a&gt;accounts = Gmail
-&lt;a name="rest_code_d2a5bb48aa02495d8fbe3ca2c0b36ff8-3"&gt;&lt;/a&gt;
-&lt;a name="rest_code_d2a5bb48aa02495d8fbe3ca2c0b36ff8-4"&gt;&lt;/a&gt;[Account Gmail]
-&lt;a name="rest_code_d2a5bb48aa02495d8fbe3ca2c0b36ff8-5"&gt;&lt;/a&gt;localrepository = Gmail-Local
-&lt;a name="rest_code_d2a5bb48aa02495d8fbe3ca2c0b36ff8-6"&gt;&lt;/a&gt;remoterepository = Gmail-Remote
+&lt;pre class="code text"&gt;&lt;a name="rest_code_9f53522fae9b4cbc9aa28e1ddfeb8c4e-1"&gt;&lt;/a&gt;[general]
+&lt;a name="rest_code_9f53522fae9b4cbc9aa28e1ddfeb8c4e-2"&gt;&lt;/a&gt;accounts = Gmail
+&lt;a name="rest_code_9f53522fae9b4cbc9aa28e1ddfeb8c4e-3"&gt;&lt;/a&gt;
+&lt;a name="rest_code_9f53522fae9b4cbc9aa28e1ddfeb8c4e-4"&gt;&lt;/a&gt;[Account Gmail]
+&lt;a name="rest_code_9f53522fae9b4cbc9aa28e1ddfeb8c4e-5"&gt;&lt;/a&gt;localrepository = Gmail-Local
+&lt;a name="rest_code_9f53522fae9b4cbc9aa28e1ddfeb8c4e-6"&gt;&lt;/a&gt;remoterepository = Gmail-Remote
 &lt;/pre&gt;&lt;p&gt;&lt;strong&gt;accounts&lt;/strong&gt; is the list of accounts that we have, here only one. Then, in
 account, repositories are just names of the repositories we'll declare now.&lt;/p&gt;
 &lt;p&gt;The local repository has to be configured:&lt;/p&gt;
-&lt;pre class="code text"&gt;&lt;a name="rest_code_95813cc1586345ac8378805d9942678b-1"&gt;&lt;/a&gt;[Repository Gmail-Local]
-&lt;a name="rest_code_95813cc1586345ac8378805d9942678b-2"&gt;&lt;/a&gt;type = Maildir
-&lt;a name="rest_code_95813cc1586345ac8378805d9942678b-3"&gt;&lt;/a&gt;localfolders = /data/oi/Gmail/
-&lt;a name="rest_code_95813cc1586345ac8378805d9942678b-4"&gt;&lt;/a&gt;sep = /
+&lt;pre class="code text"&gt;&lt;a name="rest_code_ebf4325c4dd644f19134562cdbbcbe8f-1"&gt;&lt;/a&gt;[Repository Gmail-Local]
+&lt;a name="rest_code_ebf4325c4dd644f19134562cdbbcbe8f-2"&gt;&lt;/a&gt;type = Maildir
+&lt;a name="rest_code_ebf4325c4dd644f19134562cdbbcbe8f-3"&gt;&lt;/a&gt;localfolders = /data/oi/Gmail/
+&lt;a name="rest_code_ebf4325c4dd644f19134562cdbbcbe8f-4"&gt;&lt;/a&gt;sep = /
 &lt;/pre&gt;&lt;p&gt;The first important point is &lt;strong&gt;localfolders&lt;/strong&gt; that sets where the mail will be
 put on your computer. &lt;strong&gt;sep&lt;/strong&gt; defines the separator used for nested IMAP
 folders. I recommend / since Mutt will nest them automatically if / is used as
 separator.&lt;/p&gt;
 &lt;p&gt;Then, the remote repository has to be configured:&lt;/p&gt;
-&lt;pre class="code text"&gt;&lt;a name="rest_code_b40132a9be0f4ff18bcb754ee97f361b-1"&gt;&lt;/a&gt;[Repository Gmail-Remote]
-&lt;a name="rest_code_b40132a9be0f4ff18bcb754ee97f361b-2"&gt;&lt;/a&gt;type = Gmail
-&lt;a name="rest_code_b40132a9be0f4ff18bcb754ee97f361b-3"&gt;&lt;/a&gt;remoteuser = USER
-&lt;a name="rest_code_b40132a9be0f4ff18bcb754ee97f361b-4"&gt;&lt;/a&gt;remotepass = PASSWORD
-&lt;a name="rest_code_b40132a9be0f4ff18bcb754ee97f361b-5"&gt;&lt;/a&gt;realdelete = no
-&lt;a name="rest_code_b40132a9be0f4ff18bcb754ee97f361b-6"&gt;&lt;/a&gt;folderfilter = lambda folder: folder not in ['[Gmail]/All Mail',
-&lt;a name="rest_code_b40132a9be0f4ff18bcb754ee97f361b-7"&gt;&lt;/a&gt;                                             '[Gmail]/Important',
-&lt;a name="rest_code_b40132a9be0f4ff18bcb754ee97f361b-8"&gt;&lt;/a&gt;                                             '[Gmail]/Starred',
-&lt;a name="rest_code_b40132a9be0f4ff18bcb754ee97f361b-9"&gt;&lt;/a&gt;                                             ]
-&lt;a name="rest_code_b40132a9be0f4ff18bcb754ee97f361b-10"&gt;&lt;/a&gt;sslcacertfile = /etc/ssl/certs/ca-certificates.crt
+&lt;pre class="code text"&gt;&lt;a name="rest_code_dc7ba8a0c5304ca6a128082bcfc04720-1"&gt;&lt;/a&gt;[Repository Gmail-Remote]
+&lt;a name="rest_code_dc7ba8a0c5304ca6a128082bcfc04720-2"&gt;&lt;/a&gt;type = Gmail
+&lt;a name="rest_code_dc7ba8a0c5304ca6a128082bcfc04720-3"&gt;&lt;/a&gt;remoteuser = USER
+&lt;a name="rest_code_dc7ba8a0c5304ca6a128082bcfc04720-4"&gt;&lt;/a&gt;remotepass = PASSWORD
+&lt;a name="rest_code_dc7ba8a0c5304ca6a128082bcfc04720-5"&gt;&lt;/a&gt;realdelete = no
+&lt;a name="rest_code_dc7ba8a0c5304ca6a128082bcfc04720-6"&gt;&lt;/a&gt;folderfilter = lambda folder: folder not in ['[Gmail]/All Mail',
+&lt;a name="rest_code_dc7ba8a0c5304ca6a128082bcfc04720-7"&gt;&lt;/a&gt;                                             '[Gmail]/Important',
+&lt;a name="rest_code_dc7ba8a0c5304ca6a128082bcfc04720-8"&gt;&lt;/a&gt;                                             '[Gmail]/Starred',
+&lt;a name="rest_code_dc7ba8a0c5304ca6a128082bcfc04720-9"&gt;&lt;/a&gt;                                             ]
+&lt;a name="rest_code_dc7ba8a0c5304ca6a128082bcfc04720-10"&gt;&lt;/a&gt;sslcacertfile = /etc/ssl/certs/ca-certificates.crt
 &lt;/pre&gt;&lt;p&gt;&lt;strong&gt;remotepass&lt;/strong&gt; and &lt;strong&gt;remoteuser&lt;/strong&gt; are your user names and password. You can also
 use &lt;strong&gt;remotepassfile&lt;/strong&gt; to read the password from a file. &lt;strong&gt;realdelete=no&lt;/strong&gt;
 indicates that we only want to remove all the labels of deleted mails. For
@@ -597,13 +597,13 @@ and you'll find your mailboxes directly configured in Mutt :)&lt;/p&gt;
 &lt;p&gt;This code will generate a file ~/.mutt/mailboxes that you can source in your
 Mutt configuration and get the complete list of available mailboxes. This will
 be kept up to date if you add new IMAP folders on the server for instance.&lt;/p&gt;
-&lt;pre class="code text"&gt;&lt;a name="rest_code_89ba746a795b4a91b05dd682a8335c77-1"&gt;&lt;/a&gt;[mbnames]
-&lt;a name="rest_code_89ba746a795b4a91b05dd682a8335c77-2"&gt;&lt;/a&gt;enabled = yes
-&lt;a name="rest_code_89ba746a795b4a91b05dd682a8335c77-3"&gt;&lt;/a&gt;filename = ~/.mutt/mailboxes
-&lt;a name="rest_code_89ba746a795b4a91b05dd682a8335c77-4"&gt;&lt;/a&gt;header = "mailboxes "
-&lt;a name="rest_code_89ba746a795b4a91b05dd682a8335c77-5"&gt;&lt;/a&gt;peritem = "+%(accountname)s/%(foldername)s"
-&lt;a name="rest_code_89ba746a795b4a91b05dd682a8335c77-6"&gt;&lt;/a&gt;sep = " "
-&lt;a name="rest_code_89ba746a795b4a91b05dd682a8335c77-7"&gt;&lt;/a&gt;footer = "\n"
+&lt;pre class="code text"&gt;&lt;a name="rest_code_3d418a3aaecc47af9541291559584e8c-1"&gt;&lt;/a&gt;[mbnames]
+&lt;a name="rest_code_3d418a3aaecc47af9541291559584e8c-2"&gt;&lt;/a&gt;enabled = yes
+&lt;a name="rest_code_3d418a3aaecc47af9541291559584e8c-3"&gt;&lt;/a&gt;filename = ~/.mutt/mailboxes
+&lt;a name="rest_code_3d418a3aaecc47af9541291559584e8c-4"&gt;&lt;/a&gt;header = "mailboxes "
+&lt;a name="rest_code_3d418a3aaecc47af9541291559584e8c-5"&gt;&lt;/a&gt;peritem = "+%(accountname)s/%(foldername)s"
+&lt;a name="rest_code_3d418a3aaecc47af9541291559584e8c-6"&gt;&lt;/a&gt;sep = " "
+&lt;a name="rest_code_3d418a3aaecc47af9541291559584e8c-7"&gt;&lt;/a&gt;footer = "\n"
 &lt;/pre&gt;&lt;/div&gt;
 &lt;div class="section" id="translate-names"&gt;
 &lt;h2&gt;Translate names&lt;/h2&gt;
@@ -614,25 +614,25 @@ configure offlineimap to rename these names to better ones. For that, you'll
 need to rule (in Python ;) ), one to translate from remote to local and one to
 do the reverse.&lt;/p&gt;
 &lt;p&gt;Here is what I did:&lt;/p&gt;
-&lt;pre class="code text"&gt;&lt;a name="rest_code_ad6cf87c77b84d0ea37bbd8cbebe9e0f-1"&gt;&lt;/a&gt;[Repository Gmail-Local]
-&lt;a name="rest_code_ad6cf87c77b84d0ea37bbd8cbebe9e0f-2"&gt;&lt;/a&gt;nametrans = lambda folder: {'drafts':   '[Gmail]/Drafts',
-&lt;a name="rest_code_ad6cf87c77b84d0ea37bbd8cbebe9e0f-3"&gt;&lt;/a&gt;                            'sent':     '[Gmail]/Sent Mail',
-&lt;a name="rest_code_ad6cf87c77b84d0ea37bbd8cbebe9e0f-4"&gt;&lt;/a&gt;                            'important':'[Gmail]/Important',
-&lt;a name="rest_code_ad6cf87c77b84d0ea37bbd8cbebe9e0f-5"&gt;&lt;/a&gt;                            'spam':     '[Gmail]/Spam',
-&lt;a name="rest_code_ad6cf87c77b84d0ea37bbd8cbebe9e0f-6"&gt;&lt;/a&gt;                            'starred':  '[Gmail]/Starred',
-&lt;a name="rest_code_ad6cf87c77b84d0ea37bbd8cbebe9e0f-7"&gt;&lt;/a&gt;                            'trash':    '[Gmail]/Trash',
-&lt;a name="rest_code_ad6cf87c77b84d0ea37bbd8cbebe9e0f-8"&gt;&lt;/a&gt;                            'archive':  '[Gmail]/All Mail',
-&lt;a name="rest_code_ad6cf87c77b84d0ea37bbd8cbebe9e0f-9"&gt;&lt;/a&gt;                            }.get(folder, folder)
-&lt;a name="rest_code_ad6cf87c77b84d0ea37bbd8cbebe9e0f-10"&gt;&lt;/a&gt;
-&lt;a name="rest_code_ad6cf87c77b84d0ea37bbd8cbebe9e0f-11"&gt;&lt;/a&gt;[Repository Gmail-Remote]
-&lt;a name="rest_code_ad6cf87c77b84d0ea37bbd8cbebe9e0f-12"&gt;&lt;/a&gt;nametrans = lambda folder: {'[Gmail]/Drafts':    'drafts',
-&lt;a name="rest_code_ad6cf87c77b84d0ea37bbd8cbebe9e0f-13"&gt;&lt;/a&gt;                            '[Gmail]/Sent Mail': 'sent',
-&lt;a name="rest_code_ad6cf87c77b84d0ea37bbd8cbebe9e0f-14"&gt;&lt;/a&gt;                            '[Gmail]/Starred':   'flagged',
-&lt;a name="rest_code_ad6cf87c77b84d0ea37bbd8cbebe9e0f-15"&gt;&lt;/a&gt;                            '[Gmail]/Important':   'important',
-&lt;a name="rest_code_ad6cf87c77b84d0ea37bbd8cbebe9e0f-16"&gt;&lt;/a&gt;                            '[Gmail]/Spam':   'spam',
-&lt;a name="rest_code_ad6cf87c77b84d0ea37bbd8cbebe9e0f-17"&gt;&lt;/a&gt;                            '[Gmail]/Trash':     'trash',
-&lt;a name="rest_code_ad6cf87c77b84d0ea37bbd8cbebe9e0f-18"&gt;&lt;/a&gt;                            '[Gmail]/All Mail':  'archive',
-&lt;a name="rest_code_ad6cf87c77b84d0ea37bbd8cbebe9e0f-19"&gt;&lt;/a&gt;                            }.get(folder, folder)
+&lt;pre class="code text"&gt;&lt;a name="rest_code_73637ce1f3d04be69dca9e31cc22d9ac-1"&gt;&lt;/a&gt;[Repository Gmail-Local]
+&lt;a name="rest_code_73637ce1f3d04be69dca9e31cc22d9ac-2"&gt;&lt;/a&gt;nametrans = lambda folder: {'drafts':   '[Gmail]/Drafts',
+&lt;a name="rest_code_73637ce1f3d04be69dca9e31cc22d9ac-3"&gt;&lt;/a&gt;                            'sent':     '[Gmail]/Sent Mail',
+&lt;a name="rest_code_73637ce1f3d04be69dca9e31cc22d9ac-4"&gt;&lt;/a&gt;                            'important':'[Gmail]/Important',
+&lt;a name="rest_code_73637ce1f3d04be69dca9e31cc22d9ac-5"&gt;&lt;/a&gt;                            'spam':     '[Gmail]/Spam',
+&lt;a name="rest_code_73637ce1f3d04be69dca9e31cc22d9ac-6"&gt;&lt;/a&gt;                            'starred':  '[Gmail]/Starred',
+&lt;a name="rest_code_73637ce1f3d04be69dca9e31cc22d9ac-7"&gt;&lt;/a&gt;                            'trash':    '[Gmail]/Trash',
+&lt;a name="rest_code_73637ce1f3d04be69dca9e31cc22d9ac-8"&gt;&lt;/a&gt;                            'archive':  '[Gmail]/All Mail',
+&lt;a name="rest_code_73637ce1f3d04be69dca9e31cc22d9ac-9"&gt;&lt;/a&gt;                            }.get(folder, folder)
+&lt;a name="rest_code_73637ce1f3d04be69dca9e31cc22d9ac-10"&gt;&lt;/a&gt;
+&lt;a name="rest_code_73637ce1f3d04be69dca9e31cc22d9ac-11"&gt;&lt;/a&gt;[Repository Gmail-Remote]
+&lt;a name="rest_code_73637ce1f3d04be69dca9e31cc22d9ac-12"&gt;&lt;/a&gt;nametrans = lambda folder: {'[Gmail]/Drafts':    'drafts',
+&lt;a name="rest_code_73637ce1f3d04be69dca9e31cc22d9ac-13"&gt;&lt;/a&gt;                            '[Gmail]/Sent Mail': 'sent',
+&lt;a name="rest_code_73637ce1f3d04be69dca9e31cc22d9ac-14"&gt;&lt;/a&gt;                            '[Gmail]/Starred':   'flagged',
+&lt;a name="rest_code_73637ce1f3d04be69dca9e31cc22d9ac-15"&gt;&lt;/a&gt;                            '[Gmail]/Important':   'important',
+&lt;a name="rest_code_73637ce1f3d04be69dca9e31cc22d9ac-16"&gt;&lt;/a&gt;                            '[Gmail]/Spam':   'spam',
+&lt;a name="rest_code_73637ce1f3d04be69dca9e31cc22d9ac-17"&gt;&lt;/a&gt;                            '[Gmail]/Trash':     'trash',
+&lt;a name="rest_code_73637ce1f3d04be69dca9e31cc22d9ac-18"&gt;&lt;/a&gt;                            '[Gmail]/All Mail':  'archive',
+&lt;a name="rest_code_73637ce1f3d04be69dca9e31cc22d9ac-19"&gt;&lt;/a&gt;                            }.get(folder, folder)
 &lt;/pre&gt;&lt;p&gt;I simply renamed all "[Gmail]" folders into something more readable and that
 makes more sense to me. It is not limited to special Gmail folders of course,
 this can also be applied to rename a folder X into a folder Y in the same. As it
@@ -701,33 +701,33 @@ even if you use your web client from time to time or check your mail on your
 phone, the changes will still be viewable.&lt;/p&gt;
 &lt;p&gt;The configuration is done in the ~/.imapfilter/config.lua file. The
 configuration is quite easy, you have to declare an IMAP object as the account.&lt;/p&gt;
-&lt;pre class="code lua"&gt;&lt;a name="rest_code_4fc5114ba0144e73a2365f114da25adb-1"&gt;&lt;/a&gt;&lt;span class="kd"&gt;local&lt;/span&gt; &lt;span class="n"&gt;account&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;IMAP&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
-&lt;a name="rest_code_4fc5114ba0144e73a2365f114da25adb-2"&gt;&lt;/a&gt;    &lt;span class="n"&gt;server&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s1"&gt;'&lt;/span&gt;&lt;span class="s"&gt;imap_sever'&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
-&lt;a name="rest_code_4fc5114ba0144e73a2365f114da25adb-3"&gt;&lt;/a&gt;    &lt;span class="n"&gt;username&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s1"&gt;'&lt;/span&gt;&lt;span class="s"&gt;username'&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
-&lt;a name="rest_code_4fc5114ba0144e73a2365f114da25adb-4"&gt;&lt;/a&gt;    &lt;span class="n"&gt;password&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s1"&gt;'&lt;/span&gt;&lt;span class="s"&gt;password'&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
-&lt;a name="rest_code_4fc5114ba0144e73a2365f114da25adb-5"&gt;&lt;/a&gt;    &lt;span class="n"&gt;ssl&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s1"&gt;'&lt;/span&gt;&lt;span class="s"&gt;ssl3'&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
-&lt;a name="rest_code_4fc5114ba0144e73a2365f114da25adb-6"&gt;&lt;/a&gt;&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;pre class="code lua"&gt;&lt;a name="rest_code_534a8d2502c14a679f02c7db1cd88bd9-1"&gt;&lt;/a&gt;&lt;span class="kd"&gt;local&lt;/span&gt; &lt;span class="n"&gt;account&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;IMAP&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+&lt;a name="rest_code_534a8d2502c14a679f02c7db1cd88bd9-2"&gt;&lt;/a&gt;    &lt;span class="n"&gt;server&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s1"&gt;'&lt;/span&gt;&lt;span class="s"&gt;imap_sever'&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;a name="rest_code_534a8d2502c14a679f02c7db1cd88bd9-3"&gt;&lt;/a&gt;    &lt;span class="n"&gt;username&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s1"&gt;'&lt;/span&gt;&lt;span class="s"&gt;username'&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;a name="rest_code_534a8d2502c14a679f02c7db1cd88bd9-4"&gt;&lt;/a&gt;    &lt;span class="n"&gt;password&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s1"&gt;'&lt;/span&gt;&lt;span class="s"&gt;password'&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;a name="rest_code_534a8d2502c14a679f02c7db1cd88bd9-5"&gt;&lt;/a&gt;    &lt;span class="n"&gt;ssl&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s1"&gt;'&lt;/span&gt;&lt;span class="s"&gt;ssl3'&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;a name="rest_code_534a8d2502c14a679f02c7db1cd88bd9-6"&gt;&lt;/a&gt;&lt;span class="p"&gt;}&lt;/span&gt;
 &lt;/pre&gt;&lt;p&gt;As the configuration is in Lua, you can easily get the password from another
 file. For instance, here is my account declaration:&lt;/p&gt;
-&lt;pre class="code lua"&gt;&lt;a name="rest_code_6aac18424464458784e2d0b047977385-1"&gt;&lt;/a&gt;&lt;span class="kd"&gt;local&lt;/span&gt; &lt;span class="n"&gt;account&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;IMAP&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
-&lt;a name="rest_code_6aac18424464458784e2d0b047977385-2"&gt;&lt;/a&gt;    &lt;span class="n"&gt;server&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s1"&gt;'&lt;/span&gt;&lt;span class="s"&gt;imap.gmail.com'&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
-&lt;a name="rest_code_6aac18424464458784e2d0b047977385-3"&gt;&lt;/a&gt;    &lt;span class="n"&gt;username&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s1"&gt;'&lt;/span&gt;&lt;span class="s"&gt;baptiste.wicht@gmail.com'&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
-&lt;a name="rest_code_6aac18424464458784e2d0b047977385-4"&gt;&lt;/a&gt;    &lt;span class="n"&gt;password&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;get_imap_password&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;"&lt;/span&gt;&lt;span class="s"&gt;.password.offlineimaprc"&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt;
-&lt;a name="rest_code_6aac18424464458784e2d0b047977385-5"&gt;&lt;/a&gt;    &lt;span class="n"&gt;ssl&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s1"&gt;'&lt;/span&gt;&lt;span class="s"&gt;ssl3'&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
-&lt;a name="rest_code_6aac18424464458784e2d0b047977385-6"&gt;&lt;/a&gt;&lt;span class="p"&gt;}&lt;/span&gt;
-&lt;a name="rest_code_6aac18424464458784e2d0b047977385-7"&gt;&lt;/a&gt;
-&lt;a name="rest_code_6aac18424464458784e2d0b047977385-8"&gt;&lt;/a&gt;&lt;span class="c1"&gt;-- Utility function to get IMAP password from file&lt;/span&gt;
-&lt;a name="rest_code_6aac18424464458784e2d0b047977385-9"&gt;&lt;/a&gt;&lt;span class="k"&gt;function&lt;/span&gt; &lt;span class="nf"&gt;get_imap_password&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;file&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
-&lt;a name="rest_code_6aac18424464458784e2d0b047977385-10"&gt;&lt;/a&gt;    &lt;span class="kd"&gt;local&lt;/span&gt; &lt;span class="n"&gt;home&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nb"&gt;os.getenv&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;"&lt;/span&gt;&lt;span class="s"&gt;HOME"&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
-&lt;a name="rest_code_6aac18424464458784e2d0b047977385-11"&gt;&lt;/a&gt;    &lt;span class="kd"&gt;local&lt;/span&gt; &lt;span class="n"&gt;file&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;home&lt;/span&gt; &lt;span class="o"&gt;..&lt;/span&gt; &lt;span class="s2"&gt;"&lt;/span&gt;&lt;span class="s"&gt;/"&lt;/span&gt; &lt;span class="o"&gt;..&lt;/span&gt; &lt;span class="n"&gt;file&lt;/span&gt;
-&lt;a name="rest_code_6aac18424464458784e2d0b047977385-12"&gt;&lt;/a&gt;    &lt;span class="kd"&gt;local&lt;/span&gt; &lt;span class="n"&gt;str&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nb"&gt;io.open&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;file&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;&lt;span class="n"&gt;read&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
-&lt;a name="rest_code_6aac18424464458784e2d0b047977385-13"&gt;&lt;/a&gt;    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;str&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
-&lt;a name="rest_code_6aac18424464458784e2d0b047977385-14"&gt;&lt;/a&gt;&lt;span class="k"&gt;end&lt;/span&gt;
+&lt;pre class="code lua"&gt;&lt;a name="rest_code_8df250951ea7470e822d4e2a0952d3b0-1"&gt;&lt;/a&gt;&lt;span class="kd"&gt;local&lt;/span&gt; &lt;span class="n"&gt;account&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;IMAP&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+&lt;a name="rest_code_8df250951ea7470e822d4e2a0952d3b0-2"&gt;&lt;/a&gt;    &lt;span class="n"&gt;server&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s1"&gt;'&lt;/span&gt;&lt;span class="s"&gt;imap.gmail.com'&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;a name="rest_code_8df250951ea7470e822d4e2a0952d3b0-3"&gt;&lt;/a&gt;    &lt;span class="n"&gt;username&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s1"&gt;'&lt;/span&gt;&lt;span class="s"&gt;baptiste.wicht@gmail.com'&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;a name="rest_code_8df250951ea7470e822d4e2a0952d3b0-4"&gt;&lt;/a&gt;    &lt;span class="n"&gt;password&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;get_imap_password&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;"&lt;/span&gt;&lt;span class="s"&gt;.password.offlineimaprc"&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt;
+&lt;a name="rest_code_8df250951ea7470e822d4e2a0952d3b0-5"&gt;&lt;/a&gt;    &lt;span class="n"&gt;ssl&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s1"&gt;'&lt;/span&gt;&lt;span class="s"&gt;ssl3'&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;a name="rest_code_8df250951ea7470e822d4e2a0952d3b0-6"&gt;&lt;/a&gt;&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;a name="rest_code_8df250951ea7470e822d4e2a0952d3b0-7"&gt;&lt;/a&gt;
+&lt;a name="rest_code_8df250951ea7470e822d4e2a0952d3b0-8"&gt;&lt;/a&gt;&lt;span class="c1"&gt;-- Utility function to get IMAP password from file&lt;/span&gt;
+&lt;a name="rest_code_8df250951ea7470e822d4e2a0952d3b0-9"&gt;&lt;/a&gt;&lt;span class="k"&gt;function&lt;/span&gt; &lt;span class="nf"&gt;get_imap_password&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;file&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;a name="rest_code_8df250951ea7470e822d4e2a0952d3b0-10"&gt;&lt;/a&gt;    &lt;span class="kd"&gt;local&lt;/span&gt; &lt;span class="n"&gt;home&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nb"&gt;os.getenv&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;"&lt;/span&gt;&lt;span class="s"&gt;HOME"&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;a name="rest_code_8df250951ea7470e822d4e2a0952d3b0-11"&gt;&lt;/a&gt;    &lt;span class="kd"&gt;local&lt;/span&gt; &lt;span class="n"&gt;file&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;home&lt;/span&gt; &lt;span class="o"&gt;..&lt;/span&gt; &lt;span class="s2"&gt;"&lt;/span&gt;&lt;span class="s"&gt;/"&lt;/span&gt; &lt;span class="o"&gt;..&lt;/span&gt; &lt;span class="n"&gt;file&lt;/span&gt;
+&lt;a name="rest_code_8df250951ea7470e822d4e2a0952d3b0-12"&gt;&lt;/a&gt;    &lt;span class="kd"&gt;local&lt;/span&gt; &lt;span class="n"&gt;str&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nb"&gt;io.open&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;file&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;&lt;span class="n"&gt;read&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+&lt;a name="rest_code_8df250951ea7470e822d4e2a0952d3b0-13"&gt;&lt;/a&gt;    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;str&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;a name="rest_code_8df250951ea7470e822d4e2a0952d3b0-14"&gt;&lt;/a&gt;&lt;span class="k"&gt;end&lt;/span&gt;
 &lt;/pre&gt;&lt;p&gt;It gets the password by reading a file in the home directory.&lt;/p&gt;
 &lt;p&gt;Once, you have the account, you can check the status of a folder with the
 check_status() function. For instance:&lt;/p&gt;
-&lt;pre class="code lua"&gt;&lt;a name="rest_code_d655bef1a7d74773bfd6c78f733777a2-1"&gt;&lt;/a&gt;&lt;span class="n"&gt;account&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;INBOX&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;check_status&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
-&lt;a name="rest_code_d655bef1a7d74773bfd6c78f733777a2-2"&gt;&lt;/a&gt;&lt;span class="n"&gt;account&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s1"&gt;'&lt;/span&gt;&lt;span class="s"&gt;[Gmail]/Trash'&lt;/span&gt;&lt;span class="p"&gt;]:&lt;/span&gt;&lt;span class="n"&gt;check_status&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+&lt;pre class="code lua"&gt;&lt;a name="rest_code_21a93a63e1e34159916117a7514dd1ea-1"&gt;&lt;/a&gt;&lt;span class="n"&gt;account&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;INBOX&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;check_status&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+&lt;a name="rest_code_21a93a63e1e34159916117a7514dd1ea-2"&gt;&lt;/a&gt;&lt;span class="n"&gt;account&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s1"&gt;'&lt;/span&gt;&lt;span class="s"&gt;[Gmail]/Trash'&lt;/span&gt;&lt;span class="p"&gt;]:&lt;/span&gt;&lt;span class="n"&gt;check_status&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
 &lt;/pre&gt;&lt;p&gt;You can run imapfilter simply by launching imapfilter on the command line. Once
 imapfilter is run, it will print the status of the folder you choses:&lt;/p&gt;
 &lt;pre class="literal-block"&gt;
@@ -750,14 +750,14 @@ folder.&lt;/li&gt;
 &lt;/ul&gt;
 &lt;p&gt;You can also mix different IMAP accounts, you don't have to use only one.&lt;/p&gt;
 &lt;p&gt;For instance, if you would delete all the mail coming from me, you could do:&lt;/p&gt;
-&lt;pre class="code lua"&gt;&lt;a name="rest_code_c14e996b1e4d4e549c133a24ad1aafb9-1"&gt;&lt;/a&gt;&lt;span class="n"&gt;mails&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;account&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;INBOX&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;select_all&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
-&lt;a name="rest_code_c14e996b1e4d4e549c133a24ad1aafb9-2"&gt;&lt;/a&gt;&lt;span class="n"&gt;filtered&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;mails&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;contains_from&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;"&lt;/span&gt;&lt;span class="s"&gt;baptiste.wicht@gmail.com"&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
-&lt;a name="rest_code_c14e996b1e4d4e549c133a24ad1aafb9-3"&gt;&lt;/a&gt;&lt;span class="n"&gt;filtered&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;delete_messages&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+&lt;pre class="code lua"&gt;&lt;a name="rest_code_49ac8d512c9946fb9eacc90629c5e1a6-1"&gt;&lt;/a&gt;&lt;span class="n"&gt;mails&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;account&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;INBOX&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;select_all&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+&lt;a name="rest_code_49ac8d512c9946fb9eacc90629c5e1a6-2"&gt;&lt;/a&gt;&lt;span class="n"&gt;filtered&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;mails&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;contains_from&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;"&lt;/span&gt;&lt;span class="s"&gt;baptiste.wicht@gmail.com"&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;a name="rest_code_49ac8d512c9946fb9eacc90629c5e1a6-3"&gt;&lt;/a&gt;&lt;span class="n"&gt;filtered&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;delete_messages&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
 &lt;/pre&gt;&lt;p&gt;Or you could move all the mails containing Urgent in the subject line to an IMAP
 folder:&lt;/p&gt;
-&lt;pre class="code lua"&gt;&lt;a name="rest_code_d19edad3068a414c99d104169a492bc8-1"&gt;&lt;/a&gt;&lt;span class="n"&gt;mails&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;account&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;INBOX&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;select_all&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
-&lt;a name="rest_code_d19edad3068a414c99d104169a492bc8-2"&gt;&lt;/a&gt;&lt;span class="n"&gt;filtered&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;mails&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;contains_subject&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;"&lt;/span&gt;&lt;span class="s"&gt;Urgent"&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
-&lt;a name="rest_code_d19edad3068a414c99d104169a492bc8-3"&gt;&lt;/a&gt;&lt;span class="n"&gt;filtered&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;move_messages&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;account&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s2"&gt;"&lt;/span&gt;&lt;span class="s"&gt;urgent_mails"&lt;/span&gt;&lt;span class="p"&gt;])&lt;/span&gt;
+&lt;pre class="code lua"&gt;&lt;a name="rest_code_11e5fbda27134ebca94dd141a0dadc58-1"&gt;&lt;/a&gt;&lt;span class="n"&gt;mails&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;account&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;INBOX&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;select_all&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+&lt;a name="rest_code_11e5fbda27134ebca94dd141a0dadc58-2"&gt;&lt;/a&gt;&lt;span class="n"&gt;filtered&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;mails&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;contains_subject&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;"&lt;/span&gt;&lt;span class="s"&gt;Urgent"&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;a name="rest_code_11e5fbda27134ebca94dd141a0dadc58-3"&gt;&lt;/a&gt;&lt;span class="n"&gt;filtered&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;move_messages&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;account&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s2"&gt;"&lt;/span&gt;&lt;span class="s"&gt;urgent_mails"&lt;/span&gt;&lt;span class="p"&gt;])&lt;/span&gt;
 &lt;/pre&gt;&lt;p&gt;If you want some more examples, you can take a look at &lt;a class="reference external" href="https://github.com/wichtounet/dotfiles/blob/master/.imapfilter/config.lua"&gt;my imapfilter
 configuration&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;The best way to start using it is to look at examples, there are plenty of them
