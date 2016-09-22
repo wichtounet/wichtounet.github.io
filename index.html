@@ -163,8 +163,8 @@
 <div class="p-summary">
         <div>
 <p>You may remember <a class="reference external" href="http://baptiste-wicht.com/posts/2016/06/reduce-compilation-time-by-another-16-with-catch.html">my quest for faster compilation times</a>. I had made several changes to the Catch test framework macros in order to save some compilation at the expense of my test code looking a bit less nice:</p>
-<pre class="code cpp"><a name="rest_code_a7463c83008a467ab513672c04050f68-1"></a><span class="n">REQUIRE</span><span class="p">(</span><span class="n">a</span> <span class="o">==</span> <span class="mi">9</span><span class="p">);</span> <span class="c1">//Before</span>
-<a name="rest_code_a7463c83008a467ab513672c04050f68-2"></a><span class="n">REQUIRE_EQUALS</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="mi">9</span><span class="p">);</span> <span class="c1">//After</span>
+<pre class="code cpp"><a name="rest_code_450bd06b5f4d4f07bab22fd97312f63b-1"></a><span class="n">REQUIRE</span><span class="p">(</span><span class="n">a</span> <span class="o">==</span> <span class="mi">9</span><span class="p">);</span> <span class="c1">//Before</span>
+<a name="rest_code_450bd06b5f4d4f07bab22fd97312f63b-2"></a><span class="n">REQUIRE_EQUALS</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="mi">9</span><span class="p">);</span> <span class="c1">//After</span>
 </pre>
 <p>The first line is a little bit better, but using several optimizations, I was
 able to dramatically change the compilation time of the test cases of ETL. In
@@ -177,29 +177,29 @@ Catch but that claims to be much lighter. I tested doctest 1.0 early on, but at
 this point it was actually slower than Catch and especially slower than my
 versions of the macro.</p>
 <p>Today, doctest 1.1 was released with promises of being even lighter than before
-and providing several new ways of speeding up compilation time. If you want the
+and providing several new ways of speeding up compilation. If you want the
 results directly, you can take a look at the next section.</p>
 <p>First of all, this new version improved the basic macros to make expression
 decomposition faster. When you use the standard REQUIRE macro, the expression is
 composed by using several template techniques and operator overloading. This is
-really slow to compile and this is way my fast version of the Catch macros are
-much faster to compiler.</p>
-<p>Moreover, doctest 1.1 also introduce CHECK_EQ that does not any expression
+really slow to compile. By removing the need for this decomposition, the fast
+Catch macros are much faster to compile.</p>
+<p>Moreover, doctest 1.1 also introduces CHECK_EQ that does not any expression
 decomposition. This is close to what I did in my macros expect that it is
 directly integrated into the framework and preserves all its features. It is
 also possible to bypass the expression checking code by using FAST_CHECK_EQ
-macro. In that case, the exception are not captured. Finally, a new
+macro. In that case, the exceptions are not captured. Finally, a new
 configuration option is introduced (DOCTEST_CONFIG_SUPER_FAST_ASSERTS) that
 removes some features related to automatic debugger breaks. Since I don't use
-the debugger and I don't need to capture exception everywhere (it's sufficient
-for me that the test fail completely if an exception is thrown), I'm more than
-eager to use these new features.</p>
+the debugger features and I don't need to capture exception everywhere (it's
+sufficient for me that the test fails completely if an exception is thrown), I'm
+more than eager to use these new features.</p>
 </div>
 <div class="section" id="results">
 <h2>Results</h2>
-<p>For evaluation, I have compiled the complete test set of ETL, with 1 thread,
+<p>For evaluation, I have compiled the complete test suite of ETL, with 1 thread,
 using gcc 4.9.3 with various different options, starting from Catch to doctest
-1.1 with all compilation time features.</p>
+1.1 with all compilation time features. Here are the results, in seconds:</p>
 <table border="1" class="docutils">
 <colgroup>
 <col width="29%">
@@ -269,27 +269,29 @@ using gcc 4.9.3 with various different options, starting from Catch to doctest
 </table>
 <p>As you can see, doctest 1.1 is much faster to compile than doctest 1.0! This is
 really great news. Moreover, it is already 16% faster than Catch. When all the
-features are used, doctest is 12% faster than my stripped down version of Catch
-macros (and 43% faster than Catch). This is really cool. It means that I don't
-have to do any change on the code (no need to strip macros myself) and I can
-gain a lot of compilation compared to the bare Catch framework.</p>
+features are used, doctest is 12% faster than my stripped down versions of Catch
+macros (and 43% faster than Catch standard macros). This is really cool! It
+means that I don't have to do any change in the code (no need to strip macros
+myself) and I can gain a lot of compilation time compared to the bare Catch
+framework.</p>
 <p>I really think the author of doctest did a great job with the new version.
 Although this was not of as much interest for me, there are also a lot of
-changes in the new version. You can consult the <a class="reference external" href="https://github.com/onqtam/doctest/blob/master/CHANGELOG.md">changelog</a> if you want.</p>
+other changes in the new version. You can consult the
+<a class="reference external" href="https://github.com/onqtam/doctest/blob/master/CHANGELOG.md">changelog</a> if you want more information.</p>
 </div>
 <div class="section" id="conclusion">
 <h2>Conclusion</h2>
-<p>Overall doctest 1.1 is much faster to compile than doctest 1.0. Moreover, it
+<p>Overall, doctest 1.1 is much faster to compile than doctest 1.0. Moreover, it
 offers very fast macros for test assertions that are much faster to compile
 than Catch versions and even faster than the versions I created myself to reduce
-compilation time. I really thing this is great advance for doctest. When
-compiling with all the optimizations, doctest 1.1 makes me save 50 seconds in
+compilation time. I really thing this is a great advance for doctest. When
+compiling with all the optimizations, doctest 1.1 saves me 50 seconds in
 compilation time compared to the fast version of Catch macro and more than
 5 minutes compared to the standard version of Catch macros.</p>
 <p>I'll probably start using doctest on my development machine. For now, I'll keep
 Catch as well since I need it to generate the unit test reports in XML format
-for Sonarqube But once this feature appears in doctest, I'll probably drop
-Catch from ETL and DLL</p>
+for Sonarqube. Once this feature appears in doctest, I'll probably drop Catch
+from ETL and DLL</p>
 <p>If you need blazing fast compilation times for your unit tests, doctest 1.1 is
 probably the way to go.</p>
 </div>
@@ -346,18 +348,18 @@ code:</p>
 </div>
 <p>If you want to exclude some code from your coverage reports, you can use
 a pragma:</p>
-<pre class="code cpp"><a name="rest_code_e7efe087bf834be290ca2a5e5e3cd171-1"></a><span class="k">switch</span> <span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="p">{</span>
-<a name="rest_code_e7efe087bf834be290ca2a5e5e3cd171-2"></a>    <span class="k">case</span> <span class="mi">1</span><span class="o">:</span> <span class="n">one</span><span class="o">++</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span>
-<a name="rest_code_e7efe087bf834be290ca2a5e5e3cd171-3"></a>    <span class="k">case</span> <span class="mi">2</span><span class="o">:</span> <span class="n">two</span><span class="o">++</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span>
-<a name="rest_code_e7efe087bf834be290ca2a5e5e3cd171-4"></a>    <span class="k">case</span> <span class="mi">3</span><span class="o">:</span> <span class="n">three</span><span class="o">++</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span>
-<a name="rest_code_e7efe087bf834be290ca2a5e5e3cd171-5"></a>    <span class="cp">#pragma BullseyeCoverage off</span>
-<a name="rest_code_e7efe087bf834be290ca2a5e5e3cd171-6"></a>    <span class="k">default</span><span class="o">:</span> <span class="n">abort</span><span class="p">();</span>
-<a name="rest_code_e7efe087bf834be290ca2a5e5e3cd171-7"></a>    <span class="cp">#pragma BullseyeCoverage on</span>
-<a name="rest_code_e7efe087bf834be290ca2a5e5e3cd171-8"></a><span class="p">}</span>
+<pre class="code cpp"><a name="rest_code_16888397f9fb4d3bb7e444f97374911e-1"></a><span class="k">switch</span> <span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="p">{</span>
+<a name="rest_code_16888397f9fb4d3bb7e444f97374911e-2"></a>    <span class="k">case</span> <span class="mi">1</span><span class="o">:</span> <span class="n">one</span><span class="o">++</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span>
+<a name="rest_code_16888397f9fb4d3bb7e444f97374911e-3"></a>    <span class="k">case</span> <span class="mi">2</span><span class="o">:</span> <span class="n">two</span><span class="o">++</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span>
+<a name="rest_code_16888397f9fb4d3bb7e444f97374911e-4"></a>    <span class="k">case</span> <span class="mi">3</span><span class="o">:</span> <span class="n">three</span><span class="o">++</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span>
+<a name="rest_code_16888397f9fb4d3bb7e444f97374911e-5"></a>    <span class="cp">#pragma BullseyeCoverage off</span>
+<a name="rest_code_16888397f9fb4d3bb7e444f97374911e-6"></a>    <span class="k">default</span><span class="o">:</span> <span class="n">abort</span><span class="p">();</span>
+<a name="rest_code_16888397f9fb4d3bb7e444f97374911e-7"></a>    <span class="cp">#pragma BullseyeCoverage on</span>
+<a name="rest_code_16888397f9fb4d3bb7e444f97374911e-8"></a><span class="p">}</span>
 </pre>
 <p>So that the condition won't be set as uncovered.</p>
 <p>As for the coverage, it's pretty straightforward. For example:</p>
-<pre class="code bash"><a name="rest_code_6210dce8665a46aeab00738e423de767-1"></a>covmerge -c -ffinal.cov sse.cov avx.cov
+<pre class="code bash"><a name="rest_code_cfdeda7487124f539f412885eb44507a-1"></a>covmerge -c -ffinal.cov sse.cov avx.cov
 </pre>
 <p>and it's really fast. Unfortunately, the merging is only done at the function
 level, not at the statement or at the condition level. This is a bit
@@ -415,22 +417,22 @@ to switch to some basic versioning. The project is now at a stable state.</p>
 <div class="section" id="examples">
 <h2>Examples</h2>
 <p>Here is an example of expressions in ETL:</p>
-<pre class="code cpp"><a name="rest_code_30038a2f5da84fd69f6a80680b023395-1"></a><span class="n">etl</span><span class="o">::</span><span class="n">fast_matrix</span><span class="o">&lt;</span><span class="kt">float</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="o">&gt;</span> <span class="n">a</span> <span class="o">=</span> <span class="p">{</span><span class="mf">1.1</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.1</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">};</span>
-<a name="rest_code_30038a2f5da84fd69f6a80680b023395-2"></a><span class="n">etl</span><span class="o">::</span><span class="n">fast_matrix</span><span class="o">&lt;</span><span class="kt">float</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="o">&gt;</span> <span class="n">b</span> <span class="o">=</span> <span class="p">{</span><span class="mf">2.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">};</span>
-<a name="rest_code_30038a2f5da84fd69f6a80680b023395-3"></a><span class="n">etl</span><span class="o">::</span><span class="n">fast_matrix</span><span class="o">&lt;</span><span class="kt">float</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="o">&gt;</span> <span class="n">c</span> <span class="o">=</span> <span class="p">{</span><span class="mf">2.2</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.2</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">};</span>
-<a name="rest_code_30038a2f5da84fd69f6a80680b023395-4"></a>
-<a name="rest_code_30038a2f5da84fd69f6a80680b023395-5"></a><span class="n">etl</span><span class="o">::</span><span class="n">fast_matrix</span><span class="o">&lt;</span><span class="kt">float</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="o">&gt;</span> <span class="n">d</span><span class="p">(</span><span class="mf">2.5</span> <span class="o">*</span> <span class="p">((</span><span class="n">a</span> <span class="o">&gt;&gt;</span> <span class="n">b</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">log</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="n">abs</span><span class="p">(</span><span class="n">c</span><span class="p">)))</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.5</span> <span class="o">*</span> <span class="n">scale</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">sign</span><span class="p">(</span><span class="n">b</span><span class="p">))</span> <span class="o">/</span> <span class="n">c</span><span class="p">)</span> <span class="o">+</span> <span class="mf">2.111</span> <span class="o">/</span> <span class="n">log</span><span class="p">(</span><span class="n">c</span><span class="p">));</span>
+<pre class="code cpp"><a name="rest_code_1479b2c9422e4d1bb46f71ff95392996-1"></a><span class="n">etl</span><span class="o">::</span><span class="n">fast_matrix</span><span class="o">&lt;</span><span class="kt">float</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="o">&gt;</span> <span class="n">a</span> <span class="o">=</span> <span class="p">{</span><span class="mf">1.1</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.1</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">};</span>
+<a name="rest_code_1479b2c9422e4d1bb46f71ff95392996-2"></a><span class="n">etl</span><span class="o">::</span><span class="n">fast_matrix</span><span class="o">&lt;</span><span class="kt">float</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="o">&gt;</span> <span class="n">b</span> <span class="o">=</span> <span class="p">{</span><span class="mf">2.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">};</span>
+<a name="rest_code_1479b2c9422e4d1bb46f71ff95392996-3"></a><span class="n">etl</span><span class="o">::</span><span class="n">fast_matrix</span><span class="o">&lt;</span><span class="kt">float</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="o">&gt;</span> <span class="n">c</span> <span class="o">=</span> <span class="p">{</span><span class="mf">2.2</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.2</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">};</span>
+<a name="rest_code_1479b2c9422e4d1bb46f71ff95392996-4"></a>
+<a name="rest_code_1479b2c9422e4d1bb46f71ff95392996-5"></a><span class="n">etl</span><span class="o">::</span><span class="n">fast_matrix</span><span class="o">&lt;</span><span class="kt">float</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="o">&gt;</span> <span class="n">d</span><span class="p">(</span><span class="mf">2.5</span> <span class="o">*</span> <span class="p">((</span><span class="n">a</span> <span class="o">&gt;&gt;</span> <span class="n">b</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">log</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="n">abs</span><span class="p">(</span><span class="n">c</span><span class="p">)))</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.5</span> <span class="o">*</span> <span class="n">scale</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">sign</span><span class="p">(</span><span class="n">b</span><span class="p">))</span> <span class="o">/</span> <span class="n">c</span><span class="p">)</span> <span class="o">+</span> <span class="mf">2.111</span> <span class="o">/</span> <span class="n">log</span><span class="p">(</span><span class="n">c</span><span class="p">));</span>
 </pre>
 <p>Or another I'm using in my neural networks library:</p>
-<pre class="code cpp"><a name="rest_code_df240e884ae44df5adeed3458d452cca-1"></a><span class="n">h</span> <span class="o">=</span> <span class="n">etl</span><span class="o">::</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">b</span> <span class="o">+</span> <span class="n">v</span> <span class="o">*</span> <span class="n">w</span><span class="p">)</span>
+<pre class="code cpp"><a name="rest_code_4d36c96128a0459ea49d267b5636ac7f-1"></a><span class="n">h</span> <span class="o">=</span> <span class="n">etl</span><span class="o">::</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">b</span> <span class="o">+</span> <span class="n">v</span> <span class="o">*</span> <span class="n">w</span><span class="p">)</span>
 </pre>
 <p>In that case, the vector-matrix multiplication will be executed using a BLAS
 kernel (if ETL is configured correclty) and the assignment, the sigmoid and the
 addition will be automatically vectorized to use either AVX or SSE depending
 on the machine.</p>
 <p>Or with a convolutional layer and a ReLU activation function:</p>
-<pre class="code cpp"><a name="rest_code_f3fa6061b68842e591fc07ab8597aeb5-1"></a><span class="n">etl</span><span class="o">::</span><span class="n">reshape</span><span class="o">&lt;</span><span class="mi">1</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">NH1</span><span class="p">,</span> <span class="n">NH2</span><span class="o">&gt;</span><span class="p">(</span><span class="n">h_a</span><span class="p">)</span> <span class="o">=</span> <span class="n">etl</span><span class="o">::</span><span class="n">conv_4d_valid_flipped</span><span class="p">(</span><span class="n">etl</span><span class="o">::</span><span class="n">reshape</span><span class="o">&lt;</span><span class="mi">1</span><span class="p">,</span> <span class="n">NC</span><span class="p">,</span> <span class="n">NV1</span><span class="p">,</span> <span class="n">NV2</span><span class="o">&gt;</span><span class="p">(</span><span class="n">v_a</span><span class="p">),</span> <span class="n">w</span><span class="p">);</span>
-<a name="rest_code_f3fa6061b68842e591fc07ab8597aeb5-2"></a><span class="n">h</span> <span class="o">=</span> <span class="n">max</span><span class="p">(</span><span class="n">b_rep</span> <span class="o">+</span> <span class="n">h_a</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">);</span>
+<pre class="code cpp"><a name="rest_code_d79eace305e142939add4ecbd58285f7-1"></a><span class="n">etl</span><span class="o">::</span><span class="n">reshape</span><span class="o">&lt;</span><span class="mi">1</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">NH1</span><span class="p">,</span> <span class="n">NH2</span><span class="o">&gt;</span><span class="p">(</span><span class="n">h_a</span><span class="p">)</span> <span class="o">=</span> <span class="n">etl</span><span class="o">::</span><span class="n">conv_4d_valid_flipped</span><span class="p">(</span><span class="n">etl</span><span class="o">::</span><span class="n">reshape</span><span class="o">&lt;</span><span class="mi">1</span><span class="p">,</span> <span class="n">NC</span><span class="p">,</span> <span class="n">NV1</span><span class="p">,</span> <span class="n">NV2</span><span class="o">&gt;</span><span class="p">(</span><span class="n">v_a</span><span class="p">),</span> <span class="n">w</span><span class="p">);</span>
+<a name="rest_code_d79eace305e142939add4ecbd58285f7-2"></a><span class="n">h</span> <span class="o">=</span> <span class="n">max</span><span class="p">(</span><span class="n">b_rep</span> <span class="o">+</span> <span class="n">h_a</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">);</span>
 </pre>
 <p>This will automatically be computed either with NVIDIA CUDNN (if available) or
 with optimized SSE/AVX kernels.</p>
@@ -768,18 +770,18 @@ repository, in the releases pages or directly in the &lt;em&gt;master&lt;/em&gt;
 <p>No, it's not the same post as two days! I've been able to reduce the compilation
 time of my test cases by another 16%!</p>
 <p>Two days ago, I posted an article about how <a class="reference external" href="http://baptiste-wicht.com/posts/2016/05/speedup-compilation-by-13-by-simplifying-unit-test-with-catch.html">I reduced the compilation time of my tests by 13%</a>, by bypassing the expression deduction from Catch. I came up with the macro <code class="cpp"><span class="n">REQUIRE_EQUALS</span></code>:</p>
-<pre class="code cpp"><a name="rest_code_d43d567dc2fc49648e7db3c536a08ac8-1"></a><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">L</span><span class="p">,</span> <span class="k">typename</span> <span class="n">R</span><span class="o">&gt;</span>
-<a name="rest_code_d43d567dc2fc49648e7db3c536a08ac8-2"></a><span class="kt">void</span> <span class="n">evaluate_result</span><span class="p">(</span><span class="n">Catch</span><span class="o">::</span><span class="n">ResultBuilder</span><span class="o">&amp;&amp;</span> <span class="n">__result</span><span class="p">,</span> <span class="n">L</span> <span class="n">lhs</span><span class="p">,</span> <span class="n">R</span> <span class="n">rhs</span><span class="p">){</span>
-<a name="rest_code_d43d567dc2fc49648e7db3c536a08ac8-3"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">setResultType</span><span class="p">(</span><span class="n">lhs</span> <span class="o">==</span> <span class="n">rhs</span><span class="p">);</span>
-<a name="rest_code_d43d567dc2fc49648e7db3c536a08ac8-4"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">setLhs</span><span class="p">(</span><span class="n">Catch</span><span class="o">::</span><span class="n">toString</span><span class="p">(</span><span class="n">lhs</span><span class="p">));</span>
-<a name="rest_code_d43d567dc2fc49648e7db3c536a08ac8-5"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">setRhs</span><span class="p">(</span><span class="n">Catch</span><span class="o">::</span><span class="n">toString</span><span class="p">(</span><span class="n">rhs</span><span class="p">));</span>
-<a name="rest_code_d43d567dc2fc49648e7db3c536a08ac8-6"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">setOp</span><span class="p">(</span><span class="s">"=="</span><span class="p">);</span>
-<a name="rest_code_d43d567dc2fc49648e7db3c536a08ac8-7"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">endExpression</span><span class="p">();</span>
-<a name="rest_code_d43d567dc2fc49648e7db3c536a08ac8-8"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">react</span><span class="p">();</span>
-<a name="rest_code_d43d567dc2fc49648e7db3c536a08ac8-9"></a><span class="p">}</span>
-<a name="rest_code_d43d567dc2fc49648e7db3c536a08ac8-10"></a>
-<a name="rest_code_d43d567dc2fc49648e7db3c536a08ac8-11"></a><span class="cp">#define REQUIRE_EQUALS(lhs, rhs) \</span>
-<a name="rest_code_d43d567dc2fc49648e7db3c536a08ac8-12"></a><span class="cp">    evaluate_result(Catch::ResultBuilder( "REQUIRE", CATCH_INTERNAL_LINEINFO, #lhs " == " #rhs, Catch::ResultDisposition::Normal ), lhs, rhs);</span>
+<pre class="code cpp"><a name="rest_code_903a01cd760f4003a8b46718b4935a55-1"></a><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">L</span><span class="p">,</span> <span class="k">typename</span> <span class="n">R</span><span class="o">&gt;</span>
+<a name="rest_code_903a01cd760f4003a8b46718b4935a55-2"></a><span class="kt">void</span> <span class="n">evaluate_result</span><span class="p">(</span><span class="n">Catch</span><span class="o">::</span><span class="n">ResultBuilder</span><span class="o">&amp;&amp;</span> <span class="n">__result</span><span class="p">,</span> <span class="n">L</span> <span class="n">lhs</span><span class="p">,</span> <span class="n">R</span> <span class="n">rhs</span><span class="p">){</span>
+<a name="rest_code_903a01cd760f4003a8b46718b4935a55-3"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">setResultType</span><span class="p">(</span><span class="n">lhs</span> <span class="o">==</span> <span class="n">rhs</span><span class="p">);</span>
+<a name="rest_code_903a01cd760f4003a8b46718b4935a55-4"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">setLhs</span><span class="p">(</span><span class="n">Catch</span><span class="o">::</span><span class="n">toString</span><span class="p">(</span><span class="n">lhs</span><span class="p">));</span>
+<a name="rest_code_903a01cd760f4003a8b46718b4935a55-5"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">setRhs</span><span class="p">(</span><span class="n">Catch</span><span class="o">::</span><span class="n">toString</span><span class="p">(</span><span class="n">rhs</span><span class="p">));</span>
+<a name="rest_code_903a01cd760f4003a8b46718b4935a55-6"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">setOp</span><span class="p">(</span><span class="s">"=="</span><span class="p">);</span>
+<a name="rest_code_903a01cd760f4003a8b46718b4935a55-7"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">endExpression</span><span class="p">();</span>
+<a name="rest_code_903a01cd760f4003a8b46718b4935a55-8"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">react</span><span class="p">();</span>
+<a name="rest_code_903a01cd760f4003a8b46718b4935a55-9"></a><span class="p">}</span>
+<a name="rest_code_903a01cd760f4003a8b46718b4935a55-10"></a>
+<a name="rest_code_903a01cd760f4003a8b46718b4935a55-11"></a><span class="cp">#define REQUIRE_EQUALS(lhs, rhs) \</span>
+<a name="rest_code_903a01cd760f4003a8b46718b4935a55-12"></a><span class="cp">    evaluate_result(Catch::ResultBuilder( "REQUIRE", CATCH_INTERNAL_LINEINFO, #lhs " == " #rhs, Catch::ResultDisposition::Normal ), lhs, rhs);</span>
 </pre>
 <p>This has the advantage that the left and right hand sides are directly set, not
 deduced with templates and operator overloading. This still has exactly the same
@@ -794,19 +796,19 @@ Considering that I have some test files with around 400 assertions, this is
 a lot of overhead for nothing. Moreover, two parameters have always the same
 value, no need to repeat them every time.</p>
 <p>Simplifying the macro to the minimum led me to this:</p>
-<pre class="code cpp"><a name="rest_code_bd24f072529f4583927d7af147def8a4-1"></a><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">L</span><span class="p">,</span> <span class="k">typename</span> <span class="n">R</span><span class="o">&gt;</span>
-<a name="rest_code_bd24f072529f4583927d7af147def8a4-2"></a><span class="kt">void</span> <span class="n">evaluate_result</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">file</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">line</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">exp</span><span class="p">,</span> <span class="n">L</span> <span class="n">lhs</span><span class="p">,</span> <span class="n">R</span> <span class="n">rhs</span><span class="p">){</span>
-<a name="rest_code_bd24f072529f4583927d7af147def8a4-3"></a>    <span class="n">Catch</span><span class="o">::</span><span class="n">ResultBuilder</span> <span class="n">result</span><span class="p">(</span><span class="s">"REQUIRE"</span><span class="p">,</span> <span class="p">{</span><span class="n">file</span><span class="p">,</span> <span class="n">line</span><span class="p">},</span> <span class="n">exp</span><span class="p">,</span> <span class="n">Catch</span><span class="o">::</span><span class="n">ResultDisposition</span><span class="o">::</span><span class="n">Flags</span><span class="o">::</span><span class="n">Normal</span><span class="p">);</span>
-<a name="rest_code_bd24f072529f4583927d7af147def8a4-4"></a>    <span class="n">result</span><span class="p">.</span><span class="n">setResultType</span><span class="p">(</span><span class="n">lhs</span> <span class="o">==</span> <span class="n">rhs</span><span class="p">);</span>
-<a name="rest_code_bd24f072529f4583927d7af147def8a4-5"></a>    <span class="n">result</span><span class="p">.</span><span class="n">setLhs</span><span class="p">(</span><span class="n">Catch</span><span class="o">::</span><span class="n">toString</span><span class="p">(</span><span class="n">lhs</span><span class="p">));</span>
-<a name="rest_code_bd24f072529f4583927d7af147def8a4-6"></a>    <span class="n">result</span><span class="p">.</span><span class="n">setRhs</span><span class="p">(</span><span class="n">Catch</span><span class="o">::</span><span class="n">toString</span><span class="p">(</span><span class="n">rhs</span><span class="p">));</span>
-<a name="rest_code_bd24f072529f4583927d7af147def8a4-7"></a>    <span class="n">result</span><span class="p">.</span><span class="n">setOp</span><span class="p">(</span><span class="s">"=="</span><span class="p">);</span>
-<a name="rest_code_bd24f072529f4583927d7af147def8a4-8"></a>    <span class="n">result</span><span class="p">.</span><span class="n">endExpression</span><span class="p">();</span>
-<a name="rest_code_bd24f072529f4583927d7af147def8a4-9"></a>    <span class="n">result</span><span class="p">.</span><span class="n">react</span><span class="p">();</span>
-<a name="rest_code_bd24f072529f4583927d7af147def8a4-10"></a><span class="p">}</span>
-<a name="rest_code_bd24f072529f4583927d7af147def8a4-11"></a>
-<a name="rest_code_bd24f072529f4583927d7af147def8a4-12"></a><span class="cp">#define REQUIRE_EQUALS(lhs, rhs) \</span>
-<a name="rest_code_bd24f072529f4583927d7af147def8a4-13"></a><span class="cp">    evaluate_result(__FILE__, __LINE__, #lhs " == " #rhs, lhs, rhs);</span>
+<pre class="code cpp"><a name="rest_code_9fd0922a18d74a9c997a463eda882044-1"></a><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">L</span><span class="p">,</span> <span class="k">typename</span> <span class="n">R</span><span class="o">&gt;</span>
+<a name="rest_code_9fd0922a18d74a9c997a463eda882044-2"></a><span class="kt">void</span> <span class="n">evaluate_result</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">file</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">line</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">exp</span><span class="p">,</span> <span class="n">L</span> <span class="n">lhs</span><span class="p">,</span> <span class="n">R</span> <span class="n">rhs</span><span class="p">){</span>
+<a name="rest_code_9fd0922a18d74a9c997a463eda882044-3"></a>    <span class="n">Catch</span><span class="o">::</span><span class="n">ResultBuilder</span> <span class="n">result</span><span class="p">(</span><span class="s">"REQUIRE"</span><span class="p">,</span> <span class="p">{</span><span class="n">file</span><span class="p">,</span> <span class="n">line</span><span class="p">},</span> <span class="n">exp</span><span class="p">,</span> <span class="n">Catch</span><span class="o">::</span><span class="n">ResultDisposition</span><span class="o">::</span><span class="n">Flags</span><span class="o">::</span><span class="n">Normal</span><span class="p">);</span>
+<a name="rest_code_9fd0922a18d74a9c997a463eda882044-4"></a>    <span class="n">result</span><span class="p">.</span><span class="n">setResultType</span><span class="p">(</span><span class="n">lhs</span> <span class="o">==</span> <span class="n">rhs</span><span class="p">);</span>
+<a name="rest_code_9fd0922a18d74a9c997a463eda882044-5"></a>    <span class="n">result</span><span class="p">.</span><span class="n">setLhs</span><span class="p">(</span><span class="n">Catch</span><span class="o">::</span><span class="n">toString</span><span class="p">(</span><span class="n">lhs</span><span class="p">));</span>
+<a name="rest_code_9fd0922a18d74a9c997a463eda882044-6"></a>    <span class="n">result</span><span class="p">.</span><span class="n">setRhs</span><span class="p">(</span><span class="n">Catch</span><span class="o">::</span><span class="n">toString</span><span class="p">(</span><span class="n">rhs</span><span class="p">));</span>
+<a name="rest_code_9fd0922a18d74a9c997a463eda882044-7"></a>    <span class="n">result</span><span class="p">.</span><span class="n">setOp</span><span class="p">(</span><span class="s">"=="</span><span class="p">);</span>
+<a name="rest_code_9fd0922a18d74a9c997a463eda882044-8"></a>    <span class="n">result</span><span class="p">.</span><span class="n">endExpression</span><span class="p">();</span>
+<a name="rest_code_9fd0922a18d74a9c997a463eda882044-9"></a>    <span class="n">result</span><span class="p">.</span><span class="n">react</span><span class="p">();</span>
+<a name="rest_code_9fd0922a18d74a9c997a463eda882044-10"></a><span class="p">}</span>
+<a name="rest_code_9fd0922a18d74a9c997a463eda882044-11"></a>
+<a name="rest_code_9fd0922a18d74a9c997a463eda882044-12"></a><span class="cp">#define REQUIRE_EQUALS(lhs, rhs) \</span>
+<a name="rest_code_9fd0922a18d74a9c997a463eda882044-13"></a><span class="cp">    evaluate_result(__FILE__, __LINE__, #lhs " == " #rhs, lhs, rhs);</span>
 </pre>
 <p>The macro is now a simple function call. Even though the function is a template
 function, it will only be compiled for a few types (<code class="cpp"><span class="kt">double</span></code> and
@@ -853,50 +855,50 @@ everything I need from a test framework.</p>
 <p>Contrary to some popular test frameworks that provides ASSERT_EQUALS,
 ASSERT_GREATER and all fashion of assert macros, Catch only provides one
 version: REQUIRE. For instance:</p>
-<pre class="code cpp"><a name="rest_code_3686633a807045c284727567fc8e9876-1"></a><span class="n">REQUIRE</span><span class="p">(</span><span class="n">x</span> <span class="o">==</span> <span class="mf">1.0</span><span class="p">);</span>
-<a name="rest_code_3686633a807045c284727567fc8e9876-2"></a><span class="n">REQUIRE</span><span class="p">(</span><span class="n">y</span> <span class="o">&lt;</span> <span class="mf">5.5</span><span class="p">);</span>
-<a name="rest_code_3686633a807045c284727567fc8e9876-3"></a><span class="n">REQUIRE</span><span class="p">((</span><span class="n">z</span> <span class="o">+</span> <span class="n">x</span><span class="p">)</span> <span class="o">!=</span> <span class="mf">22.01f</span><span class="p">);</span>
+<pre class="code cpp"><a name="rest_code_531534b054c24c0c9b08426ac436023e-1"></a><span class="n">REQUIRE</span><span class="p">(</span><span class="n">x</span> <span class="o">==</span> <span class="mf">1.0</span><span class="p">);</span>
+<a name="rest_code_531534b054c24c0c9b08426ac436023e-2"></a><span class="n">REQUIRE</span><span class="p">(</span><span class="n">y</span> <span class="o">&lt;</span> <span class="mf">5.5</span><span class="p">);</span>
+<a name="rest_code_531534b054c24c0c9b08426ac436023e-3"></a><span class="n">REQUIRE</span><span class="p">((</span><span class="n">z</span> <span class="o">+</span> <span class="n">x</span><span class="p">)</span> <span class="o">!=</span> <span class="mf">22.01f</span><span class="p">);</span>
 </pre>
 <p>The left and right part are detected with some smart template and operator
 overloading techniques and this makes for very nice test output in case of
 errors, for instance:</p>
-<pre class="code text"><a name="rest_code_a704556835a44cc5a74f5489b5f9244a-1"></a>test/src/dyn_matrix.cpp:16: FAILED:
-<a name="rest_code_a704556835a44cc5a74f5489b5f9244a-2"></a>  REQUIRE( test_matrix.rows() == 2UL )
-<a name="rest_code_a704556835a44cc5a74f5489b5f9244a-3"></a>with expansion:
-<a name="rest_code_a704556835a44cc5a74f5489b5f9244a-4"></a>  3 == 2
+<pre class="code text"><a name="rest_code_42d0a44a1e544000b8f68cfb03dd1dc9-1"></a>test/src/dyn_matrix.cpp:16: FAILED:
+<a name="rest_code_42d0a44a1e544000b8f68cfb03dd1dc9-2"></a>  REQUIRE( test_matrix.rows() == 2UL )
+<a name="rest_code_42d0a44a1e544000b8f68cfb03dd1dc9-3"></a>with expansion:
+<a name="rest_code_42d0a44a1e544000b8f68cfb03dd1dc9-4"></a>  3 == 2
 </pre>
 <p>I think this is pretty nice and the tests are really clear. However, <em>it comes
 with a cost</em> and I underestimated this at first.</p>
 <p>To overcome this, I create two new macros (and few other variations)
 REQUIRE_EQUALS and REQUIRE_DIRECT that simply bypass Catch deduction of the
 expression:</p>
-<pre class="code cpp"><a name="rest_code_1efb2bee04404381b2cd4d237d346c72-1"></a><span class="kr">inline</span> <span class="kt">void</span> <span class="nf">evaluate_result_direct</span><span class="p">(</span><span class="n">Catch</span><span class="o">::</span><span class="n">ResultBuilder</span><span class="o">&amp;&amp;</span> <span class="n">__result</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">value</span><span class="p">){</span>
-<a name="rest_code_1efb2bee04404381b2cd4d237d346c72-2"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">setResultType</span><span class="p">(</span><span class="n">value</span><span class="p">);</span>
-<a name="rest_code_1efb2bee04404381b2cd4d237d346c72-3"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">setLhs</span><span class="p">(</span><span class="n">value</span> <span class="o">?</span> <span class="s">"true"</span> <span class="o">:</span> <span class="s">"false"</span><span class="p">);</span>
-<a name="rest_code_1efb2bee04404381b2cd4d237d346c72-4"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">setOp</span><span class="p">(</span><span class="s">""</span><span class="p">);</span>
-<a name="rest_code_1efb2bee04404381b2cd4d237d346c72-5"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">endExpression</span><span class="p">();</span>
-<a name="rest_code_1efb2bee04404381b2cd4d237d346c72-6"></a><span class="p">}</span>
-<a name="rest_code_1efb2bee04404381b2cd4d237d346c72-7"></a>
-<a name="rest_code_1efb2bee04404381b2cd4d237d346c72-8"></a><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">L</span><span class="p">,</span> <span class="k">typename</span> <span class="n">R</span><span class="o">&gt;</span>
-<a name="rest_code_1efb2bee04404381b2cd4d237d346c72-9"></a><span class="kt">void</span> <span class="n">evaluate_result</span><span class="p">(</span><span class="n">Catch</span><span class="o">::</span><span class="n">ResultBuilder</span><span class="o">&amp;&amp;</span> <span class="n">__result</span><span class="p">,</span> <span class="n">L</span> <span class="n">lhs</span><span class="p">,</span> <span class="n">R</span> <span class="n">rhs</span><span class="p">){</span>
-<a name="rest_code_1efb2bee04404381b2cd4d237d346c72-10"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">setResultType</span><span class="p">(</span><span class="n">lhs</span> <span class="o">==</span> <span class="n">rhs</span><span class="p">);</span>
-<a name="rest_code_1efb2bee04404381b2cd4d237d346c72-11"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">setLhs</span><span class="p">(</span><span class="n">Catch</span><span class="o">::</span><span class="n">toString</span><span class="p">(</span><span class="n">lhs</span><span class="p">));</span>
-<a name="rest_code_1efb2bee04404381b2cd4d237d346c72-12"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">setRhs</span><span class="p">(</span><span class="n">Catch</span><span class="o">::</span><span class="n">toString</span><span class="p">(</span><span class="n">rhs</span><span class="p">));</span>
-<a name="rest_code_1efb2bee04404381b2cd4d237d346c72-13"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">setOp</span><span class="p">(</span><span class="s">"=="</span><span class="p">);</span>
-<a name="rest_code_1efb2bee04404381b2cd4d237d346c72-14"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">endExpression</span><span class="p">();</span>
-<a name="rest_code_1efb2bee04404381b2cd4d237d346c72-15"></a><span class="p">}</span>
-<a name="rest_code_1efb2bee04404381b2cd4d237d346c72-16"></a>
-<a name="rest_code_1efb2bee04404381b2cd4d237d346c72-17"></a><span class="cp">#define REQUIRE_DIRECT(value) \</span>
-<a name="rest_code_1efb2bee04404381b2cd4d237d346c72-18"></a><span class="cp">    evaluate_result_direct(Catch::ResultBuilder( "REQUIRE", CATCH_INTERNAL_LINEINFO, #value, Catch::ResultDisposition::Normal ), value);</span>
-<a name="rest_code_1efb2bee04404381b2cd4d237d346c72-19"></a>
-<a name="rest_code_1efb2bee04404381b2cd4d237d346c72-20"></a><span class="cp">#define REQUIRE_EQUALS(lhs, rhs) \</span>
-<a name="rest_code_1efb2bee04404381b2cd4d237d346c72-21"></a><span class="cp">    evaluate_result(Catch::ResultBuilder( "REQUIRE", CATCH_INTERNAL_LINEINFO, #lhs " == " #rhs, Catch::ResultDisposition::Normal ), lhs, rhs);</span>
+<pre class="code cpp"><a name="rest_code_25fc437b2e6d44fb90a6eb655f5a9a47-1"></a><span class="kr">inline</span> <span class="kt">void</span> <span class="nf">evaluate_result_direct</span><span class="p">(</span><span class="n">Catch</span><span class="o">::</span><span class="n">ResultBuilder</span><span class="o">&amp;&amp;</span> <span class="n">__result</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">value</span><span class="p">){</span>
+<a name="rest_code_25fc437b2e6d44fb90a6eb655f5a9a47-2"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">setResultType</span><span class="p">(</span><span class="n">value</span><span class="p">);</span>
+<a name="rest_code_25fc437b2e6d44fb90a6eb655f5a9a47-3"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">setLhs</span><span class="p">(</span><span class="n">value</span> <span class="o">?</span> <span class="s">"true"</span> <span class="o">:</span> <span class="s">"false"</span><span class="p">);</span>
+<a name="rest_code_25fc437b2e6d44fb90a6eb655f5a9a47-4"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">setOp</span><span class="p">(</span><span class="s">""</span><span class="p">);</span>
+<a name="rest_code_25fc437b2e6d44fb90a6eb655f5a9a47-5"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">endExpression</span><span class="p">();</span>
+<a name="rest_code_25fc437b2e6d44fb90a6eb655f5a9a47-6"></a><span class="p">}</span>
+<a name="rest_code_25fc437b2e6d44fb90a6eb655f5a9a47-7"></a>
+<a name="rest_code_25fc437b2e6d44fb90a6eb655f5a9a47-8"></a><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">L</span><span class="p">,</span> <span class="k">typename</span> <span class="n">R</span><span class="o">&gt;</span>
+<a name="rest_code_25fc437b2e6d44fb90a6eb655f5a9a47-9"></a><span class="kt">void</span> <span class="n">evaluate_result</span><span class="p">(</span><span class="n">Catch</span><span class="o">::</span><span class="n">ResultBuilder</span><span class="o">&amp;&amp;</span> <span class="n">__result</span><span class="p">,</span> <span class="n">L</span> <span class="n">lhs</span><span class="p">,</span> <span class="n">R</span> <span class="n">rhs</span><span class="p">){</span>
+<a name="rest_code_25fc437b2e6d44fb90a6eb655f5a9a47-10"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">setResultType</span><span class="p">(</span><span class="n">lhs</span> <span class="o">==</span> <span class="n">rhs</span><span class="p">);</span>
+<a name="rest_code_25fc437b2e6d44fb90a6eb655f5a9a47-11"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">setLhs</span><span class="p">(</span><span class="n">Catch</span><span class="o">::</span><span class="n">toString</span><span class="p">(</span><span class="n">lhs</span><span class="p">));</span>
+<a name="rest_code_25fc437b2e6d44fb90a6eb655f5a9a47-12"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">setRhs</span><span class="p">(</span><span class="n">Catch</span><span class="o">::</span><span class="n">toString</span><span class="p">(</span><span class="n">rhs</span><span class="p">));</span>
+<a name="rest_code_25fc437b2e6d44fb90a6eb655f5a9a47-13"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">setOp</span><span class="p">(</span><span class="s">"=="</span><span class="p">);</span>
+<a name="rest_code_25fc437b2e6d44fb90a6eb655f5a9a47-14"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">endExpression</span><span class="p">();</span>
+<a name="rest_code_25fc437b2e6d44fb90a6eb655f5a9a47-15"></a><span class="p">}</span>
+<a name="rest_code_25fc437b2e6d44fb90a6eb655f5a9a47-16"></a>
+<a name="rest_code_25fc437b2e6d44fb90a6eb655f5a9a47-17"></a><span class="cp">#define REQUIRE_DIRECT(value) \</span>
+<a name="rest_code_25fc437b2e6d44fb90a6eb655f5a9a47-18"></a><span class="cp">    evaluate_result_direct(Catch::ResultBuilder( "REQUIRE", CATCH_INTERNAL_LINEINFO, #value, Catch::ResultDisposition::Normal ), value);</span>
+<a name="rest_code_25fc437b2e6d44fb90a6eb655f5a9a47-19"></a>
+<a name="rest_code_25fc437b2e6d44fb90a6eb655f5a9a47-20"></a><span class="cp">#define REQUIRE_EQUALS(lhs, rhs) \</span>
+<a name="rest_code_25fc437b2e6d44fb90a6eb655f5a9a47-21"></a><span class="cp">    evaluate_result(Catch::ResultBuilder( "REQUIRE", CATCH_INTERNAL_LINEINFO, #lhs " == " #rhs, Catch::ResultDisposition::Normal ), lhs, rhs);</span>
 </pre>
 <p>There is really nothing too special about it, I simply followed the macros and
 functions in Catch source code until I found out what to bypass.</p>
 <p>And now, we use them directly:</p>
-<pre class="code cpp"><a name="rest_code_f3094374879440828df82743d65836fb-1"></a><span class="n">REQUIRE_DIRECT</span><span class="p">(</span><span class="n">am_i_true</span><span class="p">());</span>
-<a name="rest_code_f3094374879440828df82743d65836fb-2"></a><span class="n">REQUIRE_EQUALS</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">);</span>
+<pre class="code cpp"><a name="rest_code_345529241741451abbedab636b886598-1"></a><span class="n">REQUIRE_DIRECT</span><span class="p">(</span><span class="n">am_i_true</span><span class="p">());</span>
+<a name="rest_code_345529241741451abbedab636b886598-2"></a><span class="n">REQUIRE_EQUALS</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">);</span>
 </pre>
 <p>This is a bit less nice and it requires to know a few more macros, I admit, but
 it turns out to be much faster (and who really cares about the beauty of test
@@ -946,16 +948,16 @@ dependencies.</p>
 <div class="section" id="usage">
 <h2>Usage</h2>
 <p>To install the image, you can simply use <cite>docker pull</cite>:</p>
-<pre class="code bash"><a name="rest_code_97e13b4606c848149ba20bd5796d0beb-1"></a>docker pull wichtounet/docker-dll
+<pre class="code bash"><a name="rest_code_8279b1ab07f1418dbb3cb773c1551e08-1"></a>docker pull wichtounet/docker-dll
 </pre>
 <p>Then, to run it, you have to create a folder containing a <cite>dll.conf</cite> file and
 mount in the container at <cite>/dll/data/</cite>. There are some examples in the
 <a class="reference external" href="https://github.com/wichtounet/docker-dll/">image repository</a>.  For instance,
 on Linux from the cloned repository:</p>
-<pre class="code bash"><a name="rest_code_0f065754cf184c43a194643dbdbd0765-1"></a>docker run -v <span class="si">${</span><span class="nv">pwd</span><span class="si">}</span>/rbm_mnist/:/dll/data/ wichtounet/docker-dll
+<pre class="code bash"><a name="rest_code_7b2d653159704ab5a440084dc3368f9e-1"></a>docker run -v <span class="si">${</span><span class="nv">pwd</span><span class="si">}</span>/rbm_mnist/:/dll/data/ wichtounet/docker-dll
 </pre>
 <p>or on Windows:</p>
-<pre class="code bash"><a name="rest_code_fdb0aad36cde448ab5da173b99432681-1"></a>docker run -v /c/Users/Baptiste/rbm_mnist/:/dll/data wichtounet/docker-dll
+<pre class="code bash"><a name="rest_code_9174d1c35485469ea6e4bfa7a71f2bf0-1"></a>docker run -v /c/Users/Baptiste/rbm_mnist/:/dll/data wichtounet/docker-dll
 </pre>
 <p>This will automatically run the actions specified in the configuration file and
 train your network.</p>
@@ -994,42 +996,42 @@ Templight is a Clang-based tool to profile the time and memory consumption of te
 <h2>Installation</h2>
 <p>Unfortunately, the templight installation is not user-friendly at all. You need to clone the complete LLVM/Clang tree and add templight inside it before compiling the complete clang toolchain. But that is the case for all clang-based tools... You also need to patch clang but that may not be necessary in the future. The complete instructions are available <a class="reference external" href="https://github.com/mikael-s-persson/templight#getting-and-compiling-templight">here</a>.</p>
 <p>The installation of Templar is much more convenient:</p>
-<pre class="code bash"><a name="rest_code_d6aabdca63ae4ab8a1ad93b8e0e48d98-1"></a>git clone https://github.com/schulmar/Templar.git
-<a name="rest_code_d6aabdca63ae4ab8a1ad93b8e0e48d98-2"></a>git checkout feature/templight2
-<a name="rest_code_d6aabdca63ae4ab8a1ad93b8e0e48d98-3"></a><span class="nb">cd</span> Templar
-<a name="rest_code_d6aabdca63ae4ab8a1ad93b8e0e48d98-4"></a>qmake .
-<a name="rest_code_d6aabdca63ae4ab8a1ad93b8e0e48d98-5"></a>make
-<a name="rest_code_d6aabdca63ae4ab8a1ad93b8e0e48d98-6"></a>sudo make install
+<pre class="code bash"><a name="rest_code_ec4c8a2ffb7b4b2eaf74e768de292d09-1"></a>git clone https://github.com/schulmar/Templar.git
+<a name="rest_code_ec4c8a2ffb7b4b2eaf74e768de292d09-2"></a>git checkout feature/templight2
+<a name="rest_code_ec4c8a2ffb7b4b2eaf74e768de292d09-3"></a><span class="nb">cd</span> Templar
+<a name="rest_code_ec4c8a2ffb7b4b2eaf74e768de292d09-4"></a>qmake .
+<a name="rest_code_ec4c8a2ffb7b4b2eaf74e768de292d09-5"></a>make
+<a name="rest_code_ec4c8a2ffb7b4b2eaf74e768de292d09-6"></a>sudo make install
 </pre>
 <p>The branch feature/templight2 has much more features than the master and should support both Qt4 and Qt5, but I have only tested it on Qt4.</p>
 </div>
 <div class="section" id="example">
 <h2>Example</h2>
 <p>Let's use the class Fibonacci function as an example:</p>
-<pre class="code cpp"><a name="rest_code_a5455d8b9b0449299986d92134530792-1"></a><span class="cp">#include</span> <span class="cpf">&lt;iostream&gt;</span><span class="cp"></span>
-<a name="rest_code_a5455d8b9b0449299986d92134530792-2"></a>
-<a name="rest_code_a5455d8b9b0449299986d92134530792-3"></a><span class="k">template</span> <span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">N</span><span class="o">&gt;</span>
-<a name="rest_code_a5455d8b9b0449299986d92134530792-4"></a><span class="k">struct</span> <span class="n">Fibonacci</span> <span class="p">{</span>
-<a name="rest_code_a5455d8b9b0449299986d92134530792-5"></a>    <span class="k">static</span> <span class="k">constexpr</span> <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">value</span> <span class="o">=</span> <span class="n">Fibonacci</span><span class="o">&lt;</span><span class="n">N</span><span class="o">-</span><span class="mi">1</span><span class="o">&gt;::</span><span class="n">value</span> <span class="o">+</span> <span class="n">Fibonacci</span><span class="o">&lt;</span><span class="n">N</span><span class="o">-</span><span class="mi">2</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">;</span>
-<a name="rest_code_a5455d8b9b0449299986d92134530792-6"></a><span class="p">};</span>
-<a name="rest_code_a5455d8b9b0449299986d92134530792-7"></a>
-<a name="rest_code_a5455d8b9b0449299986d92134530792-8"></a><span class="k">template</span> <span class="o">&lt;&gt;</span>
-<a name="rest_code_a5455d8b9b0449299986d92134530792-9"></a><span class="k">struct</span> <span class="n">Fibonacci</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;</span> <span class="p">{</span>
-<a name="rest_code_a5455d8b9b0449299986d92134530792-10"></a>    <span class="k">static</span> <span class="k">constexpr</span> <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">value</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
-<a name="rest_code_a5455d8b9b0449299986d92134530792-11"></a><span class="p">};</span>
-<a name="rest_code_a5455d8b9b0449299986d92134530792-12"></a>
-<a name="rest_code_a5455d8b9b0449299986d92134530792-13"></a><span class="k">template</span> <span class="o">&lt;&gt;</span>
-<a name="rest_code_a5455d8b9b0449299986d92134530792-14"></a><span class="k">struct</span> <span class="n">Fibonacci</span><span class="o">&lt;</span><span class="mi">0</span><span class="o">&gt;</span> <span class="p">{</span>
-<a name="rest_code_a5455d8b9b0449299986d92134530792-15"></a>    <span class="k">static</span> <span class="k">constexpr</span> <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">value</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-<a name="rest_code_a5455d8b9b0449299986d92134530792-16"></a><span class="p">};</span>
-<a name="rest_code_a5455d8b9b0449299986d92134530792-17"></a>
-<a name="rest_code_a5455d8b9b0449299986d92134530792-18"></a><span class="kt">int</span> <span class="nf">main</span><span class="p">(){</span>
-<a name="rest_code_a5455d8b9b0449299986d92134530792-19"></a>    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"Fibonacci&lt;5&gt;:"</span> <span class="o">&lt;&lt;</span> <span class="n">Fibonacci</span><span class="o">&lt;</span><span class="mi">5</span><span class="o">&gt;::</span><span class="n">value</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
-<a name="rest_code_a5455d8b9b0449299986d92134530792-20"></a><span class="p">}</span>
+<pre class="code cpp"><a name="rest_code_cd8b921d4f6941b990cc5c3b2e485204-1"></a><span class="cp">#include</span> <span class="cpf">&lt;iostream&gt;</span><span class="cp"></span>
+<a name="rest_code_cd8b921d4f6941b990cc5c3b2e485204-2"></a>
+<a name="rest_code_cd8b921d4f6941b990cc5c3b2e485204-3"></a><span class="k">template</span> <span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">N</span><span class="o">&gt;</span>
+<a name="rest_code_cd8b921d4f6941b990cc5c3b2e485204-4"></a><span class="k">struct</span> <span class="n">Fibonacci</span> <span class="p">{</span>
+<a name="rest_code_cd8b921d4f6941b990cc5c3b2e485204-5"></a>    <span class="k">static</span> <span class="k">constexpr</span> <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">value</span> <span class="o">=</span> <span class="n">Fibonacci</span><span class="o">&lt;</span><span class="n">N</span><span class="o">-</span><span class="mi">1</span><span class="o">&gt;::</span><span class="n">value</span> <span class="o">+</span> <span class="n">Fibonacci</span><span class="o">&lt;</span><span class="n">N</span><span class="o">-</span><span class="mi">2</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">;</span>
+<a name="rest_code_cd8b921d4f6941b990cc5c3b2e485204-6"></a><span class="p">};</span>
+<a name="rest_code_cd8b921d4f6941b990cc5c3b2e485204-7"></a>
+<a name="rest_code_cd8b921d4f6941b990cc5c3b2e485204-8"></a><span class="k">template</span> <span class="o">&lt;&gt;</span>
+<a name="rest_code_cd8b921d4f6941b990cc5c3b2e485204-9"></a><span class="k">struct</span> <span class="n">Fibonacci</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;</span> <span class="p">{</span>
+<a name="rest_code_cd8b921d4f6941b990cc5c3b2e485204-10"></a>    <span class="k">static</span> <span class="k">constexpr</span> <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">value</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+<a name="rest_code_cd8b921d4f6941b990cc5c3b2e485204-11"></a><span class="p">};</span>
+<a name="rest_code_cd8b921d4f6941b990cc5c3b2e485204-12"></a>
+<a name="rest_code_cd8b921d4f6941b990cc5c3b2e485204-13"></a><span class="k">template</span> <span class="o">&lt;&gt;</span>
+<a name="rest_code_cd8b921d4f6941b990cc5c3b2e485204-14"></a><span class="k">struct</span> <span class="n">Fibonacci</span><span class="o">&lt;</span><span class="mi">0</span><span class="o">&gt;</span> <span class="p">{</span>
+<a name="rest_code_cd8b921d4f6941b990cc5c3b2e485204-15"></a>    <span class="k">static</span> <span class="k">constexpr</span> <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">value</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<a name="rest_code_cd8b921d4f6941b990cc5c3b2e485204-16"></a><span class="p">};</span>
+<a name="rest_code_cd8b921d4f6941b990cc5c3b2e485204-17"></a>
+<a name="rest_code_cd8b921d4f6941b990cc5c3b2e485204-18"></a><span class="kt">int</span> <span class="nf">main</span><span class="p">(){</span>
+<a name="rest_code_cd8b921d4f6941b990cc5c3b2e485204-19"></a>    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"Fibonacci&lt;5&gt;:"</span> <span class="o">&lt;&lt;</span> <span class="n">Fibonacci</span><span class="o">&lt;</span><span class="mi">5</span><span class="o">&gt;::</span><span class="n">value</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<a name="rest_code_cd8b921d4f6941b990cc5c3b2e485204-20"></a><span class="p">}</span>
 </pre>
 <p>Nothing fancy here, we're simply printing the fifth Fibonacci number on the console.</p>
 <p>You can compile it with templight++:</p>
-<pre class="code bash"><a name="rest_code_7797a38782a140a2a8e78c477b56dc3d-1"></a>templight++ -Xtemplight -profiler -Xtemplight -memory -Xtemplight -ignore-system -std<span class="o">=</span>c++14 main.cpp
+<pre class="code bash"><a name="rest_code_ddd22fb61b2c49b7bc6e57477bfa1b29-1"></a>templight++ -Xtemplight -profiler -Xtemplight -memory -Xtemplight -ignore-system -std<span class="o">=</span>c++14 main.cpp
 </pre>
 <p>All the templight options starts with -Xtemplight and then you can use any clang++ options. This will generate a <em>a.memory.trace.pbf</em> file in the current directory. You can then run Templar. use File &gt; Open Trace to open the trace file. This should open a window of this sort:</p>
 <img alt="/images/templar.png" class="align-center" src="images/templar.png"><p>The top-left panel contains the source code of the application, automatically

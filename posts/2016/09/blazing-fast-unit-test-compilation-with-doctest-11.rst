@@ -19,32 +19,32 @@ this point it was actually slower than Catch and especially slower than my
 versions of the macro.
 
 Today, doctest 1.1 was released with promises of being even lighter than before
-and providing several new ways of speeding up compilation time. If you want the
+and providing several new ways of speeding up compilation. If you want the
 results directly, you can take a look at the next section.
 
 First of all, this new version improved the basic macros to make expression
 decomposition faster. When you use the standard REQUIRE macro, the expression is
 composed by using several template techniques and operator overloading. This is
-really slow to compile and this is way my fast version of the Catch macros are
-much faster to compiler.
+really slow to compile. By removing the need for this decomposition, the fast
+Catch macros are much faster to compile.
 
-Moreover, doctest 1.1 also introduce CHECK_EQ that does not any expression
+Moreover, doctest 1.1 also introduces CHECK_EQ that does not any expression
 decomposition. This is close to what I did in my macros expect that it is
 directly integrated into the framework and preserves all its features. It is
 also possible to bypass the expression checking code by using FAST_CHECK_EQ
-macro. In that case, the exception are not captured. Finally, a new
+macro. In that case, the exceptions are not captured. Finally, a new
 configuration option is introduced (DOCTEST_CONFIG_SUPER_FAST_ASSERTS) that
 removes some features related to automatic debugger breaks. Since I don't use
-the debugger and I don't need to capture exception everywhere (it's sufficient
-for me that the test fail completely if an exception is thrown), I'm more than
-eager to use these new features.
+the debugger features and I don't need to capture exception everywhere (it's
+sufficient for me that the test fails completely if an exception is thrown), I'm
+more than eager to use these new features.
 
 Results
 +++++++
 
-For evaluation, I have compiled the complete test set of ETL, with 1 thread,
+For evaluation, I have compiled the complete test suite of ETL, with 1 thread,
 using gcc 4.9.3 with various different options, starting from Catch to doctest
-1.1 with all compilation time features.
+1.1 with all compilation time features. Here are the results, in seconds:
 
 +--------------------+--------+----------+---------------+----------------+
 | Version            | Time   | VS Catch | VS Fast Catch | VS doctest 1.0 |
@@ -66,30 +66,32 @@ using gcc 4.9.3 with various different options, starting from Catch to doctest
 
 As you can see, doctest 1.1 is much faster to compile than doctest 1.0! This is
 really great news. Moreover, it is already 16% faster than Catch. When all the
-features are used, doctest is 12% faster than my stripped down version of Catch
-macros (and 43% faster than Catch). This is really cool. It means that I don't
-have to do any change on the code (no need to strip macros myself) and I can
-gain a lot of compilation compared to the bare Catch framework.
+features are used, doctest is 12% faster than my stripped down versions of Catch
+macros (and 43% faster than Catch standard macros). This is really cool! It
+means that I don't have to do any change in the code (no need to strip macros
+myself) and I can gain a lot of compilation time compared to the bare Catch
+framework.
 
 I really think the author of doctest did a great job with the new version.
 Although this was not of as much interest for me, there are also a lot of
-changes in the new version. You can consult the `changelog <https://github.com/onqtam/doctest/blob/master/CHANGELOG.md>`_ if you want.
+other changes in the new version. You can consult the
+`changelog <https://github.com/onqtam/doctest/blob/master/CHANGELOG.md>`_ if you want more information.
 
 Conclusion
 ++++++++++
 
-Overall doctest 1.1 is much faster to compile than doctest 1.0. Moreover, it
+Overall, doctest 1.1 is much faster to compile than doctest 1.0. Moreover, it
 offers very fast macros for test assertions that are much faster to compile
 than Catch versions and even faster than the versions I created myself to reduce
-compilation time. I really thing this is great advance for doctest. When
-compiling with all the optimizations, doctest 1.1 makes me save 50 seconds in
+compilation time. I really thing this is a great advance for doctest. When
+compiling with all the optimizations, doctest 1.1 saves me 50 seconds in
 compilation time compared to the fast version of Catch macro and more than
 5 minutes compared to the standard version of Catch macros.
 
 I'll probably start using doctest on my development machine. For now, I'll keep
 Catch as well since I need it to generate the unit test reports in XML format
-for Sonarqube But once this feature appears in doctest, I'll probably drop
-Catch from ETL and DLL
+for Sonarqube. Once this feature appears in doctest, I'll probably drop Catch
+from ETL and DLL
 
 If you need blazing fast compilation times for your unit tests, doctest 1.1 is
 probably the way to go.
