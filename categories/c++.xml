@@ -1,5 +1,186 @@
 <?xml version="1.0" encoding="utf-8"?>
-<?xml-stylesheet type="text/xsl" href="../assets/xml/rss.xsl" media="all"?><rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>@Blog("Baptiste Wicht") (C++)</title><link>http://baptiste-wicht.com/</link><description></description><atom:link href="http://baptiste-wicht.com/categories/c%2B%2B.xml" type="application/rss+xml" rel="self"></atom:link><language>en</language><lastBuildDate>Fri, 25 Nov 2016 19:46:31 GMT</lastBuildDate><generator>https://getnikola.com/</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>Blazing fast unit test compilation with doctest 1.1</title><link>http://baptiste-wicht.com/posts/2016/09/blazing-fast-unit-test-compilation-with-doctest-11.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;You may remember &lt;a class="reference external" href="http://baptiste-wicht.com/posts/2016/06/reduce-compilation-time-by-another-16-with-catch.html"&gt;my quest for faster compilation times&lt;/a&gt;. I had made several changes to the Catch test framework macros in order to save some compilation at the expense of my test code looking a bit less nice:&lt;/p&gt;
+<?xml-stylesheet type="text/xsl" href="../assets/xml/rss.xsl" media="all"?><rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>@Blog("Baptiste Wicht") (C++)</title><link>http://baptiste-wicht.com/</link><description></description><atom:link href="http://baptiste-wicht.com/categories/c%2B%2B.xml" type="application/rss+xml" rel="self"></atom:link><language>en</language><lastBuildDate>Sat, 26 Nov 2016 14:07:05 GMT</lastBuildDate><generator>https://getnikola.com/</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>zapcc - a faster C++ compiler</title><link>http://baptiste-wicht.com/posts/2016/11/zapcc-a-faster-c%2B%2B-compiler.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;I just joined the private beta program of zapcc. Zapcc is a c++ compiler, based
+on clang which aims at being much faster than other C++ compilers. How they are
+doing this is using a caching server that saves some of the compiler structures,
+which should speed up compilation a lot.&lt;/p&gt;
+&lt;p&gt;Every C++ developer knows that compilation time can quickly be an issue when
+programs are getting very big and especially when working with template-heavy
+code.&lt;/p&gt;
+&lt;p&gt;To benchmark this new compiler, I use my Expression Template Library
+(&lt;a class="reference external" href="https://github.com/wichtounet/etl/"&gt;ETL&lt;/a&gt;). This is a purely header-only
+library with lots of templates. There are lots of test cases which is what I'm
+going to compile. I'm going to compare against Clang-3.7 and gcc-4.9.3.&lt;/p&gt;
+&lt;p&gt;I have configured zapcc to let is use 2Go RAM per caching server, which is the
+maximum allowed. Moreover, I killed the servers before each tests.&lt;/p&gt;
+&lt;div class="section" id="debug-build"&gt;
+&lt;h2&gt;Debug build&lt;/h2&gt;
+&lt;p&gt;Let's start with a debug build. In that configuration, there is no optimization
+going on and several of the features of the library (GPU, BLAS, ...) are
+disabled. This is the fastest way to compile ETL. I gathered this result on
+a 4 core, 8 threads, Intel processor, with an SSD.&lt;/p&gt;
+&lt;p&gt;The following table presents the results with different number of threads and
+the difference of zapcc compared to the other compilers:&lt;/p&gt;
+&lt;table border="1" class="docutils"&gt;
+&lt;colgroup&gt;
+&lt;col width="42%"&gt;
+&lt;col width="11%"&gt;
+&lt;col width="13%"&gt;
+&lt;col width="11%"&gt;
+&lt;col width="11%"&gt;
+&lt;col width="11%"&gt;
+&lt;/colgroup&gt;
+&lt;thead valign="bottom"&gt;
+&lt;tr&gt;&lt;th class="head"&gt;Compiler&lt;/th&gt;
+&lt;th class="head"&gt;-j1&lt;/th&gt;
+&lt;th class="head"&gt;-j2&lt;/th&gt;
+&lt;th class="head"&gt;-j4&lt;/th&gt;
+&lt;th class="head"&gt;-j6&lt;/th&gt;
+&lt;th class="head"&gt;-j8&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td&gt;g++-4.9.3&lt;/td&gt;
+&lt;td&gt;350s&lt;/td&gt;
+&lt;td&gt;185s&lt;/td&gt;
+&lt;td&gt;104s&lt;/td&gt;
+&lt;td&gt;94s&lt;/td&gt;
+&lt;td&gt;91s&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;clang++-3.7&lt;/td&gt;
+&lt;td&gt;513s&lt;/td&gt;
+&lt;td&gt;271s&lt;/td&gt;
+&lt;td&gt;153s&lt;/td&gt;
+&lt;td&gt;145s&lt;/td&gt;
+&lt;td&gt;138s&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;zapcc++&lt;/td&gt;
+&lt;td&gt;158s&lt;/td&gt;
+&lt;td&gt;87s&lt;/td&gt;
+&lt;td&gt;47s&lt;/td&gt;
+&lt;td&gt;44s&lt;/td&gt;
+&lt;td&gt;42s&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;Speedup VS Clang&lt;/td&gt;
+&lt;td&gt;3.24&lt;/td&gt;
+&lt;td&gt;3.103&lt;/td&gt;
+&lt;td&gt;3.25&lt;/td&gt;
+&lt;td&gt;3.29&lt;/td&gt;
+&lt;td&gt;3.28&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;Speedup VS GCC&lt;/td&gt;
+&lt;td&gt;2.21&lt;/td&gt;
+&lt;td&gt;2.12&lt;/td&gt;
+&lt;td&gt;2.21&lt;/td&gt;
+&lt;td&gt;2.13&lt;/td&gt;
+&lt;td&gt;2.16&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;The result is pretty clear! zapcc is around &lt;strong&gt;times faster than clang&lt;/strong&gt; and around
+&lt;strong&gt;two times faster than GCC&lt;/strong&gt;. This is pretty impressive!&lt;/p&gt;
+&lt;p&gt;For those that think than clang is always faster than GCC, keep in mind that
+this is not the case for template-heavy code such as this library. In all my
+tests, clang has always been slower and much memory hungrier than gcc on
+template-heavy C++ code. And sometimes the difference is very significant.&lt;/p&gt;
+&lt;p&gt;Interestingly, we can also see that going past the physical cores is not really
+interesting on this computer. On some computer, the speedups are interesting,
+but not on this one. Always benchmark!&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="release-build"&gt;
+&lt;h2&gt;Release build&lt;/h2&gt;
+&lt;p&gt;We have seen the results on a debug build, let's now compare on something a bit
+more timely, a release build with all options of ETL enabled (GPU, BLAS, ...),
+which should make it significantly longer to compile.&lt;/p&gt;
+&lt;p&gt;Again, the table:&lt;/p&gt;
+&lt;table border="1" class="docutils"&gt;
+&lt;colgroup&gt;
+&lt;col width="40%"&gt;
+&lt;col width="12%"&gt;
+&lt;col width="12%"&gt;
+&lt;col width="12%"&gt;
+&lt;col width="12%"&gt;
+&lt;col width="12%"&gt;
+&lt;/colgroup&gt;
+&lt;thead valign="bottom"&gt;
+&lt;tr&gt;&lt;th class="head"&gt;Compiler&lt;/th&gt;
+&lt;th class="head"&gt;-j1&lt;/th&gt;
+&lt;th class="head"&gt;-j2&lt;/th&gt;
+&lt;th class="head"&gt;-j4&lt;/th&gt;
+&lt;th class="head"&gt;-j6&lt;/th&gt;
+&lt;th class="head"&gt;-j8&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td&gt;g++-4.9.3&lt;/td&gt;
+&lt;td&gt;628s&lt;/td&gt;
+&lt;td&gt;336s&lt;/td&gt;
+&lt;td&gt;197s&lt;/td&gt;
+&lt;td&gt;189s&lt;/td&gt;
+&lt;td&gt;184s&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;clang++-3.7&lt;/td&gt;
+&lt;td&gt;663s&lt;/td&gt;
+&lt;td&gt;388s&lt;/td&gt;
+&lt;td&gt;215s&lt;/td&gt;
+&lt;td&gt;212s&lt;/td&gt;
+&lt;td&gt;205s&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;zapcc++&lt;/td&gt;
+&lt;td&gt;515s&lt;/td&gt;
+&lt;td&gt;281s&lt;/td&gt;
+&lt;td&gt;173s&lt;/td&gt;
+&lt;td&gt;168s&lt;/td&gt;
+&lt;td&gt;158s&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;Speedup VS Clang&lt;/td&gt;
+&lt;td&gt;1.28&lt;/td&gt;
+&lt;td&gt;1.38&lt;/td&gt;
+&lt;td&gt;1.24&lt;/td&gt;
+&lt;td&gt;1.26&lt;/td&gt;
+&lt;td&gt;1.29&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;Speedup VS GCC&lt;/td&gt;
+&lt;td&gt;1.21&lt;/td&gt;
+&lt;td&gt;1.30&lt;/td&gt;
+&lt;td&gt;1.13&lt;/td&gt;
+&lt;td&gt;1.12&lt;/td&gt;
+&lt;td&gt;1.16&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;This time, we can see that the difference is much lower. Zapcc is &lt;strong&gt;between 1.2
+and 1.4 times faster than clang&lt;/strong&gt; and &lt;strong&gt;between 1.1 and 1.3 times faster than
+gcc&lt;/strong&gt;. This shows that most of the speedups from zapcc are in the front end of
+the compiler. This is not a lot but still significant over long builds,
+especially if you have few threads where the absolute difference would be
+higher.&lt;/p&gt;
+&lt;p&gt;We can also observe that clang is now almost on par with GCC which shows that
+optimization is faster in clang while front and backend is faster in gcc.&lt;/p&gt;
+&lt;p&gt;You also have to keep in mind that zapcc memory usage is higher than clang
+because of all the caching. Moreover, the server are still up in between
+compilations, so this memory usage stays between builds, which may not be what
+you want.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="incremental-build"&gt;
+&lt;h2&gt;Incremental build&lt;/h2&gt;
+&lt;p&gt;Normally, zapcc should shine at incremental building, but I was unable to show
+any speedup when changing a single without killing the zapcc servers. Maybe
+I did something wrong in my usage of zapcc.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="conclusion"&gt;
+&lt;h2&gt;Conclusion&lt;/h2&gt;
+&lt;p&gt;In conclusion, we can see that zapcc is always faster than both gcc and clang.
+Moreover, on debug builds, it is much faster than any of the two compilers,
+being more than 2 times faster than gcc and more than 3 times faster than clang.
+This is really great. Moreover, I have not see any issue with the tool so far,
+it can seamlessly replace clang without problem.&lt;/p&gt;
+&lt;p&gt;It's a bit weird that you cannot allocate more than 2Go to the zapcc servers.&lt;/p&gt;
+&lt;p&gt;For a program, that's really impressive. I hope that they are continuing the
+good work and especially that this motivates other compilers to improve the
+speed of compilation (especially of templates).&lt;/p&gt;
+&lt;p&gt;If you want more information, you can go to the
+&lt;a class="reference external" href="https://www.zapcc.com/"&gt;official website of zapcc&lt;/a&gt;&lt;/p&gt;
+&lt;/div&gt;&lt;/div&gt;</description><category>C++</category><category>compiler</category><category>etl</category><category>projects</category><guid>http://baptiste-wicht.com/posts/2016/11/zapcc-a-faster-c%2B%2B-compiler.html</guid><pubDate>Sat, 26 Nov 2016 12:17:50 GMT</pubDate></item><item><title>Blazing fast unit test compilation with doctest 1.1</title><link>http://baptiste-wicht.com/posts/2016/09/blazing-fast-unit-test-compilation-with-doctest-11.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;You may remember &lt;a class="reference external" href="http://baptiste-wicht.com/posts/2016/06/reduce-compilation-time-by-another-16-with-catch.html"&gt;my quest for faster compilation times&lt;/a&gt;. I had made several changes to the Catch test framework macros in order to save some compilation at the expense of my test code looking a bit less nice:&lt;/p&gt;
 &lt;pre class="code cpp"&gt;&lt;a name="rest_code_a3c1af56cb4e49549e31b1638b58d896-1"&gt;&lt;/a&gt;&lt;span class="n"&gt;REQUIRE&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="mi"&gt;9&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt; &lt;span class="c1"&gt;//Before&lt;/span&gt;
 &lt;a name="rest_code_a3c1af56cb4e49549e31b1638b58d896-2"&gt;&lt;/a&gt;&lt;span class="n"&gt;REQUIRE_EQUALS&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;9&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt; &lt;span class="c1"&gt;//After&lt;/span&gt;
 &lt;/pre&gt;&lt;p&gt;The first line is a little bit better, but using several optimizations, I was
@@ -2269,28 +2450,4 @@ scan-build make
 &lt;h2&gt;Conclusion&lt;/h2&gt;
 &lt;p&gt;The code for the generator is available on the &lt;a href="https://github.com/wichtounet/wichtounet.github.io/tree/master/src/related"&gt;Github repository of my website&lt;/a&gt;. &lt;/p&gt;
 &lt;p&gt;I wrote it in C++ because I don't like Python a lot and because I'm not good at it and it would have taken me a lot more time to include it in Nikola. If I have time and I'm motivated enough, I'll try to integrate that in Nikola. &lt;/p&gt;
-&lt;p&gt;I hope that could be useful for some people. &lt;/p&gt;&lt;/div&gt;</description><category>Algorithm</category><category>C++</category><category>Nikola</category><category>Python</category><category>The site</category><guid>http://baptiste-wicht.com/posts/2014/04/related-posts-nikola-website.html</guid><pubDate>Sat, 05 Apr 2014 14:16:45 GMT</pubDate></item><item><title>budgetwarrior 0.3.0 - Objective and wish management</title><link>http://baptiste-wicht.com/posts/2014/02/budgetwarrior-0-3-0-objective-wish-management.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;I'm pleased to announce the release of another budgetwarrior release, the version 0.3.0.&lt;/p&gt;
-&lt;h3&gt;Changes&lt;/h3&gt;
-&lt;p&gt;This version contains several important changes.&lt;/p&gt;
-&lt;p&gt;The first one is the addition of a new module to manage objectives. You can add objective with &lt;em&gt;budget objective add). &lt;/em&gt;For instance, you can add an objective saying you want to save 10000$ a year or 200$ a month. When you set your objectives, budget warrior computes how well you complete them. For instance, here is the status of my objectives:&lt;/p&gt;
-&lt;p&gt;&lt;a href="http://baptiste-wicht.com/wp-content/uploads/2014/02/Screenshot-from-2014-02-02-113057-e1391337197470.png"&gt;&lt;img alt="Objective Status" src="http://baptiste-wicht.com/wp-content/uploads/2014/02/Screenshot-from-2014-02-02-113057-e1391337197470-300x83.png" title="Objective Status"&gt;&lt;/a&gt;&lt;/p&gt;
-&lt;p&gt;Another module has been added to manage wishes. You can add wishes to budgetwarrior (&lt;em&gt;budget wish add&lt;/em&gt;) and then budgetwarrior will tell you if it is a good time to buy them. Here is an example of wish status:&lt;/p&gt;
-&lt;p&gt;&lt;a href="http://www.baptiste-wicht.com/wp-content/uploads/2014/02/Screenshot-from-2014-02-02-113814.png"&gt;&lt;img class="size-medium wp-image-2665" alt="Wish Status" src="http://baptiste-wicht.com/wp-content/uploads/2014/02/Screenshot-from-2014-02-02-113814-e1391337576857-300x96.png" width="300" height="96"&gt;&lt;/a&gt; Wish Status&lt;/p&gt;
-&lt;p&gt;The diagnostics tells you where the money will be taken: On savings, on year savings or on month savings (ideal case). It also checks the objectives to see if the payment doesn't break the fulfillment of some of them.&lt;/p&gt;
-&lt;p&gt;For complete diagnostics, it is necessary to you register your fortune (&lt;em&gt;budget fortune check&lt;/em&gt;), ideally once a month.&lt;/p&gt;
-&lt;p&gt;Of course, this is only a tool, you should not only use that to decide when to buy something, but it may have a good point of view ;)&lt;/p&gt;
-&lt;p&gt;Moreover, the version also have other smaller changes:&lt;/p&gt;
-&lt;ol&gt;
-&lt;li&gt;When you make an error when creating a new item (expense, earning, ...), the tool now lets you retry without losing what you typed before.&lt;/li&gt;
-&lt;li&gt;Confirmation messages are now shown after each modification command (delete, add and edit).&lt;/li&gt;
-&lt;li&gt;The license has been changed from Boost to MIT. The sense is almost the same, but the MIT is more well known and I thought it would be easier for people to know what this means.&lt;/li&gt;
-&lt;li&gt;There have several changes to the code base, but that doesn't impact the usage of the tool.&lt;/li&gt;
-&lt;/ol&gt;
-&lt;h3&gt;Conclusion&lt;/h3&gt;
-&lt;p&gt;I hope you'll found these changes interesting :)&lt;/p&gt;
-&lt;p&gt;If you are interested by the tool, you can download it on Github: &lt;a title="budgetwarrior repository" href="https://github.com/wichtounet/budgetwarrior"&gt;budgetwarrior&lt;/a&gt;&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;There is now Gentoo and Arch Linux installation packages available for ease of installation&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;If you have a suggestion or you found a bug, please post an issue on the github project: &lt;a title="https://github.com/wichtounet/budgetwarrior" href="https://github.com/wichtounet/budgetwarrior"&gt;https://github.com/wichtounet/budgetwarrior&lt;/a&gt;.&lt;/p&gt;
-&lt;p&gt;If you have any comment, don't hesitate to contact me, either by letting a comment on this post or by email.&lt;/p&gt;&lt;/div&gt;</description><category>budgetwarrior</category><category>C++</category><category>Linux</category><category>projects</category><guid>http://baptiste-wicht.com/posts/2014/02/budgetwarrior-0-3-0-objective-wish-management.html</guid><pubDate>Mon, 03 Feb 2014 08:21:29 GMT</pubDate></item></channel></rss>
+&lt;p&gt;I hope that could be useful for some people. &lt;/p&gt;&lt;/div&gt;</description><category>Algorithm</category><category>C++</category><category>Nikola</category><category>Python</category><category>The site</category><guid>http://baptiste-wicht.com/posts/2014/04/related-posts-nikola-website.html</guid><pubDate>Sat, 05 Apr 2014 14:16:45 GMT</pubDate></item></channel></rss>

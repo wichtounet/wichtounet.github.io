@@ -155,6 +155,211 @@
             <div class="row">
                 
         <article class="postbox h-entry post-text"><h1 class="p-name">
+<a href="posts/2016/11/zapcc-a-faster-c%2B%2B-compiler.html" class="u-url">zapcc - a faster C++ compiler</a>
+        <br><small>  
+             Posted: <time class="published dt-published" datetime="2016-11-26T13:17:50+01:00">2016-11-26 13:17</time></small>
+</h1>
+        <hr>
+<div class="p-summary">
+        <div>
+<p>I just joined the private beta program of zapcc. Zapcc is a c++ compiler, based
+on clang which aims at being much faster than other C++ compilers. How they are
+doing this is using a caching server that saves some of the compiler structures,
+which should speed up compilation a lot.</p>
+<p>Every C++ developer knows that compilation time can quickly be an issue when
+programs are getting very big and especially when working with template-heavy
+code.</p>
+<p>To benchmark this new compiler, I use my Expression Template Library
+(<a class="reference external" href="https://github.com/wichtounet/etl/">ETL</a>). This is a purely header-only
+library with lots of templates. There are lots of test cases which is what I'm
+going to compile. I'm going to compare against Clang-3.7 and gcc-4.9.3.</p>
+<p>I have configured zapcc to let is use 2Go RAM per caching server, which is the
+maximum allowed. Moreover, I killed the servers before each tests.</p>
+<div class="section" id="debug-build">
+<h2>Debug build</h2>
+<p>Let's start with a debug build. In that configuration, there is no optimization
+going on and several of the features of the library (GPU, BLAS, ...) are
+disabled. This is the fastest way to compile ETL. I gathered this result on
+a 4 core, 8 threads, Intel processor, with an SSD.</p>
+<p>The following table presents the results with different number of threads and
+the difference of zapcc compared to the other compilers:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="42%">
+<col width="11%">
+<col width="13%">
+<col width="11%">
+<col width="11%">
+<col width="11%">
+</colgroup>
+<thead valign="bottom"><tr>
+<th class="head">Compiler</th>
+<th class="head">-j1</th>
+<th class="head">-j2</th>
+<th class="head">-j4</th>
+<th class="head">-j6</th>
+<th class="head">-j8</th>
+</tr></thead>
+<tbody valign="top">
+<tr>
+<td>g++-4.9.3</td>
+<td>350s</td>
+<td>185s</td>
+<td>104s</td>
+<td>94s</td>
+<td>91s</td>
+</tr>
+<tr>
+<td>clang++-3.7</td>
+<td>513s</td>
+<td>271s</td>
+<td>153s</td>
+<td>145s</td>
+<td>138s</td>
+</tr>
+<tr>
+<td>zapcc++</td>
+<td>158s</td>
+<td>87s</td>
+<td>47s</td>
+<td>44s</td>
+<td>42s</td>
+</tr>
+<tr>
+<td>Speedup VS Clang</td>
+<td>3.24</td>
+<td>3.103</td>
+<td>3.25</td>
+<td>3.29</td>
+<td>3.28</td>
+</tr>
+<tr>
+<td>Speedup VS GCC</td>
+<td>2.21</td>
+<td>2.12</td>
+<td>2.21</td>
+<td>2.13</td>
+<td>2.16</td>
+</tr>
+</tbody>
+</table>
+<p>The result is pretty clear! zapcc is around <strong>times faster than clang</strong> and around
+<strong>two times faster than GCC</strong>. This is pretty impressive!</p>
+<p>For those that think than clang is always faster than GCC, keep in mind that
+this is not the case for template-heavy code such as this library. In all my
+tests, clang has always been slower and much memory hungrier than gcc on
+template-heavy C++ code. And sometimes the difference is very significant.</p>
+<p>Interestingly, we can also see that going past the physical cores is not really
+interesting on this computer. On some computer, the speedups are interesting,
+but not on this one. Always benchmark!</p>
+</div>
+<div class="section" id="release-build">
+<h2>Release build</h2>
+<p>We have seen the results on a debug build, let's now compare on something a bit
+more timely, a release build with all options of ETL enabled (GPU, BLAS, ...),
+which should make it significantly longer to compile.</p>
+<p>Again, the table:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="40%">
+<col width="12%">
+<col width="12%">
+<col width="12%">
+<col width="12%">
+<col width="12%">
+</colgroup>
+<thead valign="bottom"><tr>
+<th class="head">Compiler</th>
+<th class="head">-j1</th>
+<th class="head">-j2</th>
+<th class="head">-j4</th>
+<th class="head">-j6</th>
+<th class="head">-j8</th>
+</tr></thead>
+<tbody valign="top">
+<tr>
+<td>g++-4.9.3</td>
+<td>628s</td>
+<td>336s</td>
+<td>197s</td>
+<td>189s</td>
+<td>184s</td>
+</tr>
+<tr>
+<td>clang++-3.7</td>
+<td>663s</td>
+<td>388s</td>
+<td>215s</td>
+<td>212s</td>
+<td>205s</td>
+</tr>
+<tr>
+<td>zapcc++</td>
+<td>515s</td>
+<td>281s</td>
+<td>173s</td>
+<td>168s</td>
+<td>158s</td>
+</tr>
+<tr>
+<td>Speedup VS Clang</td>
+<td>1.28</td>
+<td>1.38</td>
+<td>1.24</td>
+<td>1.26</td>
+<td>1.29</td>
+</tr>
+<tr>
+<td>Speedup VS GCC</td>
+<td>1.21</td>
+<td>1.30</td>
+<td>1.13</td>
+<td>1.12</td>
+<td>1.16</td>
+</tr>
+</tbody>
+</table>
+<p>This time, we can see that the difference is much lower. Zapcc is <strong>between 1.2
+and 1.4 times faster than clang</strong> and <strong>between 1.1 and 1.3 times faster than
+gcc</strong>. This shows that most of the speedups from zapcc are in the front end of
+the compiler. This is not a lot but still significant over long builds,
+especially if you have few threads where the absolute difference would be
+higher.</p>
+<p>We can also observe that clang is now almost on par with GCC which shows that
+optimization is faster in clang while front and backend is faster in gcc.</p>
+<p>You also have to keep in mind that zapcc memory usage is higher than clang
+because of all the caching. Moreover, the server are still up in between
+compilations, so this memory usage stays between builds, which may not be what
+you want.</p>
+</div>
+<div class="section" id="incremental-build">
+<h2>Incremental build</h2>
+<p>Normally, zapcc should shine at incremental building, but I was unable to show
+any speedup when changing a single without killing the zapcc servers. Maybe
+I did something wrong in my usage of zapcc.</p>
+</div>
+<div class="section" id="conclusion">
+<h2>Conclusion</h2>
+<p>In conclusion, we can see that zapcc is always faster than both gcc and clang.
+Moreover, on debug builds, it is much faster than any of the two compilers,
+being more than 2 times faster than gcc and more than 3 times faster than clang.
+This is really great. Moreover, I have not see any issue with the tool so far,
+it can seamlessly replace clang without problem.</p>
+<p>It's a bit weird that you cannot allocate more than 2Go to the zapcc servers.</p>
+<p>For a program, that's really impressive. I hope that they are continuing the
+good work and especially that this motivates other compilers to improve the
+speed of compilation (especially of templates).</p>
+<p>If you want more information, you can go to the
+<a class="reference external" href="https://www.zapcc.com/">official website of zapcc</a></p>
+</div>
+</div>
+        </div>
+            
+        
+    <a href="posts/2016/11/zapcc-a-faster-c%2B%2B-compiler.html#disqus_thread" data-disqus-identifier="cache/posts/2016/11/zapcc-a-faster-c++-compiler.html">Comments</a>
+
+
+        </article><article class="postbox h-entry post-text"><h1 class="p-name">
 <a href="posts/2016/09/blazing-fast-unit-test-compilation-with-doctest-11.html" class="u-url">Blazing fast unit test compilation with doctest 1.1</a>
         <br><small>  
              Posted: <time class="published dt-published" datetime="2016-09-21T21:45:13+02:00">2016-09-21 21:45</time></small>
@@ -976,96 +1181,6 @@ usage.</p>
             
         
     <a href="posts/2016/04/simplify-deep-learning-library-usage-on-linux-and-windows.html#disqus_thread" data-disqus-identifier="cache/posts/2016/04/simplify-deep-learning-library-usage-on-linux-and-windows.html">Comments</a>
-
-
-        </article><article class="postbox h-entry post-text"><h1 class="p-name">
-<a href="posts/2016/02/use-templight-and-templar-to-debug-cpp-templates.html" class="u-url">Use templight and Templar to debug C++ templates</a>
-        <br><small>  
-             Posted: <time class="published dt-published" datetime="2016-02-08T08:11:18+01:00">2016-02-08 08:11</time></small>
-</h1>
-        <hr>
-<div class="p-summary">
-        <div>
-<p>C++ has some very good tools to debug, profile and analyze source files and executables. This all works well for standard runtime program. But, when you are using templates, you sometimes want these tools to act at compile-time. And at this point the support is much more scarce.</p>
-<p><a class="reference external" href="https://github.com/mikael-s-persson/templight">templight</a> and <a class="reference external" href="https://github.com/schulmar/Templar">Templar</a> and two tools that are trying to fix this issue.</p>
-<p>From the templight site:</p>
-<blockquote>
-Templight is a Clang-based tool to profile the time and memory consumption of template instantiations and to perform interactive debugging sessions to gain introspection into the template instantiation process.</blockquote>
-<p>and Templar is a visualization tool for the traces generated by templight.</p>
-<div class="section" id="installation">
-<h2>Installation</h2>
-<p>Unfortunately, the templight installation is not user-friendly at all. You need to clone the complete LLVM/Clang tree and add templight inside it before compiling the complete clang toolchain. But that is the case for all clang-based tools... You also need to patch clang but that may not be necessary in the future. The complete instructions are available <a class="reference external" href="https://github.com/mikael-s-persson/templight#getting-and-compiling-templight">here</a>.</p>
-<p>The installation of Templar is much more convenient:</p>
-<pre class="code bash"><a name="rest_code_d6aabdca63ae4ab8a1ad93b8e0e48d98-1"></a>git clone https://github.com/schulmar/Templar.git
-<a name="rest_code_d6aabdca63ae4ab8a1ad93b8e0e48d98-2"></a>git checkout feature/templight2
-<a name="rest_code_d6aabdca63ae4ab8a1ad93b8e0e48d98-3"></a><span class="nb">cd</span> Templar
-<a name="rest_code_d6aabdca63ae4ab8a1ad93b8e0e48d98-4"></a>qmake .
-<a name="rest_code_d6aabdca63ae4ab8a1ad93b8e0e48d98-5"></a>make
-<a name="rest_code_d6aabdca63ae4ab8a1ad93b8e0e48d98-6"></a>sudo make install
-</pre>
-<p>The branch feature/templight2 has much more features than the master and should support both Qt4 and Qt5, but I have only tested it on Qt4.</p>
-</div>
-<div class="section" id="example">
-<h2>Example</h2>
-<p>Let's use the class Fibonacci function as an example:</p>
-<pre class="code cpp"><a name="rest_code_a5455d8b9b0449299986d92134530792-1"></a><span class="cp">#include</span> <span class="cpf">&lt;iostream&gt;</span><span class="cp"></span>
-<a name="rest_code_a5455d8b9b0449299986d92134530792-2"></a>
-<a name="rest_code_a5455d8b9b0449299986d92134530792-3"></a><span class="k">template</span> <span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">N</span><span class="o">&gt;</span>
-<a name="rest_code_a5455d8b9b0449299986d92134530792-4"></a><span class="k">struct</span> <span class="n">Fibonacci</span> <span class="p">{</span>
-<a name="rest_code_a5455d8b9b0449299986d92134530792-5"></a>    <span class="k">static</span> <span class="k">constexpr</span> <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">value</span> <span class="o">=</span> <span class="n">Fibonacci</span><span class="o">&lt;</span><span class="n">N</span><span class="o">-</span><span class="mi">1</span><span class="o">&gt;::</span><span class="n">value</span> <span class="o">+</span> <span class="n">Fibonacci</span><span class="o">&lt;</span><span class="n">N</span><span class="o">-</span><span class="mi">2</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">;</span>
-<a name="rest_code_a5455d8b9b0449299986d92134530792-6"></a><span class="p">};</span>
-<a name="rest_code_a5455d8b9b0449299986d92134530792-7"></a>
-<a name="rest_code_a5455d8b9b0449299986d92134530792-8"></a><span class="k">template</span> <span class="o">&lt;&gt;</span>
-<a name="rest_code_a5455d8b9b0449299986d92134530792-9"></a><span class="k">struct</span> <span class="n">Fibonacci</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;</span> <span class="p">{</span>
-<a name="rest_code_a5455d8b9b0449299986d92134530792-10"></a>    <span class="k">static</span> <span class="k">constexpr</span> <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">value</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
-<a name="rest_code_a5455d8b9b0449299986d92134530792-11"></a><span class="p">};</span>
-<a name="rest_code_a5455d8b9b0449299986d92134530792-12"></a>
-<a name="rest_code_a5455d8b9b0449299986d92134530792-13"></a><span class="k">template</span> <span class="o">&lt;&gt;</span>
-<a name="rest_code_a5455d8b9b0449299986d92134530792-14"></a><span class="k">struct</span> <span class="n">Fibonacci</span><span class="o">&lt;</span><span class="mi">0</span><span class="o">&gt;</span> <span class="p">{</span>
-<a name="rest_code_a5455d8b9b0449299986d92134530792-15"></a>    <span class="k">static</span> <span class="k">constexpr</span> <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">value</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-<a name="rest_code_a5455d8b9b0449299986d92134530792-16"></a><span class="p">};</span>
-<a name="rest_code_a5455d8b9b0449299986d92134530792-17"></a>
-<a name="rest_code_a5455d8b9b0449299986d92134530792-18"></a><span class="kt">int</span> <span class="nf">main</span><span class="p">(){</span>
-<a name="rest_code_a5455d8b9b0449299986d92134530792-19"></a>    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"Fibonacci&lt;5&gt;:"</span> <span class="o">&lt;&lt;</span> <span class="n">Fibonacci</span><span class="o">&lt;</span><span class="mi">5</span><span class="o">&gt;::</span><span class="n">value</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
-<a name="rest_code_a5455d8b9b0449299986d92134530792-20"></a><span class="p">}</span>
-</pre>
-<p>Nothing fancy here, we're simply printing the fifth Fibonacci number on the console.</p>
-<p>You can compile it with templight++:</p>
-<pre class="code bash"><a name="rest_code_7797a38782a140a2a8e78c477b56dc3d-1"></a>templight++ -Xtemplight -profiler -Xtemplight -memory -Xtemplight -ignore-system -std<span class="o">=</span>c++14 main.cpp
-</pre>
-<p>All the templight options starts with -Xtemplight and then you can use any clang++ options. This will generate a <em>a.memory.trace.pbf</em> file in the current directory. You can then run Templar. use File &gt; Open Trace to open the trace file. This should open a window of this sort:</p>
-<img alt="/images/templar.png" class="align-center" src="images/templar.png"><p>The top-left panel contains the source code of the application, automatically
-refreshed whenever you move in the template tree. In the top right, there is
-the template instantiation graph. In the bottom left, you'll see a list of list
-of files to be able to filter them and in the bottom right, you'll see the list
-of templates events. You can sort the list of template events by duration which
-is really convenient. You can then select Fibonacci&lt;5&gt; by double clicking it in
-the list (once sorted, it should be near the top). This should give you a tree
-looking something like that:</p>
-<img alt="/images/templar_tree.png" class="align-center" src="images/templar_tree.png"><p>The edgy nodes are template instantiations and the round nodes are template
-memoization. We can directly see that each instantiation was only done once. I
-think this graph view is really helpful if you need to debug computation done
-at compile time. You can see that that not all nodes are displayed, this is
-because there is a limit on the displayed depth. Simply click on Fibonacci&lt;3&gt;
-and the remaining nodes will be shown.</p>
-<p>I have already used this tool to find the most time-consuming templates in ETL
-an DLL. This is a great tool to indicate where you should focus on improving
-the template compile-time. I have also been able to find some unnecessary
-instantiations that could be avoided (either with SFINAE or with refactorings).</p>
-<p>templight also contains a fully-fledged debugger for template programs, but I haven't tested it.</p>
-</div>
-<div class="section" id="conclusion">
-<h2>Conclusion</h2>
-<p>In conclusion, I would say that templight and Templar are really helping with
-template debugging and profiling. There is a real lack of tools in this domain
-and I hope to see more tools of this kind in the future. I hope this will help
-you develop template-heavy programs or template metaprograms.</p>
-</div>
-</div>
-        </div>
-            
-        
-    <a href="posts/2016/02/use-templight-and-templar-to-debug-cpp-templates.html#disqus_thread" data-disqus-identifier="cache/posts/2016/02/use-templight-and-templar-to-debug-cpp-templates.html">Comments</a>
 
 
         </article><nav class="postindexpager"><ul class="pager">
