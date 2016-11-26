@@ -40,7 +40,7 @@ the difference of zapcc compared to the other compilers:
 |     Speedup VS GCC   | 2.21 | 2.12  | 2.21 | 2.13 | 2.16 |
 +----------------------+------+-------+------+------+------+
 
-The result is pretty clear! zapcc is around **times faster than clang** and around
+The result is pretty clear! zapcc is around **three times faster than clang** and around
 **two times faster than GCC**. This is pretty impressive!
 
 For those that think than clang is always faster than GCC, keep in mind that
