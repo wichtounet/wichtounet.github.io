@@ -50,9 +50,6 @@ NAVIGATION_LINKS = {
     DEFAULT_LANG: (
         ('/stories/about.html', 'About'),
         ('/stories/publications.html', 'Publications'),
-        ('/stories/contact.html', 'Contact'),
-        ('/stories/faq.html', 'FAQ'),
-        ('/stories/legal.html', 'Legal'),
         ('/categories/index.html', 'Tags'),
         ('/archive.html', 'Archives'),
         ('http://feeds.feedburner.com/BaptisteWicht', 'RSS'),

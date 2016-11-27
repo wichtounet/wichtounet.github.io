@@ -269,7 +269,7 @@ int main(int argc, char* argv[]){
 
         std::ofstream file(files[i] + ".related.html");
 
-        file << "<ol>\n";
+        //file << "<ol>\n";
 
         for(size_t j = 0; j < related.size() && j < 6; ++j){
             auto other = related[j];
@@ -279,7 +279,8 @@ int main(int argc, char* argv[]){
             }
         }
 
-        file << "</ol>\n" << std::endl;
+        //file << "</ol>\n" << std::endl;
+        file << std::endl;
     }
 
     return 0;

@@ -8,10 +8,18 @@ It hasn't been very long since I started writing articles and tutorials in Engli
 
 A (short) list of my publication is available [here](/publications/).
 
-For all suggestions or comments on my tutorials, projects, blogs or this website, you can contact me directly with the contact form, by commenting a page or post or by email at this address: [baptiste.wicht@gmail.com](mailto:baptiste-wicht@gmail.com).
+For all suggestions or comments on my tutorials, projects, blogs or this website, there are several ways to contact me:
+
+1. By email: [baptiste.wicht@gmail.com](mailto:baptiste.wicht@gmail.com)
+2. On Twitter: [@wichtounet](https://twitter.com/wichtounet)
 
 For professional information, [my LinkedIn profile](http://www.linkedin.com/in/baptistewicht) is available.
 
 You can also take a look at my Google Profile: [Baptiste Wicht](https://plus.google.com/103113673902796202116)
 
 I hope you will find this website useful and will like my articles and blogs.
+
+For more information, you can also consult the following pages:
+
+* [Legal](/stories/legal.html)
+* [FAQ](/stories/faq.html)
