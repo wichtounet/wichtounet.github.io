@@ -1,6 +1,6 @@
 ## 1. What can I do if I found an error in one of your articles / blogs / pages?
 
-The best way is to post a comment directly on the page. You can also contact me with [the Contact form](/stories/contact.html).
+The best way is to post a comment directly on the page. You can also contact me on the [the Contact page](/stories/contact.html).
 
 ## 2. How can I thank you?
 
@@ -17,6 +17,6 @@ You can help this website (http://baptiste-wicht.com) in several ways:
 
 You can post your questions directly as comment of the specified blog/tutorial. Try to be precise about your problem.
 
-If you have a problem with the examples from my articles I try to answer each question in comments.
+If you have a problem with the examples from my articles I try to answer each question in comments. You can also open an issue on Github if this concern one of my projects.
 
 Please also note that I maintain this website on my private time, so that is not always possible for me to answer questions that go beyond the scope of my blogs/articles.
