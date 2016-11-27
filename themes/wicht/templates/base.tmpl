@@ -8,6 +8,7 @@ ${base.html_headstart()}
 </%block>
 ${template_hooks['extra_head']()}
 <link href="/favicon.ico" rel="icon" type="image/x-icon">
+<link href="/assets/css/tx3-tag-cloud.css" rel="stylesheet" type="text/css">
 </head>
 <body>
 
@@ -84,11 +85,9 @@ ${template_hooks['extra_head']()}
             <div class="left-sidebar-widget">
                 <h3>Tags</h3>
                 <div class="left-sidebar-widget-content">
-                    <div id="tags_container">
-                        <canvas width="275" height="250" id="tags_canvas">
-                            <p>Anything in here will be replaced on browsers that support the canvas element</p>
-                        </canvas>
+                    <div id="tag_cloud_left_container" style="line-height: 18px !important;">
                     </div>
+                    <div style="clear:left" />
                 </div>
             </div>
         %elif post:
@@ -133,8 +132,8 @@ ${template_hooks['extra_head']()}
             <h3>Blogroll</h3>
             <div class="left-sidebar-widget-content">
                 <ul>
-                    <li><a target="_blank" href="http://www.asjava.com/">AsJava.com : Java Tutorial</a></li>
-                    <li><a target="_blank" href="http://www.mkyong.com/">Mkyong : Java Tutorials</a></li>
+                    <li><a target="_blank" href="https://isocpp.org/blog">ISO Standard C++ - Blog</a></li>
+                    <li><a target="_blank" href="http://meetingcpp.com/index.php/blog.html">Meeting C++ - Blog</a></li>
                 </ul>
             </div>
         </div>
@@ -175,33 +174,28 @@ ${template_hooks['extra_head']()}
 % if not post:
     <script type="text/javascript">
       $(document).ready(function() {
-        jQuery.getJSON('/assets/js/tag_cloud_data.json', function(data) {
+        $.getJSON("/assets/js/tx3_tag_cloud.json", function(data){
             var items = [];
+            $.each(data, function(key, val){
+                var count = val[0];
+                var url = val[1];
+                var posts = val[2];
 
-            $.each(data, function(key, val) {
-                items.push('<li><a href="' + val[1] +'" '+'data-weight="'+val[0]+'"'+'>' + key + '</a></li>');
+                if(count > 9){
+                    items.push("<li data-weight='" + count + "'><a href='" + url + "'>" + key + "</a></li>");
+                }
             });
 
-            $('<div/>', {
-                'id': 'tags',
-                html: '<ul>' + items.join('') + '</ul>'
-            }).appendTo('body');
+            $("<ul/>", {
+                "id": "tag_cloud_left",
+                html: items.join("")
+            }).appendTo("#tag_cloud_left_container");
 
-            if(!$('#tags_canvas').tagcanvas({
-                textColour: '#FFFFFF',
-                outlineColour: '#ff00ff',
-                reverse: true,
-                depth: 0.8,
-                maxSpeed: 0.05,
-                weight: true,
-                weightFrom: "data-weight",
-                weightSizeMin: 8,
-                weightSizeMax: 24
-            },'tags')) {
-                //something went wrong, hide the canvas container
-                $('#tags_container').hide();
-            }});
+            $("#tag_cloud_left").tx3TagCloud({
+                multiplier: 0.6 // default multiplier is "1"
+            });
         });
+      });
     </script>
 %endif
 
@@ -210,7 +204,9 @@ ${template_hooks['extra_head']()}
 <script type="text/javascript" src="https://apis.google.com/js/platform.js"></script>
 
 
-<%block name="extra_js"></%block>
+<%block name="extra_js">
+<script type="text/javascript" src="/assets/js/jquery.tx3-tag-cloud.js"></script>
+</%block>
 
 % if annotations and post and not post.meta('noannotations'):
     ${notes.code()}
