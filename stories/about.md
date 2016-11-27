@@ -6,7 +6,7 @@ In 2011, I started C++ for my Bachelor project and since this time wrote several
 
 It hasn't been very long since I started writing articles and tutorials in English, but I do my best to have a good writing level. If you find errors, don’t hesitate to contact me.
 
-A (short) list of my publication is available [here](/publications/).
+A (short) list of my publication is available on the [Publications page](/publications/).
 
 For all suggestions or comments on my tutorials, projects, blogs or this website, there are several ways to contact me:
 
