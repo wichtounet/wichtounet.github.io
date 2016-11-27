@@ -23,6 +23,7 @@ Here is a picture of the Raspberry Pi system (not very pretty ;) ):
 
 .. image:: /images/asgard_hardware.jpg
    :align: center
+   :alt: Asgard automation system hardware
 
 I plan to try to fit at least some of it on a nicer box with nicer cables and
 such. Moreover, I also plan to add real antennas to the RF transmitter and
@@ -43,6 +44,7 @@ You can see the sensors data displayed on the web interface:
 
 .. image:: /images/asgard_home.png
    :align: center
+   :alt: Asgard automation system home page
 
 Actions
 +++++++
@@ -57,6 +59,7 @@ Here are the rules engine:
 
 .. image:: /images/asgard_rules.png
    :align: center
+   :alt: Asgard automation system rules page
 
 My home automation
 ++++++++++++++++++
