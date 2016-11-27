@@ -12,7 +12,7 @@ GITHUB_REMOTE_NAME = 'origin'
 
 # Data about this site
 BLOG_AUTHOR = "Baptiste Wicht"
-BLOG_TITLE = "@Blog(\"Baptiste Wicht\")"
+BLOG_TITLE = "Blog blog(\"Baptiste Wicht\");"
 SITE_URL = "http://baptiste-wicht.com/"
 BLOG_EMAIL = "baptistewicht@gmail.com"
 BLOG_DESCRIPTION = "Tutorials and short posts about programming, C++, Java, Assembly, Operating Systems Development, Compilers, ..."
