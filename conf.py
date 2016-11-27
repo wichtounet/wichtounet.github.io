@@ -50,7 +50,6 @@ NAVIGATION_LINKS = {
     DEFAULT_LANG: (
         ('/stories/about.html', 'About'),
         ('/stories/publications.html', 'Publications'),
-        ('/stories/donate.html', 'Donate'),
         ('/stories/contact.html', 'Contact'),
         ('/stories/faq.html', 'FAQ'),
         ('/stories/legal.html', 'Legal'),
