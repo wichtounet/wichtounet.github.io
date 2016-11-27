@@ -1,7 +1,8 @@
 I just joined the private beta program of zapcc. Zapcc is a c++ compiler, based
-on clang which aims at being much faster than other C++ compilers. How they are
+on Clang which aims at being much faster than other C++ compilers. How they are
 doing this is using a caching server that saves some of the compiler structures,
-which should speed up compilation a lot.
+which should speed up compilation a lot. The private beta is free, but once the
+compiler is ready, it will be a commercial compiler.
 
 Every C++ developer knows that compilation time can quickly be an issue when
 programs are getting very big and especially when working with template-heavy
@@ -40,12 +41,12 @@ the difference of zapcc compared to the other compilers:
 |     Speedup VS GCC   | 2.21 | 2.12  | 2.21 | 2.13 | 2.16 |
 +----------------------+------+-------+------+------+------+
 
-The result is pretty clear! zapcc is around **three times faster than clang** and around
+The result is pretty clear! zapcc is around **three times faster than Clang** and around
 **two times faster than GCC**. This is pretty impressive!
 
-For those that think than clang is always faster than GCC, keep in mind that
+For those that think than Clang is always faster than GCC, keep in mind that
 this is not the case for template-heavy code such as this library. In all my
-tests, clang has always been slower and much memory hungrier than gcc on
+tests, Clang has always been slower and much memory hungrier than GCC on
 template-heavy C++ code. And sometimes the difference is very significant.
 
 Interestingly, we can also see that going past the physical cores is not really
@@ -76,19 +77,24 @@ Again, the table:
 +--------------------+------+------+------+------+------+
 
 This time, we can see that the difference is much lower. Zapcc is **between 1.2
-and 1.4 times faster than clang** and **between 1.1 and 1.3 times faster than
-gcc**. This shows that most of the speedups from zapcc are in the front end of
+and 1.4 times faster than Clang** and **between 1.1 and 1.3 times faster than
+GCC**. This shows that most of the speedups from zapcc are in the front end of
 the compiler. This is not a lot but still significant over long builds,
 especially if you have few threads where the absolute difference would be
 higher.
 
-We can also observe that clang is now almost on par with GCC which shows that
-optimization is faster in clang while front and backend is faster in gcc.
+We can also observe that Clang is now almost on par with GCC which shows that
+optimization is faster in Clang while front and backend is faster in gcc.
 
-You also have to keep in mind that zapcc memory usage is higher than clang
+You also have to keep in mind that zapcc memory usage is higher than Clang
 because of all the caching. Moreover, the server are still up in between
 compilations, so this memory usage stays between builds, which may not be what
 you want.
+
+As for runtime, I have not seem any significant difference in performance
+between the clang version and the zapcc. According to the official benchmarks
+and documentation, there should not be any difference in that between zapcc and
+the version of clang on which zapcc is based.
 
 Incremental build
 +++++++++++++++++
@@ -100,11 +106,11 @@ I did something wrong in my usage of zapcc.
 Conclusion
 ++++++++++
 
-In conclusion, we can see that zapcc is always faster than both gcc and clang.
-Moreover, on debug builds, it is much faster than any of the two compilers,
-being more than 2 times faster than gcc and more than 3 times faster than clang.
-This is really great. Moreover, I have not see any issue with the tool so far,
-it can seamlessly replace clang without problem.
+In conclusion, we can see that zapcc is always faster than both GCC and Clang,
+on my template-heavy library. Moreover, on debug builds, it is much faster than
+any of the two compilers, being more than 2 times faster than GCC and more than
+3 times faster than clang. This is really great. Moreover, I have not see any
+issue with the tool so far, it can seamlessly replace Clang without problem.
 
 It's a bit weird that you cannot allocate more than 2Go to the zapcc servers.
 
