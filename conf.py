@@ -426,7 +426,7 @@ SOCIAL_BUTTONS_CODE = ""
 
 # Local Search with tipue
 
-ENABLED_EXTRAS = ['local_search']
+ENABLED_EXTRAS = []
 
 # Use content distribution networks for jquery and twitter-bootstrap css and js
 # If this is True, jquery is served from the Google CDN and twitter-bootstrap
