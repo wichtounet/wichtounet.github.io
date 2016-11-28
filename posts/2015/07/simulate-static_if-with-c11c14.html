@@ -135,51 +135,51 @@
 <h2>static_if</h2>
 <p>As its name indicates, <code>static_if</code> is an if statement but that is done at compile-time. At first, it could seem that the main point is performance, but that is not the case. With recent compilers, if you have an if statement with a compile-time constant, it will never be executed at runtime and only the correct branch will be included in the final executable code. However, even if the compiler knows that a branch will never be executed, it still has to ensure that this branch compiles. This is not the case with <code>static_if</code>. With <code>static_if</code>, only the valid branch is compiled, the other can contains invalid code. The most common reason to use a <code>static_if</code> is inside a template where you perform a test on a template argument and execute code based on this test. <code>static_if</code> has another advantage on standard if. Since only one branch is instantiated, it may save quite a lot of compile-time.</p>
 <p>Let's say we have to write a template function that, if the template argument is a string, removes the last character of the string argument, otherwise decrement the argument (I know, stupid example, but simple). With <code>static_if</code>, you can write it like this:</p>
-<pre class="code cpp"><a name="rest_code_2f8d82c3b5504bdb92faa5e7f22925a9-1"></a><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
-<a name="rest_code_2f8d82c3b5504bdb92faa5e7f22925a9-2"></a><span class="kt">void</span> <span class="n">decrement_kindof</span><span class="p">(</span><span class="n">T</span><span class="o">&amp;</span> <span class="n">value</span><span class="p">){</span>
-<a name="rest_code_2f8d82c3b5504bdb92faa5e7f22925a9-3"></a>    <span class="n">static_if</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span> <span class="n">T</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">){</span>
-<a name="rest_code_2f8d82c3b5504bdb92faa5e7f22925a9-4"></a>        <span class="n">value</span><span class="p">.</span><span class="n">pop_back</span><span class="p">();</span>
-<a name="rest_code_2f8d82c3b5504bdb92faa5e7f22925a9-5"></a>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-<a name="rest_code_2f8d82c3b5504bdb92faa5e7f22925a9-6"></a>        <span class="o">--</span><span class="n">value</span><span class="p">;</span>
-<a name="rest_code_2f8d82c3b5504bdb92faa5e7f22925a9-7"></a>    <span class="p">}</span>
-<a name="rest_code_2f8d82c3b5504bdb92faa5e7f22925a9-8"></a><span class="p">}</span>
+<pre class="code cpp"><a name="rest_code_5d2949d01c5b4825a021c49396f6b273-1"></a><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<a name="rest_code_5d2949d01c5b4825a021c49396f6b273-2"></a><span class="kt">void</span> <span class="n">decrement_kindof</span><span class="p">(</span><span class="n">T</span><span class="o">&amp;</span> <span class="n">value</span><span class="p">){</span>
+<a name="rest_code_5d2949d01c5b4825a021c49396f6b273-3"></a>    <span class="n">static_if</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span> <span class="n">T</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">){</span>
+<a name="rest_code_5d2949d01c5b4825a021c49396f6b273-4"></a>        <span class="n">value</span><span class="p">.</span><span class="n">pop_back</span><span class="p">();</span>
+<a name="rest_code_5d2949d01c5b4825a021c49396f6b273-5"></a>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<a name="rest_code_5d2949d01c5b4825a021c49396f6b273-6"></a>        <span class="o">--</span><span class="n">value</span><span class="p">;</span>
+<a name="rest_code_5d2949d01c5b4825a021c49396f6b273-7"></a>    <span class="p">}</span>
+<a name="rest_code_5d2949d01c5b4825a021c49396f6b273-8"></a><span class="p">}</span>
 </pre>
 <p>I think it is quite elegant.</p>
 </div>
 <div class="section" id="the-problem">
 <h2>The problem</h2>
 <p>Some may think, that we could do the same with C++ standard if statement:</p>
-<pre class="code cpp"><a name="rest_code_bccac190e8c94b72bea1806fe6dd0224-1"></a><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
-<a name="rest_code_bccac190e8c94b72bea1806fe6dd0224-2"></a><span class="kt">void</span> <span class="n">decrement_kindof</span><span class="p">(</span><span class="n">T</span><span class="o">&amp;</span> <span class="n">value</span><span class="p">){</span>
-<a name="rest_code_bccac190e8c94b72bea1806fe6dd0224-3"></a>    <span class="k">if</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span> <span class="n">T</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">){</span>
-<a name="rest_code_bccac190e8c94b72bea1806fe6dd0224-4"></a>        <span class="n">value</span><span class="p">.</span><span class="n">pop_back</span><span class="p">();</span>
-<a name="rest_code_bccac190e8c94b72bea1806fe6dd0224-5"></a>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-<a name="rest_code_bccac190e8c94b72bea1806fe6dd0224-6"></a>        <span class="o">--</span><span class="n">value</span><span class="p">;</span>
-<a name="rest_code_bccac190e8c94b72bea1806fe6dd0224-7"></a>    <span class="p">}</span>
-<a name="rest_code_bccac190e8c94b72bea1806fe6dd0224-8"></a><span class="p">}</span>
+<pre class="code cpp"><a name="rest_code_939e40706a4a4723b81b8bbd39ea093b-1"></a><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<a name="rest_code_939e40706a4a4723b81b8bbd39ea093b-2"></a><span class="kt">void</span> <span class="n">decrement_kindof</span><span class="p">(</span><span class="n">T</span><span class="o">&amp;</span> <span class="n">value</span><span class="p">){</span>
+<a name="rest_code_939e40706a4a4723b81b8bbd39ea093b-3"></a>    <span class="k">if</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span> <span class="n">T</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">){</span>
+<a name="rest_code_939e40706a4a4723b81b8bbd39ea093b-4"></a>        <span class="n">value</span><span class="p">.</span><span class="n">pop_back</span><span class="p">();</span>
+<a name="rest_code_939e40706a4a4723b81b8bbd39ea093b-5"></a>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<a name="rest_code_939e40706a4a4723b81b8bbd39ea093b-6"></a>        <span class="o">--</span><span class="n">value</span><span class="p">;</span>
+<a name="rest_code_939e40706a4a4723b81b8bbd39ea093b-7"></a>    <span class="p">}</span>
+<a name="rest_code_939e40706a4a4723b81b8bbd39ea093b-8"></a><span class="p">}</span>
 </pre>
 <p>However, this won't work. This template cannot be instantiated for <code>std::string</code> since it doesn't have an operator -- and it cannot be instantiated for int since it doesn't have a <code>pop_back()</code> function.</p>
 <p>There are two solutions in plain C++: specialization and SFINAE. Let's start with specialization:</p>
-<pre class="code cpp"><a name="rest_code_3c908d70c93948459bf3fdd038a6ea82-1"></a><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
-<a name="rest_code_3c908d70c93948459bf3fdd038a6ea82-2"></a><span class="kt">void</span> <span class="n">decrement_kindof</span><span class="p">(</span><span class="n">T</span><span class="o">&amp;</span> <span class="n">value</span><span class="p">){</span>
-<a name="rest_code_3c908d70c93948459bf3fdd038a6ea82-3"></a>    <span class="o">--</span><span class="n">value</span><span class="p">;</span>
-<a name="rest_code_3c908d70c93948459bf3fdd038a6ea82-4"></a><span class="p">}</span>
-<a name="rest_code_3c908d70c93948459bf3fdd038a6ea82-5"></a>
-<a name="rest_code_3c908d70c93948459bf3fdd038a6ea82-6"></a><span class="k">template</span><span class="o">&lt;&gt;</span>
-<a name="rest_code_3c908d70c93948459bf3fdd038a6ea82-7"></a><span class="kt">void</span> <span class="n">decrement_kindof</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">value</span><span class="p">){</span>
-<a name="rest_code_3c908d70c93948459bf3fdd038a6ea82-8"></a>    <span class="n">value</span><span class="p">.</span><span class="n">pop_back</span><span class="p">();</span>
-<a name="rest_code_3c908d70c93948459bf3fdd038a6ea82-9"></a><span class="p">}</span>
+<pre class="code cpp"><a name="rest_code_75dffba28924455f94c9595091928a41-1"></a><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<a name="rest_code_75dffba28924455f94c9595091928a41-2"></a><span class="kt">void</span> <span class="n">decrement_kindof</span><span class="p">(</span><span class="n">T</span><span class="o">&amp;</span> <span class="n">value</span><span class="p">){</span>
+<a name="rest_code_75dffba28924455f94c9595091928a41-3"></a>    <span class="o">--</span><span class="n">value</span><span class="p">;</span>
+<a name="rest_code_75dffba28924455f94c9595091928a41-4"></a><span class="p">}</span>
+<a name="rest_code_75dffba28924455f94c9595091928a41-5"></a>
+<a name="rest_code_75dffba28924455f94c9595091928a41-6"></a><span class="k">template</span><span class="o">&lt;&gt;</span>
+<a name="rest_code_75dffba28924455f94c9595091928a41-7"></a><span class="kt">void</span> <span class="n">decrement_kindof</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">value</span><span class="p">){</span>
+<a name="rest_code_75dffba28924455f94c9595091928a41-8"></a>    <span class="n">value</span><span class="p">.</span><span class="n">pop_back</span><span class="p">();</span>
+<a name="rest_code_75dffba28924455f94c9595091928a41-9"></a><span class="p">}</span>
 </pre>
 <p>We do a specialization for <code>std::string</code> case so that in the general case it uses -- and in the <code>std::string</code> case, it uses <code>pop_back()</code>. And the SFINAE version:</p>
-<pre class="code cpp"><a name="rest_code_7d072bc8251f47f49d40b405d3888ff5-1"></a><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">enable_if_t</span><span class="o">&lt;!</span><span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span> <span class="n">T</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">,</span> <span class="kt">int</span><span class="o">&gt;</span> <span class="o">=</span> <span class="mi">42</span><span class="o">&gt;</span>
-<a name="rest_code_7d072bc8251f47f49d40b405d3888ff5-2"></a><span class="kt">void</span> <span class="n">decrement_kindof</span><span class="p">(</span><span class="n">T</span><span class="o">&amp;</span> <span class="n">value</span><span class="p">){</span>
-<a name="rest_code_7d072bc8251f47f49d40b405d3888ff5-3"></a>    <span class="o">--</span><span class="n">value</span><span class="p">;</span>
-<a name="rest_code_7d072bc8251f47f49d40b405d3888ff5-4"></a><span class="p">}</span>
-<a name="rest_code_7d072bc8251f47f49d40b405d3888ff5-5"></a>
-<a name="rest_code_7d072bc8251f47f49d40b405d3888ff5-6"></a><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">enable_if_t</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span> <span class="n">T</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">,</span> <span class="kt">int</span><span class="o">&gt;</span> <span class="o">=</span> <span class="mi">42</span><span class="o">&gt;</span>
-<a name="rest_code_7d072bc8251f47f49d40b405d3888ff5-7"></a><span class="kt">void</span> <span class="n">decrement_kindof</span><span class="p">(</span><span class="n">T</span><span class="o">&amp;</span> <span class="n">value</span><span class="p">){</span>
-<a name="rest_code_7d072bc8251f47f49d40b405d3888ff5-8"></a>    <span class="n">value</span><span class="p">.</span><span class="n">pop_back</span><span class="p">();</span>
-<a name="rest_code_7d072bc8251f47f49d40b405d3888ff5-9"></a><span class="p">}</span>
+<pre class="code cpp"><a name="rest_code_9ea732fa260e48339b3fe4a26e7c3446-1"></a><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">enable_if_t</span><span class="o">&lt;!</span><span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span> <span class="n">T</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">,</span> <span class="kt">int</span><span class="o">&gt;</span> <span class="o">=</span> <span class="mi">42</span><span class="o">&gt;</span>
+<a name="rest_code_9ea732fa260e48339b3fe4a26e7c3446-2"></a><span class="kt">void</span> <span class="n">decrement_kindof</span><span class="p">(</span><span class="n">T</span><span class="o">&amp;</span> <span class="n">value</span><span class="p">){</span>
+<a name="rest_code_9ea732fa260e48339b3fe4a26e7c3446-3"></a>    <span class="o">--</span><span class="n">value</span><span class="p">;</span>
+<a name="rest_code_9ea732fa260e48339b3fe4a26e7c3446-4"></a><span class="p">}</span>
+<a name="rest_code_9ea732fa260e48339b3fe4a26e7c3446-5"></a>
+<a name="rest_code_9ea732fa260e48339b3fe4a26e7c3446-6"></a><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">enable_if_t</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span> <span class="n">T</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">,</span> <span class="kt">int</span><span class="o">&gt;</span> <span class="o">=</span> <span class="mi">42</span><span class="o">&gt;</span>
+<a name="rest_code_9ea732fa260e48339b3fe4a26e7c3446-7"></a><span class="kt">void</span> <span class="n">decrement_kindof</span><span class="p">(</span><span class="n">T</span><span class="o">&amp;</span> <span class="n">value</span><span class="p">){</span>
+<a name="rest_code_9ea732fa260e48339b3fe4a26e7c3446-8"></a>    <span class="n">value</span><span class="p">.</span><span class="n">pop_back</span><span class="p">();</span>
+<a name="rest_code_9ea732fa260e48339b3fe4a26e7c3446-9"></a><span class="p">}</span>
 </pre>
 <p>The first function is enabled when the type is not a <code>std::string</code> and the second function is enabled when the type is a <code>std::string</code>.</p>
 <p>Both solutions needs two functions to make it work. In this particular case, specialization is easier since the condition states exactly one type. If the condition was more complex for instance testing that a constant inside the type is equals to some value, we could only do it with SFINAE.</p>
@@ -188,57 +188,57 @@
 <div class="section" id="one-solution">
 <h2>One solution</h2>
 <p>There is one way to emulate a kind of <code>static_if</code> with C++14 generic lambdas. It is kind of using anonymous template function to emulate what we did with the previous solutions but does it behind the scene. Here the code I'm using for this emulation:</p>
-<pre class="code cpp"><a name="rest_code_aa3eada40d4e471c9743ba62cdeeb6de-1"></a><span class="k">namespace</span> <span class="n">static_if_detail</span> <span class="p">{</span>
-<a name="rest_code_aa3eada40d4e471c9743ba62cdeeb6de-2"></a>
-<a name="rest_code_aa3eada40d4e471c9743ba62cdeeb6de-3"></a><span class="k">struct</span> <span class="n">identity</span> <span class="p">{</span>
-<a name="rest_code_aa3eada40d4e471c9743ba62cdeeb6de-4"></a>    <span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
-<a name="rest_code_aa3eada40d4e471c9743ba62cdeeb6de-5"></a>    <span class="n">T</span> <span class="k">operator</span><span class="p">()(</span><span class="n">T</span><span class="o">&amp;&amp;</span> <span class="n">x</span><span class="p">)</span> <span class="k">const</span> <span class="p">{</span>
-<a name="rest_code_aa3eada40d4e471c9743ba62cdeeb6de-6"></a>        <span class="k">return</span> <span class="n">std</span><span class="o">::</span><span class="n">forward</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">x</span><span class="p">);</span>
-<a name="rest_code_aa3eada40d4e471c9743ba62cdeeb6de-7"></a>    <span class="p">}</span>
-<a name="rest_code_aa3eada40d4e471c9743ba62cdeeb6de-8"></a><span class="p">};</span>
-<a name="rest_code_aa3eada40d4e471c9743ba62cdeeb6de-9"></a>
-<a name="rest_code_aa3eada40d4e471c9743ba62cdeeb6de-10"></a><span class="k">template</span><span class="o">&lt;</span><span class="kt">bool</span> <span class="n">Cond</span><span class="o">&gt;</span>
-<a name="rest_code_aa3eada40d4e471c9743ba62cdeeb6de-11"></a><span class="k">struct</span> <span class="n">statement</span> <span class="p">{</span>
-<a name="rest_code_aa3eada40d4e471c9743ba62cdeeb6de-12"></a>    <span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">F</span><span class="o">&gt;</span>
-<a name="rest_code_aa3eada40d4e471c9743ba62cdeeb6de-13"></a>    <span class="kt">void</span> <span class="n">then</span><span class="p">(</span><span class="k">const</span> <span class="n">F</span><span class="o">&amp;</span> <span class="n">f</span><span class="p">){</span>
-<a name="rest_code_aa3eada40d4e471c9743ba62cdeeb6de-14"></a>        <span class="n">f</span><span class="p">(</span><span class="n">identity</span><span class="p">());</span>
-<a name="rest_code_aa3eada40d4e471c9743ba62cdeeb6de-15"></a>    <span class="p">}</span>
-<a name="rest_code_aa3eada40d4e471c9743ba62cdeeb6de-16"></a>
-<a name="rest_code_aa3eada40d4e471c9743ba62cdeeb6de-17"></a>    <span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">F</span><span class="o">&gt;</span>
-<a name="rest_code_aa3eada40d4e471c9743ba62cdeeb6de-18"></a>    <span class="kt">void</span> <span class="n">else_</span><span class="p">(</span><span class="k">const</span> <span class="n">F</span><span class="o">&amp;</span><span class="p">){}</span>
-<a name="rest_code_aa3eada40d4e471c9743ba62cdeeb6de-19"></a><span class="p">};</span>
-<a name="rest_code_aa3eada40d4e471c9743ba62cdeeb6de-20"></a>
-<a name="rest_code_aa3eada40d4e471c9743ba62cdeeb6de-21"></a><span class="k">template</span><span class="o">&lt;&gt;</span>
-<a name="rest_code_aa3eada40d4e471c9743ba62cdeeb6de-22"></a><span class="k">struct</span> <span class="n">statement</span><span class="o">&lt;</span><span class="nb">false</span><span class="o">&gt;</span> <span class="p">{</span>
-<a name="rest_code_aa3eada40d4e471c9743ba62cdeeb6de-23"></a>    <span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">F</span><span class="o">&gt;</span>
-<a name="rest_code_aa3eada40d4e471c9743ba62cdeeb6de-24"></a>    <span class="kt">void</span> <span class="n">then</span><span class="p">(</span><span class="k">const</span> <span class="n">F</span><span class="o">&amp;</span><span class="p">){}</span>
-<a name="rest_code_aa3eada40d4e471c9743ba62cdeeb6de-25"></a>
-<a name="rest_code_aa3eada40d4e471c9743ba62cdeeb6de-26"></a>    <span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">F</span><span class="o">&gt;</span>
-<a name="rest_code_aa3eada40d4e471c9743ba62cdeeb6de-27"></a>    <span class="kt">void</span> <span class="n">else_</span><span class="p">(</span><span class="k">const</span> <span class="n">F</span><span class="o">&amp;</span> <span class="n">f</span><span class="p">){</span>
-<a name="rest_code_aa3eada40d4e471c9743ba62cdeeb6de-28"></a>        <span class="n">f</span><span class="p">(</span><span class="n">identity</span><span class="p">());</span>
-<a name="rest_code_aa3eada40d4e471c9743ba62cdeeb6de-29"></a>    <span class="p">}</span>
-<a name="rest_code_aa3eada40d4e471c9743ba62cdeeb6de-30"></a><span class="p">};</span>
-<a name="rest_code_aa3eada40d4e471c9743ba62cdeeb6de-31"></a>
-<a name="rest_code_aa3eada40d4e471c9743ba62cdeeb6de-32"></a><span class="p">}</span> <span class="c1">//end of namespace static_if_detail</span>
-<a name="rest_code_aa3eada40d4e471c9743ba62cdeeb6de-33"></a>
-<a name="rest_code_aa3eada40d4e471c9743ba62cdeeb6de-34"></a><span class="k">template</span><span class="o">&lt;</span><span class="kt">bool</span> <span class="n">Cond</span><span class="p">,</span> <span class="k">typename</span> <span class="n">F</span><span class="o">&gt;</span>
-<a name="rest_code_aa3eada40d4e471c9743ba62cdeeb6de-35"></a><span class="n">static_if_detail</span><span class="o">::</span><span class="n">statement</span><span class="o">&lt;</span><span class="n">Cond</span><span class="o">&gt;</span> <span class="n">static_if</span><span class="p">(</span><span class="n">F</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">f</span><span class="p">){</span>
-<a name="rest_code_aa3eada40d4e471c9743ba62cdeeb6de-36"></a>    <span class="n">static_if_detail</span><span class="o">::</span><span class="n">statement</span><span class="o">&lt;</span><span class="n">Cond</span><span class="o">&gt;</span> <span class="n">if_</span><span class="p">;</span>
-<a name="rest_code_aa3eada40d4e471c9743ba62cdeeb6de-37"></a>    <span class="n">if_</span><span class="p">.</span><span class="n">then</span><span class="p">(</span><span class="n">f</span><span class="p">);</span>
-<a name="rest_code_aa3eada40d4e471c9743ba62cdeeb6de-38"></a>    <span class="k">return</span> <span class="n">if_</span><span class="p">;</span>
-<a name="rest_code_aa3eada40d4e471c9743ba62cdeeb6de-39"></a><span class="p">}</span>
+<pre class="code cpp"><a name="rest_code_a681d07240a349b0b76fa26966114dcd-1"></a><span class="k">namespace</span> <span class="n">static_if_detail</span> <span class="p">{</span>
+<a name="rest_code_a681d07240a349b0b76fa26966114dcd-2"></a>
+<a name="rest_code_a681d07240a349b0b76fa26966114dcd-3"></a><span class="k">struct</span> <span class="n">identity</span> <span class="p">{</span>
+<a name="rest_code_a681d07240a349b0b76fa26966114dcd-4"></a>    <span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<a name="rest_code_a681d07240a349b0b76fa26966114dcd-5"></a>    <span class="n">T</span> <span class="k">operator</span><span class="p">()(</span><span class="n">T</span><span class="o">&amp;&amp;</span> <span class="n">x</span><span class="p">)</span> <span class="k">const</span> <span class="p">{</span>
+<a name="rest_code_a681d07240a349b0b76fa26966114dcd-6"></a>        <span class="k">return</span> <span class="n">std</span><span class="o">::</span><span class="n">forward</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">x</span><span class="p">);</span>
+<a name="rest_code_a681d07240a349b0b76fa26966114dcd-7"></a>    <span class="p">}</span>
+<a name="rest_code_a681d07240a349b0b76fa26966114dcd-8"></a><span class="p">};</span>
+<a name="rest_code_a681d07240a349b0b76fa26966114dcd-9"></a>
+<a name="rest_code_a681d07240a349b0b76fa26966114dcd-10"></a><span class="k">template</span><span class="o">&lt;</span><span class="kt">bool</span> <span class="n">Cond</span><span class="o">&gt;</span>
+<a name="rest_code_a681d07240a349b0b76fa26966114dcd-11"></a><span class="k">struct</span> <span class="n">statement</span> <span class="p">{</span>
+<a name="rest_code_a681d07240a349b0b76fa26966114dcd-12"></a>    <span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">F</span><span class="o">&gt;</span>
+<a name="rest_code_a681d07240a349b0b76fa26966114dcd-13"></a>    <span class="kt">void</span> <span class="n">then</span><span class="p">(</span><span class="k">const</span> <span class="n">F</span><span class="o">&amp;</span> <span class="n">f</span><span class="p">){</span>
+<a name="rest_code_a681d07240a349b0b76fa26966114dcd-14"></a>        <span class="n">f</span><span class="p">(</span><span class="n">identity</span><span class="p">());</span>
+<a name="rest_code_a681d07240a349b0b76fa26966114dcd-15"></a>    <span class="p">}</span>
+<a name="rest_code_a681d07240a349b0b76fa26966114dcd-16"></a>
+<a name="rest_code_a681d07240a349b0b76fa26966114dcd-17"></a>    <span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">F</span><span class="o">&gt;</span>
+<a name="rest_code_a681d07240a349b0b76fa26966114dcd-18"></a>    <span class="kt">void</span> <span class="n">else_</span><span class="p">(</span><span class="k">const</span> <span class="n">F</span><span class="o">&amp;</span><span class="p">){}</span>
+<a name="rest_code_a681d07240a349b0b76fa26966114dcd-19"></a><span class="p">};</span>
+<a name="rest_code_a681d07240a349b0b76fa26966114dcd-20"></a>
+<a name="rest_code_a681d07240a349b0b76fa26966114dcd-21"></a><span class="k">template</span><span class="o">&lt;&gt;</span>
+<a name="rest_code_a681d07240a349b0b76fa26966114dcd-22"></a><span class="k">struct</span> <span class="n">statement</span><span class="o">&lt;</span><span class="nb">false</span><span class="o">&gt;</span> <span class="p">{</span>
+<a name="rest_code_a681d07240a349b0b76fa26966114dcd-23"></a>    <span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">F</span><span class="o">&gt;</span>
+<a name="rest_code_a681d07240a349b0b76fa26966114dcd-24"></a>    <span class="kt">void</span> <span class="n">then</span><span class="p">(</span><span class="k">const</span> <span class="n">F</span><span class="o">&amp;</span><span class="p">){}</span>
+<a name="rest_code_a681d07240a349b0b76fa26966114dcd-25"></a>
+<a name="rest_code_a681d07240a349b0b76fa26966114dcd-26"></a>    <span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">F</span><span class="o">&gt;</span>
+<a name="rest_code_a681d07240a349b0b76fa26966114dcd-27"></a>    <span class="kt">void</span> <span class="n">else_</span><span class="p">(</span><span class="k">const</span> <span class="n">F</span><span class="o">&amp;</span> <span class="n">f</span><span class="p">){</span>
+<a name="rest_code_a681d07240a349b0b76fa26966114dcd-28"></a>        <span class="n">f</span><span class="p">(</span><span class="n">identity</span><span class="p">());</span>
+<a name="rest_code_a681d07240a349b0b76fa26966114dcd-29"></a>    <span class="p">}</span>
+<a name="rest_code_a681d07240a349b0b76fa26966114dcd-30"></a><span class="p">};</span>
+<a name="rest_code_a681d07240a349b0b76fa26966114dcd-31"></a>
+<a name="rest_code_a681d07240a349b0b76fa26966114dcd-32"></a><span class="p">}</span> <span class="c1">//end of namespace static_if_detail</span>
+<a name="rest_code_a681d07240a349b0b76fa26966114dcd-33"></a>
+<a name="rest_code_a681d07240a349b0b76fa26966114dcd-34"></a><span class="k">template</span><span class="o">&lt;</span><span class="kt">bool</span> <span class="n">Cond</span><span class="p">,</span> <span class="k">typename</span> <span class="n">F</span><span class="o">&gt;</span>
+<a name="rest_code_a681d07240a349b0b76fa26966114dcd-35"></a><span class="n">static_if_detail</span><span class="o">::</span><span class="n">statement</span><span class="o">&lt;</span><span class="n">Cond</span><span class="o">&gt;</span> <span class="n">static_if</span><span class="p">(</span><span class="n">F</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">f</span><span class="p">){</span>
+<a name="rest_code_a681d07240a349b0b76fa26966114dcd-36"></a>    <span class="n">static_if_detail</span><span class="o">::</span><span class="n">statement</span><span class="o">&lt;</span><span class="n">Cond</span><span class="o">&gt;</span> <span class="n">if_</span><span class="p">;</span>
+<a name="rest_code_a681d07240a349b0b76fa26966114dcd-37"></a>    <span class="n">if_</span><span class="p">.</span><span class="n">then</span><span class="p">(</span><span class="n">f</span><span class="p">);</span>
+<a name="rest_code_a681d07240a349b0b76fa26966114dcd-38"></a>    <span class="k">return</span> <span class="n">if_</span><span class="p">;</span>
+<a name="rest_code_a681d07240a349b0b76fa26966114dcd-39"></a><span class="p">}</span>
 </pre>
 <p>Note: I got the idea (and most of the code) from the <a class="reference external" href="http://lists.boost.org/Archives/boost/2014/08/216607.php">Boost Mailing List</a>.</p>
 <p>The condition is passed a non-type template parameter and the code for the branch is a passed a generic lambda functor. The <code>static_if</code> function returns a statement structure. We could avoid returning a struct and directly execute, or not, the functor based on the condition, but using a structure allows for the <code>else_</code> part which may be practical. The structure <code>statement</code> is specialized on the condition. If the condition is true, the right part will execute the functor while the false part will not execute anything. The specialization when the condition is false willl do the contrary. A special point here is the use of the identity function. The function is passed to the lambda. The user can then use this function to make non-dependent type dependent. This is necessary if we want to call functions on non-dependent types and these functions may not exist. For instance, you may want to call a function on <code>this</code>, which is not a dependent type.</p>
 <p>Here is how the code will look using this solution:</p>
-<pre class="code cpp"><a name="rest_code_19a97af5b78642c4ae3e8e65303aed26-1"></a><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
-<a name="rest_code_19a97af5b78642c4ae3e8e65303aed26-2"></a><span class="kt">void</span> <span class="n">decrement_kindof</span><span class="p">(</span><span class="n">T</span><span class="o">&amp;</span> <span class="n">value</span><span class="p">){</span>
-<a name="rest_code_19a97af5b78642c4ae3e8e65303aed26-3"></a>    <span class="n">static_if</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span> <span class="n">T</span><span class="o">&gt;::</span><span class="n">value</span><span class="o">&gt;</span><span class="p">([</span><span class="o">&amp;</span><span class="p">](</span><span class="k">auto</span> <span class="n">f</span><span class="p">){</span>
-<a name="rest_code_19a97af5b78642c4ae3e8e65303aed26-4"></a>        <span class="n">f</span><span class="p">(</span><span class="n">value</span><span class="p">).</span><span class="n">pop_back</span><span class="p">();</span>
-<a name="rest_code_19a97af5b78642c4ae3e8e65303aed26-5"></a>    <span class="p">}).</span><span class="n">else_</span><span class="p">([</span><span class="o">&amp;</span><span class="p">](</span><span class="k">auto</span> <span class="n">f</span><span class="p">){</span>
-<a name="rest_code_19a97af5b78642c4ae3e8e65303aed26-6"></a>        <span class="o">--</span><span class="n">f</span><span class="p">(</span><span class="n">value</span><span class="p">);</span>
-<a name="rest_code_19a97af5b78642c4ae3e8e65303aed26-7"></a>    <span class="p">});</span>
-<a name="rest_code_19a97af5b78642c4ae3e8e65303aed26-8"></a><span class="p">}</span>
+<pre class="code cpp"><a name="rest_code_4a33beca7b7b4896a0f1cd0d071a5f5f-1"></a><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<a name="rest_code_4a33beca7b7b4896a0f1cd0d071a5f5f-2"></a><span class="kt">void</span> <span class="n">decrement_kindof</span><span class="p">(</span><span class="n">T</span><span class="o">&amp;</span> <span class="n">value</span><span class="p">){</span>
+<a name="rest_code_4a33beca7b7b4896a0f1cd0d071a5f5f-3"></a>    <span class="n">static_if</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span> <span class="n">T</span><span class="o">&gt;::</span><span class="n">value</span><span class="o">&gt;</span><span class="p">([</span><span class="o">&amp;</span><span class="p">](</span><span class="k">auto</span> <span class="n">f</span><span class="p">){</span>
+<a name="rest_code_4a33beca7b7b4896a0f1cd0d071a5f5f-4"></a>        <span class="n">f</span><span class="p">(</span><span class="n">value</span><span class="p">).</span><span class="n">pop_back</span><span class="p">();</span>
+<a name="rest_code_4a33beca7b7b4896a0f1cd0d071a5f5f-5"></a>    <span class="p">}).</span><span class="n">else_</span><span class="p">([</span><span class="o">&amp;</span><span class="p">](</span><span class="k">auto</span> <span class="n">f</span><span class="p">){</span>
+<a name="rest_code_4a33beca7b7b4896a0f1cd0d071a5f5f-6"></a>        <span class="o">--</span><span class="n">f</span><span class="p">(</span><span class="n">value</span><span class="p">);</span>
+<a name="rest_code_4a33beca7b7b4896a0f1cd0d071a5f5f-7"></a>    <span class="p">});</span>
+<a name="rest_code_4a33beca7b7b4896a0f1cd0d071a5f5f-8"></a><span class="p">}</span>
 </pre>
 <p>It is not as elegant as the "real" <code>static_if</code> version, but it is closer than the other solutions.</p>
 <p>If you don't use the lazy identity function (f), it still works on g++, but not on clang for some reasons.</p>
