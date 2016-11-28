@@ -17,15 +17,15 @@ Moreover, the static files are now hosted and cached by CloudFlare. I've also
 removed the 3D tag cloud which was quite slow. The Google API usage for the
 Google profile badge were also quite slow. Overall, the index page is now really
 fast. The article pages are also much faster but it's not perfect, especially
-because of Disqus that does a shitload of requests and redirects everywhere. I've
-also got rid of the Disqus ads which were really insignificant in the end. It
-may take a while for the ads to disappear according to Disqus.
+because of Disqus that does tons of requests and redirects everywhere. I've also
+got rid of the Disqus ads which were really insignificant in the end. It may
+take a while for the ads to disappear according to Disqus.
 
 I know that it's still not perfect, but I hope that user experience on the blog
 is now improved for all readers and now article can be read on mobile normally.
 I'll try to continue monitoring the speed and usability of the website to see if
 I can improve it further in the coming days.
 
-If you have any issue on the update website, don't hesitate to let me know
+If you have any issue on the updated website, don't hesitate to let me know
 either by commenting on this post or sending me an email (check the Contact
 page).
