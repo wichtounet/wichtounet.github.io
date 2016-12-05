@@ -1,7 +1,315 @@
 <?xml version="1.0" encoding="utf-8"?>
-<?xml-stylesheet type="text/xsl" href="../assets/xml/rss.xsl" media="all"?><rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Blog blog("Baptiste Wicht"); (gcc)</title><link>http://baptiste-wicht.com/</link><description></description><atom:link href="http://baptiste-wicht.com/categories/gcc.xml" type="application/rss+xml" rel="self"></atom:link><language>en</language><lastBuildDate>Mon, 28 Nov 2016 08:25:22 GMT</lastBuildDate><generator>https://getnikola.com/</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>Blazing fast unit test compilation with doctest 1.1</title><link>http://baptiste-wicht.com/posts/2016/09/blazing-fast-unit-test-compilation-with-doctest-11.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;You may remember &lt;a class="reference external" href="http://baptiste-wicht.com/posts/2016/06/reduce-compilation-time-by-another-16-with-catch.html"&gt;my quest for faster compilation times&lt;/a&gt;. I had made several changes to the Catch test framework macros in order to save some compilation at the expense of my test code looking a bit less nice:&lt;/p&gt;
-&lt;pre class="code cpp"&gt;&lt;a name="rest_code_88d6a1d526a140dab3432da9fb19998e-1"&gt;&lt;/a&gt;&lt;span class="n"&gt;REQUIRE&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="mi"&gt;9&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt; &lt;span class="c1"&gt;//Before&lt;/span&gt;
-&lt;a name="rest_code_88d6a1d526a140dab3432da9fb19998e-2"&gt;&lt;/a&gt;&lt;span class="n"&gt;REQUIRE_EQUALS&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;9&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt; &lt;span class="c1"&gt;//After&lt;/span&gt;
+<?xml-stylesheet type="text/xsl" href="../assets/xml/rss.xsl" media="all"?><rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Blog blog("Baptiste Wicht"); (gcc)</title><link>http://baptiste-wicht.com/</link><description></description><atom:link href="http://baptiste-wicht.com/categories/gcc.xml" type="application/rss+xml" rel="self"></atom:link><language>en</language><lastBuildDate>Mon, 05 Dec 2016 19:55:08 GMT</lastBuildDate><generator>https://getnikola.com/</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>zapcc C++ compilation speed against gcc 5.4 and clang 3.9</title><link>http://baptiste-wicht.com/posts/2016/12/zapcc-cpp-compilation-speed-against-gcc-54-and-clang-39.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;A week ago, I compared the &lt;a class="reference external" href="http://baptiste-wicht.com/posts/2016/11/zapcc-a-faster-cpp-compiler.html"&gt;compilation time performance of zapcc against gcc-4.9.3 and clang-3.7&lt;/a&gt;. On debug builds, zapcc was about 2 times faster than gcc and 3 times faster than clang. In this post, I'm going to try some more recent compilers, namely gcc 5.4 and clang 3.9 on the same project. If you want more information on zapcc, read the previous posts, this post will concentrate on results.&lt;/p&gt;
+&lt;p&gt;Again, I use my Expression Template Library
+(&lt;a class="reference external" href="https://github.com/wichtounet/etl/"&gt;ETL&lt;/a&gt;). This is a purely header-only
+library with lots of templates. I'm going to compile the full test cases.&lt;/p&gt;
+&lt;p&gt;The results of the two articles are not directly comparable, since they were
+obtained on two different computers. The one on which the present results are
+done has a less powerful and only 16Go of RAM compared to the 32Go of RAM of my
+build machine. Also take into account that that the present results were
+obtained on a Desktop machine, there can be some perturbations from background
+tasks.&lt;/p&gt;
+&lt;p&gt;Just like on the previous results, it does not help using more threads than
+physical cores, therefore, the results were only computed on up to 4 cores on
+this machine.&lt;/p&gt;
+&lt;p&gt;The link time is not taken into account on the results.&lt;/p&gt;
+&lt;div class="section" id="debug-build"&gt;
+&lt;h2&gt;Debug build&lt;/h2&gt;
+&lt;p&gt;Let's start with the result of the debug build.&lt;/p&gt;
+&lt;table border="1" class="docutils"&gt;
+&lt;colgroup&gt;
+&lt;col width="55%"&gt;
+&lt;col width="15%"&gt;
+&lt;col width="15%"&gt;
+&lt;col width="15%"&gt;
+&lt;/colgroup&gt;
+&lt;thead valign="bottom"&gt;
+&lt;tr&gt;&lt;th class="head"&gt;Compiler&lt;/th&gt;
+&lt;th class="head"&gt;-j1&lt;/th&gt;
+&lt;th class="head"&gt;-j2&lt;/th&gt;
+&lt;th class="head"&gt;-j4&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td&gt;g++-5.4.0&lt;/td&gt;
+&lt;td&gt;469s&lt;/td&gt;
+&lt;td&gt;230s&lt;/td&gt;
+&lt;td&gt;130s&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;clang++-3.9&lt;/td&gt;
+&lt;td&gt;710s&lt;/td&gt;
+&lt;td&gt;371s&lt;/td&gt;
+&lt;td&gt;218s&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;zapcc++&lt;/td&gt;
+&lt;td&gt;214s&lt;/td&gt;
+&lt;td&gt;112s&lt;/td&gt;
+&lt;td&gt;66s&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;Speedup VS Clang&lt;/td&gt;
+&lt;td&gt;3.31&lt;/td&gt;
+&lt;td&gt;3.31&lt;/td&gt;
+&lt;td&gt;3.3&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;Speedup VS GCC&lt;/td&gt;
+&lt;td&gt;2.19&lt;/td&gt;
+&lt;td&gt;2.05&lt;/td&gt;
+&lt;td&gt;1.96&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;The results are almost the same as the previous test. zapcc is 3.3 times faster
+to compile than Clang and around 2 times faster than GCC. It seems that GCC 5.4
+is a bit faster than GCC 4.9.3 while clang 3.9 is a bit slower than clang 3.7,
+but nothing terribly significant.&lt;/p&gt;
+&lt;p&gt;Overall, for debug builds, zapcc can bring a very significant improvement to
+your compile times.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="release-build"&gt;
+&lt;h2&gt;Release build&lt;/h2&gt;
+&lt;p&gt;Let's see what is the status of Release builds. Since the results are comparable
+between the numbers of threads, the results here are just for one thread.&lt;/p&gt;
+&lt;p&gt;This is more time consuming since a lot of optimizations are enabled and more
+features from ETL are enabled as well.&lt;/p&gt;
+&lt;table border="1" class="docutils"&gt;
+&lt;colgroup&gt;
+&lt;col width="79%"&gt;
+&lt;col width="21%"&gt;
+&lt;/colgroup&gt;
+&lt;thead valign="bottom"&gt;
+&lt;tr&gt;&lt;th class="head"&gt;Compiler&lt;/th&gt;
+&lt;th class="head"&gt;-j1&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td&gt;g++-5.4.0&lt;/td&gt;
+&lt;td&gt;782s&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;clang++-3.9&lt;/td&gt;
+&lt;td&gt;960s&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;zapcc++&lt;/td&gt;
+&lt;td&gt;640s&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;Speedup VS Clang&lt;/td&gt;
+&lt;td&gt;1.5&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;Speedup VS GCC&lt;/td&gt;
+&lt;td&gt;1.22&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;On a release build, the speedups are much less interesting. Nevertheless, they
+are still significant. zapcc is still 1.2 times faster than gcc and 1.5 times
+faster than clang. Then speedup against clang 3.9 is significantly higher than
+it was on my experiment with clang 3.7, it's possible that clang 3.9 is slower
+or simply has new optimization passes.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="conclusion"&gt;
+&lt;h2&gt;Conclusion&lt;/h2&gt;
+&lt;p&gt;The previous conclusion still holds with modern version of compilers: zapcc is
+much faster than other compilers on Debug builds of template heavy code. More
+than 3 times faster than clang-3.9 and about 2 times faster than gcc-5.4. Since
+it's based on clang, there should not be any issue compiling projects that
+already compile with a recent clang. Even though the speedups are less
+interesting on a release build, it is still significantly, especially compared
+against clang.&lt;/p&gt;
+&lt;p&gt;I'm really interested in finding out what will be the pricing for zapcc once
+out of the beta or if they will be able to get even faster!&lt;/p&gt;
+&lt;p&gt;For the comparison with gcc 4.9.3 and clang 3.7, you can have a look at
+&lt;a class="reference external" href="http://baptiste-wicht.com/posts/2016/11/zapcc-a-faster-cpp-compiler.html"&gt;this article&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;If you want more information about zapcc, you can go to the
+&lt;a class="reference external" href="https://www.zapcc.com/"&gt;official website of zapcc&lt;/a&gt;&lt;/p&gt;
+&lt;/div&gt;&lt;/div&gt;</description><category>C++</category><category>clang</category><category>compiler</category><category>etl</category><category>gcc</category><category>meta</category><category>projects</category><guid>http://baptiste-wicht.com/posts/2016/12/zapcc-cpp-compilation-speed-against-gcc-54-and-clang-39.html</guid><pubDate>Mon, 05 Dec 2016 17:46:09 GMT</pubDate></item><item><title>zapcc - a faster C++ compiler</title><link>http://baptiste-wicht.com/posts/2016/11/zapcc-a-faster-cpp-compiler.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;Update: For a comparison against more modern compiler versions, you can read: &lt;a class="reference external" href="http://localhost:8000/posts/2016/12/zapcc-cpp-compilation-speed-against-gcc-54-and-clang-39.html"&gt;zapcc C++ compilation speed against gcc 5.4 and clang 3.9&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;I just joined the private beta program of zapcc. Zapcc is a c++ compiler, based
+on Clang which aims at being much faster than other C++ compilers. How they are
+doing this is using a caching server that saves some of the compiler structures,
+which should speed up compilation a lot. The private beta is free, but once the
+compiler is ready, it will be a commercial compiler.&lt;/p&gt;
+&lt;p&gt;Every C++ developer knows that compilation time can quickly be an issue when
+programs are getting very big and especially when working with template-heavy
+code.&lt;/p&gt;
+&lt;p&gt;To benchmark this new compiler, I use my Expression Template Library
+(&lt;a class="reference external" href="https://github.com/wichtounet/etl/"&gt;ETL&lt;/a&gt;). This is a purely header-only
+library with lots of templates. There are lots of test cases which is what I'm
+going to compile. I'm going to compare against Clang-3.7 and gcc-4.9.3.&lt;/p&gt;
+&lt;p&gt;I have configured zapcc to let is use 2Go RAM per caching server, which is the
+maximum allowed. Moreover, I killed the servers before each tests.&lt;/p&gt;
+&lt;div class="section" id="debug-build"&gt;
+&lt;h2&gt;Debug build&lt;/h2&gt;
+&lt;p&gt;Let's start with a debug build. In that configuration, there is no optimization
+going on and several of the features of the library (GPU, BLAS, ...) are
+disabled. This is the fastest way to compile ETL. I gathered this result on
+a 4 core, 8 threads, Intel processor, with an SSD.&lt;/p&gt;
+&lt;p&gt;The following table presents the results with different number of threads and
+the difference of zapcc compared to the other compilers:&lt;/p&gt;
+&lt;table border="1" class="docutils"&gt;
+&lt;colgroup&gt;
+&lt;col width="42%"&gt;
+&lt;col width="11%"&gt;
+&lt;col width="13%"&gt;
+&lt;col width="11%"&gt;
+&lt;col width="11%"&gt;
+&lt;col width="11%"&gt;
+&lt;/colgroup&gt;
+&lt;thead valign="bottom"&gt;
+&lt;tr&gt;&lt;th class="head"&gt;Compiler&lt;/th&gt;
+&lt;th class="head"&gt;-j1&lt;/th&gt;
+&lt;th class="head"&gt;-j2&lt;/th&gt;
+&lt;th class="head"&gt;-j4&lt;/th&gt;
+&lt;th class="head"&gt;-j6&lt;/th&gt;
+&lt;th class="head"&gt;-j8&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td&gt;g++-4.9.3&lt;/td&gt;
+&lt;td&gt;350s&lt;/td&gt;
+&lt;td&gt;185s&lt;/td&gt;
+&lt;td&gt;104s&lt;/td&gt;
+&lt;td&gt;94s&lt;/td&gt;
+&lt;td&gt;91s&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;clang++-3.7&lt;/td&gt;
+&lt;td&gt;513s&lt;/td&gt;
+&lt;td&gt;271s&lt;/td&gt;
+&lt;td&gt;153s&lt;/td&gt;
+&lt;td&gt;145s&lt;/td&gt;
+&lt;td&gt;138s&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;zapcc++&lt;/td&gt;
+&lt;td&gt;158s&lt;/td&gt;
+&lt;td&gt;87s&lt;/td&gt;
+&lt;td&gt;47s&lt;/td&gt;
+&lt;td&gt;44s&lt;/td&gt;
+&lt;td&gt;42s&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;Speedup VS Clang&lt;/td&gt;
+&lt;td&gt;3.24&lt;/td&gt;
+&lt;td&gt;3.103&lt;/td&gt;
+&lt;td&gt;3.25&lt;/td&gt;
+&lt;td&gt;3.29&lt;/td&gt;
+&lt;td&gt;3.28&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;Speedup VS GCC&lt;/td&gt;
+&lt;td&gt;2.21&lt;/td&gt;
+&lt;td&gt;2.12&lt;/td&gt;
+&lt;td&gt;2.21&lt;/td&gt;
+&lt;td&gt;2.13&lt;/td&gt;
+&lt;td&gt;2.16&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;The result is pretty clear! zapcc is around &lt;strong&gt;three times faster than Clang&lt;/strong&gt; and around
+&lt;strong&gt;two times faster than GCC&lt;/strong&gt;. This is pretty impressive!&lt;/p&gt;
+&lt;p&gt;For those that think than Clang is always faster than GCC, keep in mind that
+this is not the case for template-heavy code such as this library. In all my
+tests, Clang has always been slower and much memory hungrier than GCC on
+template-heavy C++ code. And sometimes the difference is very significant.&lt;/p&gt;
+&lt;p&gt;Interestingly, we can also see that going past the physical cores is not really
+interesting on this computer. On some computer, the speedups are interesting,
+but not on this one. Always benchmark!&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="release-build"&gt;
+&lt;h2&gt;Release build&lt;/h2&gt;
+&lt;p&gt;We have seen the results on a debug build, let's now compare on something a bit
+more timely, a release build with all options of ETL enabled (GPU, BLAS, ...),
+which should make it significantly longer to compile.&lt;/p&gt;
+&lt;p&gt;Again, the table:&lt;/p&gt;
+&lt;table border="1" class="docutils"&gt;
+&lt;colgroup&gt;
+&lt;col width="40%"&gt;
+&lt;col width="12%"&gt;
+&lt;col width="12%"&gt;
+&lt;col width="12%"&gt;
+&lt;col width="12%"&gt;
+&lt;col width="12%"&gt;
+&lt;/colgroup&gt;
+&lt;thead valign="bottom"&gt;
+&lt;tr&gt;&lt;th class="head"&gt;Compiler&lt;/th&gt;
+&lt;th class="head"&gt;-j1&lt;/th&gt;
+&lt;th class="head"&gt;-j2&lt;/th&gt;
+&lt;th class="head"&gt;-j4&lt;/th&gt;
+&lt;th class="head"&gt;-j6&lt;/th&gt;
+&lt;th class="head"&gt;-j8&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td&gt;g++-4.9.3&lt;/td&gt;
+&lt;td&gt;628s&lt;/td&gt;
+&lt;td&gt;336s&lt;/td&gt;
+&lt;td&gt;197s&lt;/td&gt;
+&lt;td&gt;189s&lt;/td&gt;
+&lt;td&gt;184s&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;clang++-3.7&lt;/td&gt;
+&lt;td&gt;663s&lt;/td&gt;
+&lt;td&gt;388s&lt;/td&gt;
+&lt;td&gt;215s&lt;/td&gt;
+&lt;td&gt;212s&lt;/td&gt;
+&lt;td&gt;205s&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;zapcc++&lt;/td&gt;
+&lt;td&gt;515s&lt;/td&gt;
+&lt;td&gt;281s&lt;/td&gt;
+&lt;td&gt;173s&lt;/td&gt;
+&lt;td&gt;168s&lt;/td&gt;
+&lt;td&gt;158s&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;Speedup VS Clang&lt;/td&gt;
+&lt;td&gt;1.28&lt;/td&gt;
+&lt;td&gt;1.38&lt;/td&gt;
+&lt;td&gt;1.24&lt;/td&gt;
+&lt;td&gt;1.26&lt;/td&gt;
+&lt;td&gt;1.29&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;Speedup VS GCC&lt;/td&gt;
+&lt;td&gt;1.21&lt;/td&gt;
+&lt;td&gt;1.30&lt;/td&gt;
+&lt;td&gt;1.13&lt;/td&gt;
+&lt;td&gt;1.12&lt;/td&gt;
+&lt;td&gt;1.16&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;This time, we can see that the difference is much lower. Zapcc is &lt;strong&gt;between 1.2
+and 1.4 times faster than Clang&lt;/strong&gt; and &lt;strong&gt;between 1.1 and 1.3 times faster than
+GCC&lt;/strong&gt;. This shows that most of the speedups from zapcc are in the front end of
+the compiler. This is not a lot but still significant over long builds,
+especially if you have few threads where the absolute difference would be
+higher.&lt;/p&gt;
+&lt;p&gt;We can also observe that Clang is now almost on par with GCC which shows that
+optimization is faster in Clang while front and backend is faster in gcc.&lt;/p&gt;
+&lt;p&gt;You also have to keep in mind that zapcc memory usage is higher than Clang
+because of all the caching. Moreover, the server are still up in between
+compilations, so this memory usage stays between builds, which may not be what
+you want.&lt;/p&gt;
+&lt;p&gt;As for runtime, I have not seem any significant difference in performance
+between the clang version and the zapcc. According to the official benchmarks
+and documentation, there should not be any difference in that between zapcc and
+the version of clang on which zapcc is based.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="incremental-build"&gt;
+&lt;h2&gt;Incremental build&lt;/h2&gt;
+&lt;p&gt;Normally, zapcc should shine at incremental building, but I was unable to show
+any speedup when changing a single without killing the zapcc servers. Maybe
+I did something wrong in my usage of zapcc.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="conclusion"&gt;
+&lt;h2&gt;Conclusion&lt;/h2&gt;
+&lt;p&gt;In conclusion, we can see that zapcc is always faster than both GCC and Clang,
+on my template-heavy library. Moreover, on debug builds, it is much faster than
+any of the two compilers, being more than 2 times faster than GCC and more than
+3 times faster than clang. This is really great. Moreover, I have not see any
+issue with the tool so far, it can seamlessly replace Clang without problem.&lt;/p&gt;
+&lt;p&gt;It's a bit weird that you cannot allocate more than 2Go to the zapcc servers.&lt;/p&gt;
+&lt;p&gt;For a program, that's really impressive. I hope that they are continuing the
+good work and especially that this motivates other compilers to improve the
+speed of compilation (especially of templates).&lt;/p&gt;
+&lt;p&gt;If you want more information, you can go to the
+&lt;a class="reference external" href="https://www.zapcc.com/"&gt;official website of zapcc&lt;/a&gt;&lt;/p&gt;
+&lt;/div&gt;&lt;/div&gt;</description><category>C++</category><category>clang</category><category>compiler</category><category>etl</category><category>gcc</category><category>projects</category><category>zapcc</category><guid>http://baptiste-wicht.com/posts/2016/11/zapcc-a-faster-cpp-compiler.html</guid><pubDate>Sat, 26 Nov 2016 12:17:50 GMT</pubDate></item><item><title>Blazing fast unit test compilation with doctest 1.1</title><link>http://baptiste-wicht.com/posts/2016/09/blazing-fast-unit-test-compilation-with-doctest-11.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;You may remember &lt;a class="reference external" href="http://baptiste-wicht.com/posts/2016/06/reduce-compilation-time-by-another-16-with-catch.html"&gt;my quest for faster compilation times&lt;/a&gt;. I had made several changes to the Catch test framework macros in order to save some compilation at the expense of my test code looking a bit less nice:&lt;/p&gt;
+&lt;pre class="code cpp"&gt;&lt;a name="rest_code_e1261b157ad4477b80ca4338c1002541-1"&gt;&lt;/a&gt;&lt;span class="n"&gt;REQUIRE&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="mi"&gt;9&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt; &lt;span class="c1"&gt;//Before&lt;/span&gt;
+&lt;a name="rest_code_e1261b157ad4477b80ca4338c1002541-2"&gt;&lt;/a&gt;&lt;span class="n"&gt;REQUIRE_EQUALS&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;9&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt; &lt;span class="c1"&gt;//After&lt;/span&gt;
 &lt;/pre&gt;&lt;p&gt;The first line is a little bit better, but using several optimizations, I was
 able to dramatically change the compilation time of the test cases of ETL. In
 the end, I don't think that the difference between the two lines justifies the
@@ -136,56 +444,56 @@ probably the way to go.&lt;/p&gt;
 &lt;h2&gt;Removal of std::async&lt;/h2&gt;
 &lt;p&gt;The second improvement was very surprising. I was working on improving the compilation of ETL and found out that the sum and average reductions of matrices were dramatically slow, about an order of magnitude slower than standard operations on matrices. In parallel (but the two facts are linked), I also found out another weird fact when splitting a file into 10 parts (the file was comprised of 10 test cases). Compiling the 10 parts separarely (and sequentially, not multiple threads) was about 40% faster than compiling the complete file. There was no swapping so it was not a memory issue. This is not expected. Generally, it is faster to compile a big file than to compile its parts separately. The advantage of smaller files is that you can compile them in parallel and that incremental builds are faster (only compile a small part).&lt;/p&gt;
 &lt;p&gt;By elimination, I found out that most of the time was spent inside the function that was dispatching in parallel the work for accumulating the sum of a matrix. Here is the function:&lt;/p&gt;
-&lt;pre class="code cpp"&gt;&lt;a name="rest_code_97f0b37970e24d05a9f732f7cef85f19-1"&gt;&lt;/a&gt;&lt;span class="k"&gt;template&lt;/span&gt; &lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="k"&gt;typename&lt;/span&gt; &lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="k"&gt;typename&lt;/span&gt; &lt;span class="n"&gt;Functor&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="k"&gt;typename&lt;/span&gt; &lt;span class="n"&gt;AccFunctor&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
-&lt;a name="rest_code_97f0b37970e24d05a9f732f7cef85f19-2"&gt;&lt;/a&gt;&lt;span class="kr"&gt;inline&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;dispatch_1d_acc&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;bool&lt;/span&gt; &lt;span class="n"&gt;p&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;Functor&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class="n"&gt;functor&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;AccFunctor&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class="n"&gt;acc_functor&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;first&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;last&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
-&lt;a name="rest_code_97f0b37970e24d05a9f732f7cef85f19-3"&gt;&lt;/a&gt;    &lt;span class="k"&gt;if&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;p&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
-&lt;a name="rest_code_97f0b37970e24d05a9f732f7cef85f19-4"&gt;&lt;/a&gt;        &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;vector&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;future&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;futures&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;threads&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
-&lt;a name="rest_code_97f0b37970e24d05a9f732f7cef85f19-5"&gt;&lt;/a&gt;
-&lt;a name="rest_code_97f0b37970e24d05a9f732f7cef85f19-6"&gt;&lt;/a&gt;        &lt;span class="k"&gt;auto&lt;/span&gt; &lt;span class="n"&gt;n&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;last&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="n"&gt;first&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
-&lt;a name="rest_code_97f0b37970e24d05a9f732f7cef85f19-7"&gt;&lt;/a&gt;        &lt;span class="k"&gt;auto&lt;/span&gt; &lt;span class="n"&gt;batch&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;n&lt;/span&gt; &lt;span class="o"&gt;/&lt;/span&gt; &lt;span class="n"&gt;threads&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
-&lt;a name="rest_code_97f0b37970e24d05a9f732f7cef85f19-8"&gt;&lt;/a&gt;
-&lt;a name="rest_code_97f0b37970e24d05a9f732f7cef85f19-9"&gt;&lt;/a&gt;        &lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;t&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;t&lt;/span&gt; &lt;span class="o"&gt;&amp;lt;&lt;/span&gt; &lt;span class="n"&gt;threads&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;t&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
-&lt;a name="rest_code_97f0b37970e24d05a9f732f7cef85f19-10"&gt;&lt;/a&gt;            &lt;span class="n"&gt;futures&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;t&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;async&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;launch&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;async&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;functor&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;first&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;t&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="n"&gt;batch&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;first&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;t&lt;/span&gt;&lt;span class="o"&gt;+&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="n"&gt;batch&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
-&lt;a name="rest_code_97f0b37970e24d05a9f732f7cef85f19-11"&gt;&lt;/a&gt;        &lt;span class="p"&gt;}&lt;/span&gt;
-&lt;a name="rest_code_97f0b37970e24d05a9f732f7cef85f19-12"&gt;&lt;/a&gt;
-&lt;a name="rest_code_97f0b37970e24d05a9f732f7cef85f19-13"&gt;&lt;/a&gt;        &lt;span class="n"&gt;acc_functor&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;functor&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;first&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;threads&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="n"&gt;batch&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;last&lt;/span&gt;&lt;span class="p"&gt;));&lt;/span&gt;
-&lt;a name="rest_code_97f0b37970e24d05a9f732f7cef85f19-14"&gt;&lt;/a&gt;
-&lt;a name="rest_code_97f0b37970e24d05a9f732f7cef85f19-15"&gt;&lt;/a&gt;        &lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="k"&gt;auto&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt; &lt;span class="nl"&gt;fut&lt;/span&gt; &lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="n"&gt;futures&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
-&lt;a name="rest_code_97f0b37970e24d05a9f732f7cef85f19-16"&gt;&lt;/a&gt;            &lt;span class="n"&gt;acc_functor&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;fut&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get&lt;/span&gt;&lt;span class="p"&gt;());&lt;/span&gt;
-&lt;a name="rest_code_97f0b37970e24d05a9f732f7cef85f19-17"&gt;&lt;/a&gt;        &lt;span class="p"&gt;}&lt;/span&gt;
-&lt;a name="rest_code_97f0b37970e24d05a9f732f7cef85f19-18"&gt;&lt;/a&gt;    &lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="k"&gt;else&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
-&lt;a name="rest_code_97f0b37970e24d05a9f732f7cef85f19-19"&gt;&lt;/a&gt;        &lt;span class="n"&gt;acc_functor&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;functor&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;first&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;last&lt;/span&gt;&lt;span class="p"&gt;));&lt;/span&gt;
-&lt;a name="rest_code_97f0b37970e24d05a9f732f7cef85f19-20"&gt;&lt;/a&gt;    &lt;span class="p"&gt;}&lt;/span&gt;
-&lt;a name="rest_code_97f0b37970e24d05a9f732f7cef85f19-21"&gt;&lt;/a&gt;&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;pre class="code cpp"&gt;&lt;a name="rest_code_2f658faccd73460e81ad05836f2b7acb-1"&gt;&lt;/a&gt;&lt;span class="k"&gt;template&lt;/span&gt; &lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="k"&gt;typename&lt;/span&gt; &lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="k"&gt;typename&lt;/span&gt; &lt;span class="n"&gt;Functor&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="k"&gt;typename&lt;/span&gt; &lt;span class="n"&gt;AccFunctor&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;a name="rest_code_2f658faccd73460e81ad05836f2b7acb-2"&gt;&lt;/a&gt;&lt;span class="kr"&gt;inline&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;dispatch_1d_acc&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;bool&lt;/span&gt; &lt;span class="n"&gt;p&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;Functor&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class="n"&gt;functor&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;AccFunctor&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class="n"&gt;acc_functor&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;first&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;last&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+&lt;a name="rest_code_2f658faccd73460e81ad05836f2b7acb-3"&gt;&lt;/a&gt;    &lt;span class="k"&gt;if&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;p&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+&lt;a name="rest_code_2f658faccd73460e81ad05836f2b7acb-4"&gt;&lt;/a&gt;        &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;vector&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;future&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;futures&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;threads&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;a name="rest_code_2f658faccd73460e81ad05836f2b7acb-5"&gt;&lt;/a&gt;
+&lt;a name="rest_code_2f658faccd73460e81ad05836f2b7acb-6"&gt;&lt;/a&gt;        &lt;span class="k"&gt;auto&lt;/span&gt; &lt;span class="n"&gt;n&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;last&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="n"&gt;first&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;a name="rest_code_2f658faccd73460e81ad05836f2b7acb-7"&gt;&lt;/a&gt;        &lt;span class="k"&gt;auto&lt;/span&gt; &lt;span class="n"&gt;batch&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;n&lt;/span&gt; &lt;span class="o"&gt;/&lt;/span&gt; &lt;span class="n"&gt;threads&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;a name="rest_code_2f658faccd73460e81ad05836f2b7acb-8"&gt;&lt;/a&gt;
+&lt;a name="rest_code_2f658faccd73460e81ad05836f2b7acb-9"&gt;&lt;/a&gt;        &lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;t&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;t&lt;/span&gt; &lt;span class="o"&gt;&amp;lt;&lt;/span&gt; &lt;span class="n"&gt;threads&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;t&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+&lt;a name="rest_code_2f658faccd73460e81ad05836f2b7acb-10"&gt;&lt;/a&gt;            &lt;span class="n"&gt;futures&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;t&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;async&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;launch&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;async&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;functor&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;first&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;t&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="n"&gt;batch&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;first&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;t&lt;/span&gt;&lt;span class="o"&gt;+&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="n"&gt;batch&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;a name="rest_code_2f658faccd73460e81ad05836f2b7acb-11"&gt;&lt;/a&gt;        &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;a name="rest_code_2f658faccd73460e81ad05836f2b7acb-12"&gt;&lt;/a&gt;
+&lt;a name="rest_code_2f658faccd73460e81ad05836f2b7acb-13"&gt;&lt;/a&gt;        &lt;span class="n"&gt;acc_functor&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;functor&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;first&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;threads&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="n"&gt;batch&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;last&lt;/span&gt;&lt;span class="p"&gt;));&lt;/span&gt;
+&lt;a name="rest_code_2f658faccd73460e81ad05836f2b7acb-14"&gt;&lt;/a&gt;
+&lt;a name="rest_code_2f658faccd73460e81ad05836f2b7acb-15"&gt;&lt;/a&gt;        &lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="k"&gt;auto&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt; &lt;span class="nl"&gt;fut&lt;/span&gt; &lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="n"&gt;futures&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+&lt;a name="rest_code_2f658faccd73460e81ad05836f2b7acb-16"&gt;&lt;/a&gt;            &lt;span class="n"&gt;acc_functor&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;fut&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get&lt;/span&gt;&lt;span class="p"&gt;());&lt;/span&gt;
+&lt;a name="rest_code_2f658faccd73460e81ad05836f2b7acb-17"&gt;&lt;/a&gt;        &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;a name="rest_code_2f658faccd73460e81ad05836f2b7acb-18"&gt;&lt;/a&gt;    &lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="k"&gt;else&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+&lt;a name="rest_code_2f658faccd73460e81ad05836f2b7acb-19"&gt;&lt;/a&gt;        &lt;span class="n"&gt;acc_functor&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;functor&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;first&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;last&lt;/span&gt;&lt;span class="p"&gt;));&lt;/span&gt;
+&lt;a name="rest_code_2f658faccd73460e81ad05836f2b7acb-20"&gt;&lt;/a&gt;    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;a name="rest_code_2f658faccd73460e81ad05836f2b7acb-21"&gt;&lt;/a&gt;&lt;span class="p"&gt;}&lt;/span&gt;
 &lt;/pre&gt;&lt;p&gt;There isn't anything really fancy about this function. This takes one functor that will be done in parallel and one function for accumulation.  It dispatches all the work in batch and then accumulates the results. I tried several things to optimize the compilation time of this function, but nothing worked. The line that was consuming all the time was the std::async line. This function was using std::async because the thread pool that I'm generally using does not support returning values from parallel functors. I decided to use a workaround and use my thread pool and I came out with this version:&lt;/p&gt;
-&lt;pre class="code cpp"&gt;&lt;a name="rest_code_722b6807df7746e7864eb98ae99fb4d0-1"&gt;&lt;/a&gt;&lt;span class="k"&gt;template&lt;/span&gt; &lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="k"&gt;typename&lt;/span&gt; &lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="k"&gt;typename&lt;/span&gt; &lt;span class="n"&gt;Functor&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="k"&gt;typename&lt;/span&gt; &lt;span class="n"&gt;AccFunctor&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
-&lt;a name="rest_code_722b6807df7746e7864eb98ae99fb4d0-2"&gt;&lt;/a&gt;&lt;span class="kr"&gt;inline&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;dispatch_1d_acc&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;bool&lt;/span&gt; &lt;span class="n"&gt;p&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;Functor&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class="n"&gt;functor&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;AccFunctor&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class="n"&gt;acc_functor&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;first&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;last&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
-&lt;a name="rest_code_722b6807df7746e7864eb98ae99fb4d0-3"&gt;&lt;/a&gt;    &lt;span class="k"&gt;if&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;p&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
-&lt;a name="rest_code_722b6807df7746e7864eb98ae99fb4d0-4"&gt;&lt;/a&gt;        &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;vector&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;futures&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;threads&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
-&lt;a name="rest_code_722b6807df7746e7864eb98ae99fb4d0-5"&gt;&lt;/a&gt;        &lt;span class="n"&gt;cpp&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;default_thread_pool&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;pool&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;threads&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
-&lt;a name="rest_code_722b6807df7746e7864eb98ae99fb4d0-6"&gt;&lt;/a&gt;
-&lt;a name="rest_code_722b6807df7746e7864eb98ae99fb4d0-7"&gt;&lt;/a&gt;        &lt;span class="k"&gt;auto&lt;/span&gt; &lt;span class="n"&gt;n&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;last&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="n"&gt;first&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
-&lt;a name="rest_code_722b6807df7746e7864eb98ae99fb4d0-8"&gt;&lt;/a&gt;        &lt;span class="k"&gt;auto&lt;/span&gt; &lt;span class="n"&gt;batch&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;n&lt;/span&gt; &lt;span class="o"&gt;/&lt;/span&gt; &lt;span class="n"&gt;threads&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
-&lt;a name="rest_code_722b6807df7746e7864eb98ae99fb4d0-9"&gt;&lt;/a&gt;
-&lt;a name="rest_code_722b6807df7746e7864eb98ae99fb4d0-10"&gt;&lt;/a&gt;        &lt;span class="k"&gt;auto&lt;/span&gt; &lt;span class="n"&gt;sub_functor&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;futures&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;functor&lt;/span&gt;&lt;span class="p"&gt;](&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;t&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;first&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;last&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
-&lt;a name="rest_code_722b6807df7746e7864eb98ae99fb4d0-11"&gt;&lt;/a&gt;            &lt;span class="n"&gt;futures&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;t&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;functor&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;first&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;last&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
-&lt;a name="rest_code_722b6807df7746e7864eb98ae99fb4d0-12"&gt;&lt;/a&gt;        &lt;span class="p"&gt;};&lt;/span&gt;
-&lt;a name="rest_code_722b6807df7746e7864eb98ae99fb4d0-13"&gt;&lt;/a&gt;
-&lt;a name="rest_code_722b6807df7746e7864eb98ae99fb4d0-14"&gt;&lt;/a&gt;        &lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;t&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;t&lt;/span&gt; &lt;span class="o"&gt;&amp;lt;&lt;/span&gt; &lt;span class="n"&gt;threads&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;t&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
-&lt;a name="rest_code_722b6807df7746e7864eb98ae99fb4d0-15"&gt;&lt;/a&gt;            &lt;span class="n"&gt;pool&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;do_task&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;sub_functor&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;t&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;first&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;t&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="n"&gt;batch&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;first&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;t&lt;/span&gt;&lt;span class="o"&gt;+&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="n"&gt;batch&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
-&lt;a name="rest_code_722b6807df7746e7864eb98ae99fb4d0-16"&gt;&lt;/a&gt;        &lt;span class="p"&gt;}&lt;/span&gt;
-&lt;a name="rest_code_722b6807df7746e7864eb98ae99fb4d0-17"&gt;&lt;/a&gt;
-&lt;a name="rest_code_722b6807df7746e7864eb98ae99fb4d0-18"&gt;&lt;/a&gt;        &lt;span class="n"&gt;acc_functor&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;functor&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;first&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;threads&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="n"&gt;batch&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;last&lt;/span&gt;&lt;span class="p"&gt;));&lt;/span&gt;
-&lt;a name="rest_code_722b6807df7746e7864eb98ae99fb4d0-19"&gt;&lt;/a&gt;
-&lt;a name="rest_code_722b6807df7746e7864eb98ae99fb4d0-20"&gt;&lt;/a&gt;        &lt;span class="n"&gt;pool&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;wait&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
-&lt;a name="rest_code_722b6807df7746e7864eb98ae99fb4d0-21"&gt;&lt;/a&gt;
-&lt;a name="rest_code_722b6807df7746e7864eb98ae99fb4d0-22"&gt;&lt;/a&gt;        &lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="k"&gt;auto&lt;/span&gt; &lt;span class="nl"&gt;fut&lt;/span&gt; &lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="n"&gt;futures&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
-&lt;a name="rest_code_722b6807df7746e7864eb98ae99fb4d0-23"&gt;&lt;/a&gt;            &lt;span class="n"&gt;acc_functor&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;fut&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
-&lt;a name="rest_code_722b6807df7746e7864eb98ae99fb4d0-24"&gt;&lt;/a&gt;        &lt;span class="p"&gt;}&lt;/span&gt;
-&lt;a name="rest_code_722b6807df7746e7864eb98ae99fb4d0-25"&gt;&lt;/a&gt;    &lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="k"&gt;else&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
-&lt;a name="rest_code_722b6807df7746e7864eb98ae99fb4d0-26"&gt;&lt;/a&gt;        &lt;span class="n"&gt;acc_functor&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;functor&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;first&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;last&lt;/span&gt;&lt;span class="p"&gt;));&lt;/span&gt;
-&lt;a name="rest_code_722b6807df7746e7864eb98ae99fb4d0-27"&gt;&lt;/a&gt;    &lt;span class="p"&gt;}&lt;/span&gt;
-&lt;a name="rest_code_722b6807df7746e7864eb98ae99fb4d0-28"&gt;&lt;/a&gt;&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;pre class="code cpp"&gt;&lt;a name="rest_code_3641cdb096e04e9889b86d07697a7c53-1"&gt;&lt;/a&gt;&lt;span class="k"&gt;template&lt;/span&gt; &lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="k"&gt;typename&lt;/span&gt; &lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="k"&gt;typename&lt;/span&gt; &lt;span class="n"&gt;Functor&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="k"&gt;typename&lt;/span&gt; &lt;span class="n"&gt;AccFunctor&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;a name="rest_code_3641cdb096e04e9889b86d07697a7c53-2"&gt;&lt;/a&gt;&lt;span class="kr"&gt;inline&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;dispatch_1d_acc&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;bool&lt;/span&gt; &lt;span class="n"&gt;p&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;Functor&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class="n"&gt;functor&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;AccFunctor&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class="n"&gt;acc_functor&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;first&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;last&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+&lt;a name="rest_code_3641cdb096e04e9889b86d07697a7c53-3"&gt;&lt;/a&gt;    &lt;span class="k"&gt;if&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;p&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+&lt;a name="rest_code_3641cdb096e04e9889b86d07697a7c53-4"&gt;&lt;/a&gt;        &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;vector&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;futures&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;threads&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;a name="rest_code_3641cdb096e04e9889b86d07697a7c53-5"&gt;&lt;/a&gt;        &lt;span class="n"&gt;cpp&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;default_thread_pool&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;pool&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;threads&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;a name="rest_code_3641cdb096e04e9889b86d07697a7c53-6"&gt;&lt;/a&gt;
+&lt;a name="rest_code_3641cdb096e04e9889b86d07697a7c53-7"&gt;&lt;/a&gt;        &lt;span class="k"&gt;auto&lt;/span&gt; &lt;span class="n"&gt;n&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;last&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="n"&gt;first&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;a name="rest_code_3641cdb096e04e9889b86d07697a7c53-8"&gt;&lt;/a&gt;        &lt;span class="k"&gt;auto&lt;/span&gt; &lt;span class="n"&gt;batch&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;n&lt;/span&gt; &lt;span class="o"&gt;/&lt;/span&gt; &lt;span class="n"&gt;threads&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;a name="rest_code_3641cdb096e04e9889b86d07697a7c53-9"&gt;&lt;/a&gt;
+&lt;a name="rest_code_3641cdb096e04e9889b86d07697a7c53-10"&gt;&lt;/a&gt;        &lt;span class="k"&gt;auto&lt;/span&gt; &lt;span class="n"&gt;sub_functor&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;futures&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;functor&lt;/span&gt;&lt;span class="p"&gt;](&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;t&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;first&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;last&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+&lt;a name="rest_code_3641cdb096e04e9889b86d07697a7c53-11"&gt;&lt;/a&gt;            &lt;span class="n"&gt;futures&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;t&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;functor&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;first&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;last&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;a name="rest_code_3641cdb096e04e9889b86d07697a7c53-12"&gt;&lt;/a&gt;        &lt;span class="p"&gt;};&lt;/span&gt;
+&lt;a name="rest_code_3641cdb096e04e9889b86d07697a7c53-13"&gt;&lt;/a&gt;
+&lt;a name="rest_code_3641cdb096e04e9889b86d07697a7c53-14"&gt;&lt;/a&gt;        &lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;t&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;t&lt;/span&gt; &lt;span class="o"&gt;&amp;lt;&lt;/span&gt; &lt;span class="n"&gt;threads&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;t&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+&lt;a name="rest_code_3641cdb096e04e9889b86d07697a7c53-15"&gt;&lt;/a&gt;            &lt;span class="n"&gt;pool&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;do_task&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;sub_functor&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;t&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;first&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;t&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="n"&gt;batch&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;first&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;t&lt;/span&gt;&lt;span class="o"&gt;+&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="n"&gt;batch&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;a name="rest_code_3641cdb096e04e9889b86d07697a7c53-16"&gt;&lt;/a&gt;        &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;a name="rest_code_3641cdb096e04e9889b86d07697a7c53-17"&gt;&lt;/a&gt;
+&lt;a name="rest_code_3641cdb096e04e9889b86d07697a7c53-18"&gt;&lt;/a&gt;        &lt;span class="n"&gt;acc_functor&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;functor&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;first&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;threads&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="n"&gt;batch&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;last&lt;/span&gt;&lt;span class="p"&gt;));&lt;/span&gt;
+&lt;a name="rest_code_3641cdb096e04e9889b86d07697a7c53-19"&gt;&lt;/a&gt;
+&lt;a name="rest_code_3641cdb096e04e9889b86d07697a7c53-20"&gt;&lt;/a&gt;        &lt;span class="n"&gt;pool&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;wait&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+&lt;a name="rest_code_3641cdb096e04e9889b86d07697a7c53-21"&gt;&lt;/a&gt;
+&lt;a name="rest_code_3641cdb096e04e9889b86d07697a7c53-22"&gt;&lt;/a&gt;        &lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="k"&gt;auto&lt;/span&gt; &lt;span class="nl"&gt;fut&lt;/span&gt; &lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="n"&gt;futures&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+&lt;a name="rest_code_3641cdb096e04e9889b86d07697a7c53-23"&gt;&lt;/a&gt;            &lt;span class="n"&gt;acc_functor&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;fut&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;a name="rest_code_3641cdb096e04e9889b86d07697a7c53-24"&gt;&lt;/a&gt;        &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;a name="rest_code_3641cdb096e04e9889b86d07697a7c53-25"&gt;&lt;/a&gt;    &lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="k"&gt;else&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+&lt;a name="rest_code_3641cdb096e04e9889b86d07697a7c53-26"&gt;&lt;/a&gt;        &lt;span class="n"&gt;acc_functor&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;functor&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;first&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;last&lt;/span&gt;&lt;span class="p"&gt;));&lt;/span&gt;
+&lt;a name="rest_code_3641cdb096e04e9889b86d07697a7c53-27"&gt;&lt;/a&gt;    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;a name="rest_code_3641cdb096e04e9889b86d07697a7c53-28"&gt;&lt;/a&gt;&lt;span class="p"&gt;}&lt;/span&gt;
 &lt;/pre&gt;&lt;p&gt;I simply preallocate space for all the threads and create a new functor calling the input functor and saving its result inside the vector. It is less nice, but it works well. And it compiles MUCH faster. This &lt;strong&gt;reduced the compilation time&lt;/strong&gt; of my biggest test case &lt;strong&gt;by a factor of 8&lt;/strong&gt; (from 344 seconds to 44 seconds). This is really crazy. It also fixed the problem where splitting the test case was faster than big file (it is now twice faster to compile the big files than compiling all the small files separately). &lt;strong&gt;This reduced the total compilation time of dll by about 400%&lt;/strong&gt;.&lt;/p&gt;
 &lt;p&gt;As of now, I still have no idea why this makes such a big difference. I have looked at the std::async code, but I haven't found a valid reason for this slowdown. If someone has any idea, I'd be very glad to discuss in the comments below.&lt;/p&gt;
 &lt;/div&gt;
@@ -236,10 +544,10 @@ g++ options header.hpp
 &lt;h2&gt;Compile and generate dependency files at the same time&lt;/h2&gt;
 &lt;p&gt;To help write my makefiles, I'm using a set of functions that I have written. This includes automatic dependency generation using -MM -MT options of the compiler. Until now, I had two targets, one to compile the cpp file into the object file and another one to generate the dependency file. I recently saw that compilers were able to do both at the same time! Clang, G++ and the Intel compiler all have a -MD -MF options that lets you generate the dependency file at the same time you compile your file, saving you at least one read of the file.&lt;/p&gt;
 &lt;p&gt;My compilation rule in my makefile has now become:&lt;/p&gt;
-&lt;pre class="code makefile"&gt;&lt;a name="rest_code_67f3635042c44c4a9cc89cd0a0014e1c-1"&gt;&lt;/a&gt;&lt;span class="nf"&gt;release/$(1)/%.cpp.o&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="k"&gt;$(&lt;/span&gt;1&lt;span class="k"&gt;)&lt;/span&gt;/%.&lt;span class="n"&gt;cpp&lt;/span&gt;
-&lt;a name="rest_code_67f3635042c44c4a9cc89cd0a0014e1c-2"&gt;&lt;/a&gt;    @ mkdir -p release/&lt;span class="k"&gt;$(&lt;/span&gt;1&lt;span class="k"&gt;)&lt;/span&gt;/
-&lt;a name="rest_code_67f3635042c44c4a9cc89cd0a0014e1c-3"&gt;&lt;/a&gt;    &lt;span class="k"&gt;$(&lt;/span&gt;CXX&lt;span class="k"&gt;)&lt;/span&gt; &lt;span class="k"&gt;$(&lt;/span&gt;CXX_FLAGS&lt;span class="k"&gt;)&lt;/span&gt; &lt;span class="k"&gt;$(&lt;/span&gt;RELEASE_FLAGS&lt;span class="k"&gt;)&lt;/span&gt; &lt;span class="k"&gt;$(&lt;/span&gt;2&lt;span class="k"&gt;)&lt;/span&gt; -MD -MF release/&lt;span class="k"&gt;$(&lt;/span&gt;1&lt;span class="k"&gt;)&lt;/span&gt;/&lt;span class="nv"&gt;$$&lt;/span&gt;*.cpp.d -o release/&lt;span class="k"&gt;$(&lt;/span&gt;1&lt;span class="k"&gt;)&lt;/span&gt;/&lt;span class="nv"&gt;$$&lt;/span&gt;*.cpp.o -c &lt;span class="k"&gt;$(&lt;/span&gt;1&lt;span class="k"&gt;)&lt;/span&gt;/&lt;span class="nv"&gt;$$&lt;/span&gt;*.cpp
-&lt;a name="rest_code_67f3635042c44c4a9cc89cd0a0014e1c-4"&gt;&lt;/a&gt;    @ sed -i -e &lt;span class="s1"&gt;'s@^\(.*\)\.o:@\1.d \1.o:@'&lt;/span&gt; release/&lt;span class="k"&gt;$(&lt;/span&gt;1&lt;span class="k"&gt;)&lt;/span&gt;/&lt;span class="nv"&gt;$$&lt;/span&gt;*.cpp.d
+&lt;pre class="code makefile"&gt;&lt;a name="rest_code_fb088844de984d2c80e1ab51c0c31799-1"&gt;&lt;/a&gt;&lt;span class="nf"&gt;release/$(1)/%.cpp.o&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="k"&gt;$(&lt;/span&gt;1&lt;span class="k"&gt;)&lt;/span&gt;/%.&lt;span class="n"&gt;cpp&lt;/span&gt;
+&lt;a name="rest_code_fb088844de984d2c80e1ab51c0c31799-2"&gt;&lt;/a&gt;    @ mkdir -p release/&lt;span class="k"&gt;$(&lt;/span&gt;1&lt;span class="k"&gt;)&lt;/span&gt;/
+&lt;a name="rest_code_fb088844de984d2c80e1ab51c0c31799-3"&gt;&lt;/a&gt;    &lt;span class="k"&gt;$(&lt;/span&gt;CXX&lt;span class="k"&gt;)&lt;/span&gt; &lt;span class="k"&gt;$(&lt;/span&gt;CXX_FLAGS&lt;span class="k"&gt;)&lt;/span&gt; &lt;span class="k"&gt;$(&lt;/span&gt;RELEASE_FLAGS&lt;span class="k"&gt;)&lt;/span&gt; &lt;span class="k"&gt;$(&lt;/span&gt;2&lt;span class="k"&gt;)&lt;/span&gt; -MD -MF release/&lt;span class="k"&gt;$(&lt;/span&gt;1&lt;span class="k"&gt;)&lt;/span&gt;/&lt;span class="nv"&gt;$$&lt;/span&gt;*.cpp.d -o release/&lt;span class="k"&gt;$(&lt;/span&gt;1&lt;span class="k"&gt;)&lt;/span&gt;/&lt;span class="nv"&gt;$$&lt;/span&gt;*.cpp.o -c &lt;span class="k"&gt;$(&lt;/span&gt;1&lt;span class="k"&gt;)&lt;/span&gt;/&lt;span class="nv"&gt;$$&lt;/span&gt;*.cpp
+&lt;a name="rest_code_fb088844de984d2c80e1ab51c0c31799-4"&gt;&lt;/a&gt;    @ sed -i -e &lt;span class="s1"&gt;'s@^\(.*\)\.o:@\1.d \1.o:@'&lt;/span&gt; release/&lt;span class="k"&gt;$(&lt;/span&gt;1&lt;span class="k"&gt;)&lt;/span&gt;/&lt;span class="nv"&gt;$$&lt;/span&gt;*.cpp.d
 &lt;/pre&gt;&lt;p&gt;This reduced the compilation time to 86.8 seconds. Not that much reduction, but it still is quite nice to know that. I would have expected this to reduce more the compile time.&lt;/p&gt;
 &lt;div class="section" id="use-pragma-once"&gt;
 &lt;h3&gt;Use #pragma once&lt;/h3&gt;

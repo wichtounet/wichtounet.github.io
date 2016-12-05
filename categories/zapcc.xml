@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" href="../assets/xml/rss.xsl" media="all"?><rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Blog blog("Baptiste Wicht"); (zapcc)</title><link>http://baptiste-wicht.com/</link><description></description><atom:link href="http://baptiste-wicht.com/categories/zapcc.xml" type="application/rss+xml" rel="self"></atom:link><language>en</language><lastBuildDate>Mon, 05 Dec 2016 19:55:08 GMT</lastBuildDate><generator>https://getnikola.com/</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>zapcc - a faster C++ compiler</title><link>http://baptiste-wicht.com/posts/2016/11/zapcc-a-faster-cpp-compiler.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;Update: For a comparison against more modern compiler versions, you can read: &lt;a class="reference external" href="http://localhost:8000/posts/2016/12/zapcc-cpp-compilation-speed-against-gcc-54-and-clang-39.html"&gt;zapcc C++ compilation speed against gcc 5.4 and clang 3.9&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;I just joined the private beta program of zapcc. Zapcc is a c++ compiler, based
+on Clang which aims at being much faster than other C++ compilers. How they are
+doing this is using a caching server that saves some of the compiler structures,
+which should speed up compilation a lot. The private beta is free, but once the
+compiler is ready, it will be a commercial compiler.&lt;/p&gt;
+&lt;p&gt;Every C++ developer knows that compilation time can quickly be an issue when
+programs are getting very big and especially when working with template-heavy
+code.&lt;/p&gt;
+&lt;p&gt;To benchmark this new compiler, I use my Expression Template Library
+(&lt;a class="reference external" href="https://github.com/wichtounet/etl/"&gt;ETL&lt;/a&gt;). This is a purely header-only
+library with lots of templates. There are lots of test cases which is what I'm
+going to compile. I'm going to compare against Clang-3.7 and gcc-4.9.3.&lt;/p&gt;
+&lt;p&gt;I have configured zapcc to let is use 2Go RAM per caching server, which is the
+maximum allowed. Moreover, I killed the servers before each tests.&lt;/p&gt;
+&lt;div class="section" id="debug-build"&gt;
+&lt;h2&gt;Debug build&lt;/h2&gt;
+&lt;p&gt;Let's start with a debug build. In that configuration, there is no optimization
+going on and several of the features of the library (GPU, BLAS, ...) are
+disabled. This is the fastest way to compile ETL. I gathered this result on
+a 4 core, 8 threads, Intel processor, with an SSD.&lt;/p&gt;
+&lt;p&gt;The following table presents the results with different number of threads and
+the difference of zapcc compared to the other compilers:&lt;/p&gt;
+&lt;table border="1" class="docutils"&gt;
+&lt;colgroup&gt;
+&lt;col width="42%"&gt;
+&lt;col width="11%"&gt;
+&lt;col width="13%"&gt;
+&lt;col width="11%"&gt;
+&lt;col width="11%"&gt;
+&lt;col width="11%"&gt;
+&lt;/colgroup&gt;
+&lt;thead valign="bottom"&gt;
+&lt;tr&gt;&lt;th class="head"&gt;Compiler&lt;/th&gt;
+&lt;th class="head"&gt;-j1&lt;/th&gt;
+&lt;th class="head"&gt;-j2&lt;/th&gt;
+&lt;th class="head"&gt;-j4&lt;/th&gt;
+&lt;th class="head"&gt;-j6&lt;/th&gt;
+&lt;th class="head"&gt;-j8&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td&gt;g++-4.9.3&lt;/td&gt;
+&lt;td&gt;350s&lt;/td&gt;
+&lt;td&gt;185s&lt;/td&gt;
+&lt;td&gt;104s&lt;/td&gt;
+&lt;td&gt;94s&lt;/td&gt;
+&lt;td&gt;91s&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;clang++-3.7&lt;/td&gt;
+&lt;td&gt;513s&lt;/td&gt;
+&lt;td&gt;271s&lt;/td&gt;
+&lt;td&gt;153s&lt;/td&gt;
+&lt;td&gt;145s&lt;/td&gt;
+&lt;td&gt;138s&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;zapcc++&lt;/td&gt;
+&lt;td&gt;158s&lt;/td&gt;
+&lt;td&gt;87s&lt;/td&gt;
+&lt;td&gt;47s&lt;/td&gt;
+&lt;td&gt;44s&lt;/td&gt;
+&lt;td&gt;42s&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;Speedup VS Clang&lt;/td&gt;
+&lt;td&gt;3.24&lt;/td&gt;
+&lt;td&gt;3.103&lt;/td&gt;
+&lt;td&gt;3.25&lt;/td&gt;
+&lt;td&gt;3.29&lt;/td&gt;
+&lt;td&gt;3.28&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;Speedup VS GCC&lt;/td&gt;
+&lt;td&gt;2.21&lt;/td&gt;
+&lt;td&gt;2.12&lt;/td&gt;
+&lt;td&gt;2.21&lt;/td&gt;
+&lt;td&gt;2.13&lt;/td&gt;
+&lt;td&gt;2.16&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;The result is pretty clear! zapcc is around &lt;strong&gt;three times faster than Clang&lt;/strong&gt; and around
+&lt;strong&gt;two times faster than GCC&lt;/strong&gt;. This is pretty impressive!&lt;/p&gt;
+&lt;p&gt;For those that think than Clang is always faster than GCC, keep in mind that
+this is not the case for template-heavy code such as this library. In all my
+tests, Clang has always been slower and much memory hungrier than GCC on
+template-heavy C++ code. And sometimes the difference is very significant.&lt;/p&gt;
+&lt;p&gt;Interestingly, we can also see that going past the physical cores is not really
+interesting on this computer. On some computer, the speedups are interesting,
+but not on this one. Always benchmark!&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="release-build"&gt;
+&lt;h2&gt;Release build&lt;/h2&gt;
+&lt;p&gt;We have seen the results on a debug build, let's now compare on something a bit
+more timely, a release build with all options of ETL enabled (GPU, BLAS, ...),
+which should make it significantly longer to compile.&lt;/p&gt;
+&lt;p&gt;Again, the table:&lt;/p&gt;
+&lt;table border="1" class="docutils"&gt;
+&lt;colgroup&gt;
+&lt;col width="40%"&gt;
+&lt;col width="12%"&gt;
+&lt;col width="12%"&gt;
+&lt;col width="12%"&gt;
+&lt;col width="12%"&gt;
+&lt;col width="12%"&gt;
+&lt;/colgroup&gt;
+&lt;thead valign="bottom"&gt;
+&lt;tr&gt;&lt;th class="head"&gt;Compiler&lt;/th&gt;
+&lt;th class="head"&gt;-j1&lt;/th&gt;
+&lt;th class="head"&gt;-j2&lt;/th&gt;
+&lt;th class="head"&gt;-j4&lt;/th&gt;
+&lt;th class="head"&gt;-j6&lt;/th&gt;
+&lt;th class="head"&gt;-j8&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td&gt;g++-4.9.3&lt;/td&gt;
+&lt;td&gt;628s&lt;/td&gt;
+&lt;td&gt;336s&lt;/td&gt;
+&lt;td&gt;197s&lt;/td&gt;
+&lt;td&gt;189s&lt;/td&gt;
+&lt;td&gt;184s&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;clang++-3.7&lt;/td&gt;
+&lt;td&gt;663s&lt;/td&gt;
+&lt;td&gt;388s&lt;/td&gt;
+&lt;td&gt;215s&lt;/td&gt;
+&lt;td&gt;212s&lt;/td&gt;
+&lt;td&gt;205s&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;zapcc++&lt;/td&gt;
+&lt;td&gt;515s&lt;/td&gt;
+&lt;td&gt;281s&lt;/td&gt;
+&lt;td&gt;173s&lt;/td&gt;
+&lt;td&gt;168s&lt;/td&gt;
+&lt;td&gt;158s&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;Speedup VS Clang&lt;/td&gt;
+&lt;td&gt;1.28&lt;/td&gt;
+&lt;td&gt;1.38&lt;/td&gt;
+&lt;td&gt;1.24&lt;/td&gt;
+&lt;td&gt;1.26&lt;/td&gt;
+&lt;td&gt;1.29&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;Speedup VS GCC&lt;/td&gt;
+&lt;td&gt;1.21&lt;/td&gt;
+&lt;td&gt;1.30&lt;/td&gt;
+&lt;td&gt;1.13&lt;/td&gt;
+&lt;td&gt;1.12&lt;/td&gt;
+&lt;td&gt;1.16&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;This time, we can see that the difference is much lower. Zapcc is &lt;strong&gt;between 1.2
+and 1.4 times faster than Clang&lt;/strong&gt; and &lt;strong&gt;between 1.1 and 1.3 times faster than
+GCC&lt;/strong&gt;. This shows that most of the speedups from zapcc are in the front end of
+the compiler. This is not a lot but still significant over long builds,
+especially if you have few threads where the absolute difference would be
+higher.&lt;/p&gt;
+&lt;p&gt;We can also observe that Clang is now almost on par with GCC which shows that
+optimization is faster in Clang while front and backend is faster in gcc.&lt;/p&gt;
+&lt;p&gt;You also have to keep in mind that zapcc memory usage is higher than Clang
+because of all the caching. Moreover, the server are still up in between
+compilations, so this memory usage stays between builds, which may not be what
+you want.&lt;/p&gt;
+&lt;p&gt;As for runtime, I have not seem any significant difference in performance
+between the clang version and the zapcc. According to the official benchmarks
+and documentation, there should not be any difference in that between zapcc and
+the version of clang on which zapcc is based.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="incremental-build"&gt;
+&lt;h2&gt;Incremental build&lt;/h2&gt;
+&lt;p&gt;Normally, zapcc should shine at incremental building, but I was unable to show
+any speedup when changing a single without killing the zapcc servers. Maybe
+I did something wrong in my usage of zapcc.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="conclusion"&gt;
+&lt;h2&gt;Conclusion&lt;/h2&gt;
+&lt;p&gt;In conclusion, we can see that zapcc is always faster than both GCC and Clang,
+on my template-heavy library. Moreover, on debug builds, it is much faster than
+any of the two compilers, being more than 2 times faster than GCC and more than
+3 times faster than clang. This is really great. Moreover, I have not see any
+issue with the tool so far, it can seamlessly replace Clang without problem.&lt;/p&gt;
+&lt;p&gt;It's a bit weird that you cannot allocate more than 2Go to the zapcc servers.&lt;/p&gt;
+&lt;p&gt;For a program, that's really impressive. I hope that they are continuing the
+good work and especially that this motivates other compilers to improve the
+speed of compilation (especially of templates).&lt;/p&gt;
+&lt;p&gt;If you want more information, you can go to the
+&lt;a class="reference external" href="https://www.zapcc.com/"&gt;official website of zapcc&lt;/a&gt;&lt;/p&gt;
+&lt;/div&gt;&lt;/div&gt;</description><category>C++</category><category>clang</category><category>compiler</category><category>etl</category><category>gcc</category><category>projects</category><category>zapcc</category><guid>http://baptiste-wicht.com/posts/2016/11/zapcc-a-faster-cpp-compiler.html</guid><pubDate>Sat, 26 Nov 2016 12:17:50 GMT</pubDate></item></channel></rss>
