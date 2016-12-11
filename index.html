@@ -94,6 +94,534 @@
             <div id="content"></div>
             
         <article class="postbox h-entry post-text"><h1 class="p-name">
+<a href="posts/2016/12/cpp-compiler-benchmark-on-expression-templates-library-etl.html" class="u-url">C++ Compiler benchmark on Expression Templates Library (ETL)</a>
+        <br><small>  
+             Posted: <time class="published dt-published" datetime="2016-12-11T14:17:30+01:00">2016-12-11 14:17</time></small>
+</h1>
+        <hr>
+<div class="p-summary">
+        <div>
+<script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script><script src="https://code.highcharts.com/highcharts.js"></script><script src="https://code.highcharts.com/modules/exporting.js"></script><p>In my Expression Templates Library (ETL) project, I have a lot of template heavy
+code that needs to run as fast as possible and that is quite intensive to
+compile. In this post, I'm going to compare the performance of a few of the
+kernels produced by different compilers. I've got GCC 5.4, GCC 6.20 and clang
+3.9. I also included zapcc which is based on clang 4.0.</p>
+<p>These tests have been run on an Haswell processor. The automatic parallelization
+of ETL has been turned off for these tests.</p>
+<p>Keep in mind that some of the diagrams are presented in logarithmic form.</p>
+<div class="section" id="vector-multiplication">
+<h2>Vector multiplication</h2>
+<p>The first kernel is a very simple one, simple element-wise multiplication of two
+vectors. Nothing fancy here.</p>
+<div id="mul_container" style="min-width: 310px; height:400px; margin: 0 auto; "></div>
+<script>
+$(function () {
+    Highcharts.chart('mul_container', {
+        chart: { type: 'column' },
+        title: { text: 'Element-wise Vector Multiplication' },
+        xAxis: {
+            categories: ['10', '100', '1000', '10000', '100000', '1000000']
+        },
+        yAxis: {
+            type: 'logarithmic',
+            title: { text: 'Time (us)' },
+            plotLines: [{
+                value: 0,
+                width: 1,
+                color: '#808080'
+            }]
+        },
+        tooltip: {valueSuffix: 'us'},
+        series: [
+        {
+            name: 'g++-5.4', data: [0.021, 0.040, 0.215, 2.07, 32.1, 403]
+        },
+        {
+            name: 'g++-6.2', data: [0.021, 0.037, 0.208, 2.17, 32.1, 376]
+        },
+        {
+            name: 'clang-3.9', data: [0.027, 0.045, 0.243, 2.43, 32.7, 389]
+        },
+        {
+            name: 'zapcc-4.0', data: [0.026, 0.047, 0.321, 2.5, 32.8, 411]
+        }
+        ]
+    });
+});
+</script><p>For small vectors, clang is significantly slower than gcc-5.4 and gcc6.2. On
+vectors from 100'000 elements, the speed is comparable for each compiler,
+depending on the memory bandwidth. Overall, gcc-6.2 produces the fastest code
+here. clang-4.0 is slightly slower than clang-3.9, but nothing dramatic.</p>
+</div>
+<div class="section" id="vector-exponentiation">
+<h2>Vector exponentiation</h2>
+<p>The second kernel is computing the exponentials of each elements of a vector and
+storing them in another vector.</p>
+<div id="exp_container" style="min-width: 310px; height:400px; margin: 0 auto; "></div>
+<script>
+$(function () {
+    Highcharts.chart('exp_container', {
+        chart: { type: 'column' },
+        title: { text: 'Element-wise Vector Exponentiation' },
+        xAxis: {
+            categories: ['10', '100', '1000', '10000', '100000', '1000000']
+        },
+        yAxis: {
+            type: 'logarithmic',
+            title: { text: 'Time (us)' },
+            plotLines: [{
+                value: 0,
+                width: 1,
+                color: '#808080'
+            }]
+        },
+        tooltip: {valueSuffix: 'us'},
+        series: [
+        {
+            name: 'g++-5.4', data: [0.0478, 0.137, 1.12, 9.79, 97.5, 959]
+        },
+        {
+            name: 'g++-6.2', data: [0.0474, 0.132, 1.11, 9.71, 97, 1000]
+        },
+        {
+            name: 'clang-3.9', data: [0.0492, 0.136, 0.959, 9.24, 92.9, 914]
+        },
+        {
+            name: 'zapcc-4.0', data: [0.0488, 0.142, 0.952, 9.25, 91.9, 915]
+        }
+        ]
+    });
+});
+</script><p>Interestingly, this time, clang versions are significantly faster for medium to
+large vectors, from 1000 elements and higher, by about 5%. There is no
+significant differences between the different versions of each compiler.</p>
+</div>
+<div class="section" id="matrix-matrix-multiplication">
+<h2>Matrix-Matrix Multiplication</h2>
+<p>The next kernel I did benchmark with the matrix-matrix multiplication operation.
+In that case, the kernel is hand-unrolled and vectorized.</p>
+<div id="gemm_container_small" style="min-width: 310px; height:400px; margin: 0 auto; "></div>
+<div id="gemm_container_large" style="min-width: 310px; height:400px; margin: 0 auto; "></div>
+<script>
+$(function () {
+    Highcharts.chart('gemm_container_small', {
+        chart: { type: 'column' },
+        title: { text: 'Matrix Matrix Multiplication (small)', },
+        xAxis: {
+            categories: ['10x10', '20x20', '40x40', '60x60', '80x80', '100x100']
+        },
+        yAxis: {
+            type: 'logarithmic',
+            title: { text: 'Time (us)' },
+            plotLines: [{
+                value: 0,
+                width: 1,
+                color: '#808080'
+            }]
+        },
+        tooltip: {valueSuffix: 'us'},
+        series: [
+        {
+            name: 'g++-5.4', data: [0.159, 0.815, 2.637, 13.849, 17.281, 78.903]
+        },
+        {
+            name: 'g++-6.2', data: [0.162, 0.802, 2.431, 13.531, 17.274, 74.02]
+        },
+        {
+            name: 'clang-3.9', data: [0.179, 1.218, 2.391, 14.981, 15.142, 61.548]
+        },
+        {
+            name: 'zapcc-4.0', data: [0.159, 0.836, 2.712, 13.426, 15.114, 62.241]
+        }
+        ]
+    });
+    Highcharts.chart('gemm_container_large', {
+        chart: { type: 'column' },
+        title: { text: 'Matrix Matrix Multiplication (large)', },
+        xAxis: {
+            categories: ['200x200', '300x300', '400x400', '500x500', '600x600', '700x700', '800x800', '900x900', '1000x1000']
+        },
+        yAxis: {
+            type: 'logarithmic',
+            title: { text: 'Time (us)' },
+            plotLines: [{
+                value: 0,
+                width: 1,
+                color: '#808080'
+            }]
+        },
+        tooltip: {valueSuffix: 'us'},
+        series: [
+        {
+            name: 'g++-5.4', data: [275.219, 1371, 1837, 5177, 6667, 14981, 17037, 31492, 32813]
+        },
+        {
+            name: 'g++-6.2', data: [267.776, 1362, 1808, 5297, 6859, 15166, 15664, 30666, 33067]
+        },
+        {
+            name: 'clang-3.9', data: [266.033, 1230, 1789, 4825, 6969, 14488, 15916, 30872, 33186]
+        },
+        {
+            name: 'zapcc-4.0', data: [267.806, 1237, 1820, 4909, 7035, 15191, 18193, 33127, 37346]
+        }
+        ]
+    });
+});
+</script><p>There are few differences between the compilers. The first thing is that for
+some sizes such as 80x80 and 100x100, clang is significantly faster than GCC, by
+more than 10%. The other interesting fact is that for large matrices
+zapcc-clang-4.0 is always slower than clang-3.9 which is itself on par with the
+two GCC versions. In my opinion, it comes from a regression in clang trunk but
+it could also come from zapcc itself.</p>
+<div id="std_gemm_container_large" style="min-width: 310px; height:400px; margin: 0 auto; "></div>
+<script>
+$(function () {
+    Highcharts.chart('std_gemm_container_large', {
+        chart: { type: 'column' },
+        title: { text: 'Matrix Matrix Multiplication (naive)', },
+        xAxis: {
+            categories: ['200x200', '300x300', '400x400', '500x500', '600x600', '700x700', '800x800', '900x900', '1000x1000']
+        },
+        yAxis: {
+            type: 'logarithmic',
+            title: { text: 'Time (ms)' },
+            plotLines: [{
+                value: 0,
+                width: 1,
+                color: '#808080'
+            }]
+        },
+        tooltip: {valueSuffix: 'ms'},
+        series: [
+        {
+            name: 'g++-5.4', data: [1.195, 4.891, 10.467, 22.400, 33.399,
+            58.401, 77.150, 121.392, 148.469]
+        },
+        {
+            name: 'g++-6.2', data: [1.109, 4.540, 9.964, 21.359, 31.904,
+            55.282, 72.690, 113.52, 143.27]
+        },
+        {
+            name: 'clang-3.9', data: [0.893, 3.710, 7.287, 16.244, 23.920,
+            43.342, 56.771, 91.870, 112.309]
+        },
+        {
+            name: 'zapcc-4.0', data: [5.088, 16.909, 39.632, 77.194, 133.15,
+            214.539, 316.01, 447.715, 612.255]
+        }
+        ]
+    });
+});
+</script><p>The results are much more interesting here! First, there is a huge regression in
+clang-4.0 (or in zapcc for that matter). Indeed, it is up to 6 times slower than
+clang-3.9. Moreover, the clang-3.9 is always significantly faster than gcc-6.2.
+Finally, there is a small improvement in gcc-6.2 compared to gcc 5.4.</p>
+</div>
+<div class="section" id="fast-fourrier-transform">
+<h2>Fast-Fourrier Transform</h2>
+<p>The following kernel is the performance of a hand-crafted Fast-Fourrier
+transform implementation.</p>
+<div id="fft_container" style="min-width: 310px; height:400px; margin: 0 auto; "></div>
+<script>
+$(function () {
+    Highcharts.chart('fft_container', {
+        chart: { type: 'column' },
+        title: { text: 'Fast Fourrier Transform', },
+        xAxis: {
+            categories: ['100', '1000', '10000', '100000', '1000000']
+        },
+        yAxis: {
+            type: 'logarithmic',
+            title: { text: 'Time (us)' },
+            plotLines: [{
+                value: 0,
+                width: 1,
+                color: '#808080'
+            }]
+        },
+        tooltip: {valueSuffix: 'us'},
+        series: [
+        {
+            name: 'g++-5.4', data: [2.640, 27.515, 308.239, 3427.4, 41695.9]
+        },
+        {
+            name: 'g++-6.2', data: [2.578, 26.194, 298.97, 3348.82, 40783.8]
+        },
+        {
+            name: 'clang-3.9', data: [3.047, 30.514, 333.403, 3569.36,43860.6]
+        },
+        {
+            name: 'zapcc-4.0', data: [3.199,33.304,317.135,4025.18,48445.3]
+        }
+        ]
+    });
+});
+</script><p>On this benchmark, gcc-6.2 is the clear winner. It is significantly faster
+than clang-3.9 and clang-4.0. Moreover, gcc-6.2 is also faster than gcc-5.4.
+On the contrary, clang-4.0 is significantly slower than clang-3.9 except on one
+configuration (10000 elements).</p>
+</div>
+<div class="section" id="d-convolution">
+<h2>1D Convolution</h2>
+<p>This kernel is about computing the 1D valid convolution of two vectors.</p>
+<div id="conv1_container" style="min-width: 310px; height:400px; margin: 0 auto; "></div>
+<script>
+$(function () {
+    Highcharts.chart('conv1_container', {
+        chart: { type: 'column' },
+        title: { text: '1D convolution (optimized)', },
+        xAxis: {
+            categories: ['1000x500', '2000x1000', '3000x1500', '4000x2000',
+            '5000x2500', '6000x3000', '7000x3500', '8000x4000', '9000x4500',
+            '10000x5000']
+        },
+        yAxis: {
+            type: 'logarithmic',
+            title: { text: 'Time (us)' },
+            plotLines: [{
+                value: 0,
+                width: 1,
+                color: '#808080'
+            }]
+        },
+        tooltip: {valueSuffix: 'us'},
+        series: [
+        {
+            name: 'g++-5.4', data: [11.710, 41.002, 91.201, 158.178,
+            248.985, 353.695, 486.676, 634.53, 867.101, 1082.62]
+        },
+        {
+            name: 'g++-6.2', data: [9.307, 40.921, 90.327, 158.734, 248.892,
+            354.582, 488.38, 636.899, 869.637, 1084.86]
+        },
+        {
+            name: 'clang-3.9', data: [13.404, 41.409, 95.094, 162.339,
+            256.143, 362.34, 498.66, 651.352, 886.465, 1092.24]
+        },
+        {
+            name: 'zapcc-4.0', data: [13.528, 40.886, 94.473, 159.917,
+            252.992, 356.63, 493.653, 640.348, 872.282, 1091.36]
+        }
+        ]
+    });
+});
+</script><p>While clang-4.0 is faster than clang-3.9, it is still slightly slower than both
+gcc versions. On the GCC side, there is not a lot of difference except on the
+1000x500 on which gcc-6.2 is 25% faster.</p>
+<p>And here are the results with the naive implementation:</p>
+<div id="std_conv1_container" style="min-width: 310px; height:400px; margin: 0 auto; "></div>
+<script>
+$(function () {
+    Highcharts.chart('std_conv1_container', {
+        chart: { type: 'column' },
+        title: { text: '1D convolution (naive)', },
+        xAxis: {
+            categories: ['1000x500', '2000x1000', '3000x1500', '4000x2000',
+            '5000x2500', '6000x3000', '7000x3500', '8000x4000', '9000x4500',
+            '10000x5000']
+        },
+        yAxis: {
+            type: 'logarithmic',
+            title: { text: 'Time (ms)' },
+            plotLines: [{
+                value: 0,
+                width: 1,
+                color: '#808080'
+            }]
+        },
+        tooltip: {valueSuffix: 'ms'},
+        series: [
+        {
+            name: 'g++-5.4', data: [0.350, 1.452, 3.260, 5.823, 9.116,
+            13.155, 17.922, 23.438, 29.705, 36.683]
+        },
+        {
+            name: 'g++-6.2', data: [0.350, 1.457, 3.262, 5.823, 9.120,
+            13.152, 17.922, 23.436, 29.687, 36.665]
+        },
+        {
+            name: 'clang-3.9', data: [0.216, 0.873, 1.974, 3.517, 5.501,
+            7.921, 10.793, 14.11, 17.867, 22.068]
+        },
+        {
+            name: 'zapcc-4.0', data: [0.215, 0.873, 1.972, 3.514, 5.501,
+            7.928, 10.799, 14.11, 17.879, 22.065]
+        }
+        ]
+    });
+});
+</script><p>Again, on the naive version, clang is much faster than GCC on the naive, by
+about 65%. This is a really large speedup.</p>
+</div>
+<div class="section" id="id1">
+<h2>2D Convolution</h2>
+<p>This next kernel is computing the 2D valid convolution of two matrices</p>
+<div id="conv2_container" style="min-width: 310px; height:400px; margin: 0 auto; "></div>
+<script>
+$(function () {
+    Highcharts.chart('conv2_container', {
+        chart: { type: 'column' },
+        title: { text: '2D Convolution (optimized)', },
+        xAxis: {
+            categories: ['100x50', '105x50', '110x55', '115x55', '120x60',
+            '125x60', '130x65', '135x65', '140x70']
+        },
+        yAxis: {
+            title: { text: 'Time (us)' },
+            plotLines: [{
+                value: 0,
+                width: 1,
+                color: '#808080'
+            }]
+        },
+        tooltip: {valueSuffix: 'us'},
+        series: [
+        {
+            name: 'g++-5.4', data: [327.399, 367.389, 441.457, 576.021,
+            762.268, 794, 994.06, 1261.71, 1360.57]
+        },
+        {
+            name: 'g++-6.2', data: [327.764, 367.379, 441.993, 572.241,
+            761.741, 784.605, 991.717, 1266.55, 1361.59]
+        },
+        {
+            name: 'clang-3.9', data: [330.199, 364.253, 443.483, 580.676,
+            763.772, 777.39, 1000.53, 1267.75, 1375.51]
+        },
+        {
+            name: 'zapcc-4.0', data: [339.358, 364.756, 443.807, 575.917,
+            761.248, 784.695, 992.29, 1265.04, 1367.33]
+        }
+        ]
+    });
+});
+</script><p>There is no clear difference between the compilers in this code. Every compiler
+here has up and down.</p>
+<p>Let's look at the naive implementation of the 2D convolution (units are
+milliseconds here not microseconds):</p>
+<div id="std_conv2_container" style="min-width: 310px; height:400px; margin: 0 auto; "></div>
+<script>
+$(function () {
+    Highcharts.chart('std_conv2_container', {
+        chart: { type: 'column' },
+        title: { text: '2D Convolution (naive)', },
+        xAxis: {
+            categories: ['100x50', '105x50', '110x55', '115x55', '120x60',
+            '125x60', '130x65', '135x65', '140x70']
+        },
+        yAxis: {
+            title: { text: 'Time (ms)' },
+            plotLines: [{
+                value: 0,
+                width: 1,
+                color: '#808080'
+            }]
+        },
+        tooltip: {valueSuffix: 'ms'},
+        series: [
+        {
+            name: 'g++-5.4', data: [9.501,11.458,13.888, 16.489, 19.634,
+            22.898, 27.012, 31.246, 36.269]
+        },
+        {
+            name: 'g++-6.2', data: [9.502, 11.464, 13.903, 16.484, 19.642,
+            22.994, 27.004, 31.248, 36.26]
+        },
+        {
+            name: 'clang-3.9', data: [5.880, 7.136, 8.610, 10.226, 12.164,
+            14.247, 17.024, 19.577, 22.510]
+        },
+        {
+            name: 'zapcc-4.0', data: [5.875, 7.091, 8.661, 10.241, 12.218,
+            14.302, 16.777, 19.424, 22.472]
+        }
+        ]
+    });
+});
+</script><p>This time the difference is very large! Indeed, clang versions are about 60%
+faster than the GCC versions! This is really impressive. Even though this does
+not comes close to the optimized. It seems the vectorizer of clang is much more
+efficient than the one from GCC.</p>
+</div>
+<div class="section" id="id2">
+<h2>4D Convolution</h2>
+<p>The final kernel that I'm testing is the batched 4D convolutions that is used a
+lot in Deep Learning. This is not really a 4D convolution, but a large number
+of 2D convolutions applied on 4D tensors.</p>
+<div id="conv4_container" style="min-width: 310px; height:400px; margin: 0 auto; "></div>
+<script>
+$(function () {
+    Highcharts.chart('conv4_container', {
+        chart: { type: 'column' },
+        title: { text: '4D Convolution', },
+        xAxis: {
+            categories: ['2x6x3x28x16', '2x6x3x28x16', '2x6x3x28x16',
+            '2x6x3x28x16', '2x6x3x28x16', '2x6x3x28x16', '2x6x3x28x16',
+            '2x6x3x28x16', '2x6x3x28x16']
+        },
+        yAxis: {
+            type: 'logarithmic',
+            title: { text: 'Time (ms)' },
+            plotLines: [{
+                value: 0,
+                width: 1,
+                color: '#808080'
+            }]
+        },
+        tooltip: {valueSuffix: 'ms'},
+        series: [
+        {
+            name: 'g++-5.4', data: [0.095, 0.402, 1.083, 2.237, 3.988,
+            6.474, 9.985, 14.132, 19.539]
+        },
+        {
+            name: 'g++-6.2', data: [0.089, 0.413, 1.081, 2.224, 3.990,
+            6.462, 9.815, 14.118, 19.612]
+        },
+        {
+            name: 'clang-3.9', data: [0.090, 0.416, 1.108, 2.277, 4.077,
+            6.587, 10.024, 14.359, 20.006]
+        },
+        {
+            name: 'zapcc-4.0', data: [0.088, 0.406, 1.080, 2.237, 3.987,
+            6.484, 9.827, 14.130, 19.569]
+        }
+        ]
+    });
+});
+</script><p>Again, there are very small differences between each version. The best versions
+are the most recent versions of the compiler gcc-6.2 and clang-4.0 on a tie.</p>
+</div>
+<div class="section" id="conclusion">
+<h2>Conclusion</h2>
+<p>Overall, we can see two trends in these results. First, when working with
+highly-optimized code, the choice of compiler will not make a huge difference.
+On these kind of kernels, gcc-6.2 tend to perform faster than the other
+compilers, but only by a very slight margin, except in some cases. On the other
+hand, when working with naive implementations, clang versions really did perform
+much better than GCC. The clang compiled versions of the 1D and 2D convolutions
+are more than 60% faster than their GCC counter parts. This is really
+impressive. Overall, clang-4.0 seems to have several performance regressions,
+but since it's not still a work in progress, I would not be suprised if these
+regressions are not present in the final version. Since the clang-4.0 version is
+in fact the clang version used by zapcc, it's also possible that zapcc is
+introducing new performance regressions.</p>
+<p>Overall, my advice would be to use GCC-6.2 (or 5.4) on hand-optimized kernels
+and clang when you have mostly naive implementations. However, keep in mind that
+at least for the example shown here, the naive version optimized by the compiler
+never comes close to the highly-optimized version.</p>
+<p>As ever, takes this with a grain of salt, it's only been tested on one project
+and one machine, you may obtain very different results on other projects and on
+other processors.</p>
+</div>
+</div>
+        </div>
+            
+        
+    <a href="posts/2016/12/cpp-compiler-benchmark-on-expression-templates-library-etl.html#disqus_thread" data-disqus-identifier="cache/posts/2016/12/cpp-compiler-benchmark-on-expression-templates-library-etl.html">Comments</a>
+
+
+        </article><article class="postbox h-entry post-text"><h1 class="p-name">
 <a href="posts/2016/12/zapcc-cpp-compilation-speed-against-gcc-54-and-clang-39.html" class="u-url">zapcc C++ compilation speed against gcc 5.4 and clang 3.9</a>
         <br><small>  
              Posted: <time class="published dt-published" datetime="2016-12-05T18:46:09+01:00">2016-12-05 18:46</time></small>
@@ -499,8 +1027,8 @@ speed of compilation (especially of templates).</p>
 <div class="p-summary">
         <div>
 <p>You may remember <a class="reference external" href="http://baptiste-wicht.com/posts/2016/06/reduce-compilation-time-by-another-16-with-catch.html">my quest for faster compilation times</a>. I had made several changes to the Catch test framework macros in order to save some compilation at the expense of my test code looking a bit less nice:</p>
-<pre class="code cpp"><a name="rest_code_e1261b157ad4477b80ca4338c1002541-1"></a><span class="n">REQUIRE</span><span class="p">(</span><span class="n">a</span> <span class="o">==</span> <span class="mi">9</span><span class="p">);</span> <span class="c1">//Before</span>
-<a name="rest_code_e1261b157ad4477b80ca4338c1002541-2"></a><span class="n">REQUIRE_EQUALS</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="mi">9</span><span class="p">);</span> <span class="c1">//After</span>
+<pre class="code cpp"><a name="rest_code_4a7f4861e17b493fa5a4c1ec565352a3-1"></a><span class="n">REQUIRE</span><span class="p">(</span><span class="n">a</span> <span class="o">==</span> <span class="mi">9</span><span class="p">);</span> <span class="c1">//Before</span>
+<a name="rest_code_4a7f4861e17b493fa5a4c1ec565352a3-2"></a><span class="n">REQUIRE_EQUALS</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="mi">9</span><span class="p">);</span> <span class="c1">//After</span>
 </pre>
 <p>The first line is a little bit better, but using several optimizations, I was
 able to dramatically change the compilation time of the test cases of ETL. In
@@ -684,18 +1212,18 @@ code:</p>
 </div>
 <p>If you want to exclude some code from your coverage reports, you can use
 a pragma:</p>
-<pre class="code cpp"><a name="rest_code_46f776f1d2a14d07bf2c29e5c3849636-1"></a><span class="k">switch</span> <span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="p">{</span>
-<a name="rest_code_46f776f1d2a14d07bf2c29e5c3849636-2"></a>    <span class="k">case</span> <span class="mi">1</span><span class="o">:</span> <span class="n">one</span><span class="o">++</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span>
-<a name="rest_code_46f776f1d2a14d07bf2c29e5c3849636-3"></a>    <span class="k">case</span> <span class="mi">2</span><span class="o">:</span> <span class="n">two</span><span class="o">++</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span>
-<a name="rest_code_46f776f1d2a14d07bf2c29e5c3849636-4"></a>    <span class="k">case</span> <span class="mi">3</span><span class="o">:</span> <span class="n">three</span><span class="o">++</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span>
-<a name="rest_code_46f776f1d2a14d07bf2c29e5c3849636-5"></a>    <span class="cp">#pragma BullseyeCoverage off</span>
-<a name="rest_code_46f776f1d2a14d07bf2c29e5c3849636-6"></a>    <span class="k">default</span><span class="o">:</span> <span class="n">abort</span><span class="p">();</span>
-<a name="rest_code_46f776f1d2a14d07bf2c29e5c3849636-7"></a>    <span class="cp">#pragma BullseyeCoverage on</span>
-<a name="rest_code_46f776f1d2a14d07bf2c29e5c3849636-8"></a><span class="p">}</span>
+<pre class="code cpp"><a name="rest_code_55976eb300d4430289a8eb936685493f-1"></a><span class="k">switch</span> <span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="p">{</span>
+<a name="rest_code_55976eb300d4430289a8eb936685493f-2"></a>    <span class="k">case</span> <span class="mi">1</span><span class="o">:</span> <span class="n">one</span><span class="o">++</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span>
+<a name="rest_code_55976eb300d4430289a8eb936685493f-3"></a>    <span class="k">case</span> <span class="mi">2</span><span class="o">:</span> <span class="n">two</span><span class="o">++</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span>
+<a name="rest_code_55976eb300d4430289a8eb936685493f-4"></a>    <span class="k">case</span> <span class="mi">3</span><span class="o">:</span> <span class="n">three</span><span class="o">++</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span>
+<a name="rest_code_55976eb300d4430289a8eb936685493f-5"></a>    <span class="cp">#pragma BullseyeCoverage off</span>
+<a name="rest_code_55976eb300d4430289a8eb936685493f-6"></a>    <span class="k">default</span><span class="o">:</span> <span class="n">abort</span><span class="p">();</span>
+<a name="rest_code_55976eb300d4430289a8eb936685493f-7"></a>    <span class="cp">#pragma BullseyeCoverage on</span>
+<a name="rest_code_55976eb300d4430289a8eb936685493f-8"></a><span class="p">}</span>
 </pre>
 <p>So that the condition won't be set as uncovered.</p>
 <p>As for the coverage, it's pretty straightforward. For example:</p>
-<pre class="code bash"><a name="rest_code_145f22d7fb7541ab9706bdf6f709fd4f-1"></a>covmerge -c -ffinal.cov sse.cov avx.cov
+<pre class="code bash"><a name="rest_code_1428e56f8688498ea2c9dfed88ace2af-1"></a>covmerge -c -ffinal.cov sse.cov avx.cov
 </pre>
 <p>and it's really fast. Unfortunately, the merging is only done at the function
 level, not at the statement or at the condition level. This is a bit
@@ -753,22 +1281,22 @@ to switch to some basic versioning. The project is now at a stable state.</p>
 <div class="section" id="examples">
 <h2>Examples</h2>
 <p>Here is an example of expressions in ETL:</p>
-<pre class="code cpp"><a name="rest_code_735edfa7b71f4da582cfc938e9e66b56-1"></a><span class="n">etl</span><span class="o">::</span><span class="n">fast_matrix</span><span class="o">&lt;</span><span class="kt">float</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="o">&gt;</span> <span class="n">a</span> <span class="o">=</span> <span class="p">{</span><span class="mf">1.1</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.1</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">};</span>
-<a name="rest_code_735edfa7b71f4da582cfc938e9e66b56-2"></a><span class="n">etl</span><span class="o">::</span><span class="n">fast_matrix</span><span class="o">&lt;</span><span class="kt">float</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="o">&gt;</span> <span class="n">b</span> <span class="o">=</span> <span class="p">{</span><span class="mf">2.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">};</span>
-<a name="rest_code_735edfa7b71f4da582cfc938e9e66b56-3"></a><span class="n">etl</span><span class="o">::</span><span class="n">fast_matrix</span><span class="o">&lt;</span><span class="kt">float</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="o">&gt;</span> <span class="n">c</span> <span class="o">=</span> <span class="p">{</span><span class="mf">2.2</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.2</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">};</span>
-<a name="rest_code_735edfa7b71f4da582cfc938e9e66b56-4"></a>
-<a name="rest_code_735edfa7b71f4da582cfc938e9e66b56-5"></a><span class="n">etl</span><span class="o">::</span><span class="n">fast_matrix</span><span class="o">&lt;</span><span class="kt">float</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="o">&gt;</span> <span class="n">d</span><span class="p">(</span><span class="mf">2.5</span> <span class="o">*</span> <span class="p">((</span><span class="n">a</span> <span class="o">&gt;&gt;</span> <span class="n">b</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">log</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="n">abs</span><span class="p">(</span><span class="n">c</span><span class="p">)))</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.5</span> <span class="o">*</span> <span class="n">scale</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">sign</span><span class="p">(</span><span class="n">b</span><span class="p">))</span> <span class="o">/</span> <span class="n">c</span><span class="p">)</span> <span class="o">+</span> <span class="mf">2.111</span> <span class="o">/</span> <span class="n">log</span><span class="p">(</span><span class="n">c</span><span class="p">));</span>
+<pre class="code cpp"><a name="rest_code_54e7d893cf4e45ffa244d8da866d5d71-1"></a><span class="n">etl</span><span class="o">::</span><span class="n">fast_matrix</span><span class="o">&lt;</span><span class="kt">float</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="o">&gt;</span> <span class="n">a</span> <span class="o">=</span> <span class="p">{</span><span class="mf">1.1</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.1</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">};</span>
+<a name="rest_code_54e7d893cf4e45ffa244d8da866d5d71-2"></a><span class="n">etl</span><span class="o">::</span><span class="n">fast_matrix</span><span class="o">&lt;</span><span class="kt">float</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="o">&gt;</span> <span class="n">b</span> <span class="o">=</span> <span class="p">{</span><span class="mf">2.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">};</span>
+<a name="rest_code_54e7d893cf4e45ffa244d8da866d5d71-3"></a><span class="n">etl</span><span class="o">::</span><span class="n">fast_matrix</span><span class="o">&lt;</span><span class="kt">float</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="o">&gt;</span> <span class="n">c</span> <span class="o">=</span> <span class="p">{</span><span class="mf">2.2</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.2</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">};</span>
+<a name="rest_code_54e7d893cf4e45ffa244d8da866d5d71-4"></a>
+<a name="rest_code_54e7d893cf4e45ffa244d8da866d5d71-5"></a><span class="n">etl</span><span class="o">::</span><span class="n">fast_matrix</span><span class="o">&lt;</span><span class="kt">float</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="o">&gt;</span> <span class="n">d</span><span class="p">(</span><span class="mf">2.5</span> <span class="o">*</span> <span class="p">((</span><span class="n">a</span> <span class="o">&gt;&gt;</span> <span class="n">b</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">log</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="n">abs</span><span class="p">(</span><span class="n">c</span><span class="p">)))</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.5</span> <span class="o">*</span> <span class="n">scale</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">sign</span><span class="p">(</span><span class="n">b</span><span class="p">))</span> <span class="o">/</span> <span class="n">c</span><span class="p">)</span> <span class="o">+</span> <span class="mf">2.111</span> <span class="o">/</span> <span class="n">log</span><span class="p">(</span><span class="n">c</span><span class="p">));</span>
 </pre>
 <p>Or another I'm using in my neural networks library:</p>
-<pre class="code cpp"><a name="rest_code_46c1acd4bb8f459297ef0a6adb8b419f-1"></a><span class="n">h</span> <span class="o">=</span> <span class="n">etl</span><span class="o">::</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">b</span> <span class="o">+</span> <span class="n">v</span> <span class="o">*</span> <span class="n">w</span><span class="p">)</span>
+<pre class="code cpp"><a name="rest_code_125eb398a99b46ddaf337a4bc452672d-1"></a><span class="n">h</span> <span class="o">=</span> <span class="n">etl</span><span class="o">::</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">b</span> <span class="o">+</span> <span class="n">v</span> <span class="o">*</span> <span class="n">w</span><span class="p">)</span>
 </pre>
 <p>In that case, the vector-matrix multiplication will be executed using a BLAS
 kernel (if ETL is configured correclty) and the assignment, the sigmoid and the
 addition will be automatically vectorized to use either AVX or SSE depending
 on the machine.</p>
 <p>Or with a convolutional layer and a ReLU activation function:</p>
-<pre class="code cpp"><a name="rest_code_4caf528449d94fa2be096f95ee29fdd6-1"></a><span class="n">etl</span><span class="o">::</span><span class="n">reshape</span><span class="o">&lt;</span><span class="mi">1</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">NH1</span><span class="p">,</span> <span class="n">NH2</span><span class="o">&gt;</span><span class="p">(</span><span class="n">h_a</span><span class="p">)</span> <span class="o">=</span> <span class="n">etl</span><span class="o">::</span><span class="n">conv_4d_valid_flipped</span><span class="p">(</span><span class="n">etl</span><span class="o">::</span><span class="n">reshape</span><span class="o">&lt;</span><span class="mi">1</span><span class="p">,</span> <span class="n">NC</span><span class="p">,</span> <span class="n">NV1</span><span class="p">,</span> <span class="n">NV2</span><span class="o">&gt;</span><span class="p">(</span><span class="n">v_a</span><span class="p">),</span> <span class="n">w</span><span class="p">);</span>
-<a name="rest_code_4caf528449d94fa2be096f95ee29fdd6-2"></a><span class="n">h</span> <span class="o">=</span> <span class="n">max</span><span class="p">(</span><span class="n">b_rep</span> <span class="o">+</span> <span class="n">h_a</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">);</span>
+<pre class="code cpp"><a name="rest_code_d8f17e0e51074db8adc58e08b0637c39-1"></a><span class="n">etl</span><span class="o">::</span><span class="n">reshape</span><span class="o">&lt;</span><span class="mi">1</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">NH1</span><span class="p">,</span> <span class="n">NH2</span><span class="o">&gt;</span><span class="p">(</span><span class="n">h_a</span><span class="p">)</span> <span class="o">=</span> <span class="n">etl</span><span class="o">::</span><span class="n">conv_4d_valid_flipped</span><span class="p">(</span><span class="n">etl</span><span class="o">::</span><span class="n">reshape</span><span class="o">&lt;</span><span class="mi">1</span><span class="p">,</span> <span class="n">NC</span><span class="p">,</span> <span class="n">NV1</span><span class="p">,</span> <span class="n">NV2</span><span class="o">&gt;</span><span class="p">(</span><span class="n">v_a</span><span class="p">),</span> <span class="n">w</span><span class="p">);</span>
+<a name="rest_code_d8f17e0e51074db8adc58e08b0637c39-2"></a><span class="n">h</span> <span class="o">=</span> <span class="n">max</span><span class="p">(</span><span class="n">b_rep</span> <span class="o">+</span> <span class="n">h_a</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">);</span>
 </pre>
 <p>This will automatically be computed either with NVIDIA CUDNN (if available) or
 with optimized SSE/AVX kernels.</p>
@@ -1093,81 +1621,6 @@ repository, in the releases pages or directly in the &lt;em&gt;master&lt;/em&gt;
             
         
     <a href="posts/2016/06/eddic-124-new-boost-spirit-x3-parser-and-minor-cleanups.html#disqus_thread" data-disqus-identifier="cache/posts/2016/06/eddic-124-new-boost-spirit-x3-parser-and-minor-cleanups.html">Comments</a>
-
-
-        </article><article class="postbox h-entry post-text"><h1 class="p-name">
-<a href="posts/2016/06/reduce-compilation-time-by-another-16-with-catch.html" class="u-url">Reduce Catch tests compilation time by another 16%</a>
-        <br><small>  
-             Posted: <time class="published dt-published" datetime="2016-06-01T07:28:36+02:00">2016-06-01 07:28</time></small>
-</h1>
-        <hr>
-<div class="p-summary">
-        <div>
-<p>No, it's not the same post as two days! I've been able to reduce the compilation
-time of my test cases by another 16%!</p>
-<p>Two days ago, I posted an article about how <a class="reference external" href="http://baptiste-wicht.com/posts/2016/05/speedup-compilation-by-13-by-simplifying-unit-test-with-catch.html">I reduced the compilation time of my tests by 13%</a>, by bypassing the expression deduction from Catch. I came up with the macro <code class="cpp"><span class="n">REQUIRE_EQUALS</span></code>:</p>
-<pre class="code cpp"><a name="rest_code_dd75b6bcadaa46fb829458883965c76d-1"></a><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">L</span><span class="p">,</span> <span class="k">typename</span> <span class="n">R</span><span class="o">&gt;</span>
-<a name="rest_code_dd75b6bcadaa46fb829458883965c76d-2"></a><span class="kt">void</span> <span class="n">evaluate_result</span><span class="p">(</span><span class="n">Catch</span><span class="o">::</span><span class="n">ResultBuilder</span><span class="o">&amp;&amp;</span> <span class="n">__result</span><span class="p">,</span> <span class="n">L</span> <span class="n">lhs</span><span class="p">,</span> <span class="n">R</span> <span class="n">rhs</span><span class="p">){</span>
-<a name="rest_code_dd75b6bcadaa46fb829458883965c76d-3"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">setResultType</span><span class="p">(</span><span class="n">lhs</span> <span class="o">==</span> <span class="n">rhs</span><span class="p">);</span>
-<a name="rest_code_dd75b6bcadaa46fb829458883965c76d-4"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">setLhs</span><span class="p">(</span><span class="n">Catch</span><span class="o">::</span><span class="n">toString</span><span class="p">(</span><span class="n">lhs</span><span class="p">));</span>
-<a name="rest_code_dd75b6bcadaa46fb829458883965c76d-5"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">setRhs</span><span class="p">(</span><span class="n">Catch</span><span class="o">::</span><span class="n">toString</span><span class="p">(</span><span class="n">rhs</span><span class="p">));</span>
-<a name="rest_code_dd75b6bcadaa46fb829458883965c76d-6"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">setOp</span><span class="p">(</span><span class="s">"=="</span><span class="p">);</span>
-<a name="rest_code_dd75b6bcadaa46fb829458883965c76d-7"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">endExpression</span><span class="p">();</span>
-<a name="rest_code_dd75b6bcadaa46fb829458883965c76d-8"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">react</span><span class="p">();</span>
-<a name="rest_code_dd75b6bcadaa46fb829458883965c76d-9"></a><span class="p">}</span>
-<a name="rest_code_dd75b6bcadaa46fb829458883965c76d-10"></a>
-<a name="rest_code_dd75b6bcadaa46fb829458883965c76d-11"></a><span class="cp">#define REQUIRE_EQUALS(lhs, rhs) \</span>
-<a name="rest_code_dd75b6bcadaa46fb829458883965c76d-12"></a><span class="cp">    evaluate_result(Catch::ResultBuilder( "REQUIRE", CATCH_INTERNAL_LINEINFO, #lhs " == " #rhs, Catch::ResultDisposition::Normal ), lhs, rhs);</span>
-</pre>
-<p>This has the advantage that the left and right hand sides are directly set, not
-deduced with templates and operator overloading. This still has exactly the same
-features has the original macro, but it is a bit less nice in the test code.
-I was quite happy with that optimization, but it turned out, I was not
-aggressive enough in my optimizations.</p>
-<p>Even though it seems simple, the macro is still bloated. There are two
-constructors calls: <code class="cpp"><span class="n">ResultBuilder</span></code> and <code class="cpp"><span class="n">SourceLineInfo</span></code> (hidden behind
-<code class="cpp"><span class="n">CATCH_INTERNAL_LINEINFO</span></code>). That means that if you test case has 100
-assertions, 200 constructor calls will need to be processed by the compiler.
-Considering that I have some test files with around 400 assertions, this is
-a lot of overhead for nothing. Moreover, two parameters have always the same
-value, no need to repeat them every time.</p>
-<p>Simplifying the macro to the minimum led me to this:</p>
-<pre class="code cpp"><a name="rest_code_6e21e21878214a0f8b7ae5eea7e26e5e-1"></a><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">L</span><span class="p">,</span> <span class="k">typename</span> <span class="n">R</span><span class="o">&gt;</span>
-<a name="rest_code_6e21e21878214a0f8b7ae5eea7e26e5e-2"></a><span class="kt">void</span> <span class="n">evaluate_result</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">file</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">line</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">exp</span><span class="p">,</span> <span class="n">L</span> <span class="n">lhs</span><span class="p">,</span> <span class="n">R</span> <span class="n">rhs</span><span class="p">){</span>
-<a name="rest_code_6e21e21878214a0f8b7ae5eea7e26e5e-3"></a>    <span class="n">Catch</span><span class="o">::</span><span class="n">ResultBuilder</span> <span class="n">result</span><span class="p">(</span><span class="s">"REQUIRE"</span><span class="p">,</span> <span class="p">{</span><span class="n">file</span><span class="p">,</span> <span class="n">line</span><span class="p">},</span> <span class="n">exp</span><span class="p">,</span> <span class="n">Catch</span><span class="o">::</span><span class="n">ResultDisposition</span><span class="o">::</span><span class="n">Flags</span><span class="o">::</span><span class="n">Normal</span><span class="p">);</span>
-<a name="rest_code_6e21e21878214a0f8b7ae5eea7e26e5e-4"></a>    <span class="n">result</span><span class="p">.</span><span class="n">setResultType</span><span class="p">(</span><span class="n">lhs</span> <span class="o">==</span> <span class="n">rhs</span><span class="p">);</span>
-<a name="rest_code_6e21e21878214a0f8b7ae5eea7e26e5e-5"></a>    <span class="n">result</span><span class="p">.</span><span class="n">setLhs</span><span class="p">(</span><span class="n">Catch</span><span class="o">::</span><span class="n">toString</span><span class="p">(</span><span class="n">lhs</span><span class="p">));</span>
-<a name="rest_code_6e21e21878214a0f8b7ae5eea7e26e5e-6"></a>    <span class="n">result</span><span class="p">.</span><span class="n">setRhs</span><span class="p">(</span><span class="n">Catch</span><span class="o">::</span><span class="n">toString</span><span class="p">(</span><span class="n">rhs</span><span class="p">));</span>
-<a name="rest_code_6e21e21878214a0f8b7ae5eea7e26e5e-7"></a>    <span class="n">result</span><span class="p">.</span><span class="n">setOp</span><span class="p">(</span><span class="s">"=="</span><span class="p">);</span>
-<a name="rest_code_6e21e21878214a0f8b7ae5eea7e26e5e-8"></a>    <span class="n">result</span><span class="p">.</span><span class="n">endExpression</span><span class="p">();</span>
-<a name="rest_code_6e21e21878214a0f8b7ae5eea7e26e5e-9"></a>    <span class="n">result</span><span class="p">.</span><span class="n">react</span><span class="p">();</span>
-<a name="rest_code_6e21e21878214a0f8b7ae5eea7e26e5e-10"></a><span class="p">}</span>
-<a name="rest_code_6e21e21878214a0f8b7ae5eea7e26e5e-11"></a>
-<a name="rest_code_6e21e21878214a0f8b7ae5eea7e26e5e-12"></a><span class="cp">#define REQUIRE_EQUALS(lhs, rhs) \</span>
-<a name="rest_code_6e21e21878214a0f8b7ae5eea7e26e5e-13"></a><span class="cp">    evaluate_result(__FILE__, __LINE__, #lhs " == " #rhs, lhs, rhs);</span>
-</pre>
-<p>The macro is now a simple function call. Even though the function is a template
-function, it will only be compiled for a few types (<code class="cpp"><span class="kt">double</span></code> and
-<code class="cpp"><span class="kt">float</span></code> in my case), whereas the code of the macro would be unconditionally
-compiled for each invocation.</p>
-<p>With this new macro and function, the compilation time went down from 664
-seconds to 554 seconds! This is <strong>more than 16% reduction in compilation
-time</strong>. When comparing against the original compilation time (without both
-optimizations) of 764 seconds, this is a 27% reduction! And there are absolutely
-no difference in features.</p>
-<p>This is a really great result, in my opinion. I don't think this can be cut down
-more. However, there is still some room for optimization regarding the includes
-that Catch need. Indeed, it is very bloated as well. A new test framework,
-<a class="reference external" href="https://github.com/onqtam/doctest">doctest</a> follows the same philosophy, but
-has much smaller include overhead. Once all the necessary features are in
-doctest, I may consider adapting my macros for it and using it in place of Catch
-is there is some substantial reduction in compilation time.</p>
-<p>If you want to take a look at the code, you can find the adapted code on <a class="reference external" href="https://github.com/wichtounet/etl/blob/master/test/include/fast_catch.hpp">Github</a>.</p>
-</div>
-        </div>
-            
-        
-    <a href="posts/2016/06/reduce-compilation-time-by-another-16-with-catch.html#disqus_thread" data-disqus-identifier="cache/posts/2016/06/reduce-compilation-time-by-another-16-with-catch.html">Comments</a>
 
 
         </article><nav class="postindexpager"><ul class="pager">
