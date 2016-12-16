@@ -1,4 +1,4 @@
-Update: For a comparison against more modern compiler versions, you can read: `zapcc C++ compilation speed against gcc 5.4 and clang 3.9 <http://localhost:8000/posts/2016/12/zapcc-cpp-compilation-speed-against-gcc-54-and-clang-39.html>`_
+Update: For a comparison against more modern compiler versions, you can read: `zapcc C++ compilation speed against gcc 5.4 and clang 3.9 <http://baptiste-wicht.com/posts/2016/12/zapcc-cpp-compilation-speed-against-gcc-54-and-clang-39.html>`_
 
 I just joined the private beta program of zapcc. Zapcc is a c++ compiler, based
 on Clang which aims at being much faster than other C++ compilers. How they are
