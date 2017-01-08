@@ -10,7 +10,7 @@
 <meta content="#5670d4" name="theme-color">
 <link rel="alternate" type="application/rss+xml" title="RSS" href="rss.xml">
 <link rel="canonical" href="http://baptiste-wicht.com/index.html">
-<link rel="next" href="index-28.html" type="text/html">
+<link rel="next" href="index-29.html" type="text/html">
 <!--[if lt IE 9]><script src="assets/js/html5.js"></script><![endif]--><script type="text/javascript">
   var _gaq = _gaq || [];
   _gaq.push(['_setAccount', 'UA-2175227-7']);
@@ -94,6 +94,188 @@
             <div id="content"></div>
             
         <article class="postbox h-entry post-text"><h1 class="p-name">
+<a href="posts/new-home-automation-system-with-domoticz.html" class="u-url">New home automation system with Domoticz</a>
+        <br><small>  
+             Posted: <time class="published dt-published" datetime="2017-01-08T16:08:42+01:00">2017-01-08 16:08</time></small>
+</h1>
+        <hr>
+<div class="p-summary">
+        <div>
+<p>As you may remember, I started going into Home Automation last year with a <a class="reference external" href="http://baptiste-wicht.com/posts/2016/08/asgard-home-automation-project.html">C++ project, Asgard</a>.</p>
+<p>Unfortunately, I haven't add the time to improve this project further and make
+it really useful and I have so many C++ projects already, so I decided to switch
+to using an existing project.</p>
+<div class="section" id="choice">
+<h2>Choice</h2>
+<p>I needed a system that was at least able to handle everything my existing system
+does:</p>
+<ol class="arabic simple">
+<li>Control my RF-433 Temperature Sensors (Oregon Temperature Sensors)</li>
+<li>Control my RF-433 Remote Button</li>
+<li>Control my smart power outlets</li>
+<li>Ping and wake-on-lan my different computers</li>
+<li>Be installable on a Raspberry Pi</li>
+<li>Control Skadi/Kodi Home Cinema</li>
+</ol>
+<p>Of course, it also had to be open source and in a language that I can write
+without agonizing pain (no Ruby, no JavaScript, ideally no Python (I hate a lot
+of languages...)).</p>
+<p>It's impressive the number of home automation projects that exist today. It's
+really a hot topic, more than I though. After a few hours of research, I've
+finally settled on Domoticz. It seemed that it could handle all my home
+automation devices that I already had. Domoticz is an open source home
+automation system. It's written mainly in C++, which is an advantage for me
+since I'll be able to work inside it if necessary. It has a quite modern HTML5
+interface. It has a lot of support for hardware and a lot of bridges for other
+controllers as well. One of the reason I chose it is also the floor-planner
+feature that looks really cool.</p>
+</div>
+<div class="section" id="installation">
+<h2>Installation</h2>
+<p>First of all, I cleaned the hardware of my Raspberry Pi. I got rid of my
+breadboard and the components on it. Then, I put the Raspberry Pi on a nicer box
+that I had laying around. One problem with Domoticz is that it does not support
+directly RF433 devices, but need a controller in the middle. At first,
+I believed I could simply connect them through GPIO and lets Domoticz do the
+rest, but it's not possible. I ordered the different pieces for a RFLink
+controller at nodo-shops. It is running on a Arduino Mega and is connected to
+the Pi. The very big advantage is that they handle a lot of protocols directly,
+so you only have to read the serial port to get information on RF-433 events.</p>
+<p>Here is how the current system look:</p>
+<img alt="Asgard automation system hardware" class="align-center" src="images/home_automation_hardware.jpg"><p>The black box is the Arduino Mega with RFLink software while the Transparent is
+simply the Raspberry on which Domoticz is installed.</p>
+<p>As for the installation of Domoticz, it's really simple. They also have images of
+Raspberry Pi directly, but since my Raspberry was already installed with
+Raspbian, I installed Domoticz on it directly. A simple matter of curl and bash:</p>
+<pre class="code bash"><a name="rest_code_48ee360f11ef40258ac9ad4372a16363-1"></a>sudo curl -L install.domoticz.com <span class="p">|</span> sudo bash
+</pre>
+<p>After a few questions, your installation should be complete. You can browse your
+Domoticz installation at the IP of your Pi and at the given port.</p>
+</div>
+<div class="section" id="home-automation-with-domoticz">
+<h2>Home Automation with Domoticz</h2>
+<p>There are several concepts in Domoticz that are important. At first, it seemed
+a bit weird to me, but in the end it works really well and you get used to it
+pretty fast.</p>
+<p>The first concept is the hardware. It is not necessary hardware directly, but
+rather a driver to some piece of information of switches than a real hardware in
+my opinion. For instance, the RFLink Gateway is considered hardware as well as
+the Forecast weather API. Here is all the hardware I've configured:</p>
+<img alt="Domoticz Hardware Configuration" class="align-center" src="images/domoticz_hardware.png"><p>I've got some sensors from the motherboard, the Kodi interaction, the driver to
+ping the different computers, the Forecast weather with Dark Sky and Weather
+Underground, the RFLink communication, the wake-on-lan and some dummies virtual
+switches.</p>
+<p>On its own, an hardware is useless, but it can create devices that will be used
+for home automation. A device is sub device of a particular driver. In some
+cases, the devices will be created automatically. For instance, RF Link can
+create devices as soon as they are detected. For wake-on-lan, you have to
+configure MAC Addresses and they will be added as devices. And so on...</p>
+<p>There are a lot of types of devices, also called switches. Some devices can do
+some actions, for instance the wake-on-lan devices, while others are information
+based such as ping or temperature sensors detected from the RFLink. For
+instance, here are my temperature sensors:</p>
+<img alt="Domoticz Temperature Sensors" class="align-center" src="images/domoticz_temperature.png"><p>As for my hardware I already had, I haven't add too many issues with them. The
+Oregon Temperature Sensors worked out of the box without any issues as well my
+old RF433 Ninja Block temperature sensor. The smart power outlets have been
+pretty easy to use as well. The most problem I've add was with the remote
+buttons. It seems to many that it should be the easiest, but RFLink has a lot of
+problem with them, they are detected several times and are highly unreliable.
+Interestingly you can also change the icon of most device to a large variety of
+existing devices so that they would look more realistic.</p>
+<p>Another feature I find pretty cool is the floor plan. You can create plans for
+each floor of your house and then create rooms inside and finally attach devices
+to each room and place inside the plan. Unfortunately, to draw the plan, you'll
+have to use an external tool. I've used floorplanner for this, but you may use
+any plan you have as long as you have an image.</p>
+<p>Here is my floor plan with the devices (the scale is terribly off :P) :</p>
+<img alt="Domoticz Floor Plan" class="align-center" src="images/domoticz_floorplan.png"><p>With that you can directly see the status of each of your sensors in each room.
+Moreover, you can also activate some devices directly from the floor plan as
+well :)</p>
+<p>Normally, my Somfy blinds are supposed to work with the RFLink controller.
+I have managed to control my blinds but only when the RFLink was within 50
+centimeters of the Blinds, which is clearly not acceptable. I don't know from
+where the problem comes. It may come from my Blinds controller inside the wall
+or may come from bad antenna of the RFLink or from a bug in RFLink, so from now
+I cannot control my blinds.</p>
+<p>I have several D-Link cameras at home. You can also add cameras to Domoticz, but
+don't expect a lot of support on this side. It's pretty poor indeed. The only
+useful you can do in Domoticz with Cameras is to take a screenshot from them.
+You cannot control the Camera or even have a decent video stream and cannot do
+motion detection directly. I hope that the Camera support will improve in the
+future. One thing that would be good is to add a view of the cameras in the
+floor plan, but it is not possible currently.</p>
+<p>What I did is to use Zoneminder to manage the cameras and send alert to Domoticz
+when motion is detect with the REST API of Domoticz. Unfortunately that means
+two systems to manage the Cameras. Zoneminder is a very good piece of software,
+but one of the ugliest I've ever seen (even I can do a better web interface...)
+and quite obscure to configure. But the numbers of cameras it can handle and the
+capabilities to control the camera is very very powerful.</p>
+</div>
+<div class="section" id="events-and-actions">
+<h2>Events and actions</h2>
+<p>No home automation system would be complete without an events and rules system.
+In Domoticz, you have several ways to create rules.</p>
+<p>The first solution is to create group. A group is simply a set of switches that
+are all activated together. This is pretty limited, but can be useful. The
+second solution is a scene. A scene is activated by a device and can set several
+switches to on or off after the activation. The problem with this is that you
+have to listen for an action as activation, you cannot use an existing device or
+a rule with a value. For me, these two possibilities are way too limited and
+I don't really a reason to use them.</p>
+<p>The best solution is to script an handler. For that, there are two ways, either
+you define visually your script with blocky, for instance:</p>
+<img alt="Domoticz Blockly Rule" class="align-center" src="images/domoticz_blockly.png"><p>This seemed so cool that I wanted to do all my rules with that. Unfortunately,
+it is really limited. The main limitation is that you cannot nest if blocks. In
+fact the interface lets you do, but it doesn't work afterwards. The other
+limitation is that it has no notion of time. For instance, it's very hard to
+create an action if a computer is shutdown for more than 60 seconds. You can do
+it, but you end up creating virtual devices which are turned off after some
+delay and it gets really complicated really soon...</p>
+<p>In the end, I used Lua script directly. These scripts have the information about
+the last values of each device and the last updated time as well. It's much
+easier with that to create powerful rules especially when you want a notion of
+time. There are plenty of examples on the Domoticz forum about very powerful
+rules that you can create. Unfortunately, there are some limitations. For
+instance, you cannot send several actions to the same device in the same script
+Moreover, you also have to decode the values of the sensors yourself. For
+instance, for a temperature and humidity sensor, you'll have to parse the values
+and extract the one you need by hand.</p>
+<p>So far, I haven't created many rules, only four. The first rule is that with the
+push of one remote button I can power on my smart socket and turn on one of my
+computers in my office. Then, if both the computers on this smart sockets have
+been off for more than 60 seconds, the power is shut off on the smart socket.
+And I have done almost the same for my media center and TV in my living room.</p>
+<p>In the future, I'll probably only use the Lua scripting capability. In my
+opinion, it's better to have all the scripts in the same language for
+maintainability reasons. Once my futures devices arrive, I'll have a few more
+rules to code.</p>
+</div>
+<div class="section" id="conclusion">
+<h2>Conclusion</h2>
+<p>To wrap up, I'd say that I'm pretty satisfied with my new home automation system
+with Domoticz. It's not a perfect tool, but it has a lot of features and is
+working quite well in general. I would recommend you to try it if you want
+a good home automation system, fully featured and relatively easy to use.</p>
+<p>I've several more things planned for this system. I plan to test a real motion
+sensor rather than rely only on the cameras which are focused on the doors and
+windows. I also plan to add an outdoor temperature sensor. And more
+interestingly, I'm going to try to integrate smart bulbs from Milight to be able
+to control my lights from the system. These are the shot term projects that
+I want to do, but I have many more ideas!</p>
+<p>I'm also sure that there are some features from Domoticz that I have overlooked
+or not discovered.</p>
+<p>I'll probably write more posts on Home Automation on the coming months.</p>
+<p>For more information on Domoticz, you can consult
+<a class="reference external" href="http://domoticz.com/">the official Domoticz website</a>.</p>
+</div>
+</div>
+        </div>
+            
+        
+    <a href="posts/new-home-automation-system-with-domoticz.html#disqus_thread" data-disqus-identifier="cache/posts/new-home-automation-system-with-domoticz.html">Comments</a>
+
+
+        </article><article class="postbox h-entry post-text"><h1 class="p-name">
 <a href="posts/2016/12/pvs-studio-on-cpp-library-review.html" class="u-url">PVS-Studio on C++ Library Review</a>
         <br><small>  
              Posted: <time class="published dt-published" datetime="2016-12-20T09:40:12+01:00">2016-12-20 09:40</time></small>
@@ -117,7 +299,7 @@ available on any Linux platform.</p>
 <p>The usage of PVS-Studio on Linux should be straightforward. First, you can use the
 analyzer directly with make and it will detect the invocations of the compiler.
 For instance, here is the command I used for ETL:</p>
-<pre class="code text"><a name="rest_code_a84404a2a3d341ad8cf1e14d9964a540-1"></a>pvs-studio-analyzer trace -- make -j5 debug/bin/etl_test
+<pre class="code text"><a name="rest_code_35ef8265e7bb4c459c7af503cdb8b671-1"></a>pvs-studio-analyzer trace -- make -j5 debug/bin/etl_test
 </pre>
 <p>Note that you can use several threads without issues, which is really great.
 There does not seem to be any slowdown at this stage, probably only collecting
@@ -125,43 +307,43 @@ compiler arguments.</p>
 <p>This first step creates a strace_out file that will be used by the next stage.</p>
 <p>Once, the compilation has been analyzed, you can generate the results with the
 analyze function, for which you'll need a license. Here is what I did:</p>
-<pre class="code text"><a name="rest_code_0a0426636cd24d868ed2cd2677a84923-1"></a>pvs-studio-analyzer analyze -l ~/pvs_studio/PVS-Studio.lic -j5
+<pre class="code text"><a name="rest_code_6fde8fe3918641229f2265ce04a1c343-1"></a>pvs-studio-analyzer analyze -l ~/pvs_studio/PVS-Studio.lic -j5
 </pre>
 <p>Unfortunately, this didn't work for me:</p>
-<pre class="code text"><a name="rest_code_119aa9d822fd49aa99c4741689aae0ac-1"></a>No compilation units found
-<a name="rest_code_119aa9d822fd49aa99c4741689aae0ac-2"></a>Analysis finished in 0:00:00.00
+<pre class="code text"><a name="rest_code_e30c60f75a6f42cba294bc0a39db0fc3-1"></a>No compilation units found
+<a name="rest_code_e30c60f75a6f42cba294bc0a39db0fc3-2"></a>Analysis finished in 0:00:00.00
 </pre>
 <p>Apparently, it's not able to use the strace_out it generated itself...</p>
 <p>Another possibility is to use the compilation database from clang to use
 PVS-Studio. So I generated my compile_commands.json file again (it was not up to
 date...) with <a class="reference external" href="https://github.com/rizsotto/Bear">Bear</a>. And then, you only
 need to run the analyze step:</p>
-<pre class="code text"><a name="rest_code_4910db6af11441fabaec714b272023fb-1"></a>pvs-studio-analyzer analyze -l ~/pvs_studio/PVS-Studio.lic -j5
+<pre class="code text"><a name="rest_code_d4b59f96f76a42dd8e72102941e29d6b-1"></a>pvs-studio-analyzer analyze -l ~/pvs_studio/PVS-Studio.lic -j5
 </pre>
 <p>Make sure you have the same compiler configured than the one used to generate
 the compilation database to avoid errors with compiler arguments.</p>
 <p>Unfortunately, this just printed a load of crap on my console:</p>
-<pre class="code text"><a name="rest_code_2aecb6c8a6ca4649bf1ab5c4ba03b70f-1"></a>(L8Pu(]-'Lo8h&gt;uo(_uv(uo2(-&gt;'2h_u(uo2(uvU2K h&gt;'o8a=}Lkk;x[G^%cuaa8acr[VS%
-<a name="rest_code_2aecb6c8a6ca4649bf1ab5c4ba03b70f-2"></a>$ckUaoc8 c'8&gt;_-o-8&gt;U2cu/kau==-8&gt;c-=cU2]Uf=c U2=u%c&amp;kU__-&gt;j}c@uvu2%cJ
-<a name="rest_code_2aecb6c8a6ca4649bf1ab5c4ba03b70f-3"></a>(L8Pu(]-'Lo8h&gt;uo(_uv(uo2(-&gt;'2h_u(uo2(uvU2K h&gt;'o8a=}Lkk;JVJ^%cuaa8acr[VS%
-<a name="rest_code_2aecb6c8a6ca4649bf1ab5c4ba03b70f-4"></a>$ckUaoc8 c'8&gt;_-o-8&gt;U2cu/kau==-8&gt;c-=cU2]Uf=c U2=u%c&amp;kU__-&gt;j}c@uvu2%cJ
-<a name="rest_code_2aecb6c8a6ca4649bf1ab5c4ba03b70f-5"></a>(L8Pu(]-'Lo8h&gt;uo(_uv(uo2(-&gt;'2h_u(uo2(uvU2K h&gt;'o8a=}Lkk;*[G^%cuaa8acr[VS%
-<a name="rest_code_2aecb6c8a6ca4649bf1ab5c4ba03b70f-6"></a>$ckUaoc8 c'8&gt;_-o-8&gt;U2cu/kau==-8&gt;c-=cU2]Uf=c U2=u%c&amp;kU__-&gt;j}c@uvu2%cJ
-<a name="rest_code_2aecb6c8a6ca4649bf1ab5c4ba03b70f-7"></a>(L8Pu(]-'Lo8h&gt;uo(_uv(uo2(-&gt;'2h_u(uo2(uvU2K h&gt;'o8a=}Lkk;b[b^%cuaa8acr[VS%
-<a name="rest_code_2aecb6c8a6ca4649bf1ab5c4ba03b70f-8"></a>$ckUaoc8 c'8&gt;_-o-8&gt;U2cu/kau==-8&gt;c-=cU2]Uf=c U2=u%c&amp;kU__-&gt;j}c@uvu2%cJ
-<a name="rest_code_2aecb6c8a6ca4649bf1ab5c4ba03b70f-9"></a>(L8Pu(]-'Lo8h&gt;uo(_uv(uo2(-&gt;'2h_u(uo2(uvU2K h&gt;'o8a=}Lkk;[[x^%cuaa8acr[VS%
-<a name="rest_code_2aecb6c8a6ca4649bf1ab5c4ba03b70f-10"></a>$ckUaoc8 c'8&gt;_-o-8&gt;U2cu/kau==-8&gt;c-=cU2]Uf=c U2=u%c&amp;kU__-&gt;j}c@uvu2%cJ
+<pre class="code text"><a name="rest_code_ab63b05a44a040959b0bb0f0a435a337-1"></a>(L8Pu(]-'Lo8h&gt;uo(_uv(uo2(-&gt;'2h_u(uo2(uvU2K h&gt;'o8a=}Lkk;x[G^%cuaa8acr[VS%
+<a name="rest_code_ab63b05a44a040959b0bb0f0a435a337-2"></a>$ckUaoc8 c'8&gt;_-o-8&gt;U2cu/kau==-8&gt;c-=cU2]Uf=c U2=u%c&amp;kU__-&gt;j}c@uvu2%cJ
+<a name="rest_code_ab63b05a44a040959b0bb0f0a435a337-3"></a>(L8Pu(]-'Lo8h&gt;uo(_uv(uo2(-&gt;'2h_u(uo2(uvU2K h&gt;'o8a=}Lkk;JVJ^%cuaa8acr[VS%
+<a name="rest_code_ab63b05a44a040959b0bb0f0a435a337-4"></a>$ckUaoc8 c'8&gt;_-o-8&gt;U2cu/kau==-8&gt;c-=cU2]Uf=c U2=u%c&amp;kU__-&gt;j}c@uvu2%cJ
+<a name="rest_code_ab63b05a44a040959b0bb0f0a435a337-5"></a>(L8Pu(]-'Lo8h&gt;uo(_uv(uo2(-&gt;'2h_u(uo2(uvU2K h&gt;'o8a=}Lkk;*[G^%cuaa8acr[VS%
+<a name="rest_code_ab63b05a44a040959b0bb0f0a435a337-6"></a>$ckUaoc8 c'8&gt;_-o-8&gt;U2cu/kau==-8&gt;c-=cU2]Uf=c U2=u%c&amp;kU__-&gt;j}c@uvu2%cJ
+<a name="rest_code_ab63b05a44a040959b0bb0f0a435a337-7"></a>(L8Pu(]-'Lo8h&gt;uo(_uv(uo2(-&gt;'2h_u(uo2(uvU2K h&gt;'o8a=}Lkk;b[b^%cuaa8acr[VS%
+<a name="rest_code_ab63b05a44a040959b0bb0f0a435a337-8"></a>$ckUaoc8 c'8&gt;_-o-8&gt;U2cu/kau==-8&gt;c-=cU2]Uf=c U2=u%c&amp;kU__-&gt;j}c@uvu2%cJ
+<a name="rest_code_ab63b05a44a040959b0bb0f0a435a337-9"></a>(L8Pu(]-'Lo8h&gt;uo(_uv(uo2(-&gt;'2h_u(uo2(uvU2K h&gt;'o8a=}Lkk;[[x^%cuaa8acr[VS%
+<a name="rest_code_ab63b05a44a040959b0bb0f0a435a337-10"></a>$ckUaoc8 c'8&gt;_-o-8&gt;U2cu/kau==-8&gt;c-=cU2]Uf=c U2=u%c&amp;kU__-&gt;j}c@uvu2%cJ
 </pre>
 <p>Pretty nice, isn't it ?</p>
 <p>Let's try again in a file:</p>
-<pre class="code text"><a name="rest_code_d60f2c1f42614249ab9f70bc7d4c40d8-1"></a>pvs-studio-analyzer analyze -o results.log -l ~/pvs_studio/PVS-Studio.lic -j5
+<pre class="code text"><a name="rest_code_e06abb54462843d785da5006432583df-1"></a>pvs-studio-analyzer analyze -o results.log -l ~/pvs_studio/PVS-Studio.lic -j5
 </pre>
 <p>The time is quite reasonable for the analysis, it took much less time than the
 compilation time. In total, it took 88 seconds to analyze all the files. It's
 much faster than the clang static analyzer.</p>
 <p>This time it worked, but the log file is not readable, you need to convert it
 again:</p>
-<pre class="code text"><a name="rest_code_99e192af059b41b085426451b9cb4938-1"></a>plog-converter -t errorfile -o errors results.log
+<pre class="code text"><a name="rest_code_25977eacee014b4bb5ef21decd180e81-1"></a>plog-converter -t errorfile -o errors results.log
 </pre>
 <p>And finally, you can read the results of the analysis in the errors file.</p>
 </div>
@@ -176,13 +358,13 @@ want on my computer.</p>
 <p>Let's look at the results. For each message, I'll include the message from
 PVS-Studio and the code if it's relevant.</p>
 <p>The first is about using the comma:</p>
-<pre class="code text"><a name="rest_code_202c612705014e5fb8a26f4b96b86b81-1"></a>include/etl/traits.hpp:674:1: error: V521 Such expressions using the ',' operator are dangerous. Make sure the expression is correct.
-<a name="rest_code_202c612705014e5fb8a26f4b96b86b81-2"></a>include/etl/traits.hpp:674:1: error: V685 Consider inspecting the return statement. The expression contains a comma.
+<pre class="code text"><a name="rest_code_e63266566bc84d7f8df388d67af263cb-1"></a>include/etl/traits.hpp:674:1: error: V521 Such expressions using the ',' operator are dangerous. Make sure the expression is correct.
+<a name="rest_code_e63266566bc84d7f8df388d67af263cb-2"></a>include/etl/traits.hpp:674:1: error: V685 Consider inspecting the return statement. The expression contains a comma.
 </pre>
-<pre class="code cpp"><a name="rest_code_323916a8baef4397acdd14e14e061be8-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">E</span><span class="o">&gt;</span>
-<a name="rest_code_323916a8baef4397acdd14e14e061be8-2"></a><span class="k">constexpr</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">dimensions</span><span class="p">(</span><span class="k">const</span> <span class="n">E</span><span class="o">&amp;</span> <span class="n">expr</span><span class="p">)</span> <span class="k">noexcept</span> <span class="p">{</span>
-<a name="rest_code_323916a8baef4397acdd14e14e061be8-3"></a>    <span class="k">return</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="n">expr</span><span class="p">,</span> <span class="n">etl_traits</span><span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;::</span><span class="n">dimensions</span><span class="p">();</span>
-<a name="rest_code_323916a8baef4397acdd14e14e061be8-4"></a><span class="p">}</span>
+<pre class="code cpp"><a name="rest_code_38ba107fb4ea496899526d63b488fab7-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">E</span><span class="o">&gt;</span>
+<a name="rest_code_38ba107fb4ea496899526d63b488fab7-2"></a><span class="k">constexpr</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">dimensions</span><span class="p">(</span><span class="k">const</span> <span class="n">E</span><span class="o">&amp;</span> <span class="n">expr</span><span class="p">)</span> <span class="k">noexcept</span> <span class="p">{</span>
+<a name="rest_code_38ba107fb4ea496899526d63b488fab7-3"></a>    <span class="k">return</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="n">expr</span><span class="p">,</span> <span class="n">etl_traits</span><span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;::</span><span class="n">dimensions</span><span class="p">();</span>
+<a name="rest_code_38ba107fb4ea496899526d63b488fab7-4"></a><span class="p">}</span>
 </pre>
 <p>Here I'm simply using the comma operand to ignore expr to avoid a warning. To
 make this compile in C++11, you need to do it in one line otherwise it's not
@@ -190,128 +372,128 @@ a constexpr function. It's probably not perfect to use this construct, but there
 is no problem here.</p>
 <p>There is a bunch of these, let's filter them, it remains 207 warnings. Let's
 jump to the next one:</p>
-<pre class="code text"><a name="rest_code_e31622621559425a867718db26adc1f9-1"></a>include/etl/impl/blas/fft.hpp:29:1: error: V501 There are identical sub-expressions to the left and to the right of the '==' operator: (DFTI_SINGLE) == DFTI_SINGLE
+<pre class="code text"><a name="rest_code_62ea5f53e6f5437d86d0c0f89cfedf43-1"></a>include/etl/impl/blas/fft.hpp:29:1: error: V501 There are identical sub-expressions to the left and to the right of the '==' operator: (DFTI_SINGLE) == DFTI_SINGLE
 </pre>
-<pre class="code cpp"><a name="rest_code_d2cd4f9bc9474dd6acf8482e324fa798-1"></a><span class="kr">inline</span> <span class="kt">void</span> <span class="nf">fft_kernel</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">complex</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;*</span> <span class="n">in</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">s</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">complex</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;*</span> <span class="n">out</span><span class="p">)</span> <span class="p">{</span>
-<a name="rest_code_d2cd4f9bc9474dd6acf8482e324fa798-2"></a>    <span class="n">DFTI_DESCRIPTOR_HANDLE</span> <span class="n">descriptor</span><span class="p">;</span>
-<a name="rest_code_d2cd4f9bc9474dd6acf8482e324fa798-3"></a>
-<a name="rest_code_d2cd4f9bc9474dd6acf8482e324fa798-4"></a>    <span class="kt">void</span><span class="o">*</span> <span class="n">in_ptr</span> <span class="o">=</span> <span class="k">const_cast</span><span class="o">&lt;</span><span class="kt">void</span><span class="o">*&gt;</span><span class="p">(</span><span class="k">static_cast</span><span class="o">&lt;</span><span class="k">const</span> <span class="kt">void</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">in</span><span class="p">));</span>
-<a name="rest_code_d2cd4f9bc9474dd6acf8482e324fa798-5"></a>
-<a name="rest_code_d2cd4f9bc9474dd6acf8482e324fa798-6"></a>    <span class="n">DftiCreateDescriptor</span><span class="p">(</span><span class="o">&amp;</span><span class="n">descriptor</span><span class="p">,</span> <span class="n">DFTI_SINGLE</span><span class="p">,</span> <span class="n">DFTI_COMPLEX</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">s</span><span class="p">);</span> <span class="c1">//Specify size and precision</span>
-<a name="rest_code_d2cd4f9bc9474dd6acf8482e324fa798-7"></a>    <span class="n">DftiSetValue</span><span class="p">(</span><span class="n">descriptor</span><span class="p">,</span> <span class="n">DFTI_PLACEMENT</span><span class="p">,</span> <span class="n">DFTI_NOT_INPLACE</span><span class="p">);</span>         <span class="c1">//Out of place FFT</span>
-<a name="rest_code_d2cd4f9bc9474dd6acf8482e324fa798-8"></a>    <span class="n">DftiCommitDescriptor</span><span class="p">(</span><span class="n">descriptor</span><span class="p">);</span>                                   <span class="c1">//Finalize the descriptor</span>
-<a name="rest_code_d2cd4f9bc9474dd6acf8482e324fa798-9"></a>    <span class="n">DftiComputeForward</span><span class="p">(</span><span class="n">descriptor</span><span class="p">,</span> <span class="n">in_ptr</span><span class="p">,</span> <span class="n">out</span><span class="p">);</span>                        <span class="c1">//Compute the Forward FFT</span>
-<a name="rest_code_d2cd4f9bc9474dd6acf8482e324fa798-10"></a>    <span class="n">DftiFreeDescriptor</span><span class="p">(</span><span class="o">&amp;</span><span class="n">descriptor</span><span class="p">);</span>                                    <span class="c1">//Free the descriptor</span>
-<a name="rest_code_d2cd4f9bc9474dd6acf8482e324fa798-11"></a><span class="p">}</span>
+<pre class="code cpp"><a name="rest_code_533472d0cd584ab3b730cfad3d26a91a-1"></a><span class="kr">inline</span> <span class="kt">void</span> <span class="nf">fft_kernel</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">complex</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;*</span> <span class="n">in</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">s</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">complex</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;*</span> <span class="n">out</span><span class="p">)</span> <span class="p">{</span>
+<a name="rest_code_533472d0cd584ab3b730cfad3d26a91a-2"></a>    <span class="n">DFTI_DESCRIPTOR_HANDLE</span> <span class="n">descriptor</span><span class="p">;</span>
+<a name="rest_code_533472d0cd584ab3b730cfad3d26a91a-3"></a>
+<a name="rest_code_533472d0cd584ab3b730cfad3d26a91a-4"></a>    <span class="kt">void</span><span class="o">*</span> <span class="n">in_ptr</span> <span class="o">=</span> <span class="k">const_cast</span><span class="o">&lt;</span><span class="kt">void</span><span class="o">*&gt;</span><span class="p">(</span><span class="k">static_cast</span><span class="o">&lt;</span><span class="k">const</span> <span class="kt">void</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">in</span><span class="p">));</span>
+<a name="rest_code_533472d0cd584ab3b730cfad3d26a91a-5"></a>
+<a name="rest_code_533472d0cd584ab3b730cfad3d26a91a-6"></a>    <span class="n">DftiCreateDescriptor</span><span class="p">(</span><span class="o">&amp;</span><span class="n">descriptor</span><span class="p">,</span> <span class="n">DFTI_SINGLE</span><span class="p">,</span> <span class="n">DFTI_COMPLEX</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">s</span><span class="p">);</span> <span class="c1">//Specify size and precision</span>
+<a name="rest_code_533472d0cd584ab3b730cfad3d26a91a-7"></a>    <span class="n">DftiSetValue</span><span class="p">(</span><span class="n">descriptor</span><span class="p">,</span> <span class="n">DFTI_PLACEMENT</span><span class="p">,</span> <span class="n">DFTI_NOT_INPLACE</span><span class="p">);</span>         <span class="c1">//Out of place FFT</span>
+<a name="rest_code_533472d0cd584ab3b730cfad3d26a91a-8"></a>    <span class="n">DftiCommitDescriptor</span><span class="p">(</span><span class="n">descriptor</span><span class="p">);</span>                                   <span class="c1">//Finalize the descriptor</span>
+<a name="rest_code_533472d0cd584ab3b730cfad3d26a91a-9"></a>    <span class="n">DftiComputeForward</span><span class="p">(</span><span class="n">descriptor</span><span class="p">,</span> <span class="n">in_ptr</span><span class="p">,</span> <span class="n">out</span><span class="p">);</span>                        <span class="c1">//Compute the Forward FFT</span>
+<a name="rest_code_533472d0cd584ab3b730cfad3d26a91a-10"></a>    <span class="n">DftiFreeDescriptor</span><span class="p">(</span><span class="o">&amp;</span><span class="n">descriptor</span><span class="p">);</span>                                    <span class="c1">//Free the descriptor</span>
+<a name="rest_code_533472d0cd584ab3b730cfad3d26a91a-11"></a><span class="p">}</span>
 </pre>
 <p>Unfortunately, the error is inside the MKL library. Here, I really don't think
 it's an issue. There is pack of them. I forgot to exclude non-ETL code from the
 results. Once filter from all dependencies, 137 messages remain.</p>
-<pre class="code text"><a name="rest_code_680fffef5d0e4dd591ea7a90662edb7b-1"></a>include/etl/eval_functors.hpp:157:1: warning: V560 A part of conditional expression is always false: !padding.
+<pre class="code text"><a name="rest_code_85987d54840241e6a9c0b5a77ac91422-1"></a>include/etl/eval_functors.hpp:157:1: warning: V560 A part of conditional expression is always false: !padding.
 </pre>
 <p>This is true, but not an issue since padding is a configuration constant that
 enables the use of padding in vector and matrices. There was 27 of these at
 different locations and with different configuration variables.</p>
-<pre class="code text"><a name="rest_code_7458736799464e759a6f47ac22c4e356-1"></a>include/etl/op/sub_view.hpp:161:1: note: V688 The 'i' function argument possesses the same name as one of the class members, which can result in a confusion.
+<pre class="code text"><a name="rest_code_7f56e87e02024333af56620a169dc507-1"></a>include/etl/op/sub_view.hpp:161:1: note: V688 The 'i' function argument possesses the same name as one of the class members, which can result in a confusion.
 </pre>
 <p>This is again true, but not a bug in this particular case. It is still helpful and
 I ended up changing these to avoid confusion. Again, there was a few of these.</p>
-<pre class="code text"><a name="rest_code_e414a66c8317431681f732c8aa68d1df-1"></a>etl/test/src/conv_multi_multi.cpp:23:1: error: V573 Uninitialized variable 'k' was used. The variable was used to initialize itself.
+<pre class="code text"><a name="rest_code_bdaf6468fc4e4a949060388735839faf-1"></a>etl/test/src/conv_multi_multi.cpp:23:1: error: V573 Uninitialized variable 'k' was used. The variable was used to initialize itself.
 </pre>
 <p>This one is in the test code:</p>
-<pre class="code cpp"><a name="rest_code_1392698df92947b0b1d16985861e87a4-1"></a><span class="k">for</span> <span class="p">(</span><span class="kt">size_t</span> <span class="n">k</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">k</span> <span class="o">&lt;</span> <span class="n">etl</span><span class="o">::</span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">(</span><span class="n">K</span><span class="p">);</span> <span class="o">++</span><span class="n">k</span><span class="p">)</span> <span class="p">{</span>
-<a name="rest_code_1392698df92947b0b1d16985861e87a4-2"></a>    <span class="k">for</span> <span class="p">(</span><span class="kt">size_t</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">etl</span><span class="o">::</span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">(</span><span class="n">I</span><span class="p">);</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
-<a name="rest_code_1392698df92947b0b1d16985861e87a4-3"></a>        <span class="n">C_ref</span><span class="p">(</span><span class="n">k</span><span class="p">)(</span><span class="n">i</span><span class="p">)</span> <span class="o">=</span> <span class="n">conv_2d_valid</span><span class="p">(</span><span class="n">I</span><span class="p">(</span><span class="n">i</span><span class="p">),</span> <span class="n">K</span><span class="p">(</span><span class="n">k</span><span class="p">));</span> <span class="c1">// HERE</span>
-<a name="rest_code_1392698df92947b0b1d16985861e87a4-4"></a>    <span class="p">}</span>
-<a name="rest_code_1392698df92947b0b1d16985861e87a4-5"></a><span class="p">}</span>
+<pre class="code cpp"><a name="rest_code_8114672955bd4451bd8c84d4f0195422-1"></a><span class="k">for</span> <span class="p">(</span><span class="kt">size_t</span> <span class="n">k</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">k</span> <span class="o">&lt;</span> <span class="n">etl</span><span class="o">::</span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">(</span><span class="n">K</span><span class="p">);</span> <span class="o">++</span><span class="n">k</span><span class="p">)</span> <span class="p">{</span>
+<a name="rest_code_8114672955bd4451bd8c84d4f0195422-2"></a>    <span class="k">for</span> <span class="p">(</span><span class="kt">size_t</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">etl</span><span class="o">::</span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">(</span><span class="n">I</span><span class="p">);</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+<a name="rest_code_8114672955bd4451bd8c84d4f0195422-3"></a>        <span class="n">C_ref</span><span class="p">(</span><span class="n">k</span><span class="p">)(</span><span class="n">i</span><span class="p">)</span> <span class="o">=</span> <span class="n">conv_2d_valid</span><span class="p">(</span><span class="n">I</span><span class="p">(</span><span class="n">i</span><span class="p">),</span> <span class="n">K</span><span class="p">(</span><span class="n">k</span><span class="p">));</span> <span class="c1">// HERE</span>
+<a name="rest_code_8114672955bd4451bd8c84d4f0195422-4"></a>    <span class="p">}</span>
+<a name="rest_code_8114672955bd4451bd8c84d4f0195422-5"></a><span class="p">}</span>
 </pre>
 <p>I don't see any error, k is initialized correctly to zero in the first loop.
 This is a <strong>false positive</strong> for me. There were several of these in different
 places. It seems to that the use of the operator() is confusing for PVS-Studio.</p>
-<pre class="code text"><a name="rest_code_f70a903710524d43b2b2af5608b2621c-1"></a>include/etl/traits.hpp:703:1: note: V659 Declarations of functions with 'rows' name differ in the 'const' keyword only, but the bodies of these functions have different composition. This is suspicious and can possibly be an error. Check lines: 693, 703.
+<pre class="code text"><a name="rest_code_b0045e7f8d9d47e39d259d2e6c8d223d-1"></a>include/etl/traits.hpp:703:1: note: V659 Declarations of functions with 'rows' name differ in the 'const' keyword only, but the bodies of these functions have different composition. This is suspicious and can possibly be an error. Check lines: 693, 703.
 </pre>
-<pre class="code cpp"><a name="rest_code_2861dbdfde3f44598396005d95658098-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">E</span><span class="p">,</span> <span class="n">cpp_disable_if</span><span class="p">(</span><span class="n">decay_traits</span><span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;::</span><span class="n">is_fast</span><span class="p">)</span><span class="o">&gt;</span>
-<a name="rest_code_2861dbdfde3f44598396005d95658098-2"></a><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">rows</span><span class="p">(</span><span class="k">const</span> <span class="n">E</span><span class="o">&amp;</span> <span class="n">expr</span><span class="p">)</span> <span class="p">{</span> <span class="c1">//693</span>
-<a name="rest_code_2861dbdfde3f44598396005d95658098-3"></a>    <span class="k">return</span> <span class="n">etl_traits</span><span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;::</span><span class="n">dim</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
-<a name="rest_code_2861dbdfde3f44598396005d95658098-4"></a><span class="p">}</span>
-<a name="rest_code_2861dbdfde3f44598396005d95658098-5"></a>
-<a name="rest_code_2861dbdfde3f44598396005d95658098-6"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">E</span><span class="p">,</span> <span class="n">cpp_enable_if</span><span class="p">(</span><span class="n">decay_traits</span><span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;::</span><span class="n">is_fast</span><span class="p">)</span><span class="o">&gt;</span>
-<a name="rest_code_2861dbdfde3f44598396005d95658098-7"></a><span class="k">constexpr</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">rows</span><span class="p">(</span><span class="k">const</span> <span class="n">E</span><span class="o">&amp;</span> <span class="n">expr</span><span class="p">)</span> <span class="k">noexcept</span> <span class="p">{</span> <span class="c1">//703</span>
-<a name="rest_code_2861dbdfde3f44598396005d95658098-8"></a>    <span class="k">return</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="n">expr</span><span class="p">,</span> <span class="n">etl_traits</span><span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;::</span><span class="k">template</span> <span class="n">dim</span><span class="o">&lt;</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">();</span>
-<a name="rest_code_2861dbdfde3f44598396005d95658098-9"></a><span class="p">}</span>
+<pre class="code cpp"><a name="rest_code_00911b5446224691a217634d0942e908-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">E</span><span class="p">,</span> <span class="n">cpp_disable_if</span><span class="p">(</span><span class="n">decay_traits</span><span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;::</span><span class="n">is_fast</span><span class="p">)</span><span class="o">&gt;</span>
+<a name="rest_code_00911b5446224691a217634d0942e908-2"></a><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">rows</span><span class="p">(</span><span class="k">const</span> <span class="n">E</span><span class="o">&amp;</span> <span class="n">expr</span><span class="p">)</span> <span class="p">{</span> <span class="c1">//693</span>
+<a name="rest_code_00911b5446224691a217634d0942e908-3"></a>    <span class="k">return</span> <span class="n">etl_traits</span><span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;::</span><span class="n">dim</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+<a name="rest_code_00911b5446224691a217634d0942e908-4"></a><span class="p">}</span>
+<a name="rest_code_00911b5446224691a217634d0942e908-5"></a>
+<a name="rest_code_00911b5446224691a217634d0942e908-6"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">E</span><span class="p">,</span> <span class="n">cpp_enable_if</span><span class="p">(</span><span class="n">decay_traits</span><span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;::</span><span class="n">is_fast</span><span class="p">)</span><span class="o">&gt;</span>
+<a name="rest_code_00911b5446224691a217634d0942e908-7"></a><span class="k">constexpr</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">rows</span><span class="p">(</span><span class="k">const</span> <span class="n">E</span><span class="o">&amp;</span> <span class="n">expr</span><span class="p">)</span> <span class="k">noexcept</span> <span class="p">{</span> <span class="c1">//703</span>
+<a name="rest_code_00911b5446224691a217634d0942e908-8"></a>    <span class="k">return</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="n">expr</span><span class="p">,</span> <span class="n">etl_traits</span><span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;::</span><span class="k">template</span> <span class="n">dim</span><span class="o">&lt;</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">();</span>
+<a name="rest_code_00911b5446224691a217634d0942e908-9"></a><span class="p">}</span>
 </pre>
 <p>Unfortunately, this is again a <strong>false positive</strong> because PVS-Studio failed to
 recognized SFINAE and therefore the warning is wrong.</p>
-<pre class="code text"><a name="rest_code_63d8c13040ed46b3af40a3f0daf4191a-1"></a>include/etl/builder/expression_builder.hpp:345:1: note: V524 It is odd that the body of '&gt;&gt;=' function is fully equivalent to the body of '*=' function.
+<pre class="code text"><a name="rest_code_ed63faa888cc4de087f27f1adf6479f3-1"></a>include/etl/builder/expression_builder.hpp:345:1: note: V524 It is odd that the body of '&gt;&gt;=' function is fully equivalent to the body of '*=' function.
 </pre>
 <p>This one is interesting indeed. It is true that they are exactly because in ETL
 &gt;&gt; is used for scalar element-wise multiplication. This is quite interesting that
 PVS-Studio points that out. There was a few of these oddities but all were
 normal in the library.</p>
-<pre class="code text"><a name="rest_code_964db41386534d5589306831cad5ddc8-1"></a>etl/test/src/compare.cpp:23:1: error: V501 There are identical sub-expressions to the left and to the right of the '!=' operator: a != a
+<pre class="code text"><a name="rest_code_e0af46b30b254813b4d053fe2afad044-1"></a>etl/test/src/compare.cpp:23:1: error: V501 There are identical sub-expressions to the left and to the right of the '!=' operator: a != a
 </pre>
 <p>Again, it is nice that PVS-Studio finds that, but this is done on purpose on the
 tests to compare an object to itself. If I remove all the oddities in the test
 cases, there are only 17 left in the headers. None of the warnings on the test
 case was serious, but there was no more false positives either, so that's great.</p>
-<pre class="code text"><a name="rest_code_b8667f1e80c94e7d9398b0b9eed23cc9-1"></a>include/etl/impl/vec/sum.hpp:92:1: error: V591 Non-void function should return a value.
+<pre class="code text"><a name="rest_code_416865395b0f4333bbd8e5b633a6c7f4-1"></a>include/etl/impl/vec/sum.hpp:92:1: error: V591 Non-void function should return a value.
 </pre>
-<pre class="code cpp"><a name="rest_code_b3b332f532144610b05d6cb8ceebc323-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">L</span><span class="p">,</span> <span class="n">cpp_disable_if</span><span class="p">((</span><span class="n">vec_enabled</span> <span class="o">&amp;&amp;</span> <span class="n">all_vectorizable</span><span class="o">&lt;</span><span class="n">vector_mode</span><span class="p">,</span> <span class="n">L</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">))</span><span class="o">&gt;</span>
-<a name="rest_code_b3b332f532144610b05d6cb8ceebc323-2"></a><span class="n">value_t</span><span class="o">&lt;</span><span class="n">L</span><span class="o">&gt;</span> <span class="n">sum</span><span class="p">(</span><span class="k">const</span> <span class="n">L</span><span class="o">&amp;</span> <span class="n">lhs</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">first</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">last</span><span class="p">)</span> <span class="p">{</span>
-<a name="rest_code_b3b332f532144610b05d6cb8ceebc323-3"></a>    <span class="n">cpp_unused</span><span class="p">(</span><span class="n">lhs</span><span class="p">);</span>
-<a name="rest_code_b3b332f532144610b05d6cb8ceebc323-4"></a>    <span class="n">cpp_unused</span><span class="p">(</span><span class="n">first</span><span class="p">);</span>
-<a name="rest_code_b3b332f532144610b05d6cb8ceebc323-5"></a>    <span class="n">cpp_unused</span><span class="p">(</span><span class="n">last</span><span class="p">);</span>
-<a name="rest_code_b3b332f532144610b05d6cb8ceebc323-6"></a>    <span class="n">cpp_unreachable</span><span class="p">(</span><span class="s">"vec::sum called with invalid parameters"</span><span class="p">);</span>
-<a name="rest_code_b3b332f532144610b05d6cb8ceebc323-7"></a><span class="p">}</span>
+<pre class="code cpp"><a name="rest_code_d4b9afbd8dbb420d8bca4de397a11083-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">L</span><span class="p">,</span> <span class="n">cpp_disable_if</span><span class="p">((</span><span class="n">vec_enabled</span> <span class="o">&amp;&amp;</span> <span class="n">all_vectorizable</span><span class="o">&lt;</span><span class="n">vector_mode</span><span class="p">,</span> <span class="n">L</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">))</span><span class="o">&gt;</span>
+<a name="rest_code_d4b9afbd8dbb420d8bca4de397a11083-2"></a><span class="n">value_t</span><span class="o">&lt;</span><span class="n">L</span><span class="o">&gt;</span> <span class="n">sum</span><span class="p">(</span><span class="k">const</span> <span class="n">L</span><span class="o">&amp;</span> <span class="n">lhs</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">first</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">last</span><span class="p">)</span> <span class="p">{</span>
+<a name="rest_code_d4b9afbd8dbb420d8bca4de397a11083-3"></a>    <span class="n">cpp_unused</span><span class="p">(</span><span class="n">lhs</span><span class="p">);</span>
+<a name="rest_code_d4b9afbd8dbb420d8bca4de397a11083-4"></a>    <span class="n">cpp_unused</span><span class="p">(</span><span class="n">first</span><span class="p">);</span>
+<a name="rest_code_d4b9afbd8dbb420d8bca4de397a11083-5"></a>    <span class="n">cpp_unused</span><span class="p">(</span><span class="n">last</span><span class="p">);</span>
+<a name="rest_code_d4b9afbd8dbb420d8bca4de397a11083-6"></a>    <span class="n">cpp_unreachable</span><span class="p">(</span><span class="s">"vec::sum called with invalid parameters"</span><span class="p">);</span>
+<a name="rest_code_d4b9afbd8dbb420d8bca4de397a11083-7"></a><span class="p">}</span>
 </pre>
 <p>This one is interesting. It's not a false positive since indeed the function
 does not return a value, but there is a __builtin_unreachable() inside the
 function and it cannot be called. In my opinion, the static analyzer should be
 able to handle that, but this is really a corner case.</p>
-<pre class="code text"><a name="rest_code_b67a3dac594d4e758cae98b3d98c8d6e-1"></a>include/etl/sparse.hpp:148:1: note: V550 An odd precise comparison: a == 0.0. It's probably better to use a comparison with defined precision: fabs(A - B) &lt; Epsilon.
+<pre class="code text"><a name="rest_code_2c8846266df34fc7873d1b12a3fcdc6d-1"></a>include/etl/sparse.hpp:148:1: note: V550 An odd precise comparison: a == 0.0. It's probably better to use a comparison with defined precision: fabs(A - B) &lt; Epsilon.
 </pre>
-<pre class="code cpp"><a name="rest_code_184ef488f7164bfcb1c9cecc7463c76c-1"></a><span class="kr">inline</span> <span class="kt">bool</span> <span class="nf">is_zero</span><span class="p">(</span><span class="kt">double</span> <span class="n">a</span><span class="p">)</span> <span class="p">{</span>
-<a name="rest_code_184ef488f7164bfcb1c9cecc7463c76c-2"></a>    <span class="k">return</span> <span class="n">a</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">;</span>
-<a name="rest_code_184ef488f7164bfcb1c9cecc7463c76c-3"></a><span class="p">}</span>
+<pre class="code cpp"><a name="rest_code_cc52065492ba49a1abea3102f96d77a1-1"></a><span class="kr">inline</span> <span class="kt">bool</span> <span class="nf">is_zero</span><span class="p">(</span><span class="kt">double</span> <span class="n">a</span><span class="p">)</span> <span class="p">{</span>
+<a name="rest_code_cc52065492ba49a1abea3102f96d77a1-2"></a>    <span class="k">return</span> <span class="n">a</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">;</span>
+<a name="rest_code_cc52065492ba49a1abea3102f96d77a1-3"></a><span class="p">}</span>
 </pre>
 <p>This is not false, but again this is intended because of the comparison to zero
 for a sparse matrix. There were 10 of these in the same class.</p>
-<pre class="code text"><a name="rest_code_787e1684b0da4feb9f80bda9283bdfb4-1"></a>include/etl/impl/blas/fft.hpp:562:1: note: V656 Variables 'a_padded', 'b_padded' are initialized through the call to the same function. It's probably an error or un-optimized code. Consider inspecting the 'etl::size(c)' expression. Check lines: 561, 562.
+<pre class="code text"><a name="rest_code_77d515932d8a4f57a2e7bb6ac1940d3a-1"></a>include/etl/impl/blas/fft.hpp:562:1: note: V656 Variables 'a_padded', 'b_padded' are initialized through the call to the same function. It's probably an error or un-optimized code. Consider inspecting the 'etl::size(c)' expression. Check lines: 561, 562.
 </pre>
-<pre class="code cpp"><a name="rest_code_f315c47973a74a7d97c1d1ddbadf51cf-1"></a><span class="n">dyn_vector</span><span class="o">&lt;</span><span class="n">etl</span><span class="o">::</span><span class="n">complex</span><span class="o">&lt;</span><span class="n">type</span><span class="o">&gt;&gt;</span> <span class="n">a_padded</span><span class="p">(</span><span class="n">etl</span><span class="o">::</span><span class="n">size</span><span class="p">(</span><span class="n">c</span><span class="p">));</span>
-<a name="rest_code_f315c47973a74a7d97c1d1ddbadf51cf-2"></a><span class="n">dyn_vector</span><span class="o">&lt;</span><span class="n">etl</span><span class="o">::</span><span class="n">complex</span><span class="o">&lt;</span><span class="n">type</span><span class="o">&gt;&gt;</span> <span class="n">b_padded</span><span class="p">(</span><span class="n">etl</span><span class="o">::</span><span class="n">size</span><span class="p">(</span><span class="n">c</span><span class="p">));</span>
+<pre class="code cpp"><a name="rest_code_8e1fc0858e6944d1ae719e9c7c7333f0-1"></a><span class="n">dyn_vector</span><span class="o">&lt;</span><span class="n">etl</span><span class="o">::</span><span class="n">complex</span><span class="o">&lt;</span><span class="n">type</span><span class="o">&gt;&gt;</span> <span class="n">a_padded</span><span class="p">(</span><span class="n">etl</span><span class="o">::</span><span class="n">size</span><span class="p">(</span><span class="n">c</span><span class="p">));</span>
+<a name="rest_code_8e1fc0858e6944d1ae719e9c7c7333f0-2"></a><span class="n">dyn_vector</span><span class="o">&lt;</span><span class="n">etl</span><span class="o">::</span><span class="n">complex</span><span class="o">&lt;</span><span class="n">type</span><span class="o">&gt;&gt;</span> <span class="n">b_padded</span><span class="p">(</span><span class="n">etl</span><span class="o">::</span><span class="n">size</span><span class="p">(</span><span class="n">c</span><span class="p">));</span>
 </pre>
 <p>It's indeed constructed with the same size, but for me I don't think it's an
 odd pattern. I would not consider that as a warning, especially since it's
 a constructor and not a assignment.</p>
-<pre class="code text"><a name="rest_code_878a375a93a9464ca0e2142cd282ae94-1"></a>include/etl/dyn_base.hpp:312:1: warning: V690 The 'dense_dyn_base' class implements a copy constructor, but lacks the '=' operator. It is dangerous to use such a class.
+<pre class="code text"><a name="rest_code_cd79efe284074bc4be0c20296353b289-1"></a>include/etl/dyn_base.hpp:312:1: warning: V690 The 'dense_dyn_base' class implements a copy constructor, but lacks the '=' operator. It is dangerous to use such a class.
 </pre>
 <p>This is again a kind of corner case in the library because it's a base class
 and the assignment is different between the sub classes and not a real
 assignment in the C++ sense.</p>
-<pre class="code text"><a name="rest_code_d6a6d385ffc94f7982baf5552ea0c14a-1"></a>include/etl/impl/reduc/conv_multi.hpp:657:1: warning: V711 It is dangerous to create a local variable within a loop with a same name as a variable controlling this loop.
+<pre class="code text"><a name="rest_code_0121332ca53e4364a3fb326a8b54e70e-1"></a>include/etl/impl/reduc/conv_multi.hpp:657:1: warning: V711 It is dangerous to create a local variable within a loop with a same name as a variable controlling this loop.
 </pre>
-<pre class="code cpp"><a name="rest_code_515d59d81eb94eed9b7762f4a0f29c5c-1"></a><span class="k">for</span> <span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">c</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">c</span> <span class="o">&lt;</span> <span class="n">C</span><span class="p">;</span> <span class="o">++</span><span class="n">c</span><span class="p">)</span> <span class="p">{</span>
-<a name="rest_code_515d59d81eb94eed9b7762f4a0f29c5c-2"></a>    <span class="k">for</span> <span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">k</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">k</span> <span class="o">&lt;</span> <span class="n">K</span><span class="p">;</span> <span class="o">++</span><span class="n">k</span><span class="p">)</span> <span class="p">{</span>
-<a name="rest_code_515d59d81eb94eed9b7762f4a0f29c5c-3"></a>        <span class="n">conv</span><span class="p">(</span><span class="n">k</span><span class="p">)(</span><span class="n">c</span><span class="p">)</span> <span class="o">=</span> <span class="n">conv_temp</span><span class="p">(</span><span class="n">c</span><span class="p">)(</span><span class="n">k</span><span class="p">);</span>
-<a name="rest_code_515d59d81eb94eed9b7762f4a0f29c5c-4"></a>    <span class="p">}</span>
-<a name="rest_code_515d59d81eb94eed9b7762f4a0f29c5c-5"></a><span class="p">}</span>
+<pre class="code cpp"><a name="rest_code_8e461387204f4bfb96dccef139ebe4fa-1"></a><span class="k">for</span> <span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">c</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">c</span> <span class="o">&lt;</span> <span class="n">C</span><span class="p">;</span> <span class="o">++</span><span class="n">c</span><span class="p">)</span> <span class="p">{</span>
+<a name="rest_code_8e461387204f4bfb96dccef139ebe4fa-2"></a>    <span class="k">for</span> <span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">k</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">k</span> <span class="o">&lt;</span> <span class="n">K</span><span class="p">;</span> <span class="o">++</span><span class="n">k</span><span class="p">)</span> <span class="p">{</span>
+<a name="rest_code_8e461387204f4bfb96dccef139ebe4fa-3"></a>        <span class="n">conv</span><span class="p">(</span><span class="n">k</span><span class="p">)(</span><span class="n">c</span><span class="p">)</span> <span class="o">=</span> <span class="n">conv_temp</span><span class="p">(</span><span class="n">c</span><span class="p">)(</span><span class="n">k</span><span class="p">);</span>
+<a name="rest_code_8e461387204f4bfb96dccef139ebe4fa-4"></a>    <span class="p">}</span>
+<a name="rest_code_8e461387204f4bfb96dccef139ebe4fa-5"></a><span class="p">}</span>
 </pre>
 <p>This is again a false positive... It really seems that PVS-Studio is not able to
 handle the operator().</p>
-<pre class="code text"><a name="rest_code_92a75d16dfc34624aec63d8ec1fed50f-1"></a>include/etl/impl/pooling.hpp:396:1: error: V501 There are identical sub-expressions to the left and to the right of the '||' operator: P1 || P2 || P1
+<pre class="code text"><a name="rest_code_81c87563f1054a7ca0553bdadb0c7b47-1"></a>include/etl/impl/pooling.hpp:396:1: error: V501 There are identical sub-expressions to the left and to the right of the '||' operator: P1 || P2 || P1
 </pre>
-<pre class="code cpp"><a name="rest_code_7847aa05016b4888b7a5f47d9d65343a-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="kt">size_t</span> <span class="n">C1</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">C2</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">C3</span><span class="p">,</span><span class="kt">size_t</span> <span class="n">S1</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">S2</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">S3</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">P1</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">P2</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">P3</span><span class="p">,</span> <span class="k">typename</span> <span class="n">A</span><span class="p">,</span> <span class="k">typename</span> <span class="n">M</span><span class="o">&gt;</span>
-<a name="rest_code_7847aa05016b4888b7a5f47d9d65343a-2"></a><span class="k">static</span> <span class="kt">void</span> <span class="n">apply</span><span class="p">(</span><span class="k">const</span> <span class="n">A</span><span class="o">&amp;</span> <span class="n">sub</span><span class="p">,</span> <span class="n">M</span><span class="o">&amp;&amp;</span> <span class="n">m</span><span class="p">)</span> <span class="p">{</span>
-<a name="rest_code_7847aa05016b4888b7a5f47d9d65343a-3"></a>    <span class="k">const</span> <span class="kt">size_t</span> <span class="n">o1</span> <span class="o">=</span> <span class="p">(</span><span class="n">etl</span><span class="o">::</span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">(</span><span class="n">sub</span><span class="p">)</span> <span class="o">-</span> <span class="n">C1</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">P1</span><span class="p">)</span> <span class="o">/</span> <span class="n">S1</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
-<a name="rest_code_7847aa05016b4888b7a5f47d9d65343a-4"></a>    <span class="k">const</span> <span class="kt">size_t</span> <span class="n">o2</span> <span class="o">=</span> <span class="p">(</span><span class="n">etl</span><span class="o">::</span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;</span><span class="p">(</span><span class="n">sub</span><span class="p">)</span> <span class="o">-</span> <span class="n">C2</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">P2</span><span class="p">)</span> <span class="o">/</span> <span class="n">S2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
-<a name="rest_code_7847aa05016b4888b7a5f47d9d65343a-5"></a>    <span class="k">const</span> <span class="kt">size_t</span> <span class="n">o3</span> <span class="o">=</span> <span class="p">(</span><span class="n">etl</span><span class="o">::</span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">2</span><span class="o">&gt;</span><span class="p">(</span><span class="n">sub</span><span class="p">)</span> <span class="o">-</span> <span class="n">C3</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">P3</span><span class="p">)</span> <span class="o">/</span> <span class="n">S3</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
-<a name="rest_code_7847aa05016b4888b7a5f47d9d65343a-6"></a>
-<a name="rest_code_7847aa05016b4888b7a5f47d9d65343a-7"></a>    <span class="k">if</span><span class="p">(</span><span class="n">P1</span> <span class="o">||</span> <span class="n">P2</span> <span class="o">||</span> <span class="n">P1</span><span class="p">){</span>
+<pre class="code cpp"><a name="rest_code_f81307795d3c44d59ed1bf475fa014a3-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="kt">size_t</span> <span class="n">C1</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">C2</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">C3</span><span class="p">,</span><span class="kt">size_t</span> <span class="n">S1</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">S2</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">S3</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">P1</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">P2</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">P3</span><span class="p">,</span> <span class="k">typename</span> <span class="n">A</span><span class="p">,</span> <span class="k">typename</span> <span class="n">M</span><span class="o">&gt;</span>
+<a name="rest_code_f81307795d3c44d59ed1bf475fa014a3-2"></a><span class="k">static</span> <span class="kt">void</span> <span class="n">apply</span><span class="p">(</span><span class="k">const</span> <span class="n">A</span><span class="o">&amp;</span> <span class="n">sub</span><span class="p">,</span> <span class="n">M</span><span class="o">&amp;&amp;</span> <span class="n">m</span><span class="p">)</span> <span class="p">{</span>
+<a name="rest_code_f81307795d3c44d59ed1bf475fa014a3-3"></a>    <span class="k">const</span> <span class="kt">size_t</span> <span class="n">o1</span> <span class="o">=</span> <span class="p">(</span><span class="n">etl</span><span class="o">::</span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">(</span><span class="n">sub</span><span class="p">)</span> <span class="o">-</span> <span class="n">C1</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">P1</span><span class="p">)</span> <span class="o">/</span> <span class="n">S1</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
+<a name="rest_code_f81307795d3c44d59ed1bf475fa014a3-4"></a>    <span class="k">const</span> <span class="kt">size_t</span> <span class="n">o2</span> <span class="o">=</span> <span class="p">(</span><span class="n">etl</span><span class="o">::</span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;</span><span class="p">(</span><span class="n">sub</span><span class="p">)</span> <span class="o">-</span> <span class="n">C2</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">P2</span><span class="p">)</span> <span class="o">/</span> <span class="n">S2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
+<a name="rest_code_f81307795d3c44d59ed1bf475fa014a3-5"></a>    <span class="k">const</span> <span class="kt">size_t</span> <span class="n">o3</span> <span class="o">=</span> <span class="p">(</span><span class="n">etl</span><span class="o">::</span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">2</span><span class="o">&gt;</span><span class="p">(</span><span class="n">sub</span><span class="p">)</span> <span class="o">-</span> <span class="n">C3</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">P3</span><span class="p">)</span> <span class="o">/</span> <span class="n">S3</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
+<a name="rest_code_f81307795d3c44d59ed1bf475fa014a3-6"></a>
+<a name="rest_code_f81307795d3c44d59ed1bf475fa014a3-7"></a>    <span class="k">if</span><span class="p">(</span><span class="n">P1</span> <span class="o">||</span> <span class="n">P2</span> <span class="o">||</span> <span class="n">P1</span><span class="p">){</span>
 </pre>
 <p>Last but not least, this time, it's entirely true and it's in fact a bug in my
 code! The condition should be written like this:</p>
-<pre class="code cpp"><a name="rest_code_9779a2e1037344609616a0a482a7a56b-1"></a><span class="k">if</span><span class="p">(</span><span class="n">P1</span> <span class="o">||</span> <span class="n">P2</span> <span class="o">||</span> <span class="n">P3</span><span class="p">){</span>
+<pre class="code cpp"><a name="rest_code_90a5891e99394de2a07e3a7a5a201f3b-1"></a><span class="k">if</span><span class="p">(</span><span class="n">P1</span> <span class="o">||</span> <span class="n">P2</span> <span class="o">||</span> <span class="n">P3</span><span class="p">){</span>
 </pre>
 <p>This is now fixed in the master of ETL.</p>
 </div>
@@ -1279,8 +1461,8 @@ speed of compilation (especially of templates).</p>
 <div class="p-summary">
         <div>
 <p>You may remember <a class="reference external" href="http://baptiste-wicht.com/posts/2016/06/reduce-compilation-time-by-another-16-with-catch.html">my quest for faster compilation times</a>. I had made several changes to the Catch test framework macros in order to save some compilation at the expense of my test code looking a bit less nice:</p>
-<pre class="code cpp"><a name="rest_code_b016d2c0826540d0866653ca9f9f53ad-1"></a><span class="n">REQUIRE</span><span class="p">(</span><span class="n">a</span> <span class="o">==</span> <span class="mi">9</span><span class="p">);</span> <span class="c1">//Before</span>
-<a name="rest_code_b016d2c0826540d0866653ca9f9f53ad-2"></a><span class="n">REQUIRE_EQUALS</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="mi">9</span><span class="p">);</span> <span class="c1">//After</span>
+<pre class="code cpp"><a name="rest_code_a8e911f01fd345d08c65dabc46687160-1"></a><span class="n">REQUIRE</span><span class="p">(</span><span class="n">a</span> <span class="o">==</span> <span class="mi">9</span><span class="p">);</span> <span class="c1">//Before</span>
+<a name="rest_code_a8e911f01fd345d08c65dabc46687160-2"></a><span class="n">REQUIRE_EQUALS</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="mi">9</span><span class="p">);</span> <span class="c1">//After</span>
 </pre>
 <p>The first line is a little bit better, but using several optimizations, I was
 able to dramatically change the compilation time of the test cases of ETL. In
@@ -1464,18 +1646,18 @@ code:</p>
 </div>
 <p>If you want to exclude some code from your coverage reports, you can use
 a pragma:</p>
-<pre class="code cpp"><a name="rest_code_ce79ed3ff1bf4996b1b17b8407b35866-1"></a><span class="k">switch</span> <span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="p">{</span>
-<a name="rest_code_ce79ed3ff1bf4996b1b17b8407b35866-2"></a>    <span class="k">case</span> <span class="mi">1</span><span class="o">:</span> <span class="n">one</span><span class="o">++</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span>
-<a name="rest_code_ce79ed3ff1bf4996b1b17b8407b35866-3"></a>    <span class="k">case</span> <span class="mi">2</span><span class="o">:</span> <span class="n">two</span><span class="o">++</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span>
-<a name="rest_code_ce79ed3ff1bf4996b1b17b8407b35866-4"></a>    <span class="k">case</span> <span class="mi">3</span><span class="o">:</span> <span class="n">three</span><span class="o">++</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span>
-<a name="rest_code_ce79ed3ff1bf4996b1b17b8407b35866-5"></a>    <span class="cp">#pragma BullseyeCoverage off</span>
-<a name="rest_code_ce79ed3ff1bf4996b1b17b8407b35866-6"></a>    <span class="k">default</span><span class="o">:</span> <span class="n">abort</span><span class="p">();</span>
-<a name="rest_code_ce79ed3ff1bf4996b1b17b8407b35866-7"></a>    <span class="cp">#pragma BullseyeCoverage on</span>
-<a name="rest_code_ce79ed3ff1bf4996b1b17b8407b35866-8"></a><span class="p">}</span>
+<pre class="code cpp"><a name="rest_code_3f0b01ef3837467c946de3b5f2752546-1"></a><span class="k">switch</span> <span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="p">{</span>
+<a name="rest_code_3f0b01ef3837467c946de3b5f2752546-2"></a>    <span class="k">case</span> <span class="mi">1</span><span class="o">:</span> <span class="n">one</span><span class="o">++</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span>
+<a name="rest_code_3f0b01ef3837467c946de3b5f2752546-3"></a>    <span class="k">case</span> <span class="mi">2</span><span class="o">:</span> <span class="n">two</span><span class="o">++</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span>
+<a name="rest_code_3f0b01ef3837467c946de3b5f2752546-4"></a>    <span class="k">case</span> <span class="mi">3</span><span class="o">:</span> <span class="n">three</span><span class="o">++</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span>
+<a name="rest_code_3f0b01ef3837467c946de3b5f2752546-5"></a>    <span class="cp">#pragma BullseyeCoverage off</span>
+<a name="rest_code_3f0b01ef3837467c946de3b5f2752546-6"></a>    <span class="k">default</span><span class="o">:</span> <span class="n">abort</span><span class="p">();</span>
+<a name="rest_code_3f0b01ef3837467c946de3b5f2752546-7"></a>    <span class="cp">#pragma BullseyeCoverage on</span>
+<a name="rest_code_3f0b01ef3837467c946de3b5f2752546-8"></a><span class="p">}</span>
 </pre>
 <p>So that the condition won't be set as uncovered.</p>
 <p>As for the coverage, it's pretty straightforward. For example:</p>
-<pre class="code bash"><a name="rest_code_5fc5c8292a094dddaab99d93c2c5ca4f-1"></a>covmerge -c -ffinal.cov sse.cov avx.cov
+<pre class="code bash"><a name="rest_code_b5fcfcf32d7d499d8815b927b60b4886-1"></a>covmerge -c -ffinal.cov sse.cov avx.cov
 </pre>
 <p>and it's really fast. Unfortunately, the merging is only done at the function
 level, not at the statement or at the condition level. This is a bit
@@ -1533,22 +1715,22 @@ to switch to some basic versioning. The project is now at a stable state.</p>
 <div class="section" id="examples">
 <h2>Examples</h2>
 <p>Here is an example of expressions in ETL:</p>
-<pre class="code cpp"><a name="rest_code_7f60faa1685b45e4805f0ead67cc014d-1"></a><span class="n">etl</span><span class="o">::</span><span class="n">fast_matrix</span><span class="o">&lt;</span><span class="kt">float</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="o">&gt;</span> <span class="n">a</span> <span class="o">=</span> <span class="p">{</span><span class="mf">1.1</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.1</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">};</span>
-<a name="rest_code_7f60faa1685b45e4805f0ead67cc014d-2"></a><span class="n">etl</span><span class="o">::</span><span class="n">fast_matrix</span><span class="o">&lt;</span><span class="kt">float</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="o">&gt;</span> <span class="n">b</span> <span class="o">=</span> <span class="p">{</span><span class="mf">2.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">};</span>
-<a name="rest_code_7f60faa1685b45e4805f0ead67cc014d-3"></a><span class="n">etl</span><span class="o">::</span><span class="n">fast_matrix</span><span class="o">&lt;</span><span class="kt">float</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="o">&gt;</span> <span class="n">c</span> <span class="o">=</span> <span class="p">{</span><span class="mf">2.2</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.2</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">};</span>
-<a name="rest_code_7f60faa1685b45e4805f0ead67cc014d-4"></a>
-<a name="rest_code_7f60faa1685b45e4805f0ead67cc014d-5"></a><span class="n">etl</span><span class="o">::</span><span class="n">fast_matrix</span><span class="o">&lt;</span><span class="kt">float</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="o">&gt;</span> <span class="n">d</span><span class="p">(</span><span class="mf">2.5</span> <span class="o">*</span> <span class="p">((</span><span class="n">a</span> <span class="o">&gt;&gt;</span> <span class="n">b</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">log</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="n">abs</span><span class="p">(</span><span class="n">c</span><span class="p">)))</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.5</span> <span class="o">*</span> <span class="n">scale</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">sign</span><span class="p">(</span><span class="n">b</span><span class="p">))</span> <span class="o">/</span> <span class="n">c</span><span class="p">)</span> <span class="o">+</span> <span class="mf">2.111</span> <span class="o">/</span> <span class="n">log</span><span class="p">(</span><span class="n">c</span><span class="p">));</span>
+<pre class="code cpp"><a name="rest_code_7e9e518f74144018ae3fe1b292e8e84c-1"></a><span class="n">etl</span><span class="o">::</span><span class="n">fast_matrix</span><span class="o">&lt;</span><span class="kt">float</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="o">&gt;</span> <span class="n">a</span> <span class="o">=</span> <span class="p">{</span><span class="mf">1.1</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.1</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">};</span>
+<a name="rest_code_7e9e518f74144018ae3fe1b292e8e84c-2"></a><span class="n">etl</span><span class="o">::</span><span class="n">fast_matrix</span><span class="o">&lt;</span><span class="kt">float</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="o">&gt;</span> <span class="n">b</span> <span class="o">=</span> <span class="p">{</span><span class="mf">2.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">};</span>
+<a name="rest_code_7e9e518f74144018ae3fe1b292e8e84c-3"></a><span class="n">etl</span><span class="o">::</span><span class="n">fast_matrix</span><span class="o">&lt;</span><span class="kt">float</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="o">&gt;</span> <span class="n">c</span> <span class="o">=</span> <span class="p">{</span><span class="mf">2.2</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.2</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">};</span>
+<a name="rest_code_7e9e518f74144018ae3fe1b292e8e84c-4"></a>
+<a name="rest_code_7e9e518f74144018ae3fe1b292e8e84c-5"></a><span class="n">etl</span><span class="o">::</span><span class="n">fast_matrix</span><span class="o">&lt;</span><span class="kt">float</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="o">&gt;</span> <span class="n">d</span><span class="p">(</span><span class="mf">2.5</span> <span class="o">*</span> <span class="p">((</span><span class="n">a</span> <span class="o">&gt;&gt;</span> <span class="n">b</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">log</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="n">abs</span><span class="p">(</span><span class="n">c</span><span class="p">)))</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.5</span> <span class="o">*</span> <span class="n">scale</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">sign</span><span class="p">(</span><span class="n">b</span><span class="p">))</span> <span class="o">/</span> <span class="n">c</span><span class="p">)</span> <span class="o">+</span> <span class="mf">2.111</span> <span class="o">/</span> <span class="n">log</span><span class="p">(</span><span class="n">c</span><span class="p">));</span>
 </pre>
 <p>Or another I'm using in my neural networks library:</p>
-<pre class="code cpp"><a name="rest_code_1c07c7c811874bdf8d9f3f7935daa2ae-1"></a><span class="n">h</span> <span class="o">=</span> <span class="n">etl</span><span class="o">::</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">b</span> <span class="o">+</span> <span class="n">v</span> <span class="o">*</span> <span class="n">w</span><span class="p">)</span>
+<pre class="code cpp"><a name="rest_code_c634af40bc8a45a98e8c8961cabf7c45-1"></a><span class="n">h</span> <span class="o">=</span> <span class="n">etl</span><span class="o">::</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">b</span> <span class="o">+</span> <span class="n">v</span> <span class="o">*</span> <span class="n">w</span><span class="p">)</span>
 </pre>
 <p>In that case, the vector-matrix multiplication will be executed using a BLAS
 kernel (if ETL is configured correclty) and the assignment, the sigmoid and the
 addition will be automatically vectorized to use either AVX or SSE depending
 on the machine.</p>
 <p>Or with a convolutional layer and a ReLU activation function:</p>
-<pre class="code cpp"><a name="rest_code_1ee4a902f651495b905ce9d18d257e40-1"></a><span class="n">etl</span><span class="o">::</span><span class="n">reshape</span><span class="o">&lt;</span><span class="mi">1</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">NH1</span><span class="p">,</span> <span class="n">NH2</span><span class="o">&gt;</span><span class="p">(</span><span class="n">h_a</span><span class="p">)</span> <span class="o">=</span> <span class="n">etl</span><span class="o">::</span><span class="n">conv_4d_valid_flipped</span><span class="p">(</span><span class="n">etl</span><span class="o">::</span><span class="n">reshape</span><span class="o">&lt;</span><span class="mi">1</span><span class="p">,</span> <span class="n">NC</span><span class="p">,</span> <span class="n">NV1</span><span class="p">,</span> <span class="n">NV2</span><span class="o">&gt;</span><span class="p">(</span><span class="n">v_a</span><span class="p">),</span> <span class="n">w</span><span class="p">);</span>
-<a name="rest_code_1ee4a902f651495b905ce9d18d257e40-2"></a><span class="n">h</span> <span class="o">=</span> <span class="n">max</span><span class="p">(</span><span class="n">b_rep</span> <span class="o">+</span> <span class="n">h_a</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">);</span>
+<pre class="code cpp"><a name="rest_code_8606db8ef9b4432a805c8b42739a0d8f-1"></a><span class="n">etl</span><span class="o">::</span><span class="n">reshape</span><span class="o">&lt;</span><span class="mi">1</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">NH1</span><span class="p">,</span> <span class="n">NH2</span><span class="o">&gt;</span><span class="p">(</span><span class="n">h_a</span><span class="p">)</span> <span class="o">=</span> <span class="n">etl</span><span class="o">::</span><span class="n">conv_4d_valid_flipped</span><span class="p">(</span><span class="n">etl</span><span class="o">::</span><span class="n">reshape</span><span class="o">&lt;</span><span class="mi">1</span><span class="p">,</span> <span class="n">NC</span><span class="p">,</span> <span class="n">NV1</span><span class="p">,</span> <span class="n">NV2</span><span class="o">&gt;</span><span class="p">(</span><span class="n">v_a</span><span class="p">),</span> <span class="n">w</span><span class="p">);</span>
+<a name="rest_code_8606db8ef9b4432a805c8b42739a0d8f-2"></a><span class="n">h</span> <span class="o">=</span> <span class="n">max</span><span class="p">(</span><span class="n">b_rep</span> <span class="o">+</span> <span class="n">h_a</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">);</span>
 </pre>
 <p>This will automatically be computed either with NVIDIA CUDNN (if available) or
 with optimized SSE/AVX kernels.</p>
@@ -1688,73 +1870,9 @@ to open Issues on Github if you have questions or post a comment here.</p>
     <a href="posts/2016/08/asgard-home-automation-project.html#disqus_thread" data-disqus-identifier="cache/posts/2016/08/asgard-home-automation-project.html">Comments</a>
 
 
-        </article><article class="postbox h-entry post-text"><h1 class="p-name">
-<a href="posts/2016/08/update-thor-thesis-and-publications.html" class="u-url">Update: Thor, Thesis and Publications</a>
-        <br><small>  
-             Posted: <time class="published dt-published" datetime="2016-08-23T07:40:13+02:00">2016-08-23 07:40</time></small>
-</h1>
-        <hr>
-<div class="p-summary">
-        <div>
-<p>Since it's been a real while since the last post I've written here, I wanted to
-write a short status update.</p>
-<p>I had to serve one month in the army, which does not help at all for
-productivity :P Since the update to Boost Spirit X3, I haven't worked on my
-eddic compiler again, but I've switched back to my operating system project:
-thor. I'm having a lot of fun with it again and it's in much better state than
-before.</p>
-<p>We also have been very productive on the publication side, with four new
-publications this year in various conferences. I'll update the blog when the
-proceedings are published. I'll be going to ICANN 2016 and ANNPR 2016 next week
-and probably to ICFHR in October. And of course, I'll go back to Meeting C++ in
-November :) As for my thesis, it's finally going great, I've started writing
-regularly and it's taking form!</p>
-<div class="section" id="thor">
-<h2>Thor</h2>
-<p>My project Thor Operating System now has much more features than before:</p>
-<ul class="simple">
-<li>64bit operating system</li>
-<li>Preemptive Multiprocessing</li>
-<li>Keyboard / Mouse driver</li>
-<li>Full ACPI support with ACPICA</li>
-<li>Read/Write ATA driver</li>
-<li>FAT32 file system support</li>
-<li>HPET/RTC/PIT drivers</li>
-<li>Basic PCI support</li>
-<li>Multi stage booting with FAT32</li>
-</ul>
-<p>Since last time, I've fixed tons of bug in the system. Although there are still
-some culprit, it's much more stable than before. They were a lot of bugs in the
-scheduler with loads of race conditions. I hope I've working through most of
-them now.</p>
-<p>I'm currently working on the network stack. I'm able to receive and send packets
-using the Realtek 8139 card. I have working support for Ethernet, IP and ARP.
-I'm currently working on adding ICMP support. I've come to realize that the
-hardest part is not to develop the code here but to find a way to test it.
-Network in Qemu is a huge pain in the ass to configure. And then, you need tools
-to generate some packets or at least answer to packets send by the virtual
-machine, and it's really bad... Nevertheless, it's pretty fun overall :)</p>
-<p>Aside from this, I'm also working on a window manager. I'll try to post an
-update on this.</p>
-<p>You can take a look at the <a class="reference external" href="https://github.com/wichtounet/thor-os">thor sources</a> if you're interested.</p>
-</div>
-<div class="section" id="future">
-<h2>Future</h2>
-<p>For the time being, I'll focus my effort on the thor project. I also have some
-development to do on my home automation system: <a class="reference external" href="https://github.com/wichtounet/asgard-server">asgard-server</a> that I plan to finalize and deploy in a useful way this weekend in my apartment. You can also expect some updates on my deep learning library where I've started work to make it more user-friendly (kind of). I'm also still waiting on the first stable version of doctest for a new comparison with Catch.</p>
-<p>I really want to try to publish again some more posts on the blog. I'll
-especially try to publish some more updates about Thor.</p>
-</div>
-</div>
-        </div>
-            
-        
-    <a href="posts/2016/08/update-thor-thesis-and-publications.html#disqus_thread" data-disqus-identifier="cache/posts/2016/08/update-thor-thesis-and-publications.html">Comments</a>
-
-
         </article><nav class="postindexpager"><ul class="pager">
 <li class="next">
-                <a href="index-28.html" rel="next">Older posts</a>
+                <a href="index-29.html" rel="next">Older posts</a>
             </li>
         </ul></nav><script>var disqus_shortname="blogwichtounet";(function(){var a=document.createElement("script");a.async=true;a.src="https://"+disqus_shortname+".disqus.com/count.js";(document.getElementsByTagName("head")[0]||document.getElementsByTagName("body")[0]).appendChild(a)}());</script>
 </div> <!-- col -->
@@ -1768,7 +1886,7 @@ especially try to publish some more updates about Thor.</p>
 <!-- Footer -->
 
 <footer>
-    Contents © 2016         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         - License: 
+    Contents © 2017         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         - License: 
 <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="padding-left:5px;border-width:0" src="assets/img/cc.png"></a>
         <ul class="footer_inline_ul"></ul></footer><!-- Late loading stuff  --><script src="assets/js/all-nocdn.js"></script><script type="text/javascript">
       $(document).ready(function() {
