@@ -44,8 +44,10 @@ Here is how it is looking with the follow URLs feature from vimium:
    :align: center
    :alt: View of my Vivaldi browser
 
-(The gray bar on the left is the console to the left, not part of the browser
-window).
+
+
+Note: The gray bar on the left is the console to the left and the top kind of
+bar is awesome wm, they are not part of the browser.
 
 I'm using the dark theme with native windows. I've disabled the address bar,
 moved the tab bar to the bottom and completely hidden the side panel. All that
