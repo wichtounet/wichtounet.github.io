@@ -1,4 +1,4 @@
-/*!
+/*
 	Colorbox v1.4.27 - 2013-07-16
 	jQuery lightbox and modal window plugin
 	(c) 2013 Jack Moore - http://www.jacklmoore.com/colorbox
