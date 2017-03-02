@@ -93,7 +93,7 @@ because of all the caching. Moreover, the server are still up in between
 compilations, so this memory usage stays between builds, which may not be what
 you want.
 
-As for runtime, I have not seem any significant difference in performance
+As for runtime, I have not seen any significant difference in performance
 between the clang version and the zapcc. According to the official benchmarks
 and documentation, there should not be any difference in that between zapcc and
 the version of clang on which zapcc is based.
@@ -111,7 +111,7 @@ Conclusion
 In conclusion, we can see that zapcc is always faster than both GCC and Clang,
 on my template-heavy library. Moreover, on debug builds, it is much faster than
 any of the two compilers, being more than 2 times faster than GCC and more than
-3 times faster than clang. This is really great. Moreover, I have not see any
+3 times faster than clang. This is really great. Moreover, I have not seen any
 issue with the tool so far, it can seamlessly replace Clang without problem.
 
 It's a bit weird that you cannot allocate more than 2Go to the zapcc servers.
