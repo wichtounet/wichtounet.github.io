@@ -51,8 +51,8 @@ It seems that they have the compiler even faster!
 Release results
 ===============
 
-Let's start with a debug build, with no optimizations enabled. Every build will
-use four threads. This is the equivalent of doing make -j4
+Let's look now how the results are looking with optimizations enabled. Again,
+every build will use four threads. This is the equivalent of doing make -j4
 release_debug/bin/etl_test without the link step.
 
 +------------------------+--------+
