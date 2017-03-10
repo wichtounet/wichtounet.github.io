@@ -271,7 +271,7 @@ int main(int argc, char* argv[]){
 
         //file << "<ol>\n";
 
-        for(size_t j = 0; j < related.size() && j < 6; ++j){
+        for(size_t j = 0; j < related.size() && j < 7; ++j){
             auto other = related[j];
 
             if(other != i){
