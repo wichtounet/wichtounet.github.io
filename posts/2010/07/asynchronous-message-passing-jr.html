@@ -2,11 +2,11 @@
 <html prefix="og: http://ogp.me/ns# article: http://ogp.me/ns/article# " lang="en">
 <head>
 <meta charset="utf-8">
-<base href="http://baptiste-wicht.com/posts/2010/07/asynchronous-message-passing-jr.html">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Asynchronous Message Passing in JR | Blog blog("Baptiste Wicht");</title>
 <link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
-<meta content="#5670d4" name="theme-color">
+<meta name="theme-color" content="#5670d4">
+<meta name="generator" content="Nikola (getnikola.com)">
 <link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
 <link rel="canonical" href="http://baptiste-wicht.com/posts/2010/07/asynchronous-message-passing-jr.html">
 <!--[if lt IE 9]><script src="../../../assets/js/html5.js"></script><![endif]--><script type="text/javascript">
@@ -140,24 +140,24 @@
 
 <p>In Java, you will do that with Socket or RMI but in JR, this system is really easily integrated. We'll use operations as messages queues and send/receive operations in the queue to respectively send a message to the queue and receive a message from the queue. The operations must not be implemented to achieve asynchronous message passing. If the operations is implemented, this will make a remote procedure call, but we'll not cover that system for now. And because, it's asynchronous, the operations cannot have a return type. The operations visibility is the same as the method visibility. So if an operation is static in class A, a send statement on this operation can be serviced by any process who has the visibility to access this operation. </p>
 <p>So we will need that kind of operations :</p>
-<pre class="code literal-block"><span class="kd">private</span> <span class="kd">static</span> <span class="n">op</span> <span class="kt">void</span> <span class="nf">channel</span><span class="o">(</span><span class="kt">int</span><span class="o">);</span>
+<pre class="code literal-block"><span></span><span class="kd">private</span> <span class="kd">static</span> <span class="n">op</span> <span class="kt">void</span> <span class="nf">channel</span><span class="o">(</span><span class="kt">int</span><span class="o">);</span>
 </pre>
 
 
 <p>To send a message to a channel, you just have to use the send keyword followed by the name of the operations with the arguments :</p>
-<pre class="code literal-block"><span class="n">send</span> <span class="nf">channel</span><span class="o">(</span><span class="mi">12</span><span class="o">);</span>
+<pre class="code literal-block"><span></span><span class="n">send</span> <span class="nf">channel</span><span class="o">(</span><span class="mi">12</span><span class="o">);</span>
 </pre>
 
 
 <p>The send operation does not block, when the same is sended, the send operation is released.</p>
 <p>To receive a message, you have to use the receive keyword, followed by the variables name in which put the values of the arguments :</p>
-<pre class="code literal-block"><span class="kt">int</span> <span class="n">x</span><span class="o">;</span>
+<pre class="code literal-block"><span></span><span class="kt">int</span> <span class="n">x</span><span class="o">;</span>
 <span class="n">receive</span> <span class="nf">channel</span><span class="o">(</span><span class="n">x</span><span class="o">);</span>
 </pre>
 
 
 <p>The variables must have been declared before used in the receive statement. It's a little weird when we start, but it's really practical to assign them in one operation even if we have a lot of parameters. When we the process are on the same virtual machines, the parameters are passed like for any method in Java, by value. If we put all that together in processes :</p>
-<pre class="code literal-block"><span class="kd">public</span> <span class="kd">class</span> <span class="nc">AMP1</span> <span class="o">{</span>
+<pre class="code literal-block"><span></span><span class="kd">public</span> <span class="kd">class</span> <span class="nc">AMP1</span> <span class="o">{</span>
     <span class="kd">private</span> <span class="kd">static</span> <span class="n">op</span> <span class="kt">void</span> <span class="nf">channel</span><span class="o">(</span><span class="kt">int</span><span class="o">);</span>
 
     <span class="kd">private</span> <span class="kd">static</span> <span class="n">process</span> <span class="n">p1</span><span class="o">{</span>
@@ -177,7 +177,7 @@
 
 <p>The messages are received in the order they are sent for each sender. But it's possible that a message sent by Thread 1 before an other message sent by Thread 2 will be received after the one of Thread 2. Normally this would never appears when working in a simple computer, but that could appear often when working with several computers. So don't make any assumptions on the order your messages will be received. </p>
 <p>With all that, we can solve the producer-consumer problem really easily : </p>
-<pre class="code literal-block"><span class="kd">public</span> <span class="kd">class</span> <span class="nc">ProducerConsumer</span> <span class="o">{</span>
+<pre class="code literal-block"><span></span><span class="kd">public</span> <span class="kd">class</span> <span class="nc">ProducerConsumer</span> <span class="o">{</span>
     <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">int</span> <span class="n">N</span> <span class="o">=</span> <span class="mi">12</span><span class="o">;</span> <span class="c1">//Number of producers and consumers</span>
 
     <span class="kd">private</span> <span class="kd">static</span> <span class="n">op</span> <span class="kt">void</span> <span class="nf">deposit</span><span class="o">(</span><span class="n">String</span><span class="o">);</span> <span class="c1">//The channel</span>
@@ -200,7 +200,7 @@
 <p>No need to great explanations. A Producer send a message with the informations it has produced and doesn't wait for the receive. And a Consumer wait for a deposit (a send) with a receive statement and print the result when it has received the message. </p>
 <p>Like you can invoke operations with capabilities, you can also send messages through a capability. It's very easy to share channels because this is only a variable. We often send the channels in a message for an answer. </p>
 <p>Let's imagine a simple problem. We have N clients that needs resources shared by all the clients. We need something to manage the resources. So we'll use a kind of server to achieve that. So we can start with something really simple for the clients : </p>
-<pre class="code literal-block"><span class="n">op</span> <span class="kt">void</span> <span class="nf">request</span><span class="o">();</span>
+<pre class="code literal-block"><span></span><span class="n">op</span> <span class="kt">void</span> <span class="nf">request</span><span class="o">();</span>
 <span class="n">op</span> <span class="kt">void</span> <span class="nf">resource</span><span class="o">(</span><span class="n">Resource</span><span class="o">);</span>
 <span class="n">op</span> <span class="kt">void</span> <span class="nf">release</span><span class="o">(</span><span class="n">Resource</span><span class="o">);</span>
 <span class="n">send</span> <span class="nf">request</span><span class="o">();</span>
@@ -217,7 +217,7 @@
 <li>If the server wait for request messages, it cannot wait for release messages and vice-versa. A solution is to have two process in the servers, but with that, you must synchronize the two process. A better solution is to create an operation that give informations about the type of request. </li>
 </ul>
 <p>So here, is the new version of client : </p>
-<pre class="code literal-block"><span class="kd">enum</span> <span class="n">Type</span> <span class="o">{</span><span class="n">REQUEST</span><span class="o">,</span> <span class="n">RELEASE</span><span class="o">};</span>
+<pre class="code literal-block"><span></span><span class="kd">enum</span> <span class="n">Type</span> <span class="o">{</span><span class="n">REQUEST</span><span class="o">,</span> <span class="n">RELEASE</span><span class="o">};</span>
 <span class="n">op</span> <span class="kt">void</span> <span class="nf">request</span><span class="o">(</span><span class="n">Type</span><span class="o">,</span> <span class="n">cap</span> <span class="nf">void</span> <span class="o">(</span><span class="n">Resource</span><span class="o">),</span> <span class="n">Resource</span><span class="o">);</span>
 <span class="n">cap</span> <span class="nf">void</span> <span class="o">(</span><span class="n">Resource</span><span class="o">)</span> <span class="n">channel</span> <span class="o">=</span> <span class="k">new</span> <span class="n">op</span> <span class="nf">void</span> <span class="o">(</span><span class="n">Resource</span><span class="o">);</span>
 
@@ -229,7 +229,7 @@
 
 
 <p>and now the server : </p>
-<pre class="code literal-block"><span class="n">cap</span> <span class="nf">void</span> <span class="o">(</span><span class="n">Resource</span><span class="o">)</span> <span class="n">client</span><span class="o">;</span>
+<pre class="code literal-block"><span></span><span class="n">cap</span> <span class="nf">void</span> <span class="o">(</span><span class="n">Resource</span><span class="o">)</span> <span class="n">client</span><span class="o">;</span>
 
 <span class="n">Type</span> <span class="n">type</span><span class="o">;</span>
 <span class="n">Resource</span> <span class="n">resource</span><span class="o">;</span>

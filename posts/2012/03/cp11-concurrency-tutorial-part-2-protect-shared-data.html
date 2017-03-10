@@ -2,11 +2,11 @@
 <html prefix="og: http://ogp.me/ns# article: http://ogp.me/ns/article# " lang="en">
 <head>
 <meta charset="utf-8">
-<base href="http://baptiste-wicht.com/posts/2012/03/cp11-concurrency-tutorial-part-2-protect-shared-data.html">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>C++11 Concurrency Tutorial - Part 2 : Protect shared data | Blog blog("Baptiste Wicht");</title>
 <link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
-<meta content="#5670d4" name="theme-color">
+<meta name="theme-color" content="#5670d4">
+<meta name="generator" content="Nikola (getnikola.com)">
 <link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
 <link rel="canonical" href="http://baptiste-wicht.com/posts/2012/03/cp11-concurrency-tutorial-part-2-protect-shared-data.html">
 <!--[if lt IE 9]><script src="../../../assets/js/html5.js"></script><![endif]--><script type="text/javascript">
@@ -140,7 +140,7 @@
 <h4>Synchronization issues</h4>
 
 <p>As an example, we will take a simple Counter structure. This structure has a value and methods to increment or decrement the value. Here is the structure:</p>
-<pre class="code literal-block"><span class="k">struct</span> <span class="n">Counter</span> <span class="p">{</span>
+<pre class="code literal-block"><span></span><span class="k">struct</span> <span class="n">Counter</span> <span class="p">{</span>
     <span class="kt">int</span> <span class="n">value</span><span class="p">;</span>
 
     <span class="n">Counter</span><span class="p">()</span> <span class="o">:</span> <span class="n">value</span><span class="p">(</span><span class="mi">0</span><span class="p">){}</span>
@@ -153,7 +153,7 @@
 
 
 <p>There is nothing new here. Now, let's start some threads and make some increments: </p>
-<pre class="code literal-block"><span class="kt">int</span> <span class="nf">main</span><span class="p">(){</span>
+<pre class="code literal-block"><span></span><span class="kt">int</span> <span class="nf">main</span><span class="p">(){</span>
     <span class="n">Counter</span> <span class="n">counter</span><span class="p">;</span>
 
     <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="kr">thread</span><span class="o">&gt;</span> <span class="n">threads</span><span class="p">;</span>
@@ -178,7 +178,7 @@
 
 <p>Again, nothing new there. We launch 5 threads and each one increment the counter hundred times. After all thread have finished their work, we print the value of the counter. </p>
 <p>If we launch this program, we should expect that it will print 500. But this is not the case. No one can say what this program will print. Here are some results I obtained on my computer: </p>
-<pre class="code literal-block">442
+<pre class="code literal-block"><span></span>442
 500
 477
 400
@@ -217,7 +217,7 @@
 
 <p>In the C++11 threading library, the mutexes are in the mutex header and the class representing a mutex is the std::mutex class. There are two important methods on a mutex: lock() and unlock(). As their names indicate, the first one enable a thread to obtain the lock and the second releases the lock. The lock() method is blocking. The thread will only return from the lock() method when the lock has been obtained. </p>
 <p>To make our Counter struct thread-safe, we have to add a std::mutex member to it and then to lock()/unlock() the mutex in every function of the object: </p>
-<pre class="code literal-block"><span class="k">struct</span> <span class="n">Counter</span> <span class="p">{</span>
+<pre class="code literal-block"><span></span><span class="k">struct</span> <span class="n">Counter</span> <span class="p">{</span>
     <span class="n">std</span><span class="o">::</span><span class="n">mutex</span> <span class="n">mutex</span><span class="p">;</span>
     <span class="kt">int</span> <span class="n">value</span><span class="p">;</span>
 
@@ -236,7 +236,7 @@
 <h4>Exceptions and locks</h4>
 
 <p>Now, let's see what happens in another case. Imagine that the Counter has a decrement operation that throws an exception if the value is 0: </p>
-<pre class="code literal-block"><span class="k">struct</span> <span class="n">Counter</span> <span class="p">{</span>
+<pre class="code literal-block"><span></span><span class="k">struct</span> <span class="n">Counter</span> <span class="p">{</span>
     <span class="kt">int</span> <span class="n">value</span><span class="p">;</span>
 
     <span class="n">Counter</span><span class="p">()</span> <span class="o">:</span> <span class="n">value</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="p">{}</span>
@@ -257,7 +257,7 @@
 
 
 <p>You want to access this structure concurrently without modifying the class. So you create a wrapper with locks for this class: </p>
-<pre class="code literal-block"><span class="k">struct</span> <span class="n">ConcurrentCounter</span> <span class="p">{</span>
+<pre class="code literal-block"><span></span><span class="k">struct</span> <span class="n">ConcurrentCounter</span> <span class="p">{</span>
     <span class="n">std</span><span class="o">::</span><span class="n">mutex</span> <span class="n">mutex</span><span class="p">;</span>
     <span class="n">Counter</span> <span class="n">counter</span><span class="p">;</span>
 
@@ -277,7 +277,7 @@
 
 
 <p>This wrapper works well in most of the cases, but when an exception occurs in the decrement method, you have a big problem. Indeed, if an exception occurs, the unlock() function is not called and so the lock is left in a blocked state. Then, you program is completely blocked. To fix this problem, you have to use a try/catch structure to unlock the lock before throwing again the exception:</p>
-<pre class="code literal-block"><span class="kt">void</span> <span class="nf">decrement</span><span class="p">(){</span>
+<pre class="code literal-block"><span></span><span class="kt">void</span> <span class="nf">decrement</span><span class="p">(){</span>
     <span class="n">mutex</span><span class="p">.</span><span class="n">lock</span><span class="p">();</span>
     <span class="k">try</span> <span class="p">{</span>
         <span class="n">counter</span><span class="p">.</span><span class="n">decrement</span><span class="p">();</span>
@@ -296,7 +296,7 @@
 
 <p>When you want to protect a whole block of code (a function in our case, but can be inside a loop or another control structure), it exists a good solution to avoid forgetting to release the lock: std::lock_guard. </p>
 <p>This class is a simple smart manager for a lock. When the std::lock_guard is created, it automatically calls lock() on the mutex. When the guard gets destructed, it also releases the lock. You can use it like this: </p>
-<pre class="code literal-block"><span class="k">struct</span> <span class="n">ConcurrentSafeCounter</span> <span class="p">{</span>
+<pre class="code literal-block"><span></span><span class="k">struct</span> <span class="n">ConcurrentSafeCounter</span> <span class="p">{</span>
     <span class="n">std</span><span class="o">::</span><span class="n">mutex</span> <span class="n">mutex</span><span class="p">;</span>
     <span class="n">Counter</span> <span class="n">counter</span><span class="p">;</span>
 

@@ -2,11 +2,11 @@
 <html prefix="og: http://ogp.me/ns# article: http://ogp.me/ns/article# " lang="en">
 <head>
 <meta charset="utf-8">
-<base href="http://baptiste-wicht.com/posts/2010/04/java-7-more-dynamics.html">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Java 7 : More dynamics | Blog blog("Baptiste Wicht");</title>
 <link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
-<meta content="#5670d4" name="theme-color">
+<meta name="theme-color" content="#5670d4">
+<meta name="generator" content="Nikola (getnikola.com)">
 <link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
 <link rel="canonical" href="http://baptiste-wicht.com/posts/2010/04/java-7-more-dynamics.html">
 <!--[if lt IE 9]><script src="../../../assets/js/html5.js"></script><![endif]--><script type="text/javascript">
@@ -145,7 +145,7 @@
 <p>The MethodHandle class allows to manipulate a reference to a method. It's like a pointer to a method. With that features, we avoid the heavy process of reflection.</p>
 <p>With that class, we can have informations about the method (return type and parameters) and invoke that method with a special invoke() method that can be called with any number of parameters. To create a MethodHandle we use the MethodHandles factory.</p>
 <p>Here is an example :</p>
-<pre class="code literal-block"><span class="n">JComboBox</span> <span class="n">combo</span> <span class="o">=</span> <span class="k">new</span> <span class="n">JComboBox</span><span class="o">();</span>
+<pre class="code literal-block"><span></span><span class="n">JComboBox</span> <span class="n">combo</span> <span class="o">=</span> <span class="k">new</span> <span class="n">JComboBox</span><span class="o">();</span>
 
 <span class="n">MethodHandle</span> <span class="n">handle</span> <span class="o">=</span> <span class="n">MethodHandles</span><span class="o">.</span><span class="na">lookup</span><span class="o">().</span><span class="na">findVirtual</span><span class="o">(</span><span class="n">JComboBox</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="s">"setModel"</span><span class="o">,</span> <span class="n">MethodType</span><span class="o">.</span><span class="na">make</span><span class="o">(</span><span class="kt">void</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="n">ComboBoxModel</span><span class="o">.</span><span class="na">class</span><span class="o">));</span>
 
@@ -162,7 +162,7 @@
 <h4>InvokeDynamic</h4>
 
 <p>The second class of this new package is the InvokeDynamic class. This is even more weird than the first one, because this class has no methods. But we can invoke any methods on it.</p>
-<pre class="code literal-block"><span class="n">InvokeDynamic</span><span class="o">.</span><span class="na">setModel</span><span class="o">(</span><span class="k">new</span> <span class="n">CustomComboModel</span><span class="o">());</span>
+<pre class="code literal-block"><span></span><span class="n">InvokeDynamic</span><span class="o">.</span><span class="na">setModel</span><span class="o">(</span><span class="k">new</span> <span class="n">CustomComboModel</span><span class="o">());</span>
 <span class="n">InvokeDynamic</span><span class="o">.</span><span class="na">init</span><span class="o">();</span>
 <span class="n">Date</span> <span class="n">today</span> <span class="o">=</span> <span class="n">InvokeDynamic</span><span class="o">.</span><span class="na">getDate</span><span class="o">();</span>
 <span class="c1">//... You can call any valid method</span>
@@ -173,7 +173,7 @@
 <p>To use that mechanism, we must define a bootstrap mechanism who will do the conversion between the method calls on InvokeDynamic and the really Method (through MethodHandle) to invoke. When we invoke the method, the JVM use that bootstrap method to get the MethodHandle and invoke it.The JVM use a cache for the MethodHandle to improve performances. So, only the first dynamic call will be searched in the bootstrap method.  </p>
 <p>To register the bootstrap method, we have to use the <em>Linkage.registerBootstrapMethod(String methodName)</em> method. </p>
 <p>Here is a really basic example of a boot strap method. That method only use the name of the called method and return the MethodHandle to the same method in the Utility class with no args. Of course, that kind of bootstrap method must not be used, but that shows the basics of develop that kind of methods. </p>
-<pre class="code literal-block"><span class="kd">private</span> <span class="kd">static</span> <span class="n">CallSite</span> <span class="nf">bootstrap</span><span class="o">(</span><span class="n">Class</span> <span class="n">caller</span><span class="o">,</span> <span class="n">String</span> <span class="n">name</span><span class="o">,</span> <span class="n">MethodType</span> <span class="n">type</span><span class="o">)</span> <span class="o">{</span>
+<pre class="code literal-block"><span></span><span class="kd">private</span> <span class="kd">static</span> <span class="n">CallSite</span> <span class="nf">bootstrap</span><span class="o">(</span><span class="n">Class</span> <span class="n">caller</span><span class="o">,</span> <span class="n">String</span> <span class="n">name</span><span class="o">,</span> <span class="n">MethodType</span> <span class="n">type</span><span class="o">)</span> <span class="o">{</span>
     <span class="n">CallSite</span> <span class="n">site</span> <span class="o">=</span> <span class="k">new</span> <span class="n">CallSite</span><span class="o">(</span><span class="n">caller</span><span class="o">,</span> <span class="n">name</span><span class="o">,</span> <span class="n">MethodType</span><span class="o">.</span><span class="na">make</span><span class="o">(</span><span class="kt">void</span><span class="o">.</span><span class="na">class</span><span class="o">));</span>
     <span class="n">site</span><span class="o">.</span><span class="na">setTarget</span><span class="o">(</span><span class="n">MethodHandles</span><span class="o">.</span><span class="na">lookup</span><span class="o">().</span><span class="na">findStatic</span><span class="o">(</span><span class="n">Utility</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="n">name</span><span class="o">,</span> <span class="n">MethodType</span><span class="o">.</span><span class="na">make</span><span class="o">(</span><span class="kt">void</span><span class="o">.</span><span class="na">class</span><span class="o">)));</span>
     <span class="k">return</span> <span class="n">site</span><span class="o">;</span>
@@ -182,14 +182,14 @@
 
 
 <p>References of type InvokeDynamic can take any types of objects : </p>
-<pre class="code literal-block"><span class="n">InvokeDynamic</span> <span class="n">dynamicString</span> <span class="o">=</span> <span class="s">"Hello World"</span><span class="o">;</span>
+<pre class="code literal-block"><span></span><span class="n">InvokeDynamic</span> <span class="n">dynamicString</span> <span class="o">=</span> <span class="s">"Hello World"</span><span class="o">;</span>
 <span class="n">InvokeDynamic</span> <span class="n">dynamicCombo</span> <span class="o">=</span> <span class="k">new</span> <span class="n">JComboBox</span><span class="o">();</span>
 <span class="n">InvokeDynamic</span> <span class="n">dynamicNumber</span> <span class="o">=</span> <span class="mi">1</span><span class="o">;</span>
 </pre>
 
 
 <p>With that, we can dynamically call a method on the target : </p>
-<pre class="code literal-block"><span class="n">dynamicString</span><span class="o">.</span><span class="na">aSimpleMethod</span><span class="o">();</span>
+<pre class="code literal-block"><span></span><span class="n">dynamicString</span><span class="o">.</span><span class="na">aSimpleMethod</span><span class="o">();</span>
 </pre>
 
 
