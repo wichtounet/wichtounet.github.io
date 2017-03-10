@@ -97,6 +97,210 @@
             <div id="content"></div>
             
         <article class="postbox h-entry post-text"><h1 class="p-name">
+<a href="posts/2017/03/disappointing-zapcc-performance-on-deep-learning-library-dll.html" class="u-url">Disappointing zapcc performance on Deep Learning Library (DLL)</a>
+        <br><small>  
+             Posted: <time class="published dt-published" datetime="2017-03-09T13:41:06+01:00">2017-03-09 13:41</time></small>
+</h1>
+        <hr>
+<div class="p-summary">
+        <div>
+<p>One week ago, zapcc 1.0 was released and I've observed it to be much faster than the other
+compilers in terms of compile time. This can be seen when
+<a class="reference external" href="http://baptiste-wicht.com/posts/2017/03/release-zapcc-10-fast-cpp-compiler.html">I tested it on my Expression Templates Library (ETL)</a>. It was almost four
+times faster than clang 3.9 and about 2.5 times faster than GCC.</p>
+<p>The ETL library is quite heavy to compile, but still reasonable. This is not the
+case for my Deep Learning Library (DLL) where compiling all the test cases takes
+a very long time. I have to admit that I have been going overboard with
+templates and such and I have now to pay the price. In practice, for the users
+of the library, this is not a big problem since only one or two neural networks
+will be compiled (and it will take hours to train), but in the test cases, there
+are hundreds of them and this is a huge pain. Anyway, enough with the ramble,
+I figured it would be very good to test zapcc on it and see what I can gain from
+using it.</p>
+<p>In this article, when I speak of a compiler thread, I mean an instance of the
+processor, so it's really a process in the Linux world.</p>
+<div class="section" id="results">
+<h2>Results</h2>
+<p>However, I soon realized that I would have more issues than I thought. The first
+problem is the memory consumed by zapcc. Indeed, it is based on clang and
+I always had problem with huge memory consumption from clang on this library and
+zapcc has even bigger memory consumption because some information is cached
+between runs. The amount of memory that zapcc is able to cache can be configured
+in the configuration file. By default, it can use 1.5Go of memory. When zapcc
+goes over the memory limit, it simply wipes out its caches. This means that all
+the gain for the next compilation will be lost, since the cache will have to be
+rebuilt from scratch. This is not a hard limit for the compilation itself.
+Indeed, if the compilation itself takes 3Go, it will still be able to complete
+it, but it is likely that the cache will be wiped after the compilation.</p>
+<p>When I tried compiling using several threads, it soon used all my memory and
+crashed. The same occurs with clang but I can still compile with 3 or 4 threads
+without too much issues on this computer. The same also occurs with GCC but it
+can still handle 4 or 5 threads (depending on the order of the compilation
+units).</p>
+<p>The tests are performed on my desktop computer at work, which is not really
+good... I have 12Go of RAM (I had to ask for extra...) and an old Sandy Bridge
+processor, but at least I have an SSD (also had to ask for extra).</p>
+<p>I started with testing with only one compiler thread. For zapcc, I set the
+maximum memory limit to 8Go. Even with such a limit, the zapcc server restarted
+more than 10 times during the compilation of the 84 test cases. After this first
+experiment, I increased the number of threads to 2 for each compiler, using 4Go
+limit for zapcc. The limit is for each server and each parallel thread will
+spawn a new server, so the effective limit is the number of threads times the
+limit. Even with two threads, I was unable to finish a compilation with zapcc.
+This is quite disappoint for me since clang is able to run with 4 threads in
+parallel. Moreover, a big problem with that is that the servers are not always
+killed when there is no no more memory, they just hang and use all the memory of
+the computer, which is evidently really inconvenient for service processes. When
+this happens with clang or gcc, the compiler simply crashes and the memory is
+released and make is interrupted. Since zapcc is not able to work with more than
+one thread on this computer, the results are the ones with one thread. I was
+also surprised to be able to compile the library with clang and four threads,
+this was not possible before clang-3.9.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="36%">
+<col width="17%">
+<col width="17%">
+<col width="15%">
+<col width="15%">
+</colgroup>
+<thead valign="bottom"><tr>
+<th class="head">Compiler</th>
+<th class="head">-j1</th>
+<th class="head">-j2</th>
+<th class="head">-j3</th>
+<th class="head">-j4</th>
+</tr></thead>
+<tbody valign="top">
+<tr>
+<td>gcc-4.9.3</td>
+<td>2250.95</td>
+<td>1256.36</td>
+<td>912.67</td>
+<td>760.84</td>
+</tr>
+<tr>
+<td>gcc-5.3.0</td>
+<td>2305.37</td>
+<td>1279.49</td>
+<td>918.08</td>
+<td>741.38</td>
+</tr>
+<tr>
+<td>clang-3.9</td>
+<td>2047.61</td>
+<td><strong>1102.93</strong></td>
+<td><strong>899.13</strong></td>
+<td><strong>730.42</strong></td>
+</tr>
+<tr>
+<td>zapcc-1.0</td>
+<td><strong>1483.73</strong></td>
+<td>1483.73</td>
+<td>1483.73</td>
+<td>1483.73</td>
+</tr>
+<tr>
+<td>Difference against Clang</td>
+<td>-27.55%</td>
+<td>+25.69%</td>
+<td>+39.37%</td>
+<td>+50.77%</td>
+</tr>
+<tr>
+<td>Speedup VS GCC-5.3</td>
+<td>-35.66%</td>
+<td>+13.75%</td>
+<td>+38.09%</td>
+<td>+50.03%</td>
+</tr>
+<tr>
+<td>Speedup VS GCC-4.9</td>
+<td>-34.08%</td>
+<td>+15.30%</td>
+<td>+38.50%</td>
+<td>+48.75%</td>
+</tr>
+</tbody>
+</table>
+<p>If we look at the results with only one thread, we can see that there still are
+some significant improvements when using zapcc, but nowhere near as good as what
+was seen in the compilation of ETL. Here, the compilation time is reduced by 34%
+compared to gcc and by 27% compared to clang. This is not bad, since it is
+faster than the other compilers, but I would have expected better speedups. We
+can see that g++-4.9 is slightly faster than g++-5.3, but this is not really
+a significant difference. I'm actually very surprised to find that clang is
+faster than g++ on this experiment. On ETL, it is always very significantly
+slower and before, it was also significantly slower on DLL. I was so used to
+this, that I stopped using it on this project. I may have to reconsider my
+position when working on this project.</p>
+<p>Let's look at the results with more than two threads. Even with two threads,
+every compiler is faster than zapcc. Indeed, zapcc is slower than Clang by 25%
+and slower than GCC by about 15%. If we use more threads, the other compilers
+are becoming even faster and the slowdowns of zapcc are more important. When
+using four threads, zapcc is about 48% slower than gcc and about 50% slower than
+clang. This is really showing one big downside of zapcc that has a very large
+memory consumption. When it is used to compile really heavy template code, it is
+failing very early to use more processes. And even when there is enough memory,
+the speedups are not as great as for relatively simpler code.</p>
+<p>One may argue that this is not a fair comparison since zapcc does not have the
+same numbers of threads. However, considering that this is the best zapcc can do
+on this machine, I would argue that this is a fair comparison in this limited
+experimental setting. If we were to have a big machine for compilation, which
+I don't have at work, the zapcc results would likely be more interesting, but in
+this specific limited case, it shows that zapcc suffers from its high memory
+consumption. It should also be taken into account that this experiment was done
+with almost nothing else running on the machine (no browser for instance) to
+have as much memory as possible available for the compilers. This is not
+a common use case.  Most of the days, when I compile something, I have my
+browser open, which makes a large difference in memory available, and several
+other applications (but consoles and vim instances do not really consume memory
+:D).</p>
+<p>This experiment made me realize that the compilation times for this library were
+quickly becoming crazy. Most of the time, the complete test suite is only
+compiled on my Continuous Integration machine at home which has a much faster
+processor and much more RAM. Therefore, it is relatively fast since it uses more
+threads to compile.  Nevertheless, this is not a good point that the unit tests
+takes so much time to compile. I plan to split the test cases in several sets.
+Because, currently the real unit tests are compiled with the performance tests
+and other various tests. I'll probably end up generating three executables. This
+will help greatly during development. Moreover, I also have a technique to
+decrease the compilation time by erasing some template parameters at compilation
+time. This is already ready, but has currently a runtime overhead that I will
+try to remove and then use this technique everywhere to get back to reasonable
+compilation times. I'll also try to see if I can find obvious compilation
+bottlenecks in the code.</p>
+</div>
+<div class="section" id="conclusion">
+<h2>Conclusion</h2>
+<p>To conclude, while zapcc brings some very interesting compilation speedups in
+some cases like in my ETL library, it also has some downsides, namely
+<strong>huge memory consumption</strong>. This memory consumption may prevent the use of several
+compiler threads and render zapcc much less interesting than other compilers.</p>
+<p>When trying to compile my DLL library on a machine with 12Go of RAM with two
+zapcc threads, it was impossible for me to make it complete. While zapcc was
+faster with one thread than the other compilers, they were able to use up to
+four threads and in the end <strong>zapcc was about twice slower than clang</strong>.</p>
+<p>I knew that zapcc memory consumption was very large, but I would have not have
+expected something so critical. Another feature that would be interesting in
+zapcc would be to set a max memory hard limit for the server instead of simply
+a limit on the cache they are able to keep in memory. This would prevent hanging
+the complete computer when something goes wrong.</p>
+<p>I had a good surprise with clang that was actually faster than GCC and also able
+to work with four threads in parallel. This was not the case with previous
+version of clang. On ETL, it is still significantly slower than GCC though.</p>
+<p>For now, I'll continue using clang on this DLL project and use zapcc only on my
+ETL project. I'll also focus on improving the compilation time on this project
+and make it reasonable again.</p>
+</div>
+</div>
+        </div>
+            
+        
+    <a href="posts/2017/03/disappointing-zapcc-performance-on-deep-learning-library-dll.html#disqus_thread" data-disqus-identifier="cache/posts/2017/03/disappointing-zapcc-performance-on-deep-learning-library-dll.html">Comments</a>
+
+
+        </article><article class="postbox h-entry post-text"><h1 class="p-name">
 <a href="posts/2017/03/migrated-from-owncloud-5-to-nextcloud-11.html" class="u-url">Migrated from owncloud 5 to Nextcloud 11</a>
         <br><small>  
              Posted: <time class="published dt-published" datetime="2017-03-03T09:08:58+01:00">2017-03-03 09:08</time></small>
@@ -666,23 +870,23 @@ moved the tab bar to the bottom and completely hidden the side panel. All that
 remained was the title bar and the scroll bar.</p>
 <p>To get rid of the title bar, you can use CSS. First, you have to only display
 the Vivaldi button in the settings page. Then, you can use this custom CSS:</p>
-<pre class="code CSS"><a name="rest_code_ba75722958d7422aaac58ae348465a34-1"></a><span class="nt">button</span><span class="nc">.vivaldi</span> <span class="p">{</span>
-<a name="rest_code_ba75722958d7422aaac58ae348465a34-2"></a>    <span class="nb">display</span><span class="o">:</span> <span class="nb">none</span> <span class="cp">!important</span><span class="p">;</span>
-<a name="rest_code_ba75722958d7422aaac58ae348465a34-3"></a><span class="p">}</span>
-<a name="rest_code_ba75722958d7422aaac58ae348465a34-4"></a>
-<a name="rest_code_ba75722958d7422aaac58ae348465a34-5"></a><span class="nn">#header</span> <span class="p">{</span>
-<a name="rest_code_ba75722958d7422aaac58ae348465a34-6"></a>    <span class="nb">min-height</span><span class="o">:</span> <span class="m">0</span> <span class="cp">!important</span><span class="p">;</span>
-<a name="rest_code_ba75722958d7422aaac58ae348465a34-7"></a>    <span class="nb">z-index</span><span class="o">:</span> <span class="nb">auto</span> <span class="cp">!important</span><span class="p">;</span>
-<a name="rest_code_ba75722958d7422aaac58ae348465a34-8"></a><span class="p">}</span>
-<a name="rest_code_ba75722958d7422aaac58ae348465a34-9"></a>
-<a name="rest_code_ba75722958d7422aaac58ae348465a34-10"></a><span class="nc">.button-toolbar.home</span> <span class="p">{</span> <span class="nb">display</span><span class="o">:</span> <span class="nb">none</span> <span class="p">}</span>
+<pre class="code CSS"><a name="rest_code_0f18c7d313314e4d97f7f4d51e4e682c-1"></a><span class="nt">button</span><span class="nc">.vivaldi</span> <span class="p">{</span>
+<a name="rest_code_0f18c7d313314e4d97f7f4d51e4e682c-2"></a>    <span class="nb">display</span><span class="o">:</span> <span class="nb">none</span> <span class="cp">!important</span><span class="p">;</span>
+<a name="rest_code_0f18c7d313314e4d97f7f4d51e4e682c-3"></a><span class="p">}</span>
+<a name="rest_code_0f18c7d313314e4d97f7f4d51e4e682c-4"></a>
+<a name="rest_code_0f18c7d313314e4d97f7f4d51e4e682c-5"></a><span class="nn">#header</span> <span class="p">{</span>
+<a name="rest_code_0f18c7d313314e4d97f7f4d51e4e682c-6"></a>    <span class="nb">min-height</span><span class="o">:</span> <span class="m">0</span> <span class="cp">!important</span><span class="p">;</span>
+<a name="rest_code_0f18c7d313314e4d97f7f4d51e4e682c-7"></a>    <span class="nb">z-index</span><span class="o">:</span> <span class="nb">auto</span> <span class="cp">!important</span><span class="p">;</span>
+<a name="rest_code_0f18c7d313314e4d97f7f4d51e4e682c-8"></a><span class="p">}</span>
+<a name="rest_code_0f18c7d313314e4d97f7f4d51e4e682c-9"></a>
+<a name="rest_code_0f18c7d313314e4d97f7f4d51e4e682c-10"></a><span class="nc">.button-toolbar.home</span> <span class="p">{</span> <span class="nb">display</span><span class="o">:</span> <span class="nb">none</span> <span class="p">}</span>
 </pre>
 <p>to hide the title completely! To get rid of the scroll bar, you need to use the
 Stylish extension and use this custom CSS:</p>
-<pre class="code CSS"><a name="rest_code_3a8e36f0a354452e8cba7237a52027f1-1"></a><span class="o">:</span><span class="nd">:-webkit-scrollbar</span><span class="p">{</span><span class="nb">display</span><span class="o">:</span><span class="nb">none</span> <span class="cp">!important</span><span class="p">;</span> <span class="nb">width</span><span class="o">:</span><span class="m">0px</span><span class="p">;}</span>
-<a name="rest_code_3a8e36f0a354452e8cba7237a52027f1-2"></a><span class="o">:</span><span class="nd">:-webkit-scrollbar-button</span><span class="o">,:</span><span class="nd">:-webkit-scrollbar-track</span><span class="p">{</span><span class="nb">display</span><span class="o">:</span><span class="nb">none</span> <span class="cp">!important</span><span class="p">;}</span>
-<a name="rest_code_3a8e36f0a354452e8cba7237a52027f1-3"></a><span class="o">:</span><span class="nd">:-webkit-scrollbar-thumb</span><span class="p">{</span><span class="nb">display</span><span class="o">:</span> <span class="nb">none</span> <span class="cp">!important</span><span class="p">;}</span>
-<a name="rest_code_3a8e36f0a354452e8cba7237a52027f1-4"></a><span class="o">:</span><span class="nd">:-webkit-scrollbar-track</span><span class="p">{</span><span class="nb">display</span><span class="o">:</span> <span class="nb">none</span> <span class="cp">!important</span><span class="p">;}</span>
+<pre class="code CSS"><a name="rest_code_98c819850c7e4cd4bae24ad6c8ab5110-1"></a><span class="o">:</span><span class="nd">:-webkit-scrollbar</span><span class="p">{</span><span class="nb">display</span><span class="o">:</span><span class="nb">none</span> <span class="cp">!important</span><span class="p">;</span> <span class="nb">width</span><span class="o">:</span><span class="m">0px</span><span class="p">;}</span>
+<a name="rest_code_98c819850c7e4cd4bae24ad6c8ab5110-2"></a><span class="o">:</span><span class="nd">:-webkit-scrollbar-button</span><span class="o">,:</span><span class="nd">:-webkit-scrollbar-track</span><span class="p">{</span><span class="nb">display</span><span class="o">:</span><span class="nb">none</span> <span class="cp">!important</span><span class="p">;}</span>
+<a name="rest_code_98c819850c7e4cd4bae24ad6c8ab5110-3"></a><span class="o">:</span><span class="nd">:-webkit-scrollbar-thumb</span><span class="p">{</span><span class="nb">display</span><span class="o">:</span> <span class="nb">none</span> <span class="cp">!important</span><span class="p">;}</span>
+<a name="rest_code_98c819850c7e4cd4bae24ad6c8ab5110-4"></a><span class="o">:</span><span class="nd">:-webkit-scrollbar-track</span><span class="p">{</span><span class="nb">display</span><span class="o">:</span> <span class="nb">none</span> <span class="cp">!important</span><span class="p">;}</span>
 </pre>
 <p>And then, no more scroll bar :)</p>
 <p>If you want to have full HTML5 video support, you need to install extra codecs.
@@ -755,7 +959,7 @@ simply the Raspberry on which Domoticz is installed.</p>
 <p>As for the installation of Domoticz, it's really simple. They also have images of
 Raspberry Pi directly, but since my Raspberry was already installed with
 Raspbian, I installed Domoticz on it directly. A simple matter of curl and bash:</p>
-<pre class="code bash"><a name="rest_code_99d875d64b634552ab6e96c4b3ebcf69-1"></a>sudo curl -L install.domoticz.com <span class="p">|</span> sudo bash
+<pre class="code bash"><a name="rest_code_12f8fd57ff2c43449795c44ffc4f88b9-1"></a>sudo curl -L install.domoticz.com <span class="p">|</span> sudo bash
 </pre>
 <p>After a few questions, your installation should be complete. You can browse your
 Domoticz installation at the IP of your Pi and at the given port.</p>
@@ -907,7 +1111,7 @@ available on any Linux platform.</p>
 <p>The usage of PVS-Studio on Linux should be straightforward. First, you can use the
 analyzer directly with make and it will detect the invocations of the compiler.
 For instance, here is the command I used for ETL:</p>
-<pre class="code text"><a name="rest_code_44396ac984724de5baf642249d8b1b1b-1"></a>pvs-studio-analyzer trace -- make -j5 debug/bin/etl_test
+<pre class="code text"><a name="rest_code_0f877ca773884ee58b7f0820e698fbae-1"></a>pvs-studio-analyzer trace -- make -j5 debug/bin/etl_test
 </pre>
 <p>Note that you can use several threads without issues, which is really great.
 There does not seem to be any slowdown at this stage, probably only collecting
@@ -915,43 +1119,43 @@ compiler arguments.</p>
 <p>This first step creates a strace_out file that will be used by the next stage.</p>
 <p>Once, the compilation has been analyzed, you can generate the results with the
 analyze function, for which you'll need a license. Here is what I did:</p>
-<pre class="code text"><a name="rest_code_7bb49910aa3e424f990d0dc4f71bf88a-1"></a>pvs-studio-analyzer analyze -l ~/pvs_studio/PVS-Studio.lic -j5
+<pre class="code text"><a name="rest_code_c6156e68e04943b38bf39be447d43737-1"></a>pvs-studio-analyzer analyze -l ~/pvs_studio/PVS-Studio.lic -j5
 </pre>
 <p>Unfortunately, this didn't work for me:</p>
-<pre class="code text"><a name="rest_code_c289ffebcbec48ab9098134a934aa153-1"></a>No compilation units found
-<a name="rest_code_c289ffebcbec48ab9098134a934aa153-2"></a>Analysis finished in 0:00:00.00
+<pre class="code text"><a name="rest_code_5a49cc1f76a3411d9f395f497c700042-1"></a>No compilation units found
+<a name="rest_code_5a49cc1f76a3411d9f395f497c700042-2"></a>Analysis finished in 0:00:00.00
 </pre>
 <p>Apparently, it's not able to use the strace_out it generated itself...</p>
 <p>Another possibility is to use the compilation database from clang to use
 PVS-Studio. So I generated my compile_commands.json file again (it was not up to
 date...) with <a class="reference external" href="https://github.com/rizsotto/Bear">Bear</a>. And then, you only
 need to run the analyze step:</p>
-<pre class="code text"><a name="rest_code_a99e73de15ab4e77aee8375613e6f487-1"></a>pvs-studio-analyzer analyze -l ~/pvs_studio/PVS-Studio.lic -j5
+<pre class="code text"><a name="rest_code_4142a43651ba4bd8a21b890a40ca1231-1"></a>pvs-studio-analyzer analyze -l ~/pvs_studio/PVS-Studio.lic -j5
 </pre>
 <p>Make sure you have the same compiler configured than the one used to generate
 the compilation database to avoid errors with compiler arguments.</p>
 <p>Unfortunately, this just printed a load of crap on my console:</p>
-<pre class="code text"><a name="rest_code_b61137b790ed450e9402de88b4c2fbcc-1"></a>(L8Pu(]-'Lo8h&gt;uo(_uv(uo2(-&gt;'2h_u(uo2(uvU2K h&gt;'o8a=}Lkk;x[G^%cuaa8acr[VS%
-<a name="rest_code_b61137b790ed450e9402de88b4c2fbcc-2"></a>$ckUaoc8 c'8&gt;_-o-8&gt;U2cu/kau==-8&gt;c-=cU2]Uf=c U2=u%c&amp;kU__-&gt;j}c@uvu2%cJ
-<a name="rest_code_b61137b790ed450e9402de88b4c2fbcc-3"></a>(L8Pu(]-'Lo8h&gt;uo(_uv(uo2(-&gt;'2h_u(uo2(uvU2K h&gt;'o8a=}Lkk;JVJ^%cuaa8acr[VS%
-<a name="rest_code_b61137b790ed450e9402de88b4c2fbcc-4"></a>$ckUaoc8 c'8&gt;_-o-8&gt;U2cu/kau==-8&gt;c-=cU2]Uf=c U2=u%c&amp;kU__-&gt;j}c@uvu2%cJ
-<a name="rest_code_b61137b790ed450e9402de88b4c2fbcc-5"></a>(L8Pu(]-'Lo8h&gt;uo(_uv(uo2(-&gt;'2h_u(uo2(uvU2K h&gt;'o8a=}Lkk;*[G^%cuaa8acr[VS%
-<a name="rest_code_b61137b790ed450e9402de88b4c2fbcc-6"></a>$ckUaoc8 c'8&gt;_-o-8&gt;U2cu/kau==-8&gt;c-=cU2]Uf=c U2=u%c&amp;kU__-&gt;j}c@uvu2%cJ
-<a name="rest_code_b61137b790ed450e9402de88b4c2fbcc-7"></a>(L8Pu(]-'Lo8h&gt;uo(_uv(uo2(-&gt;'2h_u(uo2(uvU2K h&gt;'o8a=}Lkk;b[b^%cuaa8acr[VS%
-<a name="rest_code_b61137b790ed450e9402de88b4c2fbcc-8"></a>$ckUaoc8 c'8&gt;_-o-8&gt;U2cu/kau==-8&gt;c-=cU2]Uf=c U2=u%c&amp;kU__-&gt;j}c@uvu2%cJ
-<a name="rest_code_b61137b790ed450e9402de88b4c2fbcc-9"></a>(L8Pu(]-'Lo8h&gt;uo(_uv(uo2(-&gt;'2h_u(uo2(uvU2K h&gt;'o8a=}Lkk;[[x^%cuaa8acr[VS%
-<a name="rest_code_b61137b790ed450e9402de88b4c2fbcc-10"></a>$ckUaoc8 c'8&gt;_-o-8&gt;U2cu/kau==-8&gt;c-=cU2]Uf=c U2=u%c&amp;kU__-&gt;j}c@uvu2%cJ
+<pre class="code text"><a name="rest_code_cc46d0c91c3245b9af49d93bbd1938d1-1"></a>(L8Pu(]-'Lo8h&gt;uo(_uv(uo2(-&gt;'2h_u(uo2(uvU2K h&gt;'o8a=}Lkk;x[G^%cuaa8acr[VS%
+<a name="rest_code_cc46d0c91c3245b9af49d93bbd1938d1-2"></a>$ckUaoc8 c'8&gt;_-o-8&gt;U2cu/kau==-8&gt;c-=cU2]Uf=c U2=u%c&amp;kU__-&gt;j}c@uvu2%cJ
+<a name="rest_code_cc46d0c91c3245b9af49d93bbd1938d1-3"></a>(L8Pu(]-'Lo8h&gt;uo(_uv(uo2(-&gt;'2h_u(uo2(uvU2K h&gt;'o8a=}Lkk;JVJ^%cuaa8acr[VS%
+<a name="rest_code_cc46d0c91c3245b9af49d93bbd1938d1-4"></a>$ckUaoc8 c'8&gt;_-o-8&gt;U2cu/kau==-8&gt;c-=cU2]Uf=c U2=u%c&amp;kU__-&gt;j}c@uvu2%cJ
+<a name="rest_code_cc46d0c91c3245b9af49d93bbd1938d1-5"></a>(L8Pu(]-'Lo8h&gt;uo(_uv(uo2(-&gt;'2h_u(uo2(uvU2K h&gt;'o8a=}Lkk;*[G^%cuaa8acr[VS%
+<a name="rest_code_cc46d0c91c3245b9af49d93bbd1938d1-6"></a>$ckUaoc8 c'8&gt;_-o-8&gt;U2cu/kau==-8&gt;c-=cU2]Uf=c U2=u%c&amp;kU__-&gt;j}c@uvu2%cJ
+<a name="rest_code_cc46d0c91c3245b9af49d93bbd1938d1-7"></a>(L8Pu(]-'Lo8h&gt;uo(_uv(uo2(-&gt;'2h_u(uo2(uvU2K h&gt;'o8a=}Lkk;b[b^%cuaa8acr[VS%
+<a name="rest_code_cc46d0c91c3245b9af49d93bbd1938d1-8"></a>$ckUaoc8 c'8&gt;_-o-8&gt;U2cu/kau==-8&gt;c-=cU2]Uf=c U2=u%c&amp;kU__-&gt;j}c@uvu2%cJ
+<a name="rest_code_cc46d0c91c3245b9af49d93bbd1938d1-9"></a>(L8Pu(]-'Lo8h&gt;uo(_uv(uo2(-&gt;'2h_u(uo2(uvU2K h&gt;'o8a=}Lkk;[[x^%cuaa8acr[VS%
+<a name="rest_code_cc46d0c91c3245b9af49d93bbd1938d1-10"></a>$ckUaoc8 c'8&gt;_-o-8&gt;U2cu/kau==-8&gt;c-=cU2]Uf=c U2=u%c&amp;kU__-&gt;j}c@uvu2%cJ
 </pre>
 <p>Pretty nice, isn't it ?</p>
 <p>Let's try again in a file:</p>
-<pre class="code text"><a name="rest_code_01c76ef92a904311bc9f4bc8c7cfb2ca-1"></a>pvs-studio-analyzer analyze -o results.log -l ~/pvs_studio/PVS-Studio.lic -j5
+<pre class="code text"><a name="rest_code_854a9e9de0c44011a009a0136a7518d0-1"></a>pvs-studio-analyzer analyze -o results.log -l ~/pvs_studio/PVS-Studio.lic -j5
 </pre>
 <p>The time is quite reasonable for the analysis, it took much less time than the
 compilation time. In total, it took 88 seconds to analyze all the files. It's
 much faster than the clang static analyzer.</p>
 <p>This time it worked, but the log file is not readable, you need to convert it
 again:</p>
-<pre class="code text"><a name="rest_code_441cd40154814f3b8df891575b8d5694-1"></a>plog-converter -t errorfile -o errors results.log
+<pre class="code text"><a name="rest_code_de64e02638c2481a998ddd7c667b51ae-1"></a>plog-converter -t errorfile -o errors results.log
 </pre>
 <p>And finally, you can read the results of the analysis in the errors file.</p>
 </div>
@@ -966,13 +1170,13 @@ want on my computer.</p>
 <p>Let's look at the results. For each message, I'll include the message from
 PVS-Studio and the code if it's relevant.</p>
 <p>The first is about using the comma:</p>
-<pre class="code text"><a name="rest_code_eac1f9450eb243338cdf0679d99b35f1-1"></a>include/etl/traits.hpp:674:1: error: V521 Such expressions using the ',' operator are dangerous. Make sure the expression is correct.
-<a name="rest_code_eac1f9450eb243338cdf0679d99b35f1-2"></a>include/etl/traits.hpp:674:1: error: V685 Consider inspecting the return statement. The expression contains a comma.
+<pre class="code text"><a name="rest_code_65e2e147a8164ed985e23f359f55680e-1"></a>include/etl/traits.hpp:674:1: error: V521 Such expressions using the ',' operator are dangerous. Make sure the expression is correct.
+<a name="rest_code_65e2e147a8164ed985e23f359f55680e-2"></a>include/etl/traits.hpp:674:1: error: V685 Consider inspecting the return statement. The expression contains a comma.
 </pre>
-<pre class="code cpp"><a name="rest_code_c59b6a60d74847c28ef4a79509527e76-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">E</span><span class="o">&gt;</span>
-<a name="rest_code_c59b6a60d74847c28ef4a79509527e76-2"></a><span class="k">constexpr</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">dimensions</span><span class="p">(</span><span class="k">const</span> <span class="n">E</span><span class="o">&amp;</span> <span class="n">expr</span><span class="p">)</span> <span class="k">noexcept</span> <span class="p">{</span>
-<a name="rest_code_c59b6a60d74847c28ef4a79509527e76-3"></a>    <span class="k">return</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="n">expr</span><span class="p">,</span> <span class="n">etl_traits</span><span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;::</span><span class="n">dimensions</span><span class="p">();</span>
-<a name="rest_code_c59b6a60d74847c28ef4a79509527e76-4"></a><span class="p">}</span>
+<pre class="code cpp"><a name="rest_code_38d30dd60268474eb2dcccbcfe4fa6e0-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">E</span><span class="o">&gt;</span>
+<a name="rest_code_38d30dd60268474eb2dcccbcfe4fa6e0-2"></a><span class="k">constexpr</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">dimensions</span><span class="p">(</span><span class="k">const</span> <span class="n">E</span><span class="o">&amp;</span> <span class="n">expr</span><span class="p">)</span> <span class="k">noexcept</span> <span class="p">{</span>
+<a name="rest_code_38d30dd60268474eb2dcccbcfe4fa6e0-3"></a>    <span class="k">return</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="n">expr</span><span class="p">,</span> <span class="n">etl_traits</span><span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;::</span><span class="n">dimensions</span><span class="p">();</span>
+<a name="rest_code_38d30dd60268474eb2dcccbcfe4fa6e0-4"></a><span class="p">}</span>
 </pre>
 <p>Here I'm simply using the comma operand to ignore expr to avoid a warning. To
 make this compile in C++11, you need to do it in one line otherwise it's not
@@ -980,128 +1184,128 @@ a constexpr function. It's probably not perfect to use this construct, but there
 is no problem here.</p>
 <p>There is a bunch of these, let's filter them, it remains 207 warnings. Let's
 jump to the next one:</p>
-<pre class="code text"><a name="rest_code_a48dcc1d9c38457486d13564182a7e55-1"></a>include/etl/impl/blas/fft.hpp:29:1: error: V501 There are identical sub-expressions to the left and to the right of the '==' operator: (DFTI_SINGLE) == DFTI_SINGLE
+<pre class="code text"><a name="rest_code_0e5d0eee11504dcb9f4ec917bbf64242-1"></a>include/etl/impl/blas/fft.hpp:29:1: error: V501 There are identical sub-expressions to the left and to the right of the '==' operator: (DFTI_SINGLE) == DFTI_SINGLE
 </pre>
-<pre class="code cpp"><a name="rest_code_582aa25275464bcf8c85d63c940e6439-1"></a><span class="kr">inline</span> <span class="kt">void</span> <span class="nf">fft_kernel</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">complex</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;*</span> <span class="n">in</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">s</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">complex</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;*</span> <span class="n">out</span><span class="p">)</span> <span class="p">{</span>
-<a name="rest_code_582aa25275464bcf8c85d63c940e6439-2"></a>    <span class="n">DFTI_DESCRIPTOR_HANDLE</span> <span class="n">descriptor</span><span class="p">;</span>
-<a name="rest_code_582aa25275464bcf8c85d63c940e6439-3"></a>
-<a name="rest_code_582aa25275464bcf8c85d63c940e6439-4"></a>    <span class="kt">void</span><span class="o">*</span> <span class="n">in_ptr</span> <span class="o">=</span> <span class="k">const_cast</span><span class="o">&lt;</span><span class="kt">void</span><span class="o">*&gt;</span><span class="p">(</span><span class="k">static_cast</span><span class="o">&lt;</span><span class="k">const</span> <span class="kt">void</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">in</span><span class="p">));</span>
-<a name="rest_code_582aa25275464bcf8c85d63c940e6439-5"></a>
-<a name="rest_code_582aa25275464bcf8c85d63c940e6439-6"></a>    <span class="n">DftiCreateDescriptor</span><span class="p">(</span><span class="o">&amp;</span><span class="n">descriptor</span><span class="p">,</span> <span class="n">DFTI_SINGLE</span><span class="p">,</span> <span class="n">DFTI_COMPLEX</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">s</span><span class="p">);</span> <span class="c1">//Specify size and precision</span>
-<a name="rest_code_582aa25275464bcf8c85d63c940e6439-7"></a>    <span class="n">DftiSetValue</span><span class="p">(</span><span class="n">descriptor</span><span class="p">,</span> <span class="n">DFTI_PLACEMENT</span><span class="p">,</span> <span class="n">DFTI_NOT_INPLACE</span><span class="p">);</span>         <span class="c1">//Out of place FFT</span>
-<a name="rest_code_582aa25275464bcf8c85d63c940e6439-8"></a>    <span class="n">DftiCommitDescriptor</span><span class="p">(</span><span class="n">descriptor</span><span class="p">);</span>                                   <span class="c1">//Finalize the descriptor</span>
-<a name="rest_code_582aa25275464bcf8c85d63c940e6439-9"></a>    <span class="n">DftiComputeForward</span><span class="p">(</span><span class="n">descriptor</span><span class="p">,</span> <span class="n">in_ptr</span><span class="p">,</span> <span class="n">out</span><span class="p">);</span>                        <span class="c1">//Compute the Forward FFT</span>
-<a name="rest_code_582aa25275464bcf8c85d63c940e6439-10"></a>    <span class="n">DftiFreeDescriptor</span><span class="p">(</span><span class="o">&amp;</span><span class="n">descriptor</span><span class="p">);</span>                                    <span class="c1">//Free the descriptor</span>
-<a name="rest_code_582aa25275464bcf8c85d63c940e6439-11"></a><span class="p">}</span>
+<pre class="code cpp"><a name="rest_code_072a12d0e7f545fc914be5a24216bbaa-1"></a><span class="kr">inline</span> <span class="kt">void</span> <span class="nf">fft_kernel</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">complex</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;*</span> <span class="n">in</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">s</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">complex</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;*</span> <span class="n">out</span><span class="p">)</span> <span class="p">{</span>
+<a name="rest_code_072a12d0e7f545fc914be5a24216bbaa-2"></a>    <span class="n">DFTI_DESCRIPTOR_HANDLE</span> <span class="n">descriptor</span><span class="p">;</span>
+<a name="rest_code_072a12d0e7f545fc914be5a24216bbaa-3"></a>
+<a name="rest_code_072a12d0e7f545fc914be5a24216bbaa-4"></a>    <span class="kt">void</span><span class="o">*</span> <span class="n">in_ptr</span> <span class="o">=</span> <span class="k">const_cast</span><span class="o">&lt;</span><span class="kt">void</span><span class="o">*&gt;</span><span class="p">(</span><span class="k">static_cast</span><span class="o">&lt;</span><span class="k">const</span> <span class="kt">void</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">in</span><span class="p">));</span>
+<a name="rest_code_072a12d0e7f545fc914be5a24216bbaa-5"></a>
+<a name="rest_code_072a12d0e7f545fc914be5a24216bbaa-6"></a>    <span class="n">DftiCreateDescriptor</span><span class="p">(</span><span class="o">&amp;</span><span class="n">descriptor</span><span class="p">,</span> <span class="n">DFTI_SINGLE</span><span class="p">,</span> <span class="n">DFTI_COMPLEX</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">s</span><span class="p">);</span> <span class="c1">//Specify size and precision</span>
+<a name="rest_code_072a12d0e7f545fc914be5a24216bbaa-7"></a>    <span class="n">DftiSetValue</span><span class="p">(</span><span class="n">descriptor</span><span class="p">,</span> <span class="n">DFTI_PLACEMENT</span><span class="p">,</span> <span class="n">DFTI_NOT_INPLACE</span><span class="p">);</span>         <span class="c1">//Out of place FFT</span>
+<a name="rest_code_072a12d0e7f545fc914be5a24216bbaa-8"></a>    <span class="n">DftiCommitDescriptor</span><span class="p">(</span><span class="n">descriptor</span><span class="p">);</span>                                   <span class="c1">//Finalize the descriptor</span>
+<a name="rest_code_072a12d0e7f545fc914be5a24216bbaa-9"></a>    <span class="n">DftiComputeForward</span><span class="p">(</span><span class="n">descriptor</span><span class="p">,</span> <span class="n">in_ptr</span><span class="p">,</span> <span class="n">out</span><span class="p">);</span>                        <span class="c1">//Compute the Forward FFT</span>
+<a name="rest_code_072a12d0e7f545fc914be5a24216bbaa-10"></a>    <span class="n">DftiFreeDescriptor</span><span class="p">(</span><span class="o">&amp;</span><span class="n">descriptor</span><span class="p">);</span>                                    <span class="c1">//Free the descriptor</span>
+<a name="rest_code_072a12d0e7f545fc914be5a24216bbaa-11"></a><span class="p">}</span>
 </pre>
 <p>Unfortunately, the error is inside the MKL library. Here, I really don't think
 it's an issue. There is pack of them. I forgot to exclude non-ETL code from the
 results. Once filter from all dependencies, 137 messages remain.</p>
-<pre class="code text"><a name="rest_code_4b72670377c4423085b4504d130f3fd2-1"></a>include/etl/eval_functors.hpp:157:1: warning: V560 A part of conditional expression is always false: !padding.
+<pre class="code text"><a name="rest_code_05d62eb888bb480c97e7a1a35623b6ed-1"></a>include/etl/eval_functors.hpp:157:1: warning: V560 A part of conditional expression is always false: !padding.
 </pre>
 <p>This is true, but not an issue since padding is a configuration constant that
 enables the use of padding in vector and matrices. There was 27 of these at
 different locations and with different configuration variables.</p>
-<pre class="code text"><a name="rest_code_c1c292c6d36c4a1b87b8de34b4cf8ba2-1"></a>include/etl/op/sub_view.hpp:161:1: note: V688 The 'i' function argument possesses the same name as one of the class members, which can result in a confusion.
+<pre class="code text"><a name="rest_code_a989b9a3362945b8a3905ea906dd3a61-1"></a>include/etl/op/sub_view.hpp:161:1: note: V688 The 'i' function argument possesses the same name as one of the class members, which can result in a confusion.
 </pre>
 <p>This is again true, but not a bug in this particular case. It is still helpful and
 I ended up changing these to avoid confusion. Again, there was a few of these.</p>
-<pre class="code text"><a name="rest_code_6605e51b88374972a6cb24048d55d27d-1"></a>etl/test/src/conv_multi_multi.cpp:23:1: error: V573 Uninitialized variable 'k' was used. The variable was used to initialize itself.
+<pre class="code text"><a name="rest_code_6aa20005c5704daa838e6498310f1058-1"></a>etl/test/src/conv_multi_multi.cpp:23:1: error: V573 Uninitialized variable 'k' was used. The variable was used to initialize itself.
 </pre>
 <p>This one is in the test code:</p>
-<pre class="code cpp"><a name="rest_code_07702aae3524443eb8a07687541e50eb-1"></a><span class="k">for</span> <span class="p">(</span><span class="kt">size_t</span> <span class="n">k</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">k</span> <span class="o">&lt;</span> <span class="n">etl</span><span class="o">::</span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">(</span><span class="n">K</span><span class="p">);</span> <span class="o">++</span><span class="n">k</span><span class="p">)</span> <span class="p">{</span>
-<a name="rest_code_07702aae3524443eb8a07687541e50eb-2"></a>    <span class="k">for</span> <span class="p">(</span><span class="kt">size_t</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">etl</span><span class="o">::</span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">(</span><span class="n">I</span><span class="p">);</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
-<a name="rest_code_07702aae3524443eb8a07687541e50eb-3"></a>        <span class="n">C_ref</span><span class="p">(</span><span class="n">k</span><span class="p">)(</span><span class="n">i</span><span class="p">)</span> <span class="o">=</span> <span class="n">conv_2d_valid</span><span class="p">(</span><span class="n">I</span><span class="p">(</span><span class="n">i</span><span class="p">),</span> <span class="n">K</span><span class="p">(</span><span class="n">k</span><span class="p">));</span> <span class="c1">// HERE</span>
-<a name="rest_code_07702aae3524443eb8a07687541e50eb-4"></a>    <span class="p">}</span>
-<a name="rest_code_07702aae3524443eb8a07687541e50eb-5"></a><span class="p">}</span>
+<pre class="code cpp"><a name="rest_code_c10ca0a0e3944ca3a5e65825e307446f-1"></a><span class="k">for</span> <span class="p">(</span><span class="kt">size_t</span> <span class="n">k</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">k</span> <span class="o">&lt;</span> <span class="n">etl</span><span class="o">::</span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">(</span><span class="n">K</span><span class="p">);</span> <span class="o">++</span><span class="n">k</span><span class="p">)</span> <span class="p">{</span>
+<a name="rest_code_c10ca0a0e3944ca3a5e65825e307446f-2"></a>    <span class="k">for</span> <span class="p">(</span><span class="kt">size_t</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">etl</span><span class="o">::</span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">(</span><span class="n">I</span><span class="p">);</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+<a name="rest_code_c10ca0a0e3944ca3a5e65825e307446f-3"></a>        <span class="n">C_ref</span><span class="p">(</span><span class="n">k</span><span class="p">)(</span><span class="n">i</span><span class="p">)</span> <span class="o">=</span> <span class="n">conv_2d_valid</span><span class="p">(</span><span class="n">I</span><span class="p">(</span><span class="n">i</span><span class="p">),</span> <span class="n">K</span><span class="p">(</span><span class="n">k</span><span class="p">));</span> <span class="c1">// HERE</span>
+<a name="rest_code_c10ca0a0e3944ca3a5e65825e307446f-4"></a>    <span class="p">}</span>
+<a name="rest_code_c10ca0a0e3944ca3a5e65825e307446f-5"></a><span class="p">}</span>
 </pre>
 <p>I don't see any error, k is initialized correctly to zero in the first loop.
 This is a <strong>false positive</strong> for me. There were several of these in different
 places. It seems to that the use of the operator() is confusing for PVS-Studio.</p>
-<pre class="code text"><a name="rest_code_c14241f3adb64607965eba61f4350a43-1"></a>include/etl/traits.hpp:703:1: note: V659 Declarations of functions with 'rows' name differ in the 'const' keyword only, but the bodies of these functions have different composition. This is suspicious and can possibly be an error. Check lines: 693, 703.
+<pre class="code text"><a name="rest_code_09396412f4b6456a953b36f89b3acf4f-1"></a>include/etl/traits.hpp:703:1: note: V659 Declarations of functions with 'rows' name differ in the 'const' keyword only, but the bodies of these functions have different composition. This is suspicious and can possibly be an error. Check lines: 693, 703.
 </pre>
-<pre class="code cpp"><a name="rest_code_dcc14551bd6546bba9ab43ac9ae281df-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">E</span><span class="p">,</span> <span class="n">cpp_disable_if</span><span class="p">(</span><span class="n">decay_traits</span><span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;::</span><span class="n">is_fast</span><span class="p">)</span><span class="o">&gt;</span>
-<a name="rest_code_dcc14551bd6546bba9ab43ac9ae281df-2"></a><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">rows</span><span class="p">(</span><span class="k">const</span> <span class="n">E</span><span class="o">&amp;</span> <span class="n">expr</span><span class="p">)</span> <span class="p">{</span> <span class="c1">//693</span>
-<a name="rest_code_dcc14551bd6546bba9ab43ac9ae281df-3"></a>    <span class="k">return</span> <span class="n">etl_traits</span><span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;::</span><span class="n">dim</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
-<a name="rest_code_dcc14551bd6546bba9ab43ac9ae281df-4"></a><span class="p">}</span>
-<a name="rest_code_dcc14551bd6546bba9ab43ac9ae281df-5"></a>
-<a name="rest_code_dcc14551bd6546bba9ab43ac9ae281df-6"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">E</span><span class="p">,</span> <span class="n">cpp_enable_if</span><span class="p">(</span><span class="n">decay_traits</span><span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;::</span><span class="n">is_fast</span><span class="p">)</span><span class="o">&gt;</span>
-<a name="rest_code_dcc14551bd6546bba9ab43ac9ae281df-7"></a><span class="k">constexpr</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">rows</span><span class="p">(</span><span class="k">const</span> <span class="n">E</span><span class="o">&amp;</span> <span class="n">expr</span><span class="p">)</span> <span class="k">noexcept</span> <span class="p">{</span> <span class="c1">//703</span>
-<a name="rest_code_dcc14551bd6546bba9ab43ac9ae281df-8"></a>    <span class="k">return</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="n">expr</span><span class="p">,</span> <span class="n">etl_traits</span><span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;::</span><span class="k">template</span> <span class="n">dim</span><span class="o">&lt;</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">();</span>
-<a name="rest_code_dcc14551bd6546bba9ab43ac9ae281df-9"></a><span class="p">}</span>
+<pre class="code cpp"><a name="rest_code_670da214ce194cb790006982e866c097-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">E</span><span class="p">,</span> <span class="n">cpp_disable_if</span><span class="p">(</span><span class="n">decay_traits</span><span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;::</span><span class="n">is_fast</span><span class="p">)</span><span class="o">&gt;</span>
+<a name="rest_code_670da214ce194cb790006982e866c097-2"></a><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">rows</span><span class="p">(</span><span class="k">const</span> <span class="n">E</span><span class="o">&amp;</span> <span class="n">expr</span><span class="p">)</span> <span class="p">{</span> <span class="c1">//693</span>
+<a name="rest_code_670da214ce194cb790006982e866c097-3"></a>    <span class="k">return</span> <span class="n">etl_traits</span><span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;::</span><span class="n">dim</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+<a name="rest_code_670da214ce194cb790006982e866c097-4"></a><span class="p">}</span>
+<a name="rest_code_670da214ce194cb790006982e866c097-5"></a>
+<a name="rest_code_670da214ce194cb790006982e866c097-6"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">E</span><span class="p">,</span> <span class="n">cpp_enable_if</span><span class="p">(</span><span class="n">decay_traits</span><span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;::</span><span class="n">is_fast</span><span class="p">)</span><span class="o">&gt;</span>
+<a name="rest_code_670da214ce194cb790006982e866c097-7"></a><span class="k">constexpr</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">rows</span><span class="p">(</span><span class="k">const</span> <span class="n">E</span><span class="o">&amp;</span> <span class="n">expr</span><span class="p">)</span> <span class="k">noexcept</span> <span class="p">{</span> <span class="c1">//703</span>
+<a name="rest_code_670da214ce194cb790006982e866c097-8"></a>    <span class="k">return</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="n">expr</span><span class="p">,</span> <span class="n">etl_traits</span><span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;::</span><span class="k">template</span> <span class="n">dim</span><span class="o">&lt;</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">();</span>
+<a name="rest_code_670da214ce194cb790006982e866c097-9"></a><span class="p">}</span>
 </pre>
 <p>Unfortunately, this is again a <strong>false positive</strong> because PVS-Studio failed to
 recognized SFINAE and therefore the warning is wrong.</p>
-<pre class="code text"><a name="rest_code_e861d2202b0b457484c042af68e34349-1"></a>include/etl/builder/expression_builder.hpp:345:1: note: V524 It is odd that the body of '&gt;&gt;=' function is fully equivalent to the body of '*=' function.
+<pre class="code text"><a name="rest_code_e2e67a6018434d6bb6a3ec0edabcee9e-1"></a>include/etl/builder/expression_builder.hpp:345:1: note: V524 It is odd that the body of '&gt;&gt;=' function is fully equivalent to the body of '*=' function.
 </pre>
 <p>This one is interesting indeed. It is true that they are exactly because in ETL
 &gt;&gt; is used for scalar element-wise multiplication. This is quite interesting that
 PVS-Studio points that out. There was a few of these oddities but all were
 normal in the library.</p>
-<pre class="code text"><a name="rest_code_ff2627f03f674dc79415db0650c57802-1"></a>etl/test/src/compare.cpp:23:1: error: V501 There are identical sub-expressions to the left and to the right of the '!=' operator: a != a
+<pre class="code text"><a name="rest_code_da4a8294a57b47c095353bb7b5e02d38-1"></a>etl/test/src/compare.cpp:23:1: error: V501 There are identical sub-expressions to the left and to the right of the '!=' operator: a != a
 </pre>
 <p>Again, it is nice that PVS-Studio finds that, but this is done on purpose on the
 tests to compare an object to itself. If I remove all the oddities in the test
 cases, there are only 17 left in the headers. None of the warnings on the test
 case was serious, but there was no more false positives either, so that's great.</p>
-<pre class="code text"><a name="rest_code_f7f25213556d4ac298975968ed81caa4-1"></a>include/etl/impl/vec/sum.hpp:92:1: error: V591 Non-void function should return a value.
+<pre class="code text"><a name="rest_code_99c4df94548a4f478bb6ea555f061578-1"></a>include/etl/impl/vec/sum.hpp:92:1: error: V591 Non-void function should return a value.
 </pre>
-<pre class="code cpp"><a name="rest_code_8ed0f728a961493a9a88937bf35de0a7-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">L</span><span class="p">,</span> <span class="n">cpp_disable_if</span><span class="p">((</span><span class="n">vec_enabled</span> <span class="o">&amp;&amp;</span> <span class="n">all_vectorizable</span><span class="o">&lt;</span><span class="n">vector_mode</span><span class="p">,</span> <span class="n">L</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">))</span><span class="o">&gt;</span>
-<a name="rest_code_8ed0f728a961493a9a88937bf35de0a7-2"></a><span class="n">value_t</span><span class="o">&lt;</span><span class="n">L</span><span class="o">&gt;</span> <span class="n">sum</span><span class="p">(</span><span class="k">const</span> <span class="n">L</span><span class="o">&amp;</span> <span class="n">lhs</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">first</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">last</span><span class="p">)</span> <span class="p">{</span>
-<a name="rest_code_8ed0f728a961493a9a88937bf35de0a7-3"></a>    <span class="n">cpp_unused</span><span class="p">(</span><span class="n">lhs</span><span class="p">);</span>
-<a name="rest_code_8ed0f728a961493a9a88937bf35de0a7-4"></a>    <span class="n">cpp_unused</span><span class="p">(</span><span class="n">first</span><span class="p">);</span>
-<a name="rest_code_8ed0f728a961493a9a88937bf35de0a7-5"></a>    <span class="n">cpp_unused</span><span class="p">(</span><span class="n">last</span><span class="p">);</span>
-<a name="rest_code_8ed0f728a961493a9a88937bf35de0a7-6"></a>    <span class="n">cpp_unreachable</span><span class="p">(</span><span class="s">"vec::sum called with invalid parameters"</span><span class="p">);</span>
-<a name="rest_code_8ed0f728a961493a9a88937bf35de0a7-7"></a><span class="p">}</span>
+<pre class="code cpp"><a name="rest_code_a4430ea0a3db43b38f18eb5c8d37f0ac-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">L</span><span class="p">,</span> <span class="n">cpp_disable_if</span><span class="p">((</span><span class="n">vec_enabled</span> <span class="o">&amp;&amp;</span> <span class="n">all_vectorizable</span><span class="o">&lt;</span><span class="n">vector_mode</span><span class="p">,</span> <span class="n">L</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">))</span><span class="o">&gt;</span>
+<a name="rest_code_a4430ea0a3db43b38f18eb5c8d37f0ac-2"></a><span class="n">value_t</span><span class="o">&lt;</span><span class="n">L</span><span class="o">&gt;</span> <span class="n">sum</span><span class="p">(</span><span class="k">const</span> <span class="n">L</span><span class="o">&amp;</span> <span class="n">lhs</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">first</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">last</span><span class="p">)</span> <span class="p">{</span>
+<a name="rest_code_a4430ea0a3db43b38f18eb5c8d37f0ac-3"></a>    <span class="n">cpp_unused</span><span class="p">(</span><span class="n">lhs</span><span class="p">);</span>
+<a name="rest_code_a4430ea0a3db43b38f18eb5c8d37f0ac-4"></a>    <span class="n">cpp_unused</span><span class="p">(</span><span class="n">first</span><span class="p">);</span>
+<a name="rest_code_a4430ea0a3db43b38f18eb5c8d37f0ac-5"></a>    <span class="n">cpp_unused</span><span class="p">(</span><span class="n">last</span><span class="p">);</span>
+<a name="rest_code_a4430ea0a3db43b38f18eb5c8d37f0ac-6"></a>    <span class="n">cpp_unreachable</span><span class="p">(</span><span class="s">"vec::sum called with invalid parameters"</span><span class="p">);</span>
+<a name="rest_code_a4430ea0a3db43b38f18eb5c8d37f0ac-7"></a><span class="p">}</span>
 </pre>
 <p>This one is interesting. It's not a false positive since indeed the function
 does not return a value, but there is a __builtin_unreachable() inside the
 function and it cannot be called. In my opinion, the static analyzer should be
 able to handle that, but this is really a corner case.</p>
-<pre class="code text"><a name="rest_code_4b28ce4a2b3941abb4758ef27b156051-1"></a>include/etl/sparse.hpp:148:1: note: V550 An odd precise comparison: a == 0.0. It's probably better to use a comparison with defined precision: fabs(A - B) &lt; Epsilon.
+<pre class="code text"><a name="rest_code_bbf342a9ab5a4fdea9321329759eb0d9-1"></a>include/etl/sparse.hpp:148:1: note: V550 An odd precise comparison: a == 0.0. It's probably better to use a comparison with defined precision: fabs(A - B) &lt; Epsilon.
 </pre>
-<pre class="code cpp"><a name="rest_code_1abfdee9913e4f0697f3ea17f5338c48-1"></a><span class="kr">inline</span> <span class="kt">bool</span> <span class="nf">is_zero</span><span class="p">(</span><span class="kt">double</span> <span class="n">a</span><span class="p">)</span> <span class="p">{</span>
-<a name="rest_code_1abfdee9913e4f0697f3ea17f5338c48-2"></a>    <span class="k">return</span> <span class="n">a</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">;</span>
-<a name="rest_code_1abfdee9913e4f0697f3ea17f5338c48-3"></a><span class="p">}</span>
+<pre class="code cpp"><a name="rest_code_08fc07b4aa444c86860c25d58d8afcb4-1"></a><span class="kr">inline</span> <span class="kt">bool</span> <span class="nf">is_zero</span><span class="p">(</span><span class="kt">double</span> <span class="n">a</span><span class="p">)</span> <span class="p">{</span>
+<a name="rest_code_08fc07b4aa444c86860c25d58d8afcb4-2"></a>    <span class="k">return</span> <span class="n">a</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">;</span>
+<a name="rest_code_08fc07b4aa444c86860c25d58d8afcb4-3"></a><span class="p">}</span>
 </pre>
 <p>This is not false, but again this is intended because of the comparison to zero
 for a sparse matrix. There were 10 of these in the same class.</p>
-<pre class="code text"><a name="rest_code_28d6d048cdca4e2ca9e957f7d41bf10e-1"></a>include/etl/impl/blas/fft.hpp:562:1: note: V656 Variables 'a_padded', 'b_padded' are initialized through the call to the same function. It's probably an error or un-optimized code. Consider inspecting the 'etl::size(c)' expression. Check lines: 561, 562.
+<pre class="code text"><a name="rest_code_f480505ac131457ea6b2b0a159d61caf-1"></a>include/etl/impl/blas/fft.hpp:562:1: note: V656 Variables 'a_padded', 'b_padded' are initialized through the call to the same function. It's probably an error or un-optimized code. Consider inspecting the 'etl::size(c)' expression. Check lines: 561, 562.
 </pre>
-<pre class="code cpp"><a name="rest_code_0d7beca8c57d402996b8476695148e9e-1"></a><span class="n">dyn_vector</span><span class="o">&lt;</span><span class="n">etl</span><span class="o">::</span><span class="n">complex</span><span class="o">&lt;</span><span class="n">type</span><span class="o">&gt;&gt;</span> <span class="n">a_padded</span><span class="p">(</span><span class="n">etl</span><span class="o">::</span><span class="n">size</span><span class="p">(</span><span class="n">c</span><span class="p">));</span>
-<a name="rest_code_0d7beca8c57d402996b8476695148e9e-2"></a><span class="n">dyn_vector</span><span class="o">&lt;</span><span class="n">etl</span><span class="o">::</span><span class="n">complex</span><span class="o">&lt;</span><span class="n">type</span><span class="o">&gt;&gt;</span> <span class="n">b_padded</span><span class="p">(</span><span class="n">etl</span><span class="o">::</span><span class="n">size</span><span class="p">(</span><span class="n">c</span><span class="p">));</span>
+<pre class="code cpp"><a name="rest_code_27954fe29563415e83b1528254c587ca-1"></a><span class="n">dyn_vector</span><span class="o">&lt;</span><span class="n">etl</span><span class="o">::</span><span class="n">complex</span><span class="o">&lt;</span><span class="n">type</span><span class="o">&gt;&gt;</span> <span class="n">a_padded</span><span class="p">(</span><span class="n">etl</span><span class="o">::</span><span class="n">size</span><span class="p">(</span><span class="n">c</span><span class="p">));</span>
+<a name="rest_code_27954fe29563415e83b1528254c587ca-2"></a><span class="n">dyn_vector</span><span class="o">&lt;</span><span class="n">etl</span><span class="o">::</span><span class="n">complex</span><span class="o">&lt;</span><span class="n">type</span><span class="o">&gt;&gt;</span> <span class="n">b_padded</span><span class="p">(</span><span class="n">etl</span><span class="o">::</span><span class="n">size</span><span class="p">(</span><span class="n">c</span><span class="p">));</span>
 </pre>
 <p>It's indeed constructed with the same size, but for me I don't think it's an
 odd pattern. I would not consider that as a warning, especially since it's
 a constructor and not a assignment.</p>
-<pre class="code text"><a name="rest_code_18635a9f63cb4c48ac770d27dcbf469a-1"></a>include/etl/dyn_base.hpp:312:1: warning: V690 The 'dense_dyn_base' class implements a copy constructor, but lacks the '=' operator. It is dangerous to use such a class.
+<pre class="code text"><a name="rest_code_d8678f88dcd847d38c5bc388430011a1-1"></a>include/etl/dyn_base.hpp:312:1: warning: V690 The 'dense_dyn_base' class implements a copy constructor, but lacks the '=' operator. It is dangerous to use such a class.
 </pre>
 <p>This is again a kind of corner case in the library because it's a base class
 and the assignment is different between the sub classes and not a real
 assignment in the C++ sense.</p>
-<pre class="code text"><a name="rest_code_2eac308db4654a8f9d8695dee69bd00a-1"></a>include/etl/impl/reduc/conv_multi.hpp:657:1: warning: V711 It is dangerous to create a local variable within a loop with a same name as a variable controlling this loop.
+<pre class="code text"><a name="rest_code_36185ca299e54bb5926abdf7835c33b1-1"></a>include/etl/impl/reduc/conv_multi.hpp:657:1: warning: V711 It is dangerous to create a local variable within a loop with a same name as a variable controlling this loop.
 </pre>
-<pre class="code cpp"><a name="rest_code_9d9d311c836d4e1baa0c1ddbe98f9985-1"></a><span class="k">for</span> <span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">c</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">c</span> <span class="o">&lt;</span> <span class="n">C</span><span class="p">;</span> <span class="o">++</span><span class="n">c</span><span class="p">)</span> <span class="p">{</span>
-<a name="rest_code_9d9d311c836d4e1baa0c1ddbe98f9985-2"></a>    <span class="k">for</span> <span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">k</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">k</span> <span class="o">&lt;</span> <span class="n">K</span><span class="p">;</span> <span class="o">++</span><span class="n">k</span><span class="p">)</span> <span class="p">{</span>
-<a name="rest_code_9d9d311c836d4e1baa0c1ddbe98f9985-3"></a>        <span class="n">conv</span><span class="p">(</span><span class="n">k</span><span class="p">)(</span><span class="n">c</span><span class="p">)</span> <span class="o">=</span> <span class="n">conv_temp</span><span class="p">(</span><span class="n">c</span><span class="p">)(</span><span class="n">k</span><span class="p">);</span>
-<a name="rest_code_9d9d311c836d4e1baa0c1ddbe98f9985-4"></a>    <span class="p">}</span>
-<a name="rest_code_9d9d311c836d4e1baa0c1ddbe98f9985-5"></a><span class="p">}</span>
+<pre class="code cpp"><a name="rest_code_b599b76418a2439e91a5672a640b890d-1"></a><span class="k">for</span> <span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">c</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">c</span> <span class="o">&lt;</span> <span class="n">C</span><span class="p">;</span> <span class="o">++</span><span class="n">c</span><span class="p">)</span> <span class="p">{</span>
+<a name="rest_code_b599b76418a2439e91a5672a640b890d-2"></a>    <span class="k">for</span> <span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">k</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">k</span> <span class="o">&lt;</span> <span class="n">K</span><span class="p">;</span> <span class="o">++</span><span class="n">k</span><span class="p">)</span> <span class="p">{</span>
+<a name="rest_code_b599b76418a2439e91a5672a640b890d-3"></a>        <span class="n">conv</span><span class="p">(</span><span class="n">k</span><span class="p">)(</span><span class="n">c</span><span class="p">)</span> <span class="o">=</span> <span class="n">conv_temp</span><span class="p">(</span><span class="n">c</span><span class="p">)(</span><span class="n">k</span><span class="p">);</span>
+<a name="rest_code_b599b76418a2439e91a5672a640b890d-4"></a>    <span class="p">}</span>
+<a name="rest_code_b599b76418a2439e91a5672a640b890d-5"></a><span class="p">}</span>
 </pre>
 <p>This is again a false positive... It really seems that PVS-Studio is not able to
 handle the operator().</p>
-<pre class="code text"><a name="rest_code_3f1773c3cc104044979434a5bafc0e46-1"></a>include/etl/impl/pooling.hpp:396:1: error: V501 There are identical sub-expressions to the left and to the right of the '||' operator: P1 || P2 || P1
+<pre class="code text"><a name="rest_code_f7a4da08181947069ce12a3ad7813279-1"></a>include/etl/impl/pooling.hpp:396:1: error: V501 There are identical sub-expressions to the left and to the right of the '||' operator: P1 || P2 || P1
 </pre>
-<pre class="code cpp"><a name="rest_code_b8328798421d4e18b8ed8e4cb55b7bd8-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="kt">size_t</span> <span class="n">C1</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">C2</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">C3</span><span class="p">,</span><span class="kt">size_t</span> <span class="n">S1</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">S2</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">S3</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">P1</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">P2</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">P3</span><span class="p">,</span> <span class="k">typename</span> <span class="n">A</span><span class="p">,</span> <span class="k">typename</span> <span class="n">M</span><span class="o">&gt;</span>
-<a name="rest_code_b8328798421d4e18b8ed8e4cb55b7bd8-2"></a><span class="k">static</span> <span class="kt">void</span> <span class="n">apply</span><span class="p">(</span><span class="k">const</span> <span class="n">A</span><span class="o">&amp;</span> <span class="n">sub</span><span class="p">,</span> <span class="n">M</span><span class="o">&amp;&amp;</span> <span class="n">m</span><span class="p">)</span> <span class="p">{</span>
-<a name="rest_code_b8328798421d4e18b8ed8e4cb55b7bd8-3"></a>    <span class="k">const</span> <span class="kt">size_t</span> <span class="n">o1</span> <span class="o">=</span> <span class="p">(</span><span class="n">etl</span><span class="o">::</span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">(</span><span class="n">sub</span><span class="p">)</span> <span class="o">-</span> <span class="n">C1</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">P1</span><span class="p">)</span> <span class="o">/</span> <span class="n">S1</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
-<a name="rest_code_b8328798421d4e18b8ed8e4cb55b7bd8-4"></a>    <span class="k">const</span> <span class="kt">size_t</span> <span class="n">o2</span> <span class="o">=</span> <span class="p">(</span><span class="n">etl</span><span class="o">::</span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;</span><span class="p">(</span><span class="n">sub</span><span class="p">)</span> <span class="o">-</span> <span class="n">C2</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">P2</span><span class="p">)</span> <span class="o">/</span> <span class="n">S2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
-<a name="rest_code_b8328798421d4e18b8ed8e4cb55b7bd8-5"></a>    <span class="k">const</span> <span class="kt">size_t</span> <span class="n">o3</span> <span class="o">=</span> <span class="p">(</span><span class="n">etl</span><span class="o">::</span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">2</span><span class="o">&gt;</span><span class="p">(</span><span class="n">sub</span><span class="p">)</span> <span class="o">-</span> <span class="n">C3</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">P3</span><span class="p">)</span> <span class="o">/</span> <span class="n">S3</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
-<a name="rest_code_b8328798421d4e18b8ed8e4cb55b7bd8-6"></a>
-<a name="rest_code_b8328798421d4e18b8ed8e4cb55b7bd8-7"></a>    <span class="k">if</span><span class="p">(</span><span class="n">P1</span> <span class="o">||</span> <span class="n">P2</span> <span class="o">||</span> <span class="n">P1</span><span class="p">){</span>
+<pre class="code cpp"><a name="rest_code_b5cf2e1981b04fcd8d729cd61c418e60-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="kt">size_t</span> <span class="n">C1</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">C2</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">C3</span><span class="p">,</span><span class="kt">size_t</span> <span class="n">S1</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">S2</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">S3</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">P1</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">P2</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">P3</span><span class="p">,</span> <span class="k">typename</span> <span class="n">A</span><span class="p">,</span> <span class="k">typename</span> <span class="n">M</span><span class="o">&gt;</span>
+<a name="rest_code_b5cf2e1981b04fcd8d729cd61c418e60-2"></a><span class="k">static</span> <span class="kt">void</span> <span class="n">apply</span><span class="p">(</span><span class="k">const</span> <span class="n">A</span><span class="o">&amp;</span> <span class="n">sub</span><span class="p">,</span> <span class="n">M</span><span class="o">&amp;&amp;</span> <span class="n">m</span><span class="p">)</span> <span class="p">{</span>
+<a name="rest_code_b5cf2e1981b04fcd8d729cd61c418e60-3"></a>    <span class="k">const</span> <span class="kt">size_t</span> <span class="n">o1</span> <span class="o">=</span> <span class="p">(</span><span class="n">etl</span><span class="o">::</span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">(</span><span class="n">sub</span><span class="p">)</span> <span class="o">-</span> <span class="n">C1</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">P1</span><span class="p">)</span> <span class="o">/</span> <span class="n">S1</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
+<a name="rest_code_b5cf2e1981b04fcd8d729cd61c418e60-4"></a>    <span class="k">const</span> <span class="kt">size_t</span> <span class="n">o2</span> <span class="o">=</span> <span class="p">(</span><span class="n">etl</span><span class="o">::</span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;</span><span class="p">(</span><span class="n">sub</span><span class="p">)</span> <span class="o">-</span> <span class="n">C2</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">P2</span><span class="p">)</span> <span class="o">/</span> <span class="n">S2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
+<a name="rest_code_b5cf2e1981b04fcd8d729cd61c418e60-5"></a>    <span class="k">const</span> <span class="kt">size_t</span> <span class="n">o3</span> <span class="o">=</span> <span class="p">(</span><span class="n">etl</span><span class="o">::</span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">2</span><span class="o">&gt;</span><span class="p">(</span><span class="n">sub</span><span class="p">)</span> <span class="o">-</span> <span class="n">C3</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">P3</span><span class="p">)</span> <span class="o">/</span> <span class="n">S3</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
+<a name="rest_code_b5cf2e1981b04fcd8d729cd61c418e60-6"></a>
+<a name="rest_code_b5cf2e1981b04fcd8d729cd61c418e60-7"></a>    <span class="k">if</span><span class="p">(</span><span class="n">P1</span> <span class="o">||</span> <span class="n">P2</span> <span class="o">||</span> <span class="n">P1</span><span class="p">){</span>
 </pre>
 <p>Last but not least, this time, it's entirely true and it's in fact a bug in my
 code! The condition should be written like this:</p>
-<pre class="code cpp"><a name="rest_code_6d36019a11d94ce7afe8d4821a5d994d-1"></a><span class="k">if</span><span class="p">(</span><span class="n">P1</span> <span class="o">||</span> <span class="n">P2</span> <span class="o">||</span> <span class="n">P3</span><span class="p">){</span>
+<pre class="code cpp"><a name="rest_code_7ab745b4816149b6b0b75d4e5b83eff2-1"></a><span class="k">if</span><span class="p">(</span><span class="n">P1</span> <span class="o">||</span> <span class="n">P2</span> <span class="o">||</span> <span class="n">P3</span><span class="p">){</span>
 </pre>
 <p>This is now fixed in the master of ETL.</p>
 </div>
@@ -1133,534 +1337,6 @@ each of your files.</p>
             
         
     <a href="posts/2016/12/pvs-studio-on-cpp-library-review.html#disqus_thread" data-disqus-identifier="cache/posts/2016/12/pvs-studio-on-cpp-library-review.html">Comments</a>
-
-
-        </article><article class="postbox h-entry post-text"><h1 class="p-name">
-<a href="posts/2016/12/cpp-compiler-benchmark-on-expression-templates-library-etl.html" class="u-url">C++ Compiler benchmark on Expression Templates Library (ETL)</a>
-        <br><small>  
-             Posted: <time class="published dt-published" datetime="2016-12-11T14:17:30+01:00">2016-12-11 14:17</time></small>
-</h1>
-        <hr>
-<div class="p-summary">
-        <div>
-<script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script><script src="https://code.highcharts.com/highcharts.js"></script><script src="https://code.highcharts.com/modules/exporting.js"></script><p>In my Expression Templates Library (ETL) project, I have a lot of template heavy
-code that needs to run as fast as possible and that is quite intensive to
-compile. In this post, I'm going to compare the performance of a few of the
-kernels produced by different compilers. I've got GCC 5.4, GCC 6.20 and clang
-3.9. I also included zapcc which is based on clang 4.0.</p>
-<p>These tests have been run on an Haswell processor. The automatic parallelization
-of ETL has been turned off for these tests.</p>
-<p>Keep in mind that some of the diagrams are presented in logarithmic form.</p>
-<div class="section" id="vector-multiplication">
-<h2>Vector multiplication</h2>
-<p>The first kernel is a very simple one, simple element-wise multiplication of two
-vectors. Nothing fancy here.</p>
-<div id="mul_container" style="min-width: 310px; height:400px; margin: 0 auto; "></div>
-<script>
-$(function () {
-    Highcharts.chart('mul_container', {
-        chart: { type: 'column' },
-        title: { text: 'Element-wise Vector Multiplication' },
-        xAxis: {
-            categories: ['10', '100', '1000', '10000', '100000', '1000000']
-        },
-        yAxis: {
-            type: 'logarithmic',
-            title: { text: 'Time (us)' },
-            plotLines: [{
-                value: 0,
-                width: 1,
-                color: '#808080'
-            }]
-        },
-        tooltip: {valueSuffix: 'us'},
-        series: [
-        {
-            name: 'g++-5.4', data: [0.021, 0.040, 0.215, 2.07, 32.1, 403]
-        },
-        {
-            name: 'g++-6.2', data: [0.021, 0.037, 0.208, 2.17, 32.1, 376]
-        },
-        {
-            name: 'clang-3.9', data: [0.027, 0.045, 0.243, 2.43, 32.7, 389]
-        },
-        {
-            name: 'zapcc-4.0', data: [0.026, 0.047, 0.321, 2.5, 32.8, 411]
-        }
-        ]
-    });
-});
-</script><p>For small vectors, clang is significantly slower than gcc-5.4 and gcc6.2. On
-vectors from 100'000 elements, the speed is comparable for each compiler,
-depending on the memory bandwidth. Overall, gcc-6.2 produces the fastest code
-here. clang-4.0 is slightly slower than clang-3.9, but nothing dramatic.</p>
-</div>
-<div class="section" id="vector-exponentiation">
-<h2>Vector exponentiation</h2>
-<p>The second kernel is computing the exponentials of each elements of a vector and
-storing them in another vector.</p>
-<div id="exp_container" style="min-width: 310px; height:400px; margin: 0 auto; "></div>
-<script>
-$(function () {
-    Highcharts.chart('exp_container', {
-        chart: { type: 'column' },
-        title: { text: 'Element-wise Vector Exponentiation' },
-        xAxis: {
-            categories: ['10', '100', '1000', '10000', '100000', '1000000']
-        },
-        yAxis: {
-            type: 'logarithmic',
-            title: { text: 'Time (us)' },
-            plotLines: [{
-                value: 0,
-                width: 1,
-                color: '#808080'
-            }]
-        },
-        tooltip: {valueSuffix: 'us'},
-        series: [
-        {
-            name: 'g++-5.4', data: [0.0478, 0.137, 1.12, 9.79, 97.5, 959]
-        },
-        {
-            name: 'g++-6.2', data: [0.0474, 0.132, 1.11, 9.71, 97, 1000]
-        },
-        {
-            name: 'clang-3.9', data: [0.0492, 0.136, 0.959, 9.24, 92.9, 914]
-        },
-        {
-            name: 'zapcc-4.0', data: [0.0488, 0.142, 0.952, 9.25, 91.9, 915]
-        }
-        ]
-    });
-});
-</script><p>Interestingly, this time, clang versions are significantly faster for medium to
-large vectors, from 1000 elements and higher, by about 5%. There is no
-significant differences between the different versions of each compiler.</p>
-</div>
-<div class="section" id="matrix-matrix-multiplication">
-<h2>Matrix-Matrix Multiplication</h2>
-<p>The next kernel I did benchmark with the matrix-matrix multiplication operation.
-In that case, the kernel is hand-unrolled and vectorized.</p>
-<div id="gemm_container_small" style="min-width: 310px; height:400px; margin: 0 auto; "></div>
-<div id="gemm_container_large" style="min-width: 310px; height:400px; margin: 0 auto; "></div>
-<script>
-$(function () {
-    Highcharts.chart('gemm_container_small', {
-        chart: { type: 'column' },
-        title: { text: 'Matrix Matrix Multiplication (small)', },
-        xAxis: {
-            categories: ['10x10', '20x20', '40x40', '60x60', '80x80', '100x100']
-        },
-        yAxis: {
-            type: 'logarithmic',
-            title: { text: 'Time (us)' },
-            plotLines: [{
-                value: 0,
-                width: 1,
-                color: '#808080'
-            }]
-        },
-        tooltip: {valueSuffix: 'us'},
-        series: [
-        {
-            name: 'g++-5.4', data: [0.159, 0.815, 2.637, 13.849, 17.281, 78.903]
-        },
-        {
-            name: 'g++-6.2', data: [0.162, 0.802, 2.431, 13.531, 17.274, 74.02]
-        },
-        {
-            name: 'clang-3.9', data: [0.179, 1.218, 2.391, 14.981, 15.142, 61.548]
-        },
-        {
-            name: 'zapcc-4.0', data: [0.159, 0.836, 2.712, 13.426, 15.114, 62.241]
-        }
-        ]
-    });
-    Highcharts.chart('gemm_container_large', {
-        chart: { type: 'column' },
-        title: { text: 'Matrix Matrix Multiplication (large)', },
-        xAxis: {
-            categories: ['200x200', '300x300', '400x400', '500x500', '600x600', '700x700', '800x800', '900x900', '1000x1000']
-        },
-        yAxis: {
-            type: 'logarithmic',
-            title: { text: 'Time (us)' },
-            plotLines: [{
-                value: 0,
-                width: 1,
-                color: '#808080'
-            }]
-        },
-        tooltip: {valueSuffix: 'us'},
-        series: [
-        {
-            name: 'g++-5.4', data: [275.219, 1371, 1837, 5177, 6667, 14981, 17037, 31492, 32813]
-        },
-        {
-            name: 'g++-6.2', data: [267.776, 1362, 1808, 5297, 6859, 15166, 15664, 30666, 33067]
-        },
-        {
-            name: 'clang-3.9', data: [266.033, 1230, 1789, 4825, 6969, 14488, 15916, 30872, 33186]
-        },
-        {
-            name: 'zapcc-4.0', data: [267.806, 1237, 1820, 4909, 7035, 15191, 18193, 33127, 37346]
-        }
-        ]
-    });
-});
-</script><p>There are few differences between the compilers. The first thing is that for
-some sizes such as 80x80 and 100x100, clang is significantly faster than GCC, by
-more than 10%. The other interesting fact is that for large matrices
-zapcc-clang-4.0 is always slower than clang-3.9 which is itself on par with the
-two GCC versions. In my opinion, it comes from a regression in clang trunk but
-it could also come from zapcc itself.</p>
-<div id="std_gemm_container_large" style="min-width: 310px; height:400px; margin: 0 auto; "></div>
-<script>
-$(function () {
-    Highcharts.chart('std_gemm_container_large', {
-        chart: { type: 'column' },
-        title: { text: 'Matrix Matrix Multiplication (naive)', },
-        xAxis: {
-            categories: ['200x200', '300x300', '400x400', '500x500', '600x600', '700x700', '800x800', '900x900', '1000x1000']
-        },
-        yAxis: {
-            type: 'logarithmic',
-            title: { text: 'Time (ms)' },
-            plotLines: [{
-                value: 0,
-                width: 1,
-                color: '#808080'
-            }]
-        },
-        tooltip: {valueSuffix: 'ms'},
-        series: [
-        {
-            name: 'g++-5.4', data: [1.195, 4.891, 10.467, 22.400, 33.399,
-            58.401, 77.150, 121.392, 148.469]
-        },
-        {
-            name: 'g++-6.2', data: [1.109, 4.540, 9.964, 21.359, 31.904,
-            55.282, 72.690, 113.52, 143.27]
-        },
-        {
-            name: 'clang-3.9', data: [0.893, 3.710, 7.287, 16.244, 23.920,
-            43.342, 56.771, 91.870, 112.309]
-        },
-        {
-            name: 'zapcc-4.0', data: [5.088, 16.909, 39.632, 77.194, 133.15,
-            214.539, 316.01, 447.715, 612.255]
-        }
-        ]
-    });
-});
-</script><p>The results are much more interesting here! First, there is a huge regression in
-clang-4.0 (or in zapcc for that matter). Indeed, it is up to 6 times slower than
-clang-3.9. Moreover, the clang-3.9 is always significantly faster than gcc-6.2.
-Finally, there is a small improvement in gcc-6.2 compared to gcc 5.4.</p>
-</div>
-<div class="section" id="fast-fourrier-transform">
-<h2>Fast-Fourrier Transform</h2>
-<p>The following kernel is the performance of a hand-crafted Fast-Fourrier
-transform implementation.</p>
-<div id="fft_container" style="min-width: 310px; height:400px; margin: 0 auto; "></div>
-<script>
-$(function () {
-    Highcharts.chart('fft_container', {
-        chart: { type: 'column' },
-        title: { text: 'Fast Fourrier Transform', },
-        xAxis: {
-            categories: ['100', '1000', '10000', '100000', '1000000']
-        },
-        yAxis: {
-            type: 'logarithmic',
-            title: { text: 'Time (us)' },
-            plotLines: [{
-                value: 0,
-                width: 1,
-                color: '#808080'
-            }]
-        },
-        tooltip: {valueSuffix: 'us'},
-        series: [
-        {
-            name: 'g++-5.4', data: [2.640, 27.515, 308.239, 3427.4, 41695.9]
-        },
-        {
-            name: 'g++-6.2', data: [2.578, 26.194, 298.97, 3348.82, 40783.8]
-        },
-        {
-            name: 'clang-3.9', data: [3.047, 30.514, 333.403, 3569.36,43860.6]
-        },
-        {
-            name: 'zapcc-4.0', data: [3.199,33.304,317.135,4025.18,48445.3]
-        }
-        ]
-    });
-});
-</script><p>On this benchmark, gcc-6.2 is the clear winner. It is significantly faster
-than clang-3.9 and clang-4.0. Moreover, gcc-6.2 is also faster than gcc-5.4.
-On the contrary, clang-4.0 is significantly slower than clang-3.9 except on one
-configuration (10000 elements).</p>
-</div>
-<div class="section" id="d-convolution">
-<h2>1D Convolution</h2>
-<p>This kernel is about computing the 1D valid convolution of two vectors.</p>
-<div id="conv1_container" style="min-width: 310px; height:400px; margin: 0 auto; "></div>
-<script>
-$(function () {
-    Highcharts.chart('conv1_container', {
-        chart: { type: 'column' },
-        title: { text: '1D convolution (optimized)', },
-        xAxis: {
-            categories: ['1000x500', '2000x1000', '3000x1500', '4000x2000',
-            '5000x2500', '6000x3000', '7000x3500', '8000x4000', '9000x4500',
-            '10000x5000']
-        },
-        yAxis: {
-            type: 'logarithmic',
-            title: { text: 'Time (us)' },
-            plotLines: [{
-                value: 0,
-                width: 1,
-                color: '#808080'
-            }]
-        },
-        tooltip: {valueSuffix: 'us'},
-        series: [
-        {
-            name: 'g++-5.4', data: [11.710, 41.002, 91.201, 158.178,
-            248.985, 353.695, 486.676, 634.53, 867.101, 1082.62]
-        },
-        {
-            name: 'g++-6.2', data: [9.307, 40.921, 90.327, 158.734, 248.892,
-            354.582, 488.38, 636.899, 869.637, 1084.86]
-        },
-        {
-            name: 'clang-3.9', data: [13.404, 41.409, 95.094, 162.339,
-            256.143, 362.34, 498.66, 651.352, 886.465, 1092.24]
-        },
-        {
-            name: 'zapcc-4.0', data: [13.528, 40.886, 94.473, 159.917,
-            252.992, 356.63, 493.653, 640.348, 872.282, 1091.36]
-        }
-        ]
-    });
-});
-</script><p>While clang-4.0 is faster than clang-3.9, it is still slightly slower than both
-gcc versions. On the GCC side, there is not a lot of difference except on the
-1000x500 on which gcc-6.2 is 25% faster.</p>
-<p>And here are the results with the naive implementation:</p>
-<div id="std_conv1_container" style="min-width: 310px; height:400px; margin: 0 auto; "></div>
-<script>
-$(function () {
-    Highcharts.chart('std_conv1_container', {
-        chart: { type: 'column' },
-        title: { text: '1D convolution (naive)', },
-        xAxis: {
-            categories: ['1000x500', '2000x1000', '3000x1500', '4000x2000',
-            '5000x2500', '6000x3000', '7000x3500', '8000x4000', '9000x4500',
-            '10000x5000']
-        },
-        yAxis: {
-            type: 'logarithmic',
-            title: { text: 'Time (ms)' },
-            plotLines: [{
-                value: 0,
-                width: 1,
-                color: '#808080'
-            }]
-        },
-        tooltip: {valueSuffix: 'ms'},
-        series: [
-        {
-            name: 'g++-5.4', data: [0.350, 1.452, 3.260, 5.823, 9.116,
-            13.155, 17.922, 23.438, 29.705, 36.683]
-        },
-        {
-            name: 'g++-6.2', data: [0.350, 1.457, 3.262, 5.823, 9.120,
-            13.152, 17.922, 23.436, 29.687, 36.665]
-        },
-        {
-            name: 'clang-3.9', data: [0.216, 0.873, 1.974, 3.517, 5.501,
-            7.921, 10.793, 14.11, 17.867, 22.068]
-        },
-        {
-            name: 'zapcc-4.0', data: [0.215, 0.873, 1.972, 3.514, 5.501,
-            7.928, 10.799, 14.11, 17.879, 22.065]
-        }
-        ]
-    });
-});
-</script><p>Again, on the naive version, clang is much faster than GCC on the naive, by
-about 65%. This is a really large speedup.</p>
-</div>
-<div class="section" id="id1">
-<h2>2D Convolution</h2>
-<p>This next kernel is computing the 2D valid convolution of two matrices</p>
-<div id="conv2_container" style="min-width: 310px; height:400px; margin: 0 auto; "></div>
-<script>
-$(function () {
-    Highcharts.chart('conv2_container', {
-        chart: { type: 'column' },
-        title: { text: '2D Convolution (optimized)', },
-        xAxis: {
-            categories: ['100x50', '105x50', '110x55', '115x55', '120x60',
-            '125x60', '130x65', '135x65', '140x70']
-        },
-        yAxis: {
-            title: { text: 'Time (us)' },
-            plotLines: [{
-                value: 0,
-                width: 1,
-                color: '#808080'
-            }]
-        },
-        tooltip: {valueSuffix: 'us'},
-        series: [
-        {
-            name: 'g++-5.4', data: [327.399, 367.389, 441.457, 576.021,
-            762.268, 794, 994.06, 1261.71, 1360.57]
-        },
-        {
-            name: 'g++-6.2', data: [327.764, 367.379, 441.993, 572.241,
-            761.741, 784.605, 991.717, 1266.55, 1361.59]
-        },
-        {
-            name: 'clang-3.9', data: [330.199, 364.253, 443.483, 580.676,
-            763.772, 777.39, 1000.53, 1267.75, 1375.51]
-        },
-        {
-            name: 'zapcc-4.0', data: [339.358, 364.756, 443.807, 575.917,
-            761.248, 784.695, 992.29, 1265.04, 1367.33]
-        }
-        ]
-    });
-});
-</script><p>There is no clear difference between the compilers in this code. Every compiler
-here has up and down.</p>
-<p>Let's look at the naive implementation of the 2D convolution (units are
-milliseconds here not microseconds):</p>
-<div id="std_conv2_container" style="min-width: 310px; height:400px; margin: 0 auto; "></div>
-<script>
-$(function () {
-    Highcharts.chart('std_conv2_container', {
-        chart: { type: 'column' },
-        title: { text: '2D Convolution (naive)', },
-        xAxis: {
-            categories: ['100x50', '105x50', '110x55', '115x55', '120x60',
-            '125x60', '130x65', '135x65', '140x70']
-        },
-        yAxis: {
-            title: { text: 'Time (ms)' },
-            plotLines: [{
-                value: 0,
-                width: 1,
-                color: '#808080'
-            }]
-        },
-        tooltip: {valueSuffix: 'ms'},
-        series: [
-        {
-            name: 'g++-5.4', data: [9.501,11.458,13.888, 16.489, 19.634,
-            22.898, 27.012, 31.246, 36.269]
-        },
-        {
-            name: 'g++-6.2', data: [9.502, 11.464, 13.903, 16.484, 19.642,
-            22.994, 27.004, 31.248, 36.26]
-        },
-        {
-            name: 'clang-3.9', data: [5.880, 7.136, 8.610, 10.226, 12.164,
-            14.247, 17.024, 19.577, 22.510]
-        },
-        {
-            name: 'zapcc-4.0', data: [5.875, 7.091, 8.661, 10.241, 12.218,
-            14.302, 16.777, 19.424, 22.472]
-        }
-        ]
-    });
-});
-</script><p>This time the difference is very large! Indeed, clang versions are about 60%
-faster than the GCC versions! This is really impressive. Even though this does
-not comes close to the optimized. It seems the vectorizer of clang is much more
-efficient than the one from GCC.</p>
-</div>
-<div class="section" id="id2">
-<h2>4D Convolution</h2>
-<p>The final kernel that I'm testing is the batched 4D convolutions that is used a
-lot in Deep Learning. This is not really a 4D convolution, but a large number
-of 2D convolutions applied on 4D tensors.</p>
-<div id="conv4_container" style="min-width: 310px; height:400px; margin: 0 auto; "></div>
-<script>
-$(function () {
-    Highcharts.chart('conv4_container', {
-        chart: { type: 'column' },
-        title: { text: '4D Convolution', },
-        xAxis: {
-            categories: ['2x6x3x28x16', '2x6x3x28x16', '2x6x3x28x16',
-            '2x6x3x28x16', '2x6x3x28x16', '2x6x3x28x16', '2x6x3x28x16',
-            '2x6x3x28x16', '2x6x3x28x16']
-        },
-        yAxis: {
-            type: 'logarithmic',
-            title: { text: 'Time (ms)' },
-            plotLines: [{
-                value: 0,
-                width: 1,
-                color: '#808080'
-            }]
-        },
-        tooltip: {valueSuffix: 'ms'},
-        series: [
-        {
-            name: 'g++-5.4', data: [0.095, 0.402, 1.083, 2.237, 3.988,
-            6.474, 9.985, 14.132, 19.539]
-        },
-        {
-            name: 'g++-6.2', data: [0.089, 0.413, 1.081, 2.224, 3.990,
-            6.462, 9.815, 14.118, 19.612]
-        },
-        {
-            name: 'clang-3.9', data: [0.090, 0.416, 1.108, 2.277, 4.077,
-            6.587, 10.024, 14.359, 20.006]
-        },
-        {
-            name: 'zapcc-4.0', data: [0.088, 0.406, 1.080, 2.237, 3.987,
-            6.484, 9.827, 14.130, 19.569]
-        }
-        ]
-    });
-});
-</script><p>Again, there are very small differences between each version. The best versions
-are the most recent versions of the compiler gcc-6.2 and clang-4.0 on a tie.</p>
-</div>
-<div class="section" id="conclusion">
-<h2>Conclusion</h2>
-<p>Overall, we can see two trends in these results. First, when working with
-highly-optimized code, the choice of compiler will not make a huge difference.
-On these kind of kernels, gcc-6.2 tend to perform faster than the other
-compilers, but only by a very slight margin, except in some cases. On the other
-hand, when working with naive implementations, clang versions really did perform
-much better than GCC. The clang compiled versions of the 1D and 2D convolutions
-are more than 60% faster than their GCC counter parts. This is really
-impressive. Overall, clang-4.0 seems to have several performance regressions,
-but since it's not still a work in progress, I would not be suprised if these
-regressions are not present in the final version. Since the clang-4.0 version is
-in fact the clang version used by zapcc, it's also possible that zapcc is
-introducing new performance regressions.</p>
-<p>Overall, my advice would be to use GCC-6.2 (or 5.4) on hand-optimized kernels
-and clang when you have mostly naive implementations. However, keep in mind that
-at least for the example shown here, the naive version optimized by the compiler
-never comes close to the highly-optimized version.</p>
-<p>As ever, takes this with a grain of salt, it's only been tested on one project
-and one machine, you may obtain very different results on other projects and on
-other processors.</p>
-</div>
-</div>
-        </div>
-            
-        
-    <a href="posts/2016/12/cpp-compiler-benchmark-on-expression-templates-library-etl.html#disqus_thread" data-disqus-identifier="cache/posts/2016/12/cpp-compiler-benchmark-on-expression-templates-library-etl.html">Comments</a>
 
 
         </article><nav class="postindexpager"><ul class="pager">
