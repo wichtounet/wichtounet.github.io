@@ -97,6 +97,167 @@
             <div id="content"></div>
             
         <article class="postbox h-entry post-text"><h1 class="p-name">
+<a href="posts/clang-tidy-static-analysis-integration-in-sonarqube.html" class="u-url">Use clang-tidy for static analysis and integration in Sonarqube</a>
+        <br><small>  
+             Posted: <time class="published dt-published" datetime="2017-03-11T09:54:00+01:00">2017-03-11 09:54</time></small>
+</h1>
+        <hr>
+<div class="p-summary">
+        <div>
+<p>clang-tidy is an extensive linter C++. It provides a complete framework for
+analysis of C++ code. Some of the checks are very simple but some of them are
+very complete and most of the checks from the clang-static-analyzer are
+integrated into clang-tidy.</p>
+<div class="section" id="usage">
+<h2>Usage</h2>
+<p>If you want to see the list of checks available on clang-tidy, you can use the
+list-checks options:</p>
+<pre class="code text"><a name="rest_code_bab09c63e3b4449da4ba4ff62d40437d-1"></a>clang-tidy -list-checks
+</pre>
+<p>You can then choose the tests you are interested in and perform an analysis of
+your code. For, it is highly recommended to use a Clang compilation database,
+you can have a look at Bear to generate this compilation database if you don't
+have it yet. The usage of clang-tidy, is pretty simple, you set the list of
+checks you want, the header on which you want to have warnings reported and the
+list of source files to analyse:</p>
+<pre class="code text"><a name="rest_code_09d7a0e1f7514f5d86d14682fb0d1462-1"></a>clang-tidy -checks='*' -header-filter="^include" -p . src/*.cpp
+</pre>
+<p>You'll very likely see a lot of warnings. And you will very likely see a lot of
+false positives and a lot of warnings you don't agree too. For insance, there
+are a lot of warnings from the CPP Core Guidelines and the Google Guidelines
+that I don't follow in my coding. You should not take the complete list of tests
+as rule, you should devise your own list of what you really want to fix in your
+code. If you want to disable one check X, you can use the - operation:</p>
+<pre class="code text"><a name="rest_code_85ac6125e16a4b199637e43a9bfd757b-1"></a>clang-tidy -checks='*,-X' -header-filter="^include" -p . src/*.cpp
+</pre>
+<p>You can also enable the checks one by one or parts of them with *:</p>
+<pre class="code text"><a name="rest_code_0ac45d8c0f894d088b5f49ef3c50d8f4-1"></a>clang-tidy -checks='google-*' -header-filter="^include" -p . src/*.cpp
+</pre>
+<p>One problem with the clang-tidy tool is that it is utterly slow, especially if
+you enable the clang-static-analyzer checks. Moreover, if you use it like it is
+set before, it will only use one thread for the complete set of files. This may
+not be an issue on small projects, but this will definitely be a big issue for
+large projects and template-heavy code (like my ETL project). You could create
+an implicit target into your Makefile to use it on each file independently and
+then use the -j option of make to make them in parallel, but it not really
+practical.</p>
+<p>For this, I just discovered that clang propose a Python script,
+run-clang-tidy.py that does it all for us! On Gentoo, it is installed at
+/usr/share/run-clang-tidy.py.</p>
+<pre class="code text"><a name="rest_code_6747011f1aea433ea699da90514c722e-1"></a>run-clang-tidy.py -checks='*' -header-filter="^include" -p . -j9
+</pre>
+<p>This will automatically run clang-tidy on each file from the compilation
+database and use 9 threads to perform the checks. This is definitely much
+faster. For me, this is the best way to run clang-tidy.</p>
+<p>One small point I don't like is that the script always print the list of enabled
+checks. For, this I changed this line in the script:</p>
+<pre class="code python"><a name="rest_code_18df0a65cdd040538ccd1a34c919c2eb-1"></a><span class="n">invocation</span> <span class="o">=</span> <span class="p">[</span><span class="n">args</span><span class="o">.</span><span class="n">clang_tidy_binary</span><span class="p">,</span> <span class="s1">'-list-checks'</span><span class="p">]</span>
+</pre>
+<p>with:</p>
+<pre class="code python"><a name="rest_code_82231de4bf434fafa2ca4a47481a440b-1"></a><span class="n">invocation</span> <span class="o">=</span> <span class="p">[</span><span class="n">args</span><span class="o">.</span><span class="n">clang_tidy_binary</span><span class="p">]</span>
+</pre>
+<p>This makes it more quiet.</p>
+<p>One thing I didn't mention is that clang-tidy is able to fix some of the errors
+directly if you use the -fix option. Personally, I don't like this, but for
+a large code base and a carefully selected set of checks, this could be really
+useful. Note that not all the checks are automatically fixable by clang-tidy.</p>
+</div>
+<div class="section" id="results">
+<h2>Results</h2>
+<p>I have run clang-tidy on my cpp-utils library and here some interesting results.
+I have not run all the checks, here is the command I used:</p>
+<pre class="code text"><a name="rest_code_04141fc0da0c49d6a3959182c1c7aff2-1"></a>/usr/share/clang/run-clang-tidy.py -p . -header-filter '^include/cpp_utils' -checks='cert-*,cppcoreguidelines-*,google-*,llvm-*,misc-*,modernize-*,performance-*,readility-*,-cppcoreguidelines-pro-type-reinterpret-cast,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-google-readability-namespace-comments,-llvm-namespace-comment,-llvm-include-order,-google-runtime-references' -j9 2&gt;/dev/null  | /usr/bin/zgrep -v "^clang-tidy"
+</pre>
+<p>Let's go over some warnings I got:</p>
+<pre class="code text"><a name="rest_code_2e962871d7c44138b7859a21d8dbf579-1"></a>include/cpp_utils/assert.hpp:91:103: warning: consider replacing 'long' with 'int64' [google-runtime-int]
+<a name="rest_code_2e962871d7c44138b7859a21d8dbf579-2"></a>void assertion_failed_msg(const CharT* expr, const char* msg, const char* function, const char* file, long line) {
+<a name="rest_code_2e962871d7c44138b7859a21d8dbf579-3"></a>                                                                                                      ^
+</pre>
+<p>I got this one several times. It is indeed more portable to use <code>int64</code> rather than <code>long</code>.</p>
+<pre class="code text"><a name="rest_code_4c8bcd05dfe644a0b83d37f4bc9ac256-1"></a>include/cpp_utils/aligned_allocator.hpp:53:9: warning: use 'using' instead of 'typedef' [modernize-use-using]
+<a name="rest_code_4c8bcd05dfe644a0b83d37f4bc9ac256-2"></a>        typedef aligned_allocator&lt;U, A&gt; other;
+<a name="rest_code_4c8bcd05dfe644a0b83d37f4bc9ac256-3"></a>        ^
+</pre>
+<p>This one is part of the modernize checks, indicating that one should use
+<code>using</code> rather than a <code>typedef</code> and I completely agree.</p>
+<pre class="code cpp"><a name="rest_code_f1b391ea2daf4c4790a301fc558c6bac-1"></a><span class="n">include</span><span class="o">/</span><span class="n">cpp_utils</span><span class="o">/</span><span class="n">aligned_allocator</span><span class="p">.</span><span class="nl">hpp</span><span class="p">:</span><span class="mi">79</span><span class="o">:</span><span class="mi">5</span><span class="o">:</span> <span class="nl">warning</span><span class="p">:</span> <span class="n">use</span> <span class="err">'</span><span class="o">=</span> <span class="k">default</span><span class="err">'</span> <span class="n">to</span> <span class="n">define</span> <span class="n">a</span> <span class="n">trivial</span> <span class="k">default</span> <span class="n">constructor</span> <span class="p">[</span><span class="n">modernize</span><span class="o">-</span><span class="n">use</span><span class="o">-</span><span class="k">default</span><span class="p">]</span>
+<a name="rest_code_f1b391ea2daf4c4790a301fc558c6bac-2"></a>    <span class="n">aligned_allocator</span><span class="p">()</span> <span class="p">{}</span>
+<a name="rest_code_f1b391ea2daf4c4790a301fc558c6bac-3"></a>    <span class="o">^</span>
+<a name="rest_code_f1b391ea2daf4c4790a301fc558c6bac-4"></a>                        <span class="o">=</span> <span class="k">default</span><span class="p">;</span>
+</pre>
+<p>Another one from the modernize checks that I really like. This is completely
+true.</p>
+<!-- code.:
+
+include/cpp_utils/maybe_parallel.hpp:33:5: warning: constructors that are callable with a single argument must be marked explicit to avoid unintentional implicit conversions [google-explicit-constructor]
+    thread_pool(Args... /*args*/){
+    ^
+    explicit -->
+<p>I don't agree that every constructor with one argument should be explicit,
+sometimes you want implicit conversion. Nevertheless, this particular case is
+very interesting since it is variadic, it can have one template argument and as
+thus it can be implicitly converted from anything, which is pretty bad I think.</p>
+<pre class="code cpp"><a name="rest_code_5c68d63a84004e1e8e5d6f06ddd363ea-1"></a><span class="n">test</span><span class="o">/</span><span class="n">array_wrapper</span><span class="p">.</span><span class="nl">cpp</span><span class="p">:</span><span class="mi">15</span><span class="o">:</span><span class="mi">18</span><span class="o">:</span> <span class="nl">warning</span><span class="p">:</span> <span class="n">C</span><span class="o">-</span><span class="n">style</span> <span class="n">casts</span> <span class="n">are</span> <span class="n">discouraged</span><span class="p">;</span> <span class="n">use</span> <span class="k">reinterpret_cast</span> <span class="p">[</span><span class="n">google</span><span class="o">-</span><span class="n">readability</span><span class="o">-</span><span class="n">casting</span><span class="p">]</span>
+<a name="rest_code_5c68d63a84004e1e8e5d6f06ddd363ea-2"></a>    <span class="kt">float</span><span class="o">*</span> <span class="n">mem</span> <span class="o">=</span> <span class="p">(</span><span class="kt">float</span><span class="o">*</span><span class="p">)</span> <span class="n">malloc</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="o">*</span> <span class="mi">8</span><span class="p">);</span>
+<a name="rest_code_5c68d63a84004e1e8e5d6f06ddd363ea-3"></a>                 <span class="o">^</span>
+<a name="rest_code_5c68d63a84004e1e8e5d6f06ddd363ea-4"></a>                 <span class="k">reinterpret_cast</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">*&gt;</span><span class="p">(</span>         <span class="p">)</span>
+</pre>
+<p>On this one, I completely agree, C-style casts should be avoided and much
+clearer C++ style casts should be preferred.</p>
+<pre class="code cpp"><a name="rest_code_cf8f01bfb01c4aa38a3181481d843ae2-1"></a><span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">wichtounet</span><span class="o">/</span><span class="n">dev</span><span class="o">/</span><span class="n">cpp_utils_test</span><span class="o">/</span><span class="n">include</span><span class="o">/</span><span class="n">cpp_utils</span><span class="o">/</span><span class="n">aligned_allocator</span><span class="p">.</span><span class="nl">hpp</span><span class="p">:</span><span class="mi">126</span><span class="o">:</span><span class="mi">19</span><span class="o">:</span> <span class="nl">warning</span><span class="p">:</span> <span class="n">thrown</span> <span class="n">exception</span> <span class="n">type</span> <span class="n">is</span> <span class="n">not</span> <span class="n">nothrow</span> <span class="n">copy</span> <span class="n">constructible</span> <span class="p">[</span><span class="n">cert</span><span class="o">-</span><span class="n">err60</span><span class="o">-</span><span class="n">cpp</span><span class="p">]</span>
+<a name="rest_code_cf8f01bfb01c4aa38a3181481d843ae2-2"></a>            <span class="k">throw</span> <span class="n">std</span><span class="o">::</span><span class="n">length_error</span><span class="p">(</span><span class="s">"aligned_allocator&lt;T&gt;::allocate() - Integer overflow."</span><span class="p">);</span>
+<a name="rest_code_cf8f01bfb01c4aa38a3181481d843ae2-3"></a>                  <span class="o">^</span>
+</pre>
+<p>This is one of the checks I don't agree with. Even though it makes sense to
+prefer exception that are nothrow copy constructible, they should be caught by
+const reference anyway. Moreover, this is here an exception from the standard
+library.</p>
+<pre class="code text"><a name="rest_code_f396a3e0e44848f49f9238405e7c4099-1"></a>/home/wichtounet/dev/cpp_utils_test/include/cpp_utils/aligned_allocator.hpp:141:40: warning: do not use const_cast [cppcoreguidelines-pro-type-const-cast]
+<a name="rest_code_f396a3e0e44848f49f9238405e7c4099-2"></a>        free((reinterpret_cast&lt;void**&gt;(const_cast&lt;std::remove_const_t&lt;T&gt;*&gt;(ptr)))[-1]);
+<a name="rest_code_f396a3e0e44848f49f9238405e7c4099-3"></a>                                       ^
+</pre>
+<p>In general, I agree that using const_cast should be avoided as much as possible.
+But there are some cases where they make sense. In this particular case, I don't
+modify the object itself but some memory before the object that is unrelated and
+I initialize myself.</p>
+<p>I also had a few false positives, but overall nothing too bad. I'm quite
+satisfied with the quality of the results. I'll fix these warnings in the coming
+week.</p>
+<p>Integration in Sonarqube</p>
+<p>The sonar-cxx plugin just integrated support for clang-tidy in main. You need
+to build the version yourself, the 0.9.8-SNAPSHOT version. You then can use
+something like this in your sonar-project.properties file:</p>
+<pre class="code text"><a name="rest_code_97498e6157734d39aaabc2b9154a6351-1"></a>sonar.cxx.clangtidy.reportPath=clang-tidy-report
+</pre>
+<p>and sonar-cxx will parse the results and integrate the issues in your sonar
+report.</p>
+<p>Here is an example:</p>
+<img alt="/images/sonar-cxx-clang-tidy.png" src="images/sonar-cxx-clang-tidy.png"><p>You can see two of the warnings from clang-tidy :)</p>
+<p>For now, I haven't integrate this in my Continuous Integration system because
+I'm still having issues with clang-tidy and the compilation database. Because
+the compilation contains absolute paths to the file and to the current
+directory, it cannot be shared directly between servers. I have to find a way to
+fix that so that clang-tidy can use on the other computer. I'll probably wait
+till the sonar-cxx 0.9.8 version is released before integrating all this in
+Sonarqube, but this is a great news for this plugin :)</p>
+</div>
+<div class="section" id="conclusion">
+<h2>Conclusion</h2>
+<p>clang-tidy is C++ linter that can analyze your code and checks for hundreds of
+problems in it. With it, I have found some very interesting problems in the code
+of my cpp_utils library. Moreover, you can now integrate it Sonarqube by using
+the sonar-cxx plugin. Since it is a bit slow, I'll probably not integrate it in
+my bigger projects, but I'll integrate at least in the cpp_utils library when
+sonar-cxx 0.9.8 will be released.</p>
+</div>
+</div>
+        </div>
+            
+        
+    <a href="posts/clang-tidy-static-analysis-integration-in-sonarqube.html#disqus_thread" data-disqus-identifier="cache/posts/clang-tidy-static-analysis-integration-in-sonarqube.html">Comments</a>
+
+
+        </article><article class="postbox h-entry post-text"><h1 class="p-name">
 <a href="posts/2017/03/disappointing-zapcc-performance-on-deep-learning-library-dll.html" class="u-url">Disappointing zapcc performance on Deep Learning Library (DLL)</a>
         <br><small>  
              Posted: <time class="published dt-published" datetime="2017-03-09T13:41:06+01:00">2017-03-09 13:41</time></small>
@@ -870,23 +1031,23 @@ moved the tab bar to the bottom and completely hidden the side panel. All that
 remained was the title bar and the scroll bar.</p>
 <p>To get rid of the title bar, you can use CSS. First, you have to only display
 the Vivaldi button in the settings page. Then, you can use this custom CSS:</p>
-<pre class="code CSS"><a name="rest_code_c4682f7ef5a2466f9c97c1077278fc05-1"></a><span class="nt">button</span><span class="p">.</span><span class="nc">vivaldi</span> <span class="p">{</span>
-<a name="rest_code_c4682f7ef5a2466f9c97c1077278fc05-2"></a>    <span class="k">display</span><span class="p">:</span> <span class="kc">none</span> <span class="cp">!important</span><span class="p">;</span>
-<a name="rest_code_c4682f7ef5a2466f9c97c1077278fc05-3"></a><span class="p">}</span>
-<a name="rest_code_c4682f7ef5a2466f9c97c1077278fc05-4"></a>
-<a name="rest_code_c4682f7ef5a2466f9c97c1077278fc05-5"></a><span class="p">#</span><span class="nn">header</span> <span class="p">{</span>
-<a name="rest_code_c4682f7ef5a2466f9c97c1077278fc05-6"></a>    <span class="k">min-height</span><span class="p">:</span> <span class="mi">0</span> <span class="cp">!important</span><span class="p">;</span>
-<a name="rest_code_c4682f7ef5a2466f9c97c1077278fc05-7"></a>    <span class="k">z-index</span><span class="p">:</span> <span class="kc">auto</span> <span class="cp">!important</span><span class="p">;</span>
-<a name="rest_code_c4682f7ef5a2466f9c97c1077278fc05-8"></a><span class="p">}</span>
-<a name="rest_code_c4682f7ef5a2466f9c97c1077278fc05-9"></a>
-<a name="rest_code_c4682f7ef5a2466f9c97c1077278fc05-10"></a><span class="p">.</span><span class="nc">button-toolbar</span><span class="p">.</span><span class="nc">home</span> <span class="p">{</span> <span class="k">display</span><span class="p">:</span> <span class="kc">none</span> <span class="p">}</span>
+<pre class="code CSS"><a name="rest_code_0131bfd39668450cbb811780061a6862-1"></a><span class="nt">button</span><span class="p">.</span><span class="nc">vivaldi</span> <span class="p">{</span>
+<a name="rest_code_0131bfd39668450cbb811780061a6862-2"></a>    <span class="k">display</span><span class="p">:</span> <span class="kc">none</span> <span class="cp">!important</span><span class="p">;</span>
+<a name="rest_code_0131bfd39668450cbb811780061a6862-3"></a><span class="p">}</span>
+<a name="rest_code_0131bfd39668450cbb811780061a6862-4"></a>
+<a name="rest_code_0131bfd39668450cbb811780061a6862-5"></a><span class="p">#</span><span class="nn">header</span> <span class="p">{</span>
+<a name="rest_code_0131bfd39668450cbb811780061a6862-6"></a>    <span class="k">min-height</span><span class="p">:</span> <span class="mi">0</span> <span class="cp">!important</span><span class="p">;</span>
+<a name="rest_code_0131bfd39668450cbb811780061a6862-7"></a>    <span class="k">z-index</span><span class="p">:</span> <span class="kc">auto</span> <span class="cp">!important</span><span class="p">;</span>
+<a name="rest_code_0131bfd39668450cbb811780061a6862-8"></a><span class="p">}</span>
+<a name="rest_code_0131bfd39668450cbb811780061a6862-9"></a>
+<a name="rest_code_0131bfd39668450cbb811780061a6862-10"></a><span class="p">.</span><span class="nc">button-toolbar</span><span class="p">.</span><span class="nc">home</span> <span class="p">{</span> <span class="k">display</span><span class="p">:</span> <span class="kc">none</span> <span class="p">}</span>
 </pre>
 <p>to hide the title completely! To get rid of the scroll bar, you need to use the
 Stylish extension and use this custom CSS:</p>
-<pre class="code CSS"><a name="rest_code_9ee01dd8d40b4f359c6889060a1b2b39-1"></a><span class="p">::</span><span class="nd">-webkit-scrollbar</span><span class="p">{</span><span class="k">display</span><span class="p">:</span><span class="kc">none</span> <span class="cp">!important</span><span class="p">;</span> <span class="k">width</span><span class="p">:</span><span class="mi">0</span><span class="kt">px</span><span class="p">;}</span>
-<a name="rest_code_9ee01dd8d40b4f359c6889060a1b2b39-2"></a><span class="p">::</span><span class="nd">-webkit-scrollbar-button</span><span class="o">,</span><span class="p">::</span><span class="nd">-webkit-scrollbar-track</span><span class="p">{</span><span class="k">display</span><span class="p">:</span><span class="kc">none</span> <span class="cp">!important</span><span class="p">;}</span>
-<a name="rest_code_9ee01dd8d40b4f359c6889060a1b2b39-3"></a><span class="p">::</span><span class="nd">-webkit-scrollbar-thumb</span><span class="p">{</span><span class="k">display</span><span class="p">:</span> <span class="kc">none</span> <span class="cp">!important</span><span class="p">;}</span>
-<a name="rest_code_9ee01dd8d40b4f359c6889060a1b2b39-4"></a><span class="p">::</span><span class="nd">-webkit-scrollbar-track</span><span class="p">{</span><span class="k">display</span><span class="p">:</span> <span class="kc">none</span> <span class="cp">!important</span><span class="p">;}</span>
+<pre class="code CSS"><a name="rest_code_cb91e99b2feb4a2bbe944fe090ac1c77-1"></a><span class="p">::</span><span class="nd">-webkit-scrollbar</span><span class="p">{</span><span class="k">display</span><span class="p">:</span><span class="kc">none</span> <span class="cp">!important</span><span class="p">;</span> <span class="k">width</span><span class="p">:</span><span class="mi">0</span><span class="kt">px</span><span class="p">;}</span>
+<a name="rest_code_cb91e99b2feb4a2bbe944fe090ac1c77-2"></a><span class="p">::</span><span class="nd">-webkit-scrollbar-button</span><span class="o">,</span><span class="p">::</span><span class="nd">-webkit-scrollbar-track</span><span class="p">{</span><span class="k">display</span><span class="p">:</span><span class="kc">none</span> <span class="cp">!important</span><span class="p">;}</span>
+<a name="rest_code_cb91e99b2feb4a2bbe944fe090ac1c77-3"></a><span class="p">::</span><span class="nd">-webkit-scrollbar-thumb</span><span class="p">{</span><span class="k">display</span><span class="p">:</span> <span class="kc">none</span> <span class="cp">!important</span><span class="p">;}</span>
+<a name="rest_code_cb91e99b2feb4a2bbe944fe090ac1c77-4"></a><span class="p">::</span><span class="nd">-webkit-scrollbar-track</span><span class="p">{</span><span class="k">display</span><span class="p">:</span> <span class="kc">none</span> <span class="cp">!important</span><span class="p">;}</span>
 </pre>
 <p>And then, no more scroll bar :)</p>
 <p>If you want to have full HTML5 video support, you need to install extra codecs.
@@ -959,7 +1120,7 @@ simply the Raspberry on which Domoticz is installed.</p>
 <p>As for the installation of Domoticz, it's really simple. They also have images of
 Raspberry Pi directly, but since my Raspberry was already installed with
 Raspbian, I installed Domoticz on it directly. A simple matter of curl and bash:</p>
-<pre class="code bash"><a name="rest_code_f617d2c6d8104a0f9365b673fd1c4812-1"></a>sudo curl -L install.domoticz.com <span class="p">|</span> sudo bash
+<pre class="code bash"><a name="rest_code_730a8f62f5964e75a605f11bd47754bf-1"></a>sudo curl -L install.domoticz.com <span class="p">|</span> sudo bash
 </pre>
 <p>After a few questions, your installation should be complete. You can browse your
 Domoticz installation at the IP of your Pi and at the given port.</p>
@@ -1085,258 +1246,6 @@ or not discovered.</p>
             
         
     <a href="posts/2017/01/new-home-automation-system-with-domoticz.html#disqus_thread" data-disqus-identifier="cache/posts/2017/01/new-home-automation-system-with-domoticz.html">Comments</a>
-
-
-        </article><article class="postbox h-entry post-text"><h1 class="p-name">
-<a href="posts/2016/12/pvs-studio-on-cpp-library-review.html" class="u-url">PVS-Studio on C++ Library Review</a>
-        <br><small>  
-             Posted: <time class="published dt-published" datetime="2016-12-20T09:40:12+01:00">2016-12-20 09:40</time></small>
-</h1>
-        <hr>
-<div class="p-summary">
-        <div>
-<p>PVS-Studio is a commercial static analyzer for C, C++ and C#. It works in both
-Windows and Linux.</p>
-<p>It has been a long time since I wanted to test it on my projects. I contacted
-The PVS-Studio team and they gave me a temporary license so that I can test the
-tool and make a review.</p>
-<p>I tried the static analyzer on my Expression Templates Library (ETL) project.
-This is a heavily-templated C++ library. I tried it on Linux of course.</p>
-<div class="section" id="usage">
-<h2>Usage</h2>
-<p>The installation is very simple, simply untar an archive and put the executables
-in your PATH (or use absolute paths). There are also some deb and rpm packages
-for some distributions. You need strace to make the analyzer work, it should be
-available on any Linux platform.</p>
-<p>The usage of PVS-Studio on Linux should be straightforward. First, you can use the
-analyzer directly with make and it will detect the invocations of the compiler.
-For instance, here is the command I used for ETL:</p>
-<pre class="code text"><a name="rest_code_dcb01f8a9c714d9fab41d4f80dea710f-1"></a>pvs-studio-analyzer trace -- make -j5 debug/bin/etl_test
-</pre>
-<p>Note that you can use several threads without issues, which is really great.
-There does not seem to be any slowdown at this stage, probably only collecting
-compiler arguments.</p>
-<p>This first step creates a strace_out file that will be used by the next stage.</p>
-<p>Once, the compilation has been analyzed, you can generate the results with the
-analyze function, for which you'll need a license. Here is what I did:</p>
-<pre class="code text"><a name="rest_code_d636623ac1c44fb3a432498e85a9ed90-1"></a>pvs-studio-analyzer analyze -l ~/pvs_studio/PVS-Studio.lic -j5
-</pre>
-<p>Unfortunately, this didn't work for me:</p>
-<pre class="code text"><a name="rest_code_352aec5a11d9440fa9e585e5be59d3c2-1"></a>No compilation units found
-<a name="rest_code_352aec5a11d9440fa9e585e5be59d3c2-2"></a>Analysis finished in 0:00:00.00
-</pre>
-<p>Apparently, it's not able to use the strace_out it generated itself...</p>
-<p>Another possibility is to use the compilation database from clang to use
-PVS-Studio. So I generated my compile_commands.json file again (it was not up to
-date...) with <a class="reference external" href="https://github.com/rizsotto/Bear">Bear</a>. And then, you only
-need to run the analyze step:</p>
-<pre class="code text"><a name="rest_code_d3149f1f77574517b22e79da38b72d49-1"></a>pvs-studio-analyzer analyze -l ~/pvs_studio/PVS-Studio.lic -j5
-</pre>
-<p>Make sure you have the same compiler configured than the one used to generate
-the compilation database to avoid errors with compiler arguments.</p>
-<p>Unfortunately, this just printed a load of crap on my console:</p>
-<pre class="code text"><a name="rest_code_e09fa95ddb3b4fb1845f703eab928b11-1"></a>(L8Pu(]-'Lo8h&gt;uo(_uv(uo2(-&gt;'2h_u(uo2(uvU2K h&gt;'o8a=}Lkk;x[G^%cuaa8acr[VS%
-<a name="rest_code_e09fa95ddb3b4fb1845f703eab928b11-2"></a>$ckUaoc8 c'8&gt;_-o-8&gt;U2cu/kau==-8&gt;c-=cU2]Uf=c U2=u%c&amp;kU__-&gt;j}c@uvu2%cJ
-<a name="rest_code_e09fa95ddb3b4fb1845f703eab928b11-3"></a>(L8Pu(]-'Lo8h&gt;uo(_uv(uo2(-&gt;'2h_u(uo2(uvU2K h&gt;'o8a=}Lkk;JVJ^%cuaa8acr[VS%
-<a name="rest_code_e09fa95ddb3b4fb1845f703eab928b11-4"></a>$ckUaoc8 c'8&gt;_-o-8&gt;U2cu/kau==-8&gt;c-=cU2]Uf=c U2=u%c&amp;kU__-&gt;j}c@uvu2%cJ
-<a name="rest_code_e09fa95ddb3b4fb1845f703eab928b11-5"></a>(L8Pu(]-'Lo8h&gt;uo(_uv(uo2(-&gt;'2h_u(uo2(uvU2K h&gt;'o8a=}Lkk;*[G^%cuaa8acr[VS%
-<a name="rest_code_e09fa95ddb3b4fb1845f703eab928b11-6"></a>$ckUaoc8 c'8&gt;_-o-8&gt;U2cu/kau==-8&gt;c-=cU2]Uf=c U2=u%c&amp;kU__-&gt;j}c@uvu2%cJ
-<a name="rest_code_e09fa95ddb3b4fb1845f703eab928b11-7"></a>(L8Pu(]-'Lo8h&gt;uo(_uv(uo2(-&gt;'2h_u(uo2(uvU2K h&gt;'o8a=}Lkk;b[b^%cuaa8acr[VS%
-<a name="rest_code_e09fa95ddb3b4fb1845f703eab928b11-8"></a>$ckUaoc8 c'8&gt;_-o-8&gt;U2cu/kau==-8&gt;c-=cU2]Uf=c U2=u%c&amp;kU__-&gt;j}c@uvu2%cJ
-<a name="rest_code_e09fa95ddb3b4fb1845f703eab928b11-9"></a>(L8Pu(]-'Lo8h&gt;uo(_uv(uo2(-&gt;'2h_u(uo2(uvU2K h&gt;'o8a=}Lkk;[[x^%cuaa8acr[VS%
-<a name="rest_code_e09fa95ddb3b4fb1845f703eab928b11-10"></a>$ckUaoc8 c'8&gt;_-o-8&gt;U2cu/kau==-8&gt;c-=cU2]Uf=c U2=u%c&amp;kU__-&gt;j}c@uvu2%cJ
-</pre>
-<p>Pretty nice, isn't it ?</p>
-<p>Let's try again in a file:</p>
-<pre class="code text"><a name="rest_code_c7dcb8380d2b48f58049e02ea3466cd5-1"></a>pvs-studio-analyzer analyze -o results.log -l ~/pvs_studio/PVS-Studio.lic -j5
-</pre>
-<p>The time is quite reasonable for the analysis, it took much less time than the
-compilation time. In total, it took 88 seconds to analyze all the files. It's
-much faster than the clang static analyzer.</p>
-<p>This time it worked, but the log file is not readable, you need to convert it
-again:</p>
-<pre class="code text"><a name="rest_code_286382b8bb6a449998eaab8981c3e935-1"></a>plog-converter -t errorfile -o errors results.log
-</pre>
-<p>And finally, you can read the results of the analysis in the errors file.</p>
-</div>
-<div class="section" id="results">
-<h2>Results</h2>
-<p>Overall, PVS-Studio found 236 messages in the ETL library, I was expecting more.
-I also wish there was an HTML report that include the source code as well as the
-error message. I had to lookup at the code for each message (you could integrate
-it in vim and then use the quickfix window to do that). There are some
-visualization but in things like QtCreator or LibreOffice which I don't have nor
-want on my computer.</p>
-<p>Let's look at the results. For each message, I'll include the message from
-PVS-Studio and the code if it's relevant.</p>
-<p>The first is about using the comma:</p>
-<pre class="code text"><a name="rest_code_56744074249f4f759398701781b45032-1"></a>include/etl/traits.hpp:674:1: error: V521 Such expressions using the ',' operator are dangerous. Make sure the expression is correct.
-<a name="rest_code_56744074249f4f759398701781b45032-2"></a>include/etl/traits.hpp:674:1: error: V685 Consider inspecting the return statement. The expression contains a comma.
-</pre>
-<pre class="code cpp"><a name="rest_code_61354b1455474e039aeb42690ddf596e-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">E</span><span class="o">&gt;</span>
-<a name="rest_code_61354b1455474e039aeb42690ddf596e-2"></a><span class="k">constexpr</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">dimensions</span><span class="p">(</span><span class="k">const</span> <span class="n">E</span><span class="o">&amp;</span> <span class="n">expr</span><span class="p">)</span> <span class="k">noexcept</span> <span class="p">{</span>
-<a name="rest_code_61354b1455474e039aeb42690ddf596e-3"></a>    <span class="k">return</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="n">expr</span><span class="p">,</span> <span class="n">etl_traits</span><span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;::</span><span class="n">dimensions</span><span class="p">();</span>
-<a name="rest_code_61354b1455474e039aeb42690ddf596e-4"></a><span class="p">}</span>
-</pre>
-<p>Here I'm simply using the comma operand to ignore expr to avoid a warning. To
-make this compile in C++11, you need to do it in one line otherwise it's not
-a constexpr function. It's probably not perfect to use this construct, but there
-is no problem here.</p>
-<p>There is a bunch of these, let's filter them, it remains 207 warnings. Let's
-jump to the next one:</p>
-<pre class="code text"><a name="rest_code_ae6d2d78e1994875a78c2f2d281456fe-1"></a>include/etl/impl/blas/fft.hpp:29:1: error: V501 There are identical sub-expressions to the left and to the right of the '==' operator: (DFTI_SINGLE) == DFTI_SINGLE
-</pre>
-<pre class="code cpp"><a name="rest_code_3bb57015fc45446a83060235c6009e26-1"></a><span class="kr">inline</span> <span class="kt">void</span> <span class="nf">fft_kernel</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">complex</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;*</span> <span class="n">in</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">s</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">complex</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;*</span> <span class="n">out</span><span class="p">)</span> <span class="p">{</span>
-<a name="rest_code_3bb57015fc45446a83060235c6009e26-2"></a>    <span class="n">DFTI_DESCRIPTOR_HANDLE</span> <span class="n">descriptor</span><span class="p">;</span>
-<a name="rest_code_3bb57015fc45446a83060235c6009e26-3"></a>
-<a name="rest_code_3bb57015fc45446a83060235c6009e26-4"></a>    <span class="kt">void</span><span class="o">*</span> <span class="n">in_ptr</span> <span class="o">=</span> <span class="k">const_cast</span><span class="o">&lt;</span><span class="kt">void</span><span class="o">*&gt;</span><span class="p">(</span><span class="k">static_cast</span><span class="o">&lt;</span><span class="k">const</span> <span class="kt">void</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">in</span><span class="p">));</span>
-<a name="rest_code_3bb57015fc45446a83060235c6009e26-5"></a>
-<a name="rest_code_3bb57015fc45446a83060235c6009e26-6"></a>    <span class="n">DftiCreateDescriptor</span><span class="p">(</span><span class="o">&amp;</span><span class="n">descriptor</span><span class="p">,</span> <span class="n">DFTI_SINGLE</span><span class="p">,</span> <span class="n">DFTI_COMPLEX</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">s</span><span class="p">);</span> <span class="c1">//Specify size and precision</span>
-<a name="rest_code_3bb57015fc45446a83060235c6009e26-7"></a>    <span class="n">DftiSetValue</span><span class="p">(</span><span class="n">descriptor</span><span class="p">,</span> <span class="n">DFTI_PLACEMENT</span><span class="p">,</span> <span class="n">DFTI_NOT_INPLACE</span><span class="p">);</span>         <span class="c1">//Out of place FFT</span>
-<a name="rest_code_3bb57015fc45446a83060235c6009e26-8"></a>    <span class="n">DftiCommitDescriptor</span><span class="p">(</span><span class="n">descriptor</span><span class="p">);</span>                                   <span class="c1">//Finalize the descriptor</span>
-<a name="rest_code_3bb57015fc45446a83060235c6009e26-9"></a>    <span class="n">DftiComputeForward</span><span class="p">(</span><span class="n">descriptor</span><span class="p">,</span> <span class="n">in_ptr</span><span class="p">,</span> <span class="n">out</span><span class="p">);</span>                        <span class="c1">//Compute the Forward FFT</span>
-<a name="rest_code_3bb57015fc45446a83060235c6009e26-10"></a>    <span class="n">DftiFreeDescriptor</span><span class="p">(</span><span class="o">&amp;</span><span class="n">descriptor</span><span class="p">);</span>                                    <span class="c1">//Free the descriptor</span>
-<a name="rest_code_3bb57015fc45446a83060235c6009e26-11"></a><span class="p">}</span>
-</pre>
-<p>Unfortunately, the error is inside the MKL library. Here, I really don't think
-it's an issue. There is pack of them. I forgot to exclude non-ETL code from the
-results. Once filter from all dependencies, 137 messages remain.</p>
-<pre class="code text"><a name="rest_code_ef6e9d4d1d0a462c9d3e6bae2bce56ee-1"></a>include/etl/eval_functors.hpp:157:1: warning: V560 A part of conditional expression is always false: !padding.
-</pre>
-<p>This is true, but not an issue since padding is a configuration constant that
-enables the use of padding in vector and matrices. There was 27 of these at
-different locations and with different configuration variables.</p>
-<pre class="code text"><a name="rest_code_4371302ef4d44034b3721bf62f029371-1"></a>include/etl/op/sub_view.hpp:161:1: note: V688 The 'i' function argument possesses the same name as one of the class members, which can result in a confusion.
-</pre>
-<p>This is again true, but not a bug in this particular case. It is still helpful and
-I ended up changing these to avoid confusion. Again, there was a few of these.</p>
-<pre class="code text"><a name="rest_code_575ff45ce7734acf92fefea7096ebca0-1"></a>etl/test/src/conv_multi_multi.cpp:23:1: error: V573 Uninitialized variable 'k' was used. The variable was used to initialize itself.
-</pre>
-<p>This one is in the test code:</p>
-<pre class="code cpp"><a name="rest_code_dfd702122f0e435ea81f025bfdec40ee-1"></a><span class="k">for</span> <span class="p">(</span><span class="kt">size_t</span> <span class="n">k</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">k</span> <span class="o">&lt;</span> <span class="n">etl</span><span class="o">::</span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">(</span><span class="n">K</span><span class="p">);</span> <span class="o">++</span><span class="n">k</span><span class="p">)</span> <span class="p">{</span>
-<a name="rest_code_dfd702122f0e435ea81f025bfdec40ee-2"></a>    <span class="k">for</span> <span class="p">(</span><span class="kt">size_t</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">etl</span><span class="o">::</span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">(</span><span class="n">I</span><span class="p">);</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
-<a name="rest_code_dfd702122f0e435ea81f025bfdec40ee-3"></a>        <span class="n">C_ref</span><span class="p">(</span><span class="n">k</span><span class="p">)(</span><span class="n">i</span><span class="p">)</span> <span class="o">=</span> <span class="n">conv_2d_valid</span><span class="p">(</span><span class="n">I</span><span class="p">(</span><span class="n">i</span><span class="p">),</span> <span class="n">K</span><span class="p">(</span><span class="n">k</span><span class="p">));</span> <span class="c1">// HERE</span>
-<a name="rest_code_dfd702122f0e435ea81f025bfdec40ee-4"></a>    <span class="p">}</span>
-<a name="rest_code_dfd702122f0e435ea81f025bfdec40ee-5"></a><span class="p">}</span>
-</pre>
-<p>I don't see any error, k is initialized correctly to zero in the first loop.
-This is a <strong>false positive</strong> for me. There were several of these in different
-places. It seems to that the use of the operator() is confusing for PVS-Studio.</p>
-<pre class="code text"><a name="rest_code_fffc0d273d444a51bfff3106b66db1df-1"></a>include/etl/traits.hpp:703:1: note: V659 Declarations of functions with 'rows' name differ in the 'const' keyword only, but the bodies of these functions have different composition. This is suspicious and can possibly be an error. Check lines: 693, 703.
-</pre>
-<pre class="code cpp"><a name="rest_code_175355c4aa7a4114988be16ba5ef641b-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">E</span><span class="p">,</span> <span class="n">cpp_disable_if</span><span class="p">(</span><span class="n">decay_traits</span><span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;::</span><span class="n">is_fast</span><span class="p">)</span><span class="o">&gt;</span>
-<a name="rest_code_175355c4aa7a4114988be16ba5ef641b-2"></a><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">rows</span><span class="p">(</span><span class="k">const</span> <span class="n">E</span><span class="o">&amp;</span> <span class="n">expr</span><span class="p">)</span> <span class="p">{</span> <span class="c1">//693</span>
-<a name="rest_code_175355c4aa7a4114988be16ba5ef641b-3"></a>    <span class="k">return</span> <span class="n">etl_traits</span><span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;::</span><span class="n">dim</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
-<a name="rest_code_175355c4aa7a4114988be16ba5ef641b-4"></a><span class="p">}</span>
-<a name="rest_code_175355c4aa7a4114988be16ba5ef641b-5"></a>
-<a name="rest_code_175355c4aa7a4114988be16ba5ef641b-6"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">E</span><span class="p">,</span> <span class="n">cpp_enable_if</span><span class="p">(</span><span class="n">decay_traits</span><span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;::</span><span class="n">is_fast</span><span class="p">)</span><span class="o">&gt;</span>
-<a name="rest_code_175355c4aa7a4114988be16ba5ef641b-7"></a><span class="k">constexpr</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">rows</span><span class="p">(</span><span class="k">const</span> <span class="n">E</span><span class="o">&amp;</span> <span class="n">expr</span><span class="p">)</span> <span class="k">noexcept</span> <span class="p">{</span> <span class="c1">//703</span>
-<a name="rest_code_175355c4aa7a4114988be16ba5ef641b-8"></a>    <span class="k">return</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="n">expr</span><span class="p">,</span> <span class="n">etl_traits</span><span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;::</span><span class="k">template</span> <span class="n">dim</span><span class="o">&lt;</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">();</span>
-<a name="rest_code_175355c4aa7a4114988be16ba5ef641b-9"></a><span class="p">}</span>
-</pre>
-<p>Unfortunately, this is again a <strong>false positive</strong> because PVS-Studio failed to
-recognized SFINAE and therefore the warning is wrong.</p>
-<pre class="code text"><a name="rest_code_6cacadec9fef4ffd97c497163d9d9b4c-1"></a>include/etl/builder/expression_builder.hpp:345:1: note: V524 It is odd that the body of '&gt;&gt;=' function is fully equivalent to the body of '*=' function.
-</pre>
-<p>This one is interesting indeed. It is true that they are exactly because in ETL
-&gt;&gt; is used for scalar element-wise multiplication. This is quite interesting that
-PVS-Studio points that out. There was a few of these oddities but all were
-normal in the library.</p>
-<pre class="code text"><a name="rest_code_c26209b2a4f943f7b7bb10019bf3f0cf-1"></a>etl/test/src/compare.cpp:23:1: error: V501 There are identical sub-expressions to the left and to the right of the '!=' operator: a != a
-</pre>
-<p>Again, it is nice that PVS-Studio finds that, but this is done on purpose on the
-tests to compare an object to itself. If I remove all the oddities in the test
-cases, there are only 17 left in the headers. None of the warnings on the test
-case was serious, but there was no more false positives either, so that's great.</p>
-<pre class="code text"><a name="rest_code_52c2c3c02c7c4906a0effb02b85b46f1-1"></a>include/etl/impl/vec/sum.hpp:92:1: error: V591 Non-void function should return a value.
-</pre>
-<pre class="code cpp"><a name="rest_code_4679cea4f3a64d53b74d1c641f7159d1-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">L</span><span class="p">,</span> <span class="n">cpp_disable_if</span><span class="p">((</span><span class="n">vec_enabled</span> <span class="o">&amp;&amp;</span> <span class="n">all_vectorizable</span><span class="o">&lt;</span><span class="n">vector_mode</span><span class="p">,</span> <span class="n">L</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">))</span><span class="o">&gt;</span>
-<a name="rest_code_4679cea4f3a64d53b74d1c641f7159d1-2"></a><span class="n">value_t</span><span class="o">&lt;</span><span class="n">L</span><span class="o">&gt;</span> <span class="n">sum</span><span class="p">(</span><span class="k">const</span> <span class="n">L</span><span class="o">&amp;</span> <span class="n">lhs</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">first</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">last</span><span class="p">)</span> <span class="p">{</span>
-<a name="rest_code_4679cea4f3a64d53b74d1c641f7159d1-3"></a>    <span class="n">cpp_unused</span><span class="p">(</span><span class="n">lhs</span><span class="p">);</span>
-<a name="rest_code_4679cea4f3a64d53b74d1c641f7159d1-4"></a>    <span class="n">cpp_unused</span><span class="p">(</span><span class="n">first</span><span class="p">);</span>
-<a name="rest_code_4679cea4f3a64d53b74d1c641f7159d1-5"></a>    <span class="n">cpp_unused</span><span class="p">(</span><span class="n">last</span><span class="p">);</span>
-<a name="rest_code_4679cea4f3a64d53b74d1c641f7159d1-6"></a>    <span class="n">cpp_unreachable</span><span class="p">(</span><span class="s">"vec::sum called with invalid parameters"</span><span class="p">);</span>
-<a name="rest_code_4679cea4f3a64d53b74d1c641f7159d1-7"></a><span class="p">}</span>
-</pre>
-<p>This one is interesting. It's not a false positive since indeed the function
-does not return a value, but there is a __builtin_unreachable() inside the
-function and it cannot be called. In my opinion, the static analyzer should be
-able to handle that, but this is really a corner case.</p>
-<pre class="code text"><a name="rest_code_5377a0fab59a472183c40532640866b7-1"></a>include/etl/sparse.hpp:148:1: note: V550 An odd precise comparison: a == 0.0. It's probably better to use a comparison with defined precision: fabs(A - B) &lt; Epsilon.
-</pre>
-<pre class="code cpp"><a name="rest_code_14cffbacff6e42f78d2880bf10ac7a46-1"></a><span class="kr">inline</span> <span class="kt">bool</span> <span class="nf">is_zero</span><span class="p">(</span><span class="kt">double</span> <span class="n">a</span><span class="p">)</span> <span class="p">{</span>
-<a name="rest_code_14cffbacff6e42f78d2880bf10ac7a46-2"></a>    <span class="k">return</span> <span class="n">a</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">;</span>
-<a name="rest_code_14cffbacff6e42f78d2880bf10ac7a46-3"></a><span class="p">}</span>
-</pre>
-<p>This is not false, but again this is intended because of the comparison to zero
-for a sparse matrix. There were 10 of these in the same class.</p>
-<pre class="code text"><a name="rest_code_add686b0cd53425e941420a32847398d-1"></a>include/etl/impl/blas/fft.hpp:562:1: note: V656 Variables 'a_padded', 'b_padded' are initialized through the call to the same function. It's probably an error or un-optimized code. Consider inspecting the 'etl::size(c)' expression. Check lines: 561, 562.
-</pre>
-<pre class="code cpp"><a name="rest_code_2a75dc7acc4f4e97a2d8258c923e0493-1"></a><span class="n">dyn_vector</span><span class="o">&lt;</span><span class="n">etl</span><span class="o">::</span><span class="n">complex</span><span class="o">&lt;</span><span class="n">type</span><span class="o">&gt;&gt;</span> <span class="n">a_padded</span><span class="p">(</span><span class="n">etl</span><span class="o">::</span><span class="n">size</span><span class="p">(</span><span class="n">c</span><span class="p">));</span>
-<a name="rest_code_2a75dc7acc4f4e97a2d8258c923e0493-2"></a><span class="n">dyn_vector</span><span class="o">&lt;</span><span class="n">etl</span><span class="o">::</span><span class="n">complex</span><span class="o">&lt;</span><span class="n">type</span><span class="o">&gt;&gt;</span> <span class="n">b_padded</span><span class="p">(</span><span class="n">etl</span><span class="o">::</span><span class="n">size</span><span class="p">(</span><span class="n">c</span><span class="p">));</span>
-</pre>
-<p>It's indeed constructed with the same size, but for me I don't think it's an
-odd pattern. I would not consider that as a warning, especially since it's
-a constructor and not a assignment.</p>
-<pre class="code text"><a name="rest_code_fac3da3f97474197bc1fe9492ac00d6a-1"></a>include/etl/dyn_base.hpp:312:1: warning: V690 The 'dense_dyn_base' class implements a copy constructor, but lacks the '=' operator. It is dangerous to use such a class.
-</pre>
-<p>This is again a kind of corner case in the library because it's a base class
-and the assignment is different between the sub classes and not a real
-assignment in the C++ sense.</p>
-<pre class="code text"><a name="rest_code_7f9abcaa6d134da3b1da86257a3596fe-1"></a>include/etl/impl/reduc/conv_multi.hpp:657:1: warning: V711 It is dangerous to create a local variable within a loop with a same name as a variable controlling this loop.
-</pre>
-<pre class="code cpp"><a name="rest_code_25b6483e8c0c42bf8285865ab7a2267b-1"></a><span class="k">for</span> <span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">c</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">c</span> <span class="o">&lt;</span> <span class="n">C</span><span class="p">;</span> <span class="o">++</span><span class="n">c</span><span class="p">)</span> <span class="p">{</span>
-<a name="rest_code_25b6483e8c0c42bf8285865ab7a2267b-2"></a>    <span class="k">for</span> <span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">k</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">k</span> <span class="o">&lt;</span> <span class="n">K</span><span class="p">;</span> <span class="o">++</span><span class="n">k</span><span class="p">)</span> <span class="p">{</span>
-<a name="rest_code_25b6483e8c0c42bf8285865ab7a2267b-3"></a>        <span class="n">conv</span><span class="p">(</span><span class="n">k</span><span class="p">)(</span><span class="n">c</span><span class="p">)</span> <span class="o">=</span> <span class="n">conv_temp</span><span class="p">(</span><span class="n">c</span><span class="p">)(</span><span class="n">k</span><span class="p">);</span>
-<a name="rest_code_25b6483e8c0c42bf8285865ab7a2267b-4"></a>    <span class="p">}</span>
-<a name="rest_code_25b6483e8c0c42bf8285865ab7a2267b-5"></a><span class="p">}</span>
-</pre>
-<p>This is again a false positive... It really seems that PVS-Studio is not able to
-handle the operator().</p>
-<pre class="code text"><a name="rest_code_1c72c8b09bf8438db8c4e82de0478f9d-1"></a>include/etl/impl/pooling.hpp:396:1: error: V501 There are identical sub-expressions to the left and to the right of the '||' operator: P1 || P2 || P1
-</pre>
-<pre class="code cpp"><a name="rest_code_8249c39ce6494527910d31f898529ece-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="kt">size_t</span> <span class="n">C1</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">C2</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">C3</span><span class="p">,</span><span class="kt">size_t</span> <span class="n">S1</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">S2</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">S3</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">P1</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">P2</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">P3</span><span class="p">,</span> <span class="k">typename</span> <span class="n">A</span><span class="p">,</span> <span class="k">typename</span> <span class="n">M</span><span class="o">&gt;</span>
-<a name="rest_code_8249c39ce6494527910d31f898529ece-2"></a><span class="k">static</span> <span class="kt">void</span> <span class="n">apply</span><span class="p">(</span><span class="k">const</span> <span class="n">A</span><span class="o">&amp;</span> <span class="n">sub</span><span class="p">,</span> <span class="n">M</span><span class="o">&amp;&amp;</span> <span class="n">m</span><span class="p">)</span> <span class="p">{</span>
-<a name="rest_code_8249c39ce6494527910d31f898529ece-3"></a>    <span class="k">const</span> <span class="kt">size_t</span> <span class="n">o1</span> <span class="o">=</span> <span class="p">(</span><span class="n">etl</span><span class="o">::</span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">(</span><span class="n">sub</span><span class="p">)</span> <span class="o">-</span> <span class="n">C1</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">P1</span><span class="p">)</span> <span class="o">/</span> <span class="n">S1</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
-<a name="rest_code_8249c39ce6494527910d31f898529ece-4"></a>    <span class="k">const</span> <span class="kt">size_t</span> <span class="n">o2</span> <span class="o">=</span> <span class="p">(</span><span class="n">etl</span><span class="o">::</span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;</span><span class="p">(</span><span class="n">sub</span><span class="p">)</span> <span class="o">-</span> <span class="n">C2</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">P2</span><span class="p">)</span> <span class="o">/</span> <span class="n">S2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
-<a name="rest_code_8249c39ce6494527910d31f898529ece-5"></a>    <span class="k">const</span> <span class="kt">size_t</span> <span class="n">o3</span> <span class="o">=</span> <span class="p">(</span><span class="n">etl</span><span class="o">::</span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">2</span><span class="o">&gt;</span><span class="p">(</span><span class="n">sub</span><span class="p">)</span> <span class="o">-</span> <span class="n">C3</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">P3</span><span class="p">)</span> <span class="o">/</span> <span class="n">S3</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
-<a name="rest_code_8249c39ce6494527910d31f898529ece-6"></a>
-<a name="rest_code_8249c39ce6494527910d31f898529ece-7"></a>    <span class="k">if</span><span class="p">(</span><span class="n">P1</span> <span class="o">||</span> <span class="n">P2</span> <span class="o">||</span> <span class="n">P1</span><span class="p">){</span>
-</pre>
-<p>Last but not least, this time, it's entirely true and it's in fact a bug in my
-code! The condition should be written like this:</p>
-<pre class="code cpp"><a name="rest_code_c3b0f03adeac46a6afd6dc35b19891be-1"></a><span class="k">if</span><span class="p">(</span><span class="n">P1</span> <span class="o">||</span> <span class="n">P2</span> <span class="o">||</span> <span class="n">P3</span><span class="p">){</span>
-</pre>
-<p>This is now fixed in the master of ETL.</p>
-</div>
-<div class="section" id="conclusion">
-<h2>Conclusion</h2>
-<p>The installation was pretty easy, but the usage was not as easy as it could
-because the first method by analyzing the build system did not work.
-Fortunately, the system supports using the Clang compilation database directly
-and therefore it was possible to use.</p>
-<p>Overall, it found 236 warnings on my code base (heavily templated library).
-Around 50 of them were in some of the extend libraries, but I forgot to filter
-them out. The quality of the results is pretty good in my opinion. It was able
-to <strong>find a bug</strong> in my implementation of pooling with padding. Unfortunately,
-there was quite a few false positives, due to SFINAE, bad handling of the
-operator() and no handling of __builtin_unreachable. The remaining were all
-correct, but were not bug considering their usages.</p>
-<p>To conclude, I think it's a great static analyzer that is really fast compared
-to other one in the market. There are a few false positives, but it's really not
-bad compared to other tools and some of the messages are really great. An HTML
-report including the source code would be great as well.</p>
-<p>If you want more information, you can consult
-<a class="reference external" href="http://www.viva64.com/en/pvs-studio/">the official site</a>. There is even a way
-to use it on open-source code for free, but you have to add comments on top of
-each of your files.</p>
-<p>I hope it was helpful ;)</p>
-</div>
-</div>
-        </div>
-            
-        
-    <a href="posts/2016/12/pvs-studio-on-cpp-library-review.html#disqus_thread" data-disqus-identifier="cache/posts/2016/12/pvs-studio-on-cpp-library-review.html">Comments</a>
 
 
         </article><nav class="postindexpager"><ul class="pager">
