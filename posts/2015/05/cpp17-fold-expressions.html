@@ -116,7 +116,7 @@ C++11 introduced variadic template to the languages. This new feature allows to 
 <article class="post-text h-entry hentry postpage" itemscope="itemscope" itemtype="http://schema.org/Article"><header><h1 class="p-name entry-title" itemprop="headline name"><a href="#" class="u-url">C++17 Fold Expressions</a></h1>
 
         <div class="metadata">
-            <p class="byline author vcard"><span class="byline-name fn">
+            <p class="byline author vcard"><span class="byline-name fn" itemprop="author">
                     Baptiste Wicht
             </span></p>
             <p class="dateline"><a href="#" rel="bookmark"><time class="published dt-published" datetime="2015-05-23T19:08:20+02:00" itemprop="datePublished" title="2015-05-23 19:08">2015-05-23 19:08</time></a></p>
@@ -137,14 +137,14 @@ C++11 introduced variadic template to the languages. This new feature allows to 
 <div class="section" id="variadic-templates">
 <h2>Variadic Templates</h2>
 <p>C++11 introduced variadic template to the languages. This new feature allows to write template functions and classes taking an arbitrary number of template parameters. This a feature I really like and I already used it quite a lot in my different libraries. Here is a very simple example computing the sum of the parameters:</p>
-<pre class="code c++"><a name="rest_code_e2deccb39a6348d1aaae3c3d72f3e123-1"></a><span class="k">auto</span> <span class="nf">old_sum</span><span class="p">(){</span>
-<a name="rest_code_e2deccb39a6348d1aaae3c3d72f3e123-2"></a>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<a name="rest_code_e2deccb39a6348d1aaae3c3d72f3e123-3"></a><span class="p">}</span>
-<a name="rest_code_e2deccb39a6348d1aaae3c3d72f3e123-4"></a>
-<a name="rest_code_e2deccb39a6348d1aaae3c3d72f3e123-5"></a><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T1</span><span class="p">,</span> <span class="k">typename</span><span class="p">...</span> <span class="n">T</span><span class="o">&gt;</span>
-<a name="rest_code_e2deccb39a6348d1aaae3c3d72f3e123-6"></a><span class="k">auto</span> <span class="n">old_sum</span><span class="p">(</span><span class="n">T1</span> <span class="n">s</span><span class="p">,</span> <span class="n">T</span><span class="p">...</span> <span class="n">ts</span><span class="p">){</span>
-<a name="rest_code_e2deccb39a6348d1aaae3c3d72f3e123-7"></a>    <span class="k">return</span> <span class="n">s</span> <span class="o">+</span> <span class="n">old_sum</span><span class="p">(</span><span class="n">ts</span><span class="p">...);;</span>
-<a name="rest_code_e2deccb39a6348d1aaae3c3d72f3e123-8"></a><span class="p">}</span>
+<pre class="code c++"><a name="rest_code_0a5889433d674e859ec56d824ac6e7fd-1"></a><span class="k">auto</span> <span class="nf">old_sum</span><span class="p">(){</span>
+<a name="rest_code_0a5889433d674e859ec56d824ac6e7fd-2"></a>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<a name="rest_code_0a5889433d674e859ec56d824ac6e7fd-3"></a><span class="p">}</span>
+<a name="rest_code_0a5889433d674e859ec56d824ac6e7fd-4"></a>
+<a name="rest_code_0a5889433d674e859ec56d824ac6e7fd-5"></a><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T1</span><span class="p">,</span> <span class="k">typename</span><span class="p">...</span> <span class="n">T</span><span class="o">&gt;</span>
+<a name="rest_code_0a5889433d674e859ec56d824ac6e7fd-6"></a><span class="k">auto</span> <span class="n">old_sum</span><span class="p">(</span><span class="n">T1</span> <span class="n">s</span><span class="p">,</span> <span class="n">T</span><span class="p">...</span> <span class="n">ts</span><span class="p">){</span>
+<a name="rest_code_0a5889433d674e859ec56d824ac6e7fd-7"></a>    <span class="k">return</span> <span class="n">s</span> <span class="o">+</span> <span class="n">old_sum</span><span class="p">(</span><span class="n">ts</span><span class="p">...);;</span>
+<a name="rest_code_0a5889433d674e859ec56d824ac6e7fd-8"></a><span class="p">}</span>
 </pre>
 <p>What can be seen here is a typical use of variadic templates. Almost all the time, is is necessary to use recursion and several functions to unpack the parameters and process them. There is only one way to unpack the arguments, by using the ... operator that simply put comma between arguments. Even if it works well, it is a bit heavy on the code. This will likely be completely optimized to a series of addition by the compiler, but it may still happen in more complicated functions that this is not done. Moreover, the intent is not always clear with that.</p>
 <p>That is why C++17 introduced an extension for the variadic template, fold expressions.</p>
@@ -153,34 +153,34 @@ C++11 introduced variadic template to the languages. This new feature allows to 
 <h2>Fold expressions</h2>
 <p>Fold expressions are a new way to unpack variadic parameters with operators. For now, only Clang 3.6 supports C++17 fold expression, with the -std=c++1z flag. That is the compiler I used to validate the examples of this post.</p>
 <p>The syntax is bit disturbing at first but quite logical:</p>
-<pre class="code c++"><a name="rest_code_f4c12970d6144c29928a2f2222d9ef1f-1"></a><span class="p">(</span> <span class="n">pack</span> <span class="n">op</span> <span class="p">...</span> <span class="p">)</span>             <span class="c1">//(1)</span>
-<a name="rest_code_f4c12970d6144c29928a2f2222d9ef1f-2"></a><span class="p">(</span> <span class="p">...</span> <span class="n">op</span> <span class="n">pack</span> <span class="p">)</span>             <span class="c1">//(2)</span>
-<a name="rest_code_f4c12970d6144c29928a2f2222d9ef1f-3"></a><span class="p">(</span> <span class="n">pack</span> <span class="n">op</span> <span class="p">...</span> <span class="n">op</span> <span class="n">init</span> <span class="p">)</span>     <span class="c1">//(3)</span>
-<a name="rest_code_f4c12970d6144c29928a2f2222d9ef1f-4"></a><span class="p">(</span> <span class="n">init</span> <span class="n">op</span> <span class="p">...</span> <span class="n">op</span> <span class="n">pack</span> <span class="p">)</span>     <span class="c1">//(4)</span>
+<pre class="code c++"><a name="rest_code_187cff75b3714066a21719b8cd2f97dc-1"></a><span class="p">(</span> <span class="n">pack</span> <span class="n">op</span> <span class="p">...</span> <span class="p">)</span>             <span class="c1">//(1)</span>
+<a name="rest_code_187cff75b3714066a21719b8cd2f97dc-2"></a><span class="p">(</span> <span class="p">...</span> <span class="n">op</span> <span class="n">pack</span> <span class="p">)</span>             <span class="c1">//(2)</span>
+<a name="rest_code_187cff75b3714066a21719b8cd2f97dc-3"></a><span class="p">(</span> <span class="n">pack</span> <span class="n">op</span> <span class="p">...</span> <span class="n">op</span> <span class="n">init</span> <span class="p">)</span>     <span class="c1">//(3)</span>
+<a name="rest_code_187cff75b3714066a21719b8cd2f97dc-4"></a><span class="p">(</span> <span class="n">init</span> <span class="n">op</span> <span class="p">...</span> <span class="n">op</span> <span class="n">pack</span> <span class="p">)</span>     <span class="c1">//(4)</span>
 </pre>
 <p>Where <em>pack</em> is an unexpanded parameter pack, <em>op</em> an operator and <em>init</em> a value. The version (1) is a right fold that is expanded like (P1 op (P2 op (P3 ... (PN-1 op PN)))). The version (2) is a left fold where the expansion is taken from the left. The (3) and (4) versions are almost the value except for an init value. Only some operators (+,*,&amp;,|,&amp;&amp;,||, ,) have defined init values and can be used with the versions (1) and (2). The other operators can only be used with an init value.</p>
 <p>For instance, here is how we could write the sum functions with fold expressions:</p>
-<pre class="code c++"><a name="rest_code_3ed86702478c4c80b940c1ab3b1f6610-1"></a><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span><span class="p">...</span> <span class="n">T</span><span class="o">&gt;</span>
-<a name="rest_code_3ed86702478c4c80b940c1ab3b1f6610-2"></a><span class="k">auto</span> <span class="n">fold_sum_1</span><span class="p">(</span><span class="n">T</span><span class="p">...</span> <span class="n">s</span><span class="p">){</span>
-<a name="rest_code_3ed86702478c4c80b940c1ab3b1f6610-3"></a>    <span class="k">return</span> <span class="p">(...</span> <span class="o">+</span> <span class="n">s</span><span class="p">);</span>
-<a name="rest_code_3ed86702478c4c80b940c1ab3b1f6610-4"></a><span class="p">}</span>
+<pre class="code c++"><a name="rest_code_724f58e8ba78480bb77f73322537b928-1"></a><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span><span class="p">...</span> <span class="n">T</span><span class="o">&gt;</span>
+<a name="rest_code_724f58e8ba78480bb77f73322537b928-2"></a><span class="k">auto</span> <span class="n">fold_sum_1</span><span class="p">(</span><span class="n">T</span><span class="p">...</span> <span class="n">s</span><span class="p">){</span>
+<a name="rest_code_724f58e8ba78480bb77f73322537b928-3"></a>    <span class="k">return</span> <span class="p">(...</span> <span class="o">+</span> <span class="n">s</span><span class="p">);</span>
+<a name="rest_code_724f58e8ba78480bb77f73322537b928-4"></a><span class="p">}</span>
 </pre>
 <p>I personally think it is much better, it clearly states our intent and does not need recursion. By default, the init value used for addition is 0, but you can change it:</p>
-<pre class="code c++"><a name="rest_code_803c470f247c459085be5ed13c18d20b-1"></a><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span><span class="p">...</span> <span class="n">T</span><span class="o">&gt;</span>
-<a name="rest_code_803c470f247c459085be5ed13c18d20b-2"></a><span class="k">auto</span> <span class="n">fold_sum_2</span><span class="p">(</span><span class="n">T</span><span class="p">...</span> <span class="n">s</span><span class="p">){</span>
-<a name="rest_code_803c470f247c459085be5ed13c18d20b-3"></a>    <span class="k">return</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="p">...</span> <span class="o">+</span> <span class="n">s</span><span class="p">);</span>
-<a name="rest_code_803c470f247c459085be5ed13c18d20b-4"></a><span class="p">}</span>
+<pre class="code c++"><a name="rest_code_8fe317af6d5a4735b349266faadd1dc0-1"></a><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span><span class="p">...</span> <span class="n">T</span><span class="o">&gt;</span>
+<a name="rest_code_8fe317af6d5a4735b349266faadd1dc0-2"></a><span class="k">auto</span> <span class="n">fold_sum_2</span><span class="p">(</span><span class="n">T</span><span class="p">...</span> <span class="n">s</span><span class="p">){</span>
+<a name="rest_code_8fe317af6d5a4735b349266faadd1dc0-3"></a>    <span class="k">return</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="p">...</span> <span class="o">+</span> <span class="n">s</span><span class="p">);</span>
+<a name="rest_code_8fe317af6d5a4735b349266faadd1dc0-4"></a><span class="p">}</span>
 </pre>
 <p>This will yield the sum of the elements plus one.</p>
 <p>This can be also very practical to print some elements for instance:</p>
-<pre class="code c++"><a name="rest_code_ef710626453c4e6ebbd6e85d622cf2b6-1"></a><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="p">...</span><span class="n">Args</span><span class="o">&gt;</span>
-<a name="rest_code_ef710626453c4e6ebbd6e85d622cf2b6-2"></a><span class="kt">void</span> <span class="n">print_1</span><span class="p">(</span><span class="n">Args</span><span class="o">&amp;&amp;</span><span class="p">...</span> <span class="n">args</span><span class="p">)</span> <span class="p">{</span>
-<a name="rest_code_ef710626453c4e6ebbd6e85d622cf2b6-3"></a>    <span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="p">...</span> <span class="o">&lt;&lt;</span> <span class="n">args</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="sc">'\n'</span><span class="p">;</span>
-<a name="rest_code_ef710626453c4e6ebbd6e85d622cf2b6-4"></a><span class="p">}</span>
+<pre class="code c++"><a name="rest_code_31d60a5ce8ac4509978bcfedad610068-1"></a><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="p">...</span><span class="n">Args</span><span class="o">&gt;</span>
+<a name="rest_code_31d60a5ce8ac4509978bcfedad610068-2"></a><span class="kt">void</span> <span class="n">print_1</span><span class="p">(</span><span class="n">Args</span><span class="o">&amp;&amp;</span><span class="p">...</span> <span class="n">args</span><span class="p">)</span> <span class="p">{</span>
+<a name="rest_code_31d60a5ce8ac4509978bcfedad610068-3"></a>    <span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="p">...</span> <span class="o">&lt;&lt;</span> <span class="n">args</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="sc">'\n'</span><span class="p">;</span>
+<a name="rest_code_31d60a5ce8ac4509978bcfedad610068-4"></a><span class="p">}</span>
 </pre>
 <p>And this can even be used when doing Template Metaprogramming, for instance here is a TMP version of the and operator:</p>
-<pre class="code c++"><a name="rest_code_e7a73a3abe6642b192209b9a10b3dd47-1"></a><span class="k">template</span><span class="o">&lt;</span><span class="kt">bool</span><span class="p">...</span> <span class="n">B</span><span class="o">&gt;</span>
-<a name="rest_code_e7a73a3abe6642b192209b9a10b3dd47-2"></a><span class="k">struct</span> <span class="nl">fold_and</span> <span class="p">:</span> <span class="n">std</span><span class="o">::</span><span class="n">integral_constant</span><span class="o">&lt;</span><span class="kt">bool</span><span class="p">,</span> <span class="p">(</span><span class="n">B</span> <span class="o">&amp;&amp;</span> <span class="p">...)</span><span class="o">&gt;</span> <span class="p">{};</span>
+<pre class="code c++"><a name="rest_code_8acd5ff0703f401ca4944ec363788a7b-1"></a><span class="k">template</span><span class="o">&lt;</span><span class="kt">bool</span><span class="p">...</span> <span class="n">B</span><span class="o">&gt;</span>
+<a name="rest_code_8acd5ff0703f401ca4944ec363788a7b-2"></a><span class="k">struct</span> <span class="nl">fold_and</span> <span class="p">:</span> <span class="n">std</span><span class="o">::</span><span class="n">integral_constant</span><span class="o">&lt;</span><span class="kt">bool</span><span class="p">,</span> <span class="p">(</span><span class="n">B</span> <span class="o">&amp;&amp;</span> <span class="p">...)</span><span class="o">&gt;</span> <span class="p">{};</span>
 </pre>
 </div>
 <div class="section" id="conclusion">
