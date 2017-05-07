@@ -1,5 +1,69 @@
 <?xml version="1.0" encoding="utf-8"?>
-<?xml-stylesheet type="text/xsl" href="../assets/xml/rss.xsl" media="all"?><rss xmlns:dc="http://purl.org/dc/elements/1.1/" version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Blog blog("Baptiste Wicht"); (Posts about Performance)</title><link>http://baptiste-wicht.com/</link><description></description><atom:link rel="self" href="http://baptiste-wicht.com/categories/performance.xml" type="application/rss+xml"></atom:link><language>en</language><lastBuildDate>Mon, 27 Mar 2017 05:46:03 GMT</lastBuildDate><generator>Nikola (getnikola.com)</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>C++ Compiler benchmark on Expression Templates Library (ETL)</title><link>http://baptiste-wicht.com/posts/2016/12/cpp-compiler-benchmark-on-expression-templates-library-etl.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"&gt;&lt;/script&gt;
+<?xml-stylesheet type="text/xsl" href="../assets/xml/rss.xsl" media="all"?><rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Blog blog("Baptiste Wicht"); (Posts about Performance)</title><link>http://baptiste-wicht.com/</link><description></description><atom:link type="application/rss+xml" href="http://baptiste-wicht.com/categories/performance.xml" rel="self"></atom:link><language>en</language><lastBuildDate>Sun, 07 May 2017 11:34:19 GMT</lastBuildDate><generator>Nikola (getnikola.com)</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>Update on Expression Templates Library (ETL)</title><link>http://baptiste-wicht.com/posts/2017/05/update-on-expression-templates-library-etl.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;It's been a while since I've &lt;a class="reference external" href="https://baptiste-wicht.com/posts/2016/09/expression-templates-library-etl-10.html"&gt;released the version 1.0 of ETL&lt;/a&gt;. There is some work to do before I release the next version, but I wanted to give you a quick update on what has been going on for ETL in the last months. There has been a lot of changes in the library and the next version will be a major update when I'm done with some refactorings and improvements.&lt;/p&gt;
+&lt;p&gt;Thanks to my thesis supervisor, the project now has a logo:&lt;/p&gt;
+&lt;img alt="ETL Logo" class="align-center" src="http://baptiste-wicht.com/images/logo.png"&gt;
+&lt;p&gt;There are quite a few new features, although probably nothing really major. The
+support for square root has been improved with cubic root and inverse root.
+Vectors can now be transformed using floor and ceil. Cross product of vector has
+been implemented as well. Batched outer product and batched bias averaging (for
+machine learning) are now supported. Reductions have also been improved with
+absolute sum and mean (asum/asum) support and min_index and max_index. argmax
+can now be used to get the max index in each sub dimensions. Matrix can now be
+decomposed into their Q/R decomposition rather than only their PALU
+decomposition. The matrices can now be sliced by getting only a sub part of the
+matrix. The pooling operators  have also been improved with stride and padding
+support. Matrices and vectors can also be shuffled. Moreover, a few adapters
+are now available for hermitian matrices, symmetric matrices and lower and upper
+matrices. So far the support for these adapters is not huge, but they are
+guaranteed to validate their constraints.&lt;/p&gt;
+&lt;p&gt;Several operations have been optimized for speed. All the pooling and upsample
+operators are now parallelized and the most used kernel (2x2 pooling) is now
+more optimized. 4D convolution kernels (for machine learning) have been greatly
+improved. There are now very specialized vectorized kernels for classic kernel
+configurations (for instance 3x3 or 5x5) and the selection of implementations is
+now smarter than before. The support of padding now much better than before for
+small amount of padding. Moreover, for small kernels the full convolution can
+now be evaluated using the valid convolution kernels directly with some padding,
+for much faster overall performance. Matrix-matrix multiplication with
+transposed matrices is now much faster when using BLAS kernels. Indeed, the
+transposition is not performed but handled inside the kernels. Moreover, the
+performance of the transposition itself is also much faster. Finally, accesses
+to 3D and 4D matrices is now much faster than before.&lt;/p&gt;
+&lt;p&gt;The parallelization feature of ETL has been completely reworked. Before, there
+was a thread pool for each algorithm that was parallelized. Now, there is
+a global thread engine with one thread pool. Since parallelization is not nested
+in ETL, this improves performance slightly by greatly diminishing the number of
+threads that are created throughout an application.&lt;/p&gt;
+&lt;p&gt;Vectorization has also been greatly improved in ETL. Integer operations are now
+automatically vectorized on processors that support this. The automatic
+vectorizer now is able to use non-temporal stores for very large operations.
+A non-temporal store bypasses the cache, thus gaining some time. Since very
+large matrices do not fit in cache, this is a net gain. Moreover, the alignment
+detection in the automatic vectorizer has also been improved. Support for
+Fused-Multiply-Add (FMA) operations has also been integrated in the algorithms
+that can make use of it. The matrix-matrix multiplications and vector-matrix
+multiplications now have optimized vectorized kernels. They also have versions
+for column-major matrices now. The old egblas version of the gemm, based on BLIS
+kernels, has been removed since it was only supporting double-precision and was
+not faster than the new vectorized algorithm. I plan to reintegrate a version of
+the GEMM based on BLIS in the future but with more optimizations and support for
+all precisions and integers. The sum and the dot product now also have
+specialized vectorized implementations. The min and max operations are now
+automatically-vectorized.&lt;/p&gt;
+&lt;p&gt;The GPU has also been almost completely reworked. Now, operations can be chained
+without any copies between GPU and CPU. Several new operations have also been
+added with support to GPU. Moreover, to complement operations that are not
+available in any of the supported NVIDIA libraries, I've created a simple
+library that can be used to add a few more GPU operations. Nevertheless a lot of
+operations are still missing and only algorithms are available not expressions
+(such as c = a + b * 1.0) that are entirely computed on CPU. I have plans to
+improve that further, but probably not before the version 1.2.&lt;/p&gt;
+&lt;p&gt;There also have been a lot of refactorings in the code of the library. A lot of
+expressions now have less overhead and are specialized for performance.
+Moreover, temporary expressions are currently being reworked in order to be more
+simple and maintainable and easier to optimize in the future.&lt;/p&gt;
+&lt;p&gt;Finally, there also was quite a few bug fixes. Most of them have been found by
+the use of the library in the Deep Learning Library (DLL) project.&lt;/p&gt;&lt;/div&gt;</description><category>C++</category><category>C++14</category><category>etl</category><category>Performance</category><category>projects</category><guid>http://baptiste-wicht.com/posts/2017/05/update-on-expression-templates-library-etl.html</guid><pubDate>Sat, 06 May 2017 19:31:48 GMT</pubDate></item><item><title>C++ Compiler benchmark on Expression Templates Library (ETL)</title><link>http://baptiste-wicht.com/posts/2016/12/cpp-compiler-benchmark-on-expression-templates-library-etl.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"&gt;&lt;/script&gt;
 &lt;script src="https://code.highcharts.com/highcharts.js"&gt;&lt;/script&gt;
 &lt;script src="https://code.highcharts.com/modules/exporting.js"&gt;&lt;/script&gt;&lt;p&gt;In my Expression Templates Library (ETL) project, I have a lot of template heavy
 code that needs to run as fast as possible and that is quite intensive to
@@ -547,10 +611,10 @@ page).&lt;/p&gt;&lt;/div&gt;</description><category>Performance</category><categ
 &lt;h2&gt;Compile and generate dependency files at the same time&lt;/h2&gt;
 &lt;p&gt;To help write my makefiles, I'm using a set of functions that I have written. This includes automatic dependency generation using -MM -MT options of the compiler. Until now, I had two targets, one to compile the cpp file into the object file and another one to generate the dependency file. I recently saw that compilers were able to do both at the same time! Clang, G++ and the Intel compiler all have a -MD -MF options that lets you generate the dependency file at the same time you compile your file, saving you at least one read of the file.&lt;/p&gt;
 &lt;p&gt;My compilation rule in my makefile has now become:&lt;/p&gt;
-&lt;pre class="code makefile"&gt;&lt;a name="rest_code_9d41849650b4494fbd37f10a39e3d6dd-1"&gt;&lt;/a&gt;&lt;span class="nf"&gt;release/$(1)/%.cpp.o&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="k"&gt;$(&lt;/span&gt;1&lt;span class="k"&gt;)&lt;/span&gt;/%.&lt;span class="n"&gt;cpp&lt;/span&gt;
-&lt;a name="rest_code_9d41849650b4494fbd37f10a39e3d6dd-2"&gt;&lt;/a&gt;    @ mkdir -p release/&lt;span class="k"&gt;$(&lt;/span&gt;&lt;span class="m"&gt;1&lt;/span&gt;&lt;span class="k"&gt;)&lt;/span&gt;/
-&lt;a name="rest_code_9d41849650b4494fbd37f10a39e3d6dd-3"&gt;&lt;/a&gt;    &lt;span class="k"&gt;$(&lt;/span&gt;CXX&lt;span class="k"&gt;)&lt;/span&gt; &lt;span class="k"&gt;$(&lt;/span&gt;CXX_FLAGS&lt;span class="k"&gt;)&lt;/span&gt; &lt;span class="k"&gt;$(&lt;/span&gt;RELEASE_FLAGS&lt;span class="k"&gt;)&lt;/span&gt; &lt;span class="k"&gt;$(&lt;/span&gt;&lt;span class="m"&gt;2&lt;/span&gt;&lt;span class="k"&gt;)&lt;/span&gt; -MD -MF release/&lt;span class="k"&gt;$(&lt;/span&gt;&lt;span class="m"&gt;1&lt;/span&gt;&lt;span class="k"&gt;)&lt;/span&gt;/&lt;span class="nv"&gt;$$&lt;/span&gt;*.cpp.d -o release/&lt;span class="k"&gt;$(&lt;/span&gt;&lt;span class="m"&gt;1&lt;/span&gt;&lt;span class="k"&gt;)&lt;/span&gt;/&lt;span class="nv"&gt;$$&lt;/span&gt;*.cpp.o -c &lt;span class="k"&gt;$(&lt;/span&gt;&lt;span class="m"&gt;1&lt;/span&gt;&lt;span class="k"&gt;)&lt;/span&gt;/&lt;span class="nv"&gt;$$&lt;/span&gt;*.cpp
-&lt;a name="rest_code_9d41849650b4494fbd37f10a39e3d6dd-4"&gt;&lt;/a&gt;    @ sed -i -e &lt;span class="s1"&gt;'s@^\(.*\)\.o:@\1.d \1.o:@'&lt;/span&gt; release/&lt;span class="k"&gt;$(&lt;/span&gt;&lt;span class="m"&gt;1&lt;/span&gt;&lt;span class="k"&gt;)&lt;/span&gt;/&lt;span class="nv"&gt;$$&lt;/span&gt;*.cpp.d
+&lt;pre class="code makefile"&gt;&lt;a name="rest_code_61fcf535a9b64183880940686f0e9274-1"&gt;&lt;/a&gt;&lt;span class="nf"&gt;release/$(1)/%.cpp.o&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="k"&gt;$(&lt;/span&gt;1&lt;span class="k"&gt;)&lt;/span&gt;/%.&lt;span class="n"&gt;cpp&lt;/span&gt;
+&lt;a name="rest_code_61fcf535a9b64183880940686f0e9274-2"&gt;&lt;/a&gt;    @ mkdir -p release/&lt;span class="k"&gt;$(&lt;/span&gt;&lt;span class="m"&gt;1&lt;/span&gt;&lt;span class="k"&gt;)&lt;/span&gt;/
+&lt;a name="rest_code_61fcf535a9b64183880940686f0e9274-3"&gt;&lt;/a&gt;    &lt;span class="k"&gt;$(&lt;/span&gt;CXX&lt;span class="k"&gt;)&lt;/span&gt; &lt;span class="k"&gt;$(&lt;/span&gt;CXX_FLAGS&lt;span class="k"&gt;)&lt;/span&gt; &lt;span class="k"&gt;$(&lt;/span&gt;RELEASE_FLAGS&lt;span class="k"&gt;)&lt;/span&gt; &lt;span class="k"&gt;$(&lt;/span&gt;&lt;span class="m"&gt;2&lt;/span&gt;&lt;span class="k"&gt;)&lt;/span&gt; -MD -MF release/&lt;span class="k"&gt;$(&lt;/span&gt;&lt;span class="m"&gt;1&lt;/span&gt;&lt;span class="k"&gt;)&lt;/span&gt;/&lt;span class="nv"&gt;$$&lt;/span&gt;*.cpp.d -o release/&lt;span class="k"&gt;$(&lt;/span&gt;&lt;span class="m"&gt;1&lt;/span&gt;&lt;span class="k"&gt;)&lt;/span&gt;/&lt;span class="nv"&gt;$$&lt;/span&gt;*.cpp.o -c &lt;span class="k"&gt;$(&lt;/span&gt;&lt;span class="m"&gt;1&lt;/span&gt;&lt;span class="k"&gt;)&lt;/span&gt;/&lt;span class="nv"&gt;$$&lt;/span&gt;*.cpp
+&lt;a name="rest_code_61fcf535a9b64183880940686f0e9274-4"&gt;&lt;/a&gt;    @ sed -i -e &lt;span class="s1"&gt;'s@^\(.*\)\.o:@\1.d \1.o:@'&lt;/span&gt; release/&lt;span class="k"&gt;$(&lt;/span&gt;&lt;span class="m"&gt;1&lt;/span&gt;&lt;span class="k"&gt;)&lt;/span&gt;/&lt;span class="nv"&gt;$$&lt;/span&gt;*.cpp.d
 &lt;/pre&gt;&lt;p&gt;This reduced the compilation time to 86.8 seconds. Not that much reduction, but it still is quite nice to know that. I would have expected this to reduce more the compile time.&lt;/p&gt;
 &lt;div class="section" id="use-pragma-once"&gt;
 &lt;h3&gt;Use #pragma once&lt;/h3&gt;
