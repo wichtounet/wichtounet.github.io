@@ -97,6 +97,53 @@
             <div id="content"></div>
             
         <article class="postbox h-entry post-text"><h1 class="p-name">
+<a href="posts/2017/05/speed-up-tensorflow-inference-compiling-from-source.html" class="u-url">Speed up TensorFlow inference by compiling it from source</a>
+        <br><small>  
+             Posted: <time class="published dt-published" datetime="2017-05-10T14:18:33+02:00">2017-05-10 14:18</time></small>
+</h1>
+        <hr>
+<div class="p-summary">
+        <div>
+<p>The most simple way to install TensorFlow is to work in a virtual Python
+environment and simply to use either the TensorFlow official packages in pip or
+use one of the official wheels for distributions.  There is one big problem with
+that technique and it's the fact that the binaries are precompiled so that they
+fit as many hardware configuration as possible. This is normal from Google since
+generating precompiled binaries for all the possible combinations of processor
+capabilities would be a nightmare. This is not a problem for GPU
+since the CUDA Libraries will take care of the difference from one graphics card
+to another. But it is a problem with CPU performance. Indeed, different
+processors have different capabilities. For instance, the vectorization
+capabilities are different from processor to processor (SSE, AVX, AVX2,
+AVX-512F, FMA, ...). All those options can make a significant difference in the
+performance of the programs. Although most of the machine learning training
+occurs on GPU most of the time, the inference is mostly done on the CPU.
+Therefore, it probably remains important to be as fast as possible on CPU.</p>
+<p>So if you care about performance on CPU, you should install TensorFlow from
+sources directly yourself. This will allow compilation of the TensorFlow sources
+with -march=native which will enable all the hardware capabilities of machine on
+which you are compiling the library.</p>
+<p>Depending on your problem, this may give you some nice speedup. In my case, on
+a very small Recurrent Neural Network, it made inference about 20% faster.  On
+a larger problem and depending on your processor, you may gain much more than
+that. If you are training on CPU, this may make a very large difference in total
+time.</p>
+<p>Installing TensorFlow is sometimes a bit cumbersome. You'll likely have to
+compile Bazel from sources as well and depending on your processor, it may take
+a long time to finish. Nevertheless, I have successfully compiled TensorFlow
+from sources on several machines now without too many problems. Just pay close
+attention to the options you are setting while configuring TensorFlow, for
+instance CUDA configuration if you want GPU support.</p>
+<p>I hope this little trick will help you gain some time :)</p>
+<p>Here is the <a class="reference external" href="https://www.tensorflow.org/install/install_sources">link to compile TensorFlow from source</a>.</p>
+</div>
+        </div>
+            
+        
+    <a href="posts/2017/05/speed-up-tensorflow-inference-compiling-from-source.html#disqus_thread" data-disqus-identifier="cache/posts/2017/05/speed-up-tensorflow-inference-compiling-from-source.html">Comments</a>
+
+
+        </article><article class="postbox h-entry post-text"><h1 class="p-name">
 <a href="posts/2017/05/update-on-expression-templates-library-etl.html" class="u-url">Update on Expression Templates Library (ETL)</a>
         <br><small>  
              Posted: <time class="published dt-published" datetime="2017-05-06T21:31:48+02:00">2017-05-06 21:31</time></small>
@@ -342,58 +389,58 @@ cases.</p>
 template containing the list of layers, in order. In DLL, there are two main
 different ways of declaring a neural networks. In the first version, the fast
 version, the layers directly know their sizes:</p>
-<pre class="code cpp"><a name="rest_code_e1ce67d03ad34c0f9887ab1f92604159-1"></a><span class="k">using</span> <span class="n">network_t</span> <span class="o">=</span>
-<a name="rest_code_e1ce67d03ad34c0f9887ab1f92604159-2"></a>    <span class="n">dll</span><span class="o">::</span><span class="n">dbn_desc</span><span class="o">&lt;</span>
-<a name="rest_code_e1ce67d03ad34c0f9887ab1f92604159-3"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">dbn_layers</span><span class="o">&lt;</span>
-<a name="rest_code_e1ce67d03ad34c0f9887ab1f92604159-4"></a>            <span class="n">dll</span><span class="o">::</span><span class="n">rbm_desc</span><span class="o">&lt;</span><span class="mi">28</span> <span class="o">*</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">500</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">momentum</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">batch_size</span><span class="o">&lt;</span><span class="mi">64</span><span class="o">&gt;&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
-<a name="rest_code_e1ce67d03ad34c0f9887ab1f92604159-5"></a>            <span class="n">dll</span><span class="o">::</span><span class="n">rbm_desc</span><span class="o">&lt;</span><span class="mi">500</span>    <span class="p">,</span> <span class="mi">400</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">momentum</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">batch_size</span><span class="o">&lt;</span><span class="mi">64</span><span class="o">&gt;&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
-<a name="rest_code_e1ce67d03ad34c0f9887ab1f92604159-6"></a>            <span class="n">dll</span><span class="o">::</span><span class="n">rbm_desc</span><span class="o">&lt;</span><span class="mi">400</span>    <span class="p">,</span> <span class="mi">10</span><span class="p">,</span>  <span class="n">dll</span><span class="o">::</span><span class="n">momentum</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">batch_size</span><span class="o">&lt;</span><span class="mi">64</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">hidden</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">unit_type</span><span class="o">::</span><span class="n">SOFTMAX</span><span class="o">&gt;&gt;::</span><span class="n">layer_t</span><span class="o">&gt;</span><span class="p">,</span>
-<a name="rest_code_e1ce67d03ad34c0f9887ab1f92604159-7"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">trainer</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">sgd_trainer</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">batch_size</span><span class="o">&lt;</span><span class="mi">64</span><span class="o">&gt;&gt;::</span><span class="n">dbn_t</span><span class="p">;</span>
-<a name="rest_code_e1ce67d03ad34c0f9887ab1f92604159-8"></a>
-<a name="rest_code_e1ce67d03ad34c0f9887ab1f92604159-9"></a><span class="k">auto</span> <span class="n">network</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_unique</span><span class="o">&lt;</span><span class="n">network_t</span><span class="o">&gt;</span><span class="p">();</span>
-<a name="rest_code_e1ce67d03ad34c0f9887ab1f92604159-10"></a><span class="n">network</span><span class="o">-&gt;</span><span class="n">pretrain</span><span class="p">(</span><span class="n">dataset</span><span class="p">.</span><span class="n">training_images</span><span class="p">,</span> <span class="mi">10</span><span class="p">);</span>
-<a name="rest_code_e1ce67d03ad34c0f9887ab1f92604159-11"></a><span class="n">network</span><span class="o">-&gt;</span><span class="n">fine_tune</span><span class="p">(</span><span class="n">dataset</span><span class="p">.</span><span class="n">training_images</span><span class="p">,</span> <span class="n">dataset</span><span class="p">.</span><span class="n">training_labels</span><span class="p">,</span> <span class="mi">10</span><span class="p">);</span>
+<pre class="code cpp"><a name="rest_code_99b44b58301048718fc70e69c4781cbf-1"></a><span class="k">using</span> <span class="n">network_t</span> <span class="o">=</span>
+<a name="rest_code_99b44b58301048718fc70e69c4781cbf-2"></a>    <span class="n">dll</span><span class="o">::</span><span class="n">dbn_desc</span><span class="o">&lt;</span>
+<a name="rest_code_99b44b58301048718fc70e69c4781cbf-3"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">dbn_layers</span><span class="o">&lt;</span>
+<a name="rest_code_99b44b58301048718fc70e69c4781cbf-4"></a>            <span class="n">dll</span><span class="o">::</span><span class="n">rbm_desc</span><span class="o">&lt;</span><span class="mi">28</span> <span class="o">*</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">500</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">momentum</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">batch_size</span><span class="o">&lt;</span><span class="mi">64</span><span class="o">&gt;&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
+<a name="rest_code_99b44b58301048718fc70e69c4781cbf-5"></a>            <span class="n">dll</span><span class="o">::</span><span class="n">rbm_desc</span><span class="o">&lt;</span><span class="mi">500</span>    <span class="p">,</span> <span class="mi">400</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">momentum</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">batch_size</span><span class="o">&lt;</span><span class="mi">64</span><span class="o">&gt;&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
+<a name="rest_code_99b44b58301048718fc70e69c4781cbf-6"></a>            <span class="n">dll</span><span class="o">::</span><span class="n">rbm_desc</span><span class="o">&lt;</span><span class="mi">400</span>    <span class="p">,</span> <span class="mi">10</span><span class="p">,</span>  <span class="n">dll</span><span class="o">::</span><span class="n">momentum</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">batch_size</span><span class="o">&lt;</span><span class="mi">64</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">hidden</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">unit_type</span><span class="o">::</span><span class="n">SOFTMAX</span><span class="o">&gt;&gt;::</span><span class="n">layer_t</span><span class="o">&gt;</span><span class="p">,</span>
+<a name="rest_code_99b44b58301048718fc70e69c4781cbf-7"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">trainer</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">sgd_trainer</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">batch_size</span><span class="o">&lt;</span><span class="mi">64</span><span class="o">&gt;&gt;::</span><span class="n">dbn_t</span><span class="p">;</span>
+<a name="rest_code_99b44b58301048718fc70e69c4781cbf-8"></a>
+<a name="rest_code_99b44b58301048718fc70e69c4781cbf-9"></a><span class="k">auto</span> <span class="n">network</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_unique</span><span class="o">&lt;</span><span class="n">network_t</span><span class="o">&gt;</span><span class="p">();</span>
+<a name="rest_code_99b44b58301048718fc70e69c4781cbf-10"></a><span class="n">network</span><span class="o">-&gt;</span><span class="n">pretrain</span><span class="p">(</span><span class="n">dataset</span><span class="p">.</span><span class="n">training_images</span><span class="p">,</span> <span class="mi">10</span><span class="p">);</span>
+<a name="rest_code_99b44b58301048718fc70e69c4781cbf-11"></a><span class="n">network</span><span class="o">-&gt;</span><span class="n">fine_tune</span><span class="p">(</span><span class="n">dataset</span><span class="p">.</span><span class="n">training_images</span><span class="p">,</span> <span class="n">dataset</span><span class="p">.</span><span class="n">training_labels</span><span class="p">,</span> <span class="mi">10</span><span class="p">);</span>
 </pre>
 <p>In my opinion, this is the best way to use DLL. This is the fastest and the
 clearest. Moreover, the dimensions of the network can be validated at compile
 time, which is always better than at runtime. However, the dimensions of the
 network cannot be changed at runtime.  For this, there is a different version,
 the dynamic version:</p>
-<pre class="code cpp"><a name="rest_code_2b430bc927854b35902560d60c229fd5-1"></a><span class="k">using</span> <span class="n">network_t</span> <span class="o">=</span>
-<a name="rest_code_2b430bc927854b35902560d60c229fd5-2"></a>    <span class="n">dll</span><span class="o">::</span><span class="n">dbn_desc</span><span class="o">&lt;</span>
-<a name="rest_code_2b430bc927854b35902560d60c229fd5-3"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">dbn_layers</span><span class="o">&lt;</span>
-<a name="rest_code_2b430bc927854b35902560d60c229fd5-4"></a>            <span class="n">dll</span><span class="o">::</span><span class="n">dyn_rbm_desc</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">momentum</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
-<a name="rest_code_2b430bc927854b35902560d60c229fd5-5"></a>            <span class="n">dll</span><span class="o">::</span><span class="n">dyn_rbm_desc</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">momentum</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
-<a name="rest_code_2b430bc927854b35902560d60c229fd5-6"></a>            <span class="n">dll</span><span class="o">::</span><span class="n">dyn_rbm_desc</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">momentum</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">hidden</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">unit_type</span><span class="o">::</span><span class="n">SOFTMAX</span><span class="o">&gt;&gt;::</span><span class="n">layer_t</span><span class="o">&gt;</span><span class="p">,</span>
-<a name="rest_code_2b430bc927854b35902560d60c229fd5-7"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">batch_size</span><span class="o">&lt;</span><span class="mi">64</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">trainer</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">sgd_trainer</span><span class="o">&gt;&gt;::</span><span class="n">dbn_t</span><span class="p">;</span>
-<a name="rest_code_2b430bc927854b35902560d60c229fd5-8"></a>
-<a name="rest_code_2b430bc927854b35902560d60c229fd5-9"></a><span class="k">auto</span> <span class="n">network</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_unique</span><span class="o">&lt;</span><span class="n">network_t</span><span class="o">&gt;</span><span class="p">();</span>
-<a name="rest_code_2b430bc927854b35902560d60c229fd5-10"></a>
-<a name="rest_code_2b430bc927854b35902560d60c229fd5-11"></a><span class="n">network</span><span class="o">-&gt;</span><span class="k">template</span> <span class="n">layer_get</span><span class="o">&lt;</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">().</span><span class="n">init_layer</span><span class="p">(</span><span class="mi">28</span> <span class="o">*</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">500</span><span class="p">);</span>
-<a name="rest_code_2b430bc927854b35902560d60c229fd5-12"></a><span class="n">network</span><span class="o">-&gt;</span><span class="k">template</span> <span class="n">layer_get</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;</span><span class="p">().</span><span class="n">init_layer</span><span class="p">(</span><span class="mi">500</span><span class="p">,</span> <span class="mi">400</span><span class="p">);</span>
-<a name="rest_code_2b430bc927854b35902560d60c229fd5-13"></a><span class="n">network</span><span class="o">-&gt;</span><span class="k">template</span> <span class="n">layer_get</span><span class="o">&lt;</span><span class="mi">2</span><span class="o">&gt;</span><span class="p">().</span><span class="n">init_layer</span><span class="p">(</span><span class="mi">400</span><span class="p">,</span> <span class="mi">10</span><span class="p">);</span>
-<a name="rest_code_2b430bc927854b35902560d60c229fd5-14"></a><span class="n">network</span><span class="o">-&gt;</span><span class="k">template</span> <span class="n">layer_get</span><span class="o">&lt;</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">().</span><span class="n">batch_size</span> <span class="o">=</span> <span class="mi">64</span><span class="p">;</span>
-<a name="rest_code_2b430bc927854b35902560d60c229fd5-15"></a><span class="n">network</span><span class="o">-&gt;</span><span class="k">template</span> <span class="n">layer_get</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;</span><span class="p">().</span><span class="n">batch_size</span> <span class="o">=</span> <span class="mi">64</span><span class="p">;</span>
-<a name="rest_code_2b430bc927854b35902560d60c229fd5-16"></a><span class="n">network</span><span class="o">-&gt;</span><span class="k">template</span> <span class="n">layer_get</span><span class="o">&lt;</span><span class="mi">2</span><span class="o">&gt;</span><span class="p">().</span><span class="n">batch_size</span> <span class="o">=</span> <span class="mi">64</span><span class="p">;</span>
-<a name="rest_code_2b430bc927854b35902560d60c229fd5-17"></a>
-<a name="rest_code_2b430bc927854b35902560d60c229fd5-18"></a><span class="n">network</span><span class="o">-&gt;</span><span class="n">pretrain</span><span class="p">(</span><span class="n">dataset</span><span class="p">.</span><span class="n">training_images</span><span class="p">,</span> <span class="mi">10</span><span class="p">);</span>
-<a name="rest_code_2b430bc927854b35902560d60c229fd5-19"></a><span class="n">network</span><span class="o">-&gt;</span><span class="n">fine_tune</span><span class="p">(</span><span class="n">dataset</span><span class="p">.</span><span class="n">training_images</span><span class="p">,</span> <span class="n">dataset</span><span class="p">.</span><span class="n">training_labels</span><span class="p">,</span> <span class="mi">10</span><span class="p">);</span>
+<pre class="code cpp"><a name="rest_code_0b601520b84e4681b1524f522bffc46e-1"></a><span class="k">using</span> <span class="n">network_t</span> <span class="o">=</span>
+<a name="rest_code_0b601520b84e4681b1524f522bffc46e-2"></a>    <span class="n">dll</span><span class="o">::</span><span class="n">dbn_desc</span><span class="o">&lt;</span>
+<a name="rest_code_0b601520b84e4681b1524f522bffc46e-3"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">dbn_layers</span><span class="o">&lt;</span>
+<a name="rest_code_0b601520b84e4681b1524f522bffc46e-4"></a>            <span class="n">dll</span><span class="o">::</span><span class="n">dyn_rbm_desc</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">momentum</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
+<a name="rest_code_0b601520b84e4681b1524f522bffc46e-5"></a>            <span class="n">dll</span><span class="o">::</span><span class="n">dyn_rbm_desc</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">momentum</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
+<a name="rest_code_0b601520b84e4681b1524f522bffc46e-6"></a>            <span class="n">dll</span><span class="o">::</span><span class="n">dyn_rbm_desc</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">momentum</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">hidden</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">unit_type</span><span class="o">::</span><span class="n">SOFTMAX</span><span class="o">&gt;&gt;::</span><span class="n">layer_t</span><span class="o">&gt;</span><span class="p">,</span>
+<a name="rest_code_0b601520b84e4681b1524f522bffc46e-7"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">batch_size</span><span class="o">&lt;</span><span class="mi">64</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">trainer</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">sgd_trainer</span><span class="o">&gt;&gt;::</span><span class="n">dbn_t</span><span class="p">;</span>
+<a name="rest_code_0b601520b84e4681b1524f522bffc46e-8"></a>
+<a name="rest_code_0b601520b84e4681b1524f522bffc46e-9"></a><span class="k">auto</span> <span class="n">network</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_unique</span><span class="o">&lt;</span><span class="n">network_t</span><span class="o">&gt;</span><span class="p">();</span>
+<a name="rest_code_0b601520b84e4681b1524f522bffc46e-10"></a>
+<a name="rest_code_0b601520b84e4681b1524f522bffc46e-11"></a><span class="n">network</span><span class="o">-&gt;</span><span class="k">template</span> <span class="n">layer_get</span><span class="o">&lt;</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">().</span><span class="n">init_layer</span><span class="p">(</span><span class="mi">28</span> <span class="o">*</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">500</span><span class="p">);</span>
+<a name="rest_code_0b601520b84e4681b1524f522bffc46e-12"></a><span class="n">network</span><span class="o">-&gt;</span><span class="k">template</span> <span class="n">layer_get</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;</span><span class="p">().</span><span class="n">init_layer</span><span class="p">(</span><span class="mi">500</span><span class="p">,</span> <span class="mi">400</span><span class="p">);</span>
+<a name="rest_code_0b601520b84e4681b1524f522bffc46e-13"></a><span class="n">network</span><span class="o">-&gt;</span><span class="k">template</span> <span class="n">layer_get</span><span class="o">&lt;</span><span class="mi">2</span><span class="o">&gt;</span><span class="p">().</span><span class="n">init_layer</span><span class="p">(</span><span class="mi">400</span><span class="p">,</span> <span class="mi">10</span><span class="p">);</span>
+<a name="rest_code_0b601520b84e4681b1524f522bffc46e-14"></a><span class="n">network</span><span class="o">-&gt;</span><span class="k">template</span> <span class="n">layer_get</span><span class="o">&lt;</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">().</span><span class="n">batch_size</span> <span class="o">=</span> <span class="mi">64</span><span class="p">;</span>
+<a name="rest_code_0b601520b84e4681b1524f522bffc46e-15"></a><span class="n">network</span><span class="o">-&gt;</span><span class="k">template</span> <span class="n">layer_get</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;</span><span class="p">().</span><span class="n">batch_size</span> <span class="o">=</span> <span class="mi">64</span><span class="p">;</span>
+<a name="rest_code_0b601520b84e4681b1524f522bffc46e-16"></a><span class="n">network</span><span class="o">-&gt;</span><span class="k">template</span> <span class="n">layer_get</span><span class="o">&lt;</span><span class="mi">2</span><span class="o">&gt;</span><span class="p">().</span><span class="n">batch_size</span> <span class="o">=</span> <span class="mi">64</span><span class="p">;</span>
+<a name="rest_code_0b601520b84e4681b1524f522bffc46e-17"></a>
+<a name="rest_code_0b601520b84e4681b1524f522bffc46e-18"></a><span class="n">network</span><span class="o">-&gt;</span><span class="n">pretrain</span><span class="p">(</span><span class="n">dataset</span><span class="p">.</span><span class="n">training_images</span><span class="p">,</span> <span class="mi">10</span><span class="p">);</span>
+<a name="rest_code_0b601520b84e4681b1524f522bffc46e-19"></a><span class="n">network</span><span class="o">-&gt;</span><span class="n">fine_tune</span><span class="p">(</span><span class="n">dataset</span><span class="p">.</span><span class="n">training_images</span><span class="p">,</span> <span class="n">dataset</span><span class="p">.</span><span class="n">training_labels</span><span class="p">,</span> <span class="mi">10</span><span class="p">);</span>
 </pre>
 <p>This is a bit more verbose, but the configuration can be changed at runtime with
 this system. Moreover, this is also faster to compile. On the other hand, there
 is some performance slowdown.</p>
 <p>There is also a third version that is a hybrid of the first version:</p>
-<pre class="code cpp"><a name="rest_code_4bce27e0e8c0404e8a01527ef38d07e7-1"></a><span class="k">using</span> <span class="n">network_t</span> <span class="o">=</span>
-<a name="rest_code_4bce27e0e8c0404e8a01527ef38d07e7-2"></a>    <span class="n">dll</span><span class="o">::</span><span class="n">dyn_dbn_desc</span><span class="o">&lt;</span>
-<a name="rest_code_4bce27e0e8c0404e8a01527ef38d07e7-3"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">dbn_layers</span><span class="o">&lt;</span>
-<a name="rest_code_4bce27e0e8c0404e8a01527ef38d07e7-4"></a>            <span class="n">dll</span><span class="o">::</span><span class="n">rbm_desc</span><span class="o">&lt;</span><span class="mi">28</span> <span class="o">*</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">500</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">momentum</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">batch_size</span><span class="o">&lt;</span><span class="mi">64</span><span class="o">&gt;&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
-<a name="rest_code_4bce27e0e8c0404e8a01527ef38d07e7-5"></a>            <span class="n">dll</span><span class="o">::</span><span class="n">rbm_desc</span><span class="o">&lt;</span><span class="mi">500</span>    <span class="p">,</span> <span class="mi">400</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">momentum</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">batch_size</span><span class="o">&lt;</span><span class="mi">64</span><span class="o">&gt;&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
-<a name="rest_code_4bce27e0e8c0404e8a01527ef38d07e7-6"></a>            <span class="n">dll</span><span class="o">::</span><span class="n">rbm_desc</span><span class="o">&lt;</span><span class="mi">400</span>    <span class="p">,</span> <span class="mi">10</span><span class="p">,</span>  <span class="n">dll</span><span class="o">::</span><span class="n">momentum</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">batch_size</span><span class="o">&lt;</span><span class="mi">64</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">hidden</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">unit_type</span><span class="o">::</span><span class="n">SOFTMAX</span><span class="o">&gt;&gt;::</span><span class="n">layer_t</span><span class="o">&gt;</span><span class="p">,</span>
-<a name="rest_code_4bce27e0e8c0404e8a01527ef38d07e7-7"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">trainer</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">sgd_trainer</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">batch_size</span><span class="o">&lt;</span><span class="mi">64</span><span class="o">&gt;&gt;::</span><span class="n">dbn_t</span><span class="p">;</span>
-<a name="rest_code_4bce27e0e8c0404e8a01527ef38d07e7-8"></a>
-<a name="rest_code_4bce27e0e8c0404e8a01527ef38d07e7-9"></a><span class="k">auto</span> <span class="n">network</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_unique</span><span class="o">&lt;</span><span class="n">network_t</span><span class="o">&gt;</span><span class="p">();</span>
-<a name="rest_code_4bce27e0e8c0404e8a01527ef38d07e7-10"></a><span class="n">network</span><span class="o">-&gt;</span><span class="n">pretrain</span><span class="p">(</span><span class="n">dataset</span><span class="p">.</span><span class="n">training_images</span><span class="p">,</span> <span class="mi">10</span><span class="p">);</span>
-<a name="rest_code_4bce27e0e8c0404e8a01527ef38d07e7-11"></a><span class="n">network</span><span class="o">-&gt;</span><span class="n">fine_tune</span><span class="p">(</span><span class="n">dataset</span><span class="p">.</span><span class="n">training_images</span><span class="p">,</span> <span class="n">dataset</span><span class="p">.</span><span class="n">training_labels</span><span class="p">,</span> <span class="mi">10</span><span class="p">);</span>
+<pre class="code cpp"><a name="rest_code_cc10af0436b64f1fb4fe27f5716ba6e1-1"></a><span class="k">using</span> <span class="n">network_t</span> <span class="o">=</span>
+<a name="rest_code_cc10af0436b64f1fb4fe27f5716ba6e1-2"></a>    <span class="n">dll</span><span class="o">::</span><span class="n">dyn_dbn_desc</span><span class="o">&lt;</span>
+<a name="rest_code_cc10af0436b64f1fb4fe27f5716ba6e1-3"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">dbn_layers</span><span class="o">&lt;</span>
+<a name="rest_code_cc10af0436b64f1fb4fe27f5716ba6e1-4"></a>            <span class="n">dll</span><span class="o">::</span><span class="n">rbm_desc</span><span class="o">&lt;</span><span class="mi">28</span> <span class="o">*</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">500</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">momentum</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">batch_size</span><span class="o">&lt;</span><span class="mi">64</span><span class="o">&gt;&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
+<a name="rest_code_cc10af0436b64f1fb4fe27f5716ba6e1-5"></a>            <span class="n">dll</span><span class="o">::</span><span class="n">rbm_desc</span><span class="o">&lt;</span><span class="mi">500</span>    <span class="p">,</span> <span class="mi">400</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">momentum</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">batch_size</span><span class="o">&lt;</span><span class="mi">64</span><span class="o">&gt;&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
+<a name="rest_code_cc10af0436b64f1fb4fe27f5716ba6e1-6"></a>            <span class="n">dll</span><span class="o">::</span><span class="n">rbm_desc</span><span class="o">&lt;</span><span class="mi">400</span>    <span class="p">,</span> <span class="mi">10</span><span class="p">,</span>  <span class="n">dll</span><span class="o">::</span><span class="n">momentum</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">batch_size</span><span class="o">&lt;</span><span class="mi">64</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">hidden</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">unit_type</span><span class="o">::</span><span class="n">SOFTMAX</span><span class="o">&gt;&gt;::</span><span class="n">layer_t</span><span class="o">&gt;</span><span class="p">,</span>
+<a name="rest_code_cc10af0436b64f1fb4fe27f5716ba6e1-7"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">trainer</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">sgd_trainer</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">batch_size</span><span class="o">&lt;</span><span class="mi">64</span><span class="o">&gt;&gt;::</span><span class="n">dbn_t</span><span class="p">;</span>
+<a name="rest_code_cc10af0436b64f1fb4fe27f5716ba6e1-8"></a>
+<a name="rest_code_cc10af0436b64f1fb4fe27f5716ba6e1-9"></a><span class="k">auto</span> <span class="n">network</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_unique</span><span class="o">&lt;</span><span class="n">network_t</span><span class="o">&gt;</span><span class="p">();</span>
+<a name="rest_code_cc10af0436b64f1fb4fe27f5716ba6e1-10"></a><span class="n">network</span><span class="o">-&gt;</span><span class="n">pretrain</span><span class="p">(</span><span class="n">dataset</span><span class="p">.</span><span class="n">training_images</span><span class="p">,</span> <span class="mi">10</span><span class="p">);</span>
+<a name="rest_code_cc10af0436b64f1fb4fe27f5716ba6e1-11"></a><span class="n">network</span><span class="o">-&gt;</span><span class="n">fine_tune</span><span class="p">(</span><span class="n">dataset</span><span class="p">.</span><span class="n">training_images</span><span class="p">,</span> <span class="n">dataset</span><span class="p">.</span><span class="n">training_labels</span><span class="p">,</span> <span class="mi">10</span><span class="p">);</span>
 </pre>
 <p>Only one line was changed compared to the first version, <code>dbn_desc</code>
 becomes <code>dyn_dbn_desc</code>. What this changes is that all the layers are
@@ -689,7 +736,7 @@ integrated into clang-tidy.</p>
 <h2>Usage</h2>
 <p>If you want to see the list of checks available on clang-tidy, you can use the
 list-checks options:</p>
-<pre class="code text"><a name="rest_code_6956448b0f9f47b8a8c143c1afdf0c53-1"></a>clang-tidy -list-checks
+<pre class="code text"><a name="rest_code_4873f800a63e48208350b5e1bd01002c-1"></a>clang-tidy -list-checks
 </pre>
 <p>You can then choose the tests you are interested in and perform an analysis of
 your code. For, it is highly recommended to use a Clang compilation database,
@@ -697,7 +744,7 @@ you can have a look at Bear to generate this compilation database if you don't
 have it yet. The usage of clang-tidy, is pretty simple, you set the list of
 checks you want, the header on which you want to have warnings reported and the
 list of source files to analyse:</p>
-<pre class="code text"><a name="rest_code_65b82e7163ee4d22ac8f8589e106fa36-1"></a>clang-tidy -checks='*' -header-filter="^include" -p . src/*.cpp
+<pre class="code text"><a name="rest_code_2372917bf86b4df0a1e23386e10a2041-1"></a>clang-tidy -checks='*' -header-filter="^include" -p . src/*.cpp
 </pre>
 <p>You'll very likely see a lot of warnings. And you will very likely see a lot of
 false positives and a lot of warnings you don't agree too. For insance, there
@@ -705,10 +752,10 @@ are a lot of warnings from the CPP Core Guidelines and the Google Guidelines
 that I don't follow in my coding. You should not take the complete list of tests
 as rule, you should devise your own list of what you really want to fix in your
 code. If you want to disable one check X, you can use the - operation:</p>
-<pre class="code text"><a name="rest_code_fd9c9f307a3d46fda2fa2eb9008a70f4-1"></a>clang-tidy -checks='*,-X' -header-filter="^include" -p . src/*.cpp
+<pre class="code text"><a name="rest_code_8e74b4dd14794fad813defae8441f9e8-1"></a>clang-tidy -checks='*,-X' -header-filter="^include" -p . src/*.cpp
 </pre>
 <p>You can also enable the checks one by one or parts of them with *:</p>
-<pre class="code text"><a name="rest_code_1ea6dad014684cf8bde08368df63d7a7-1"></a>clang-tidy -checks='google-*' -header-filter="^include" -p . src/*.cpp
+<pre class="code text"><a name="rest_code_841d344046224ed1a38654338e5a3ba4-1"></a>clang-tidy -checks='google-*' -header-filter="^include" -p . src/*.cpp
 </pre>
 <p>One problem with the clang-tidy tool is that it is utterly slow, especially if
 you enable the clang-static-analyzer checks. Moreover, if you use it like it is
@@ -721,17 +768,17 @@ practical.</p>
 <p>For this, I just discovered that clang propose a Python script,
 run-clang-tidy.py that does it all for us! On Gentoo, it is installed at
 /usr/share/run-clang-tidy.py.</p>
-<pre class="code text"><a name="rest_code_9a297af497394cfa8f1953ea9d7dac88-1"></a>run-clang-tidy.py -checks='*' -header-filter="^include" -p . -j9
+<pre class="code text"><a name="rest_code_9251ff48a9c940b8a10c9fd535c14444-1"></a>run-clang-tidy.py -checks='*' -header-filter="^include" -p . -j9
 </pre>
 <p>This will automatically run clang-tidy on each file from the compilation
 database and use 9 threads to perform the checks. This is definitely much
 faster. For me, this is the best way to run clang-tidy.</p>
 <p>One small point I don't like is that the script always print the list of enabled
 checks. For, this I changed this line in the script:</p>
-<pre class="code python"><a name="rest_code_5e06f1bc5a8341209166f0a9afa4466b-1"></a><span class="n">invocation</span> <span class="o">=</span> <span class="p">[</span><span class="n">args</span><span class="o">.</span><span class="n">clang_tidy_binary</span><span class="p">,</span> <span class="s1">'-list-checks'</span><span class="p">]</span>
+<pre class="code python"><a name="rest_code_7db30eb0c1c84bbf8c265d0b843a75f1-1"></a><span class="n">invocation</span> <span class="o">=</span> <span class="p">[</span><span class="n">args</span><span class="o">.</span><span class="n">clang_tidy_binary</span><span class="p">,</span> <span class="s1">'-list-checks'</span><span class="p">]</span>
 </pre>
 <p>with:</p>
-<pre class="code python"><a name="rest_code_7267ce4f26f0489e8f0c4dadd8d19609-1"></a><span class="n">invocation</span> <span class="o">=</span> <span class="p">[</span><span class="n">args</span><span class="o">.</span><span class="n">clang_tidy_binary</span><span class="p">]</span>
+<pre class="code python"><a name="rest_code_aa4b8e3d2f1e49179ae432fc5d189562-1"></a><span class="n">invocation</span> <span class="o">=</span> <span class="p">[</span><span class="n">args</span><span class="o">.</span><span class="n">clang_tidy_binary</span><span class="p">]</span>
 </pre>
 <p>This makes it more quiet.</p>
 <p>One thing I didn't mention is that clang-tidy is able to fix some of the errors
@@ -743,24 +790,24 @@ useful. Note that not all the checks are automatically fixable by clang-tidy.</p
 <h2>Results</h2>
 <p>I have run clang-tidy on my cpp-utils library and here some interesting results.
 I have not run all the checks, here is the command I used:</p>
-<pre class="code text"><a name="rest_code_0445579e49984e21830c5709b507af1e-1"></a>/usr/share/clang/run-clang-tidy.py -p . -header-filter '^include/cpp_utils' -checks='cert-*,cppcoreguidelines-*,google-*,llvm-*,misc-*,modernize-*,performance-*,readility-*,-cppcoreguidelines-pro-type-reinterpret-cast,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-google-readability-namespace-comments,-llvm-namespace-comment,-llvm-include-order,-google-runtime-references' -j9 2&gt;/dev/null  | /usr/bin/zgrep -v "^clang-tidy"
+<pre class="code text"><a name="rest_code_04d5f91813de48bf994d6742facb15f4-1"></a>/usr/share/clang/run-clang-tidy.py -p . -header-filter '^include/cpp_utils' -checks='cert-*,cppcoreguidelines-*,google-*,llvm-*,misc-*,modernize-*,performance-*,readility-*,-cppcoreguidelines-pro-type-reinterpret-cast,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-google-readability-namespace-comments,-llvm-namespace-comment,-llvm-include-order,-google-runtime-references' -j9 2&gt;/dev/null  | /usr/bin/zgrep -v "^clang-tidy"
 </pre>
 <p>Let's go over some warnings I got:</p>
-<pre class="code text"><a name="rest_code_747b9362d8d44dbfb112696d623b3424-1"></a>include/cpp_utils/assert.hpp:91:103: warning: consider replacing 'long' with 'int64' [google-runtime-int]
-<a name="rest_code_747b9362d8d44dbfb112696d623b3424-2"></a>void assertion_failed_msg(const CharT* expr, const char* msg, const char* function, const char* file, long line) {
-<a name="rest_code_747b9362d8d44dbfb112696d623b3424-3"></a>                                                                                                      ^
+<pre class="code text"><a name="rest_code_28edd264ff064b1a8758c122b7d99c4b-1"></a>include/cpp_utils/assert.hpp:91:103: warning: consider replacing 'long' with 'int64' [google-runtime-int]
+<a name="rest_code_28edd264ff064b1a8758c122b7d99c4b-2"></a>void assertion_failed_msg(const CharT* expr, const char* msg, const char* function, const char* file, long line) {
+<a name="rest_code_28edd264ff064b1a8758c122b7d99c4b-3"></a>                                                                                                      ^
 </pre>
 <p>I got this one several times. It is indeed more portable to use <code>int64</code> rather than <code>long</code>.</p>
-<pre class="code text"><a name="rest_code_d85a48b36c8c4e3488491a35ef240146-1"></a>include/cpp_utils/aligned_allocator.hpp:53:9: warning: use 'using' instead of 'typedef' [modernize-use-using]
-<a name="rest_code_d85a48b36c8c4e3488491a35ef240146-2"></a>        typedef aligned_allocator&lt;U, A&gt; other;
-<a name="rest_code_d85a48b36c8c4e3488491a35ef240146-3"></a>        ^
+<pre class="code text"><a name="rest_code_357ca8bc750848be9c071fbcc2e8038b-1"></a>include/cpp_utils/aligned_allocator.hpp:53:9: warning: use 'using' instead of 'typedef' [modernize-use-using]
+<a name="rest_code_357ca8bc750848be9c071fbcc2e8038b-2"></a>        typedef aligned_allocator&lt;U, A&gt; other;
+<a name="rest_code_357ca8bc750848be9c071fbcc2e8038b-3"></a>        ^
 </pre>
 <p>This one is part of the modernize checks, indicating that one should use
 <code>using</code> rather than a <code>typedef</code> and I completely agree.</p>
-<pre class="code cpp"><a name="rest_code_11e73f9bb8bc419f8dcaeab3f56dc3d1-1"></a><span class="n">include</span><span class="o">/</span><span class="n">cpp_utils</span><span class="o">/</span><span class="n">aligned_allocator</span><span class="p">.</span><span class="nl">hpp</span><span class="p">:</span><span class="mi">79</span><span class="o">:</span><span class="mi">5</span><span class="o">:</span> <span class="nl">warning</span><span class="p">:</span> <span class="n">use</span> <span class="err">'</span><span class="o">=</span> <span class="k">default</span><span class="err">'</span> <span class="n">to</span> <span class="n">define</span> <span class="n">a</span> <span class="n">trivial</span> <span class="k">default</span> <span class="n">constructor</span> <span class="p">[</span><span class="n">modernize</span><span class="o">-</span><span class="n">use</span><span class="o">-</span><span class="k">default</span><span class="p">]</span>
-<a name="rest_code_11e73f9bb8bc419f8dcaeab3f56dc3d1-2"></a>    <span class="n">aligned_allocator</span><span class="p">()</span> <span class="p">{}</span>
-<a name="rest_code_11e73f9bb8bc419f8dcaeab3f56dc3d1-3"></a>    <span class="o">^</span>
-<a name="rest_code_11e73f9bb8bc419f8dcaeab3f56dc3d1-4"></a>                        <span class="o">=</span> <span class="k">default</span><span class="p">;</span>
+<pre class="code cpp"><a name="rest_code_01b4b74415424c50b71aa0b59006ecd3-1"></a><span class="n">include</span><span class="o">/</span><span class="n">cpp_utils</span><span class="o">/</span><span class="n">aligned_allocator</span><span class="p">.</span><span class="nl">hpp</span><span class="p">:</span><span class="mi">79</span><span class="o">:</span><span class="mi">5</span><span class="o">:</span> <span class="nl">warning</span><span class="p">:</span> <span class="n">use</span> <span class="err">'</span><span class="o">=</span> <span class="k">default</span><span class="err">'</span> <span class="n">to</span> <span class="n">define</span> <span class="n">a</span> <span class="n">trivial</span> <span class="k">default</span> <span class="n">constructor</span> <span class="p">[</span><span class="n">modernize</span><span class="o">-</span><span class="n">use</span><span class="o">-</span><span class="k">default</span><span class="p">]</span>
+<a name="rest_code_01b4b74415424c50b71aa0b59006ecd3-2"></a>    <span class="n">aligned_allocator</span><span class="p">()</span> <span class="p">{}</span>
+<a name="rest_code_01b4b74415424c50b71aa0b59006ecd3-3"></a>    <span class="o">^</span>
+<a name="rest_code_01b4b74415424c50b71aa0b59006ecd3-4"></a>                        <span class="o">=</span> <span class="k">default</span><span class="p">;</span>
 </pre>
 <p>Another one from the modernize checks that I really like. This is completely
 true.</p>
@@ -774,24 +821,24 @@ include/cpp_utils/maybe_parallel.hpp:33:5: warning: constructors that are callab
 sometimes you want implicit conversion. Nevertheless, this particular case is
 very interesting since it is variadic, it can have one template argument and as
 thus it can be implicitly converted from anything, which is pretty bad I think.</p>
-<pre class="code cpp"><a name="rest_code_88677d2bb44c4c94bb5069df0ed6f139-1"></a><span class="n">test</span><span class="o">/</span><span class="n">array_wrapper</span><span class="p">.</span><span class="nl">cpp</span><span class="p">:</span><span class="mi">15</span><span class="o">:</span><span class="mi">18</span><span class="o">:</span> <span class="nl">warning</span><span class="p">:</span> <span class="n">C</span><span class="o">-</span><span class="n">style</span> <span class="n">casts</span> <span class="n">are</span> <span class="n">discouraged</span><span class="p">;</span> <span class="n">use</span> <span class="k">reinterpret_cast</span> <span class="p">[</span><span class="n">google</span><span class="o">-</span><span class="n">readability</span><span class="o">-</span><span class="n">casting</span><span class="p">]</span>
-<a name="rest_code_88677d2bb44c4c94bb5069df0ed6f139-2"></a>    <span class="kt">float</span><span class="o">*</span> <span class="n">mem</span> <span class="o">=</span> <span class="p">(</span><span class="kt">float</span><span class="o">*</span><span class="p">)</span> <span class="n">malloc</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="o">*</span> <span class="mi">8</span><span class="p">);</span>
-<a name="rest_code_88677d2bb44c4c94bb5069df0ed6f139-3"></a>                 <span class="o">^</span>
-<a name="rest_code_88677d2bb44c4c94bb5069df0ed6f139-4"></a>                 <span class="k">reinterpret_cast</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">*&gt;</span><span class="p">(</span>         <span class="p">)</span>
+<pre class="code cpp"><a name="rest_code_61886842f19741e0aeb610157e71796a-1"></a><span class="n">test</span><span class="o">/</span><span class="n">array_wrapper</span><span class="p">.</span><span class="nl">cpp</span><span class="p">:</span><span class="mi">15</span><span class="o">:</span><span class="mi">18</span><span class="o">:</span> <span class="nl">warning</span><span class="p">:</span> <span class="n">C</span><span class="o">-</span><span class="n">style</span> <span class="n">casts</span> <span class="n">are</span> <span class="n">discouraged</span><span class="p">;</span> <span class="n">use</span> <span class="k">reinterpret_cast</span> <span class="p">[</span><span class="n">google</span><span class="o">-</span><span class="n">readability</span><span class="o">-</span><span class="n">casting</span><span class="p">]</span>
+<a name="rest_code_61886842f19741e0aeb610157e71796a-2"></a>    <span class="kt">float</span><span class="o">*</span> <span class="n">mem</span> <span class="o">=</span> <span class="p">(</span><span class="kt">float</span><span class="o">*</span><span class="p">)</span> <span class="n">malloc</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="o">*</span> <span class="mi">8</span><span class="p">);</span>
+<a name="rest_code_61886842f19741e0aeb610157e71796a-3"></a>                 <span class="o">^</span>
+<a name="rest_code_61886842f19741e0aeb610157e71796a-4"></a>                 <span class="k">reinterpret_cast</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">*&gt;</span><span class="p">(</span>         <span class="p">)</span>
 </pre>
 <p>On this one, I completely agree, C-style casts should be avoided and much
 clearer C++ style casts should be preferred.</p>
-<pre class="code cpp"><a name="rest_code_7d394a655cec465d808da220ec5a2ce6-1"></a><span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">wichtounet</span><span class="o">/</span><span class="n">dev</span><span class="o">/</span><span class="n">cpp_utils_test</span><span class="o">/</span><span class="n">include</span><span class="o">/</span><span class="n">cpp_utils</span><span class="o">/</span><span class="n">aligned_allocator</span><span class="p">.</span><span class="nl">hpp</span><span class="p">:</span><span class="mi">126</span><span class="o">:</span><span class="mi">19</span><span class="o">:</span> <span class="nl">warning</span><span class="p">:</span> <span class="n">thrown</span> <span class="n">exception</span> <span class="n">type</span> <span class="n">is</span> <span class="n">not</span> <span class="n">nothrow</span> <span class="n">copy</span> <span class="n">constructible</span> <span class="p">[</span><span class="n">cert</span><span class="o">-</span><span class="n">err60</span><span class="o">-</span><span class="n">cpp</span><span class="p">]</span>
-<a name="rest_code_7d394a655cec465d808da220ec5a2ce6-2"></a>            <span class="k">throw</span> <span class="n">std</span><span class="o">::</span><span class="n">length_error</span><span class="p">(</span><span class="s">"aligned_allocator&lt;T&gt;::allocate() - Integer overflow."</span><span class="p">);</span>
-<a name="rest_code_7d394a655cec465d808da220ec5a2ce6-3"></a>                  <span class="o">^</span>
+<pre class="code cpp"><a name="rest_code_4297a265a7c94bdc9a7437f6b1de083c-1"></a><span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">wichtounet</span><span class="o">/</span><span class="n">dev</span><span class="o">/</span><span class="n">cpp_utils_test</span><span class="o">/</span><span class="n">include</span><span class="o">/</span><span class="n">cpp_utils</span><span class="o">/</span><span class="n">aligned_allocator</span><span class="p">.</span><span class="nl">hpp</span><span class="p">:</span><span class="mi">126</span><span class="o">:</span><span class="mi">19</span><span class="o">:</span> <span class="nl">warning</span><span class="p">:</span> <span class="n">thrown</span> <span class="n">exception</span> <span class="n">type</span> <span class="n">is</span> <span class="n">not</span> <span class="n">nothrow</span> <span class="n">copy</span> <span class="n">constructible</span> <span class="p">[</span><span class="n">cert</span><span class="o">-</span><span class="n">err60</span><span class="o">-</span><span class="n">cpp</span><span class="p">]</span>
+<a name="rest_code_4297a265a7c94bdc9a7437f6b1de083c-2"></a>            <span class="k">throw</span> <span class="n">std</span><span class="o">::</span><span class="n">length_error</span><span class="p">(</span><span class="s">"aligned_allocator&lt;T&gt;::allocate() - Integer overflow."</span><span class="p">);</span>
+<a name="rest_code_4297a265a7c94bdc9a7437f6b1de083c-3"></a>                  <span class="o">^</span>
 </pre>
 <p>This is one of the checks I don't agree with. Even though it makes sense to
 prefer exception that are nothrow copy constructible, they should be caught by
 const reference anyway. Moreover, this is here an exception from the standard
 library.</p>
-<pre class="code text"><a name="rest_code_6c478d3644184725954ddb8b4f720190-1"></a>/home/wichtounet/dev/cpp_utils_test/include/cpp_utils/aligned_allocator.hpp:141:40: warning: do not use const_cast [cppcoreguidelines-pro-type-const-cast]
-<a name="rest_code_6c478d3644184725954ddb8b4f720190-2"></a>        free((reinterpret_cast&lt;void**&gt;(const_cast&lt;std::remove_const_t&lt;T&gt;*&gt;(ptr)))[-1]);
-<a name="rest_code_6c478d3644184725954ddb8b4f720190-3"></a>                                       ^
+<pre class="code text"><a name="rest_code_c19d5acc8e08417cada0c13f496b2625-1"></a>/home/wichtounet/dev/cpp_utils_test/include/cpp_utils/aligned_allocator.hpp:141:40: warning: do not use const_cast [cppcoreguidelines-pro-type-const-cast]
+<a name="rest_code_c19d5acc8e08417cada0c13f496b2625-2"></a>        free((reinterpret_cast&lt;void**&gt;(const_cast&lt;std::remove_const_t&lt;T&gt;*&gt;(ptr)))[-1]);
+<a name="rest_code_c19d5acc8e08417cada0c13f496b2625-3"></a>                                       ^
 </pre>
 <p>In general, I agree that using const_cast should be avoided as much as possible.
 But there are some cases where they make sense. In this particular case, I don't
@@ -804,7 +851,7 @@ week.</p>
 <p>The sonar-cxx plugin just integrated support for clang-tidy in main. You need
 to build the version yourself, the 0.9.8-SNAPSHOT version. You then can use
 something like this in your sonar-project.properties file:</p>
-<pre class="code text"><a name="rest_code_62d8056412c840dca42c27db306f59b5-1"></a>sonar.cxx.clangtidy.reportPath=clang-tidy-report
+<pre class="code text"><a name="rest_code_ad7190aee6584f44945437adc9ffab55-1"></a>sonar.cxx.clangtidy.reportPath=clang-tidy-report
 </pre>
 <p>and sonar-cxx will parse the results and integrate the issues in your sonar
 report.</p>
@@ -1320,81 +1367,6 @@ If you want more details about this, dont' hesitate to ask as well ;)</p>
             
         
     <a href="posts/2017/02/home-automation-first-attempt-voice-control-jarvis.html#disqus_thread" data-disqus-identifier="cache/posts/2017/02/home-automation-first-attempt-at-voice-control-with-jarvis.html">Comments</a>
-
-
-        </article><article class="postbox h-entry post-text"><h1 class="p-name">
-<a href="posts/2017/02/publication-cpu-performance-optimizations-rbm-crbm.html" class="u-url">Publication: CPU Performance Optimizations for RBM and CRBM</a>
-        <br><small>  
-             Posted: <time class="published dt-published" datetime="2017-02-07T17:33:33+01:00">2017-02-07 17:33</time></small>
-</h1>
-        <hr>
-<div class="p-summary">
-        <div>
-<p>Recently, we have published a paper about performance optimizations that may
-interest you.</p>
-<p>The paper is <a class="reference external" href="https://www.researchgate.net/publication/307908790_On_CPU_Performance_Optimization_of_Restricted_Boltzmann_Machine_and_Convolutional_RBM">On CPU Performance Optimizations for Restricted Boltzmann Machine and Convolutional RBM</a>, published in the Proceedings of the Artificial Neural Networks and Pattern Recognition workshop (ANNPR-2016). I've presented this paper in Germany, at Ulm.</p>
-<p>Although most of the performance research going on is focused on GPU, there are
-still of research laboratories that are only equipped with CPU and it remains
-important to be as fast as possible on CPU. Moreover, this is something
-I really like.</p>
-<p>For this publication, I have tried to make my Restricted Boltzmann Machine (RBM)
-and Convolutional RBM (CRBM) implementations in my DLL library as fast as
-possible.</p>
-<p>The first part of the article is about Restricted Boltzmann Machine (RBM) which
-are a form of dense Artificial Neural Network (ANN). Their training is very
-similar to that of the ANN with Gradient Descent. Four different network
-configurations are being tested.</p>
-<p>First, mini-batch training is shown to be much faster than online training, even
-when online training is performed in parallel. Once mini-batch training is used,
-BLAS operations are used in order to get as much performance as possible on the
-different operations, mainly the Matrix Matrix Multiplication with the use of
-the GEMM operation from the Intel Math Kernel Library (MKL). Moreover, the
-parallel version of the MKL is also used to get even more performance. When all
-these optimizations are performed, speedups of 11 to 30 are obtained compared to
-the online training, depending on the network configurations. This final version
-is able  to perform one epoch of Contrastive Divergence in 4 to 15 seconds
-depending on the network, for 60000 images.</p>
-<p>The second part of the article is about Convolutional Restricted Boltzmann
-Machine (CRBM). This is almost the equivalent of a Convolutional Neural Network
-(CNN). Again four different networks are evaluated.</p>
-<p>The main problem with CRBM is that there are no standard implementations of the
-convolution operation that is really fast. Therefore, it is not possible to
-simply use a BLAS library to make the computation as fast as possible. The first
-optimization that was tried is to vectorize the convolutions. With this, the
-speedups have been between 1.1 and 1.9 times faster. I'm not really satisfied
-with these results since in fact per convolution the speedups are much better.
-Moreover, I have since been able to obtain better speedups but the deadline was
-too short to include them in this paper. I'll try to talk about these
-improvements in more details on this blog. What is more interesting to to
-parallellize the different convolutions since they are mostly independent. This
-can bring a speedup of the amount of cores available on the machine. Since
-convolutions are extremely memory hungry, virtual cores with Hyper Threading
-generally does not help. An interesting optimization is to use a Matrix
-Multiplication to compute several valid convolutions at once.  This can give an
-additional speedup between 1.6 and 2.2 compared to the vectorized version. While
-it is possible to use the FFT to reduce the full convolution as well, in our
-experiment the images were not big enough for this to be interesting. The final
-speedups are about 10 times faster with these optimizations.</p>
-<p>We have obtained pretty good and I'm happy we have been published. However, I'm
-not very satisfied with these results since I've been able to get even faster
-since this and when compared with other frameworks, DLL is actually quite
-competitive. I'll try to publish something new in the future.</p>
-<p>If you want more information, you can have a look at the paper. If you want to
-look at the code, you can have a look at my projects:</p>
-<ul class="simple">
-<li>
-<a class="reference external" href="https://github.com/wichtounet/etl">Expression Templates Library (ETL)</a>: For
-the Matrix Multiplication and Convolutions</li>
-<li>
-<a class="reference external" href="https://github.com/wichtounet/dll">Deep Learning Library (DLL)</a>: For the RBM
-and CRBM implementations</li>
-</ul>
-<p>Don't hesitate to ask any questions if you want more information :)</p>
-</div>
-        </div>
-            
-        
-    <a href="posts/2017/02/publication-cpu-performance-optimizations-rbm-crbm.html#disqus_thread" data-disqus-identifier="cache/posts/2017/02/publication-cpu-performance-optimizations-rbm-crbm.html">Comments</a>
 
 
         </article><nav class="postindexpager"><ul class="pager">
