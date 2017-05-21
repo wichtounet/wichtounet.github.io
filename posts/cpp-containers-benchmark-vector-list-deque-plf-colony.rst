@@ -190,6 +190,53 @@ vector containers are significantly faster than the list. Interestingly, the
 colony container becomes faster than the other containers for large data types.
 Overall, a list should never be used if the container is to be searched a lot.
 
+Iterate and modify
+******************
+
+The next test iterates over the entire collection and increment each number
+contained inside it. It uses the begin and end iterators for each container. The
+time should be mostly dominated by the iteration time.
+
+.. raw:: html
+
+    <div id="graph_write___Trivial_8_" style="width: 700px; height: 400px;"></div>
+    <input id="graph_button_write___Trivial_8_" type="button" value="Logarithmic scale">
+
+As expected, the list is the slowest of the container for that sort of
+operations and the vector is the fastest. The deque is slightly slower than the
+vector and the colony slightly faster than the list. There is a 6 times
+difference between the best result, which is pretty significant.
+
+.. raw:: html
+
+    <div id="graph_write___Trivial_32_" style="width: 700px; height: 400px;"></div>
+    <input id="graph_button_write___Trivial_32_" type="button" value="Logarithmic scale">
+
+As the data type size augments, the deque starts to gets slightly better than
+the vector and the colony starts to get much better than the list, but still not
+on par with the other containers.
+
+.. raw:: html
+
+    <div id="graph_write___Trivial_128_" style="width: 700px; height: 400px;"></div>
+    <input id="graph_button_write___Trivial_128_" type="button" value="Logarithmic scale">
+
+Once increased to 128B, the colony really starts to get interesting being the
+fastest with the deque depending on the number of elements.
+
+.. raw:: html
+
+    <div id="graph_write___Trivial_4096_" style="width: 700px; height: 400px;"></div>
+    <input id="graph_button_write___Trivial_4096_" type="button" value="Logarithmic scale">
+
+Interestingly, with very large data types (4KB), the vector takes the lead
+again, very close to the colony and the deque a bit behind.
+
+Overall, one thing is clear, the list is really bad for iteration. The colony
+container starts to shine when the size of the data type is around 128B, but
+does not provide a very significant speedup. The vector is generally the fastest
+for this kind of workload.
+
 Sort
 ****
 
@@ -648,6 +695,118 @@ but is never the fastest on this benchmark.
     graph.draw(data, options);
     };
     }
+    function draw_write___Trivial_8_(){
+    var data = google.visualization.arrayToDataTable([
+    ['x', 'colony', 'deque', 'list', 'vector'],
+    ['10000', 23, 5, 24, 2],
+    ['20000', 47, 11, 49, 5],
+    ['30000', 71, 16, 73, 8],
+    ['40000', 94, 22, 99, 13],
+    ['50000', 118, 27, 123, 14],
+    ['60000', 146, 33, 148, 17],
+    ['70000', 165, 39, 173, 23],
+    ['80000', 189, 45, 197, 23],
+    ['90000', 214, 78, 223, 27],
+    ['100000', 236, 56, 247, 38],
+    ]);
+    var graph = new google.visualization.LineChart(document.getElementById('graph_write___Trivial_8_'));
+    var options = {curveType: "function",title: "write - Trivial<8>",animation: {duration:1200, easing:"in"},width: 700, height: 400,hAxis: {title:"Number of elements", slantedText:true},vAxis: {viewWindow: {min:0}, title:"us"}};
+    graph.draw(data, options);
+    var button = document.getElementById('graph_button_write___Trivial_8_');
+    button.onclick = function(){
+    if(options.vAxis.logScale){
+    button.value="Logarithmic Scale";
+    } else {
+    button.value="Normal scale";
+    }
+    options.vAxis.logScale=!options.vAxis.logScale;
+    graph.draw(data, options);
+    };
+    }
+    function draw_write___Trivial_32_(){
+    var data = google.visualization.arrayToDataTable([
+    ['x', 'colony', 'deque', 'list', 'vector'],
+    ['10000', 24, 12, 38, 11],
+    ['20000', 49, 25, 76, 23],
+    ['30000', 74, 37, 113, 35],
+    ['40000', 99, 51, 153, 57],
+    ['50000', 124, 64, 191, 65],
+    ['60000', 148, 76, 234, 75],
+    ['70000', 173, 89, 271, 92],
+    ['80000', 198, 102, 320, 104],
+    ['90000', 223, 119, 384, 125],
+    ['100000', 252, 136, 432, 146],
+    ]);
+    var graph = new google.visualization.LineChart(document.getElementById('graph_write___Trivial_32_'));
+    var options = {curveType: "function",title: "write - Trivial<32>",animation: {duration:1200, easing:"in"},width: 700, height: 400,hAxis: {title:"Number of elements", slantedText:true},vAxis: {viewWindow: {min:0}, title:"us"}};
+    graph.draw(data, options);
+    var button = document.getElementById('graph_button_write___Trivial_32_');
+    button.onclick = function(){
+    if(options.vAxis.logScale){
+    button.value="Logarithmic Scale";
+    } else {
+    button.value="Normal scale";
+    }
+    options.vAxis.logScale=!options.vAxis.logScale;
+    graph.draw(data, options);
+    };
+    }
+    function draw_write___Trivial_128_(){
+    var data = google.visualization.arrayToDataTable([
+    ['x', 'colony', 'deque', 'list', 'vector'],
+    ['10000', 28, 34, 58, 26],
+    ['20000', 57, 59, 122, 59],
+    ['30000', 100, 93, 240, 123],
+    ['40000', 199, 170, 536, 329],
+    ['50000', 314, 250, 797, 414],
+    ['60000', 450, 319, 858, 509],
+    ['70000', 585, 533, 1076, 565],
+    ['80000', 577, 567, 1294, 664],
+    ['90000', 668, 615, 1539, 781],
+    ['100000', 780, 893, 1666, 971],
+    ]);
+    var graph = new google.visualization.LineChart(document.getElementById('graph_write___Trivial_128_'));
+    var options = {curveType: "function",title: "write - Trivial<128>",animation: {duration:1200, easing:"in"},width: 700, height: 400,hAxis: {title:"Number of elements", slantedText:true},vAxis: {viewWindow: {min:0}, title:"us"}};
+    graph.draw(data, options);
+    var button = document.getElementById('graph_button_write___Trivial_128_');
+    button.onclick = function(){
+    if(options.vAxis.logScale){
+    button.value="Logarithmic Scale";
+    } else {
+    button.value="Normal scale";
+    }
+    options.vAxis.logScale=!options.vAxis.logScale;
+    graph.draw(data, options);
+    };
+    }
+    function draw_write___Trivial_4096_(){
+    var data = google.visualization.arrayToDataTable([
+    ['x', 'colony', 'deque', 'list', 'vector'],
+    ['10000', 173, 197, 788, 163],
+    ['20000', 345, 401, 1579, 338],
+    ['30000', 523, 615, 2355, 506],
+    ['40000', 705, 828, 3091, 686],
+    ['50000', 876, 1026, 3967, 851],
+    ['60000', 1054, 1218, 4764, 1027],
+    ['70000', 1234, 1432, 5446, 1174],
+    ['80000', 1407, 1623, 6260, 1395],
+    ['90000', 1573, 1830, 7028, 1487],
+    ['100000', 1761, 2041, 7763, 1660],
+    ]);
+    var graph = new google.visualization.LineChart(document.getElementById('graph_write___Trivial_4096_'));
+    var options = {curveType: "function",title: "write - Trivial<4096>",animation: {duration:1200, easing:"in"},width: 700, height: 400,hAxis: {title:"Number of elements", slantedText:true},vAxis: {viewWindow: {min:0}, title:"us"}};
+    graph.draw(data, options);
+    var button = document.getElementById('graph_button_write___Trivial_4096_');
+    button.onclick = function(){
+    if(options.vAxis.logScale){
+    button.value="Logarithmic Scale";
+    } else {
+    button.value="Normal scale";
+    }
+    options.vAxis.logScale=!options.vAxis.logScale;
+    graph.draw(data, options);
+    };
+    }
     function draw_all(){
     draw_fill_back___Trivial_8_();
     draw_fill_back___Trivial_128_();
@@ -660,6 +819,10 @@ but is never the fastest on this benchmark.
     draw_linear_search___Trivial_8_();
     draw_linear_search___Trivial_128_();
     draw_linear_search___Trivial_4096_();
+    draw_write___Trivial_8_();
+    draw_write___Trivial_32_();
+    draw_write___Trivial_128_();
+    draw_write___Trivial_4096_();
     draw_sort___Trivial_8_();
     draw_sort___Trivial_128_();
     draw_sort___Trivial_4096_();
