@@ -4,6 +4,18 @@ Write your post here.
 All the examples are compiled with g++-4.9.4 and run on a Gentoo Linux machine
 with an Intel Core i7-4770 at 3.4GHz.
 
+
+Here are direct links to all benchmarks:
+
+* `Fill`_ Benchmark
+* `Emplace`_ Benchmark
+* `Fill Front`_ Benchmark
+* `Linear Search`_ Benchmark
+* `Iterate and modify`_ Benchmark
+* `Number Crunching`_ Benchmark
+* `Sort`_ Benchmark
+* `Destruction`_ Benchmark
+
 Fill
 ****
 
@@ -114,7 +126,7 @@ Overall, for the tested types, emplace should have exactly the same performance
 as normal push_back. Except for the special case of COW for GCC that should not
 happen anymore if you use a recent compiler and C++11.
 
-Fill front
+Fill Front
 **********
 
 The next benchmark is again a fill benchmark but elements are inserted at the
@@ -237,6 +249,46 @@ container starts to shine when the size of the data type is around 128B, but
 does not provide a very significant speedup. The vector is generally the fastest
 for this kind of workload.
 
+Number Crunching
+****************
+
+The next test is about numbers. Random numbers are inserted into the container
+so that it is kept sorted. That means that a linear search will be performed to
+find the insertion point. Since colony is unordered, it is excluded from this
+benchmark. In practice, vector and deque could use binary search contrary to the
+list.
+
+Let's see the result with a number of 8 bytes:
+
+.. raw:: html
+
+    <div id="graph_number_crunching___Trivial_8_" style="width: 700px; height: 400px;"></div>
+    <input id="graph_button_number_crunching___Trivial_8_" type="button" value="Logarithmic scale">
+
+The results are quite clear. The list is more than 20 times slower and than the
+vector and the deque. This is because this benchmark is driven more by iterations than
+by modifications of the structure and therefore the vector and deque are much
+faster at this. Vector is still faster than the deque for its slightly better
+locality.
+
+If we take elements of 32 bytes:
+
+.. raw:: html
+
+    <div id="graph_number_crunching___Trivial_32_" style="width: 700px; height: 400px;"></div>
+    <input id="graph_button_number_crunching___Trivial_32_" type="button" value="Logarithmic scale">
+
+The list is *only* 8 times slower than the vector and deque. There is no doubt
+that the difference would be even slower as the size of the elements grows.
+Nevertheless, since we are talking about number crunching, this is rarely with
+bigger numbers.
+
+Overall, for such a load, the vector and deque structures are shining because of
+their excellent iteration performance compared to the poor performance of the
+list. Moreover, keep into account that in practice this would be done using
+binary search for the vector and deque, probably meaning faster time for them
+(even though binary search is not cache-efficient).
+
 Sort
 ****
 
@@ -280,18 +332,76 @@ data type gets too big (>1KB). Again, the colony container is in a sort of
 middle ground with very stable performance for both large and small data types
 but is never the fastest on this benchmark.
 
+Destruction
+***********
 
+The last test that is done is used to measure the time necessary to delete
+a container. The containers are dynamically allocated, filled with n numbers,
+and then their destruction time (via delete) is computed. This is probably never
+a bottleneck in practice, but this is still interesting to benchmark in my
+opinion.
 
+.. raw:: html
 
+    <div id="graph_destruction___Trivial_8_" style="width: 700px; height: 400px;"></div>
+    <input id="graph_button_destruction___Trivial_8_" type="button" value="Logarithmic scale">
 
+As you can see, the differences between the benchmarks are very significant. The
+list is 10'000 times slower than the vector, the colony is 2000 slower than it
+and even the deque is 200 times slower than the vector. The deallocation of
+a vector, for trivial type, is simply a memory deallocation so its speed purely
+depends on the speed on deallocating memory which is very fast on modern
+systems.  The other containers need to deallocate all the small pieces they have
+allocated. Not only does that mean more deallocations but especially means
+walking through most of the elements.
 
+.. raw:: html
 
+    <div id="graph_destruction___Trivial_128_" style="width: 700px; height: 400px;"></div>
+    <input id="graph_button_destruction___Trivial_128_" type="button" value="Logarithmic scale">
 
+For a larger data type, the results are changing significantly. The overhead of
+the deque is going up very quickly. This is actually normal each of the blocks
+of the deque are actually very few elements and therefore it becomes very close
+to a list in terms of deallocation and memory walks. What is very interesting
+here is that colony actually is going on par with the vector and sometimes
+slower than it. This shows that very deallocations are not necessary slower than
+several smaller deallocations. Moreover, this also shows that colony is
+especially good when the data type starts to become important.
 
+.. raw:: html
 
+    <div id="graph_destruction___Trivial_4096_" style="width: 700px; height: 400px;"></div>
+    <input id="graph_button_destruction___Trivial_4096_" type="button" value="Logarithmic scale">
 
+For a very large data type, the vector and the colony are the fastest
+collection, followed by the deque and list, only 1.8 times slower. This shows
+that at this point, the deque makes as much allocations than the list.
 
+.. raw:: html
 
+    <div id="graph_destruction___NonTrivialStringMovable" style="width: 700px; height: 400px;"></div>
+    <input id="graph_button_destruction___NonTrivialStringMovable" type="button" value="Logarithmic scale">
+
+For a non-trivial type, every collection has to go through each element and
+calls the necessary destructor. Therefore, the time is mostly related to the
+iteration time. This puts the list on the bottom and the three other containers
+at almost the same time.
+
+Overall, the destruction of a vector for trivial types is significantly faster
+than the other collections, unless the data type becomes very big. Colony has
+a large overhead for small types but becomes interesting for large data types.
+The list is always a poor contender since it needs to walk through all elements
+in order to deallocate each node. Interestingly, the deque has more and more
+overhead as the data type grows since each block will be able to hold less and
+elements and therefore resembles a list. When types are non-trivial, the time
+for destruction is generally tied to the time necessary to walk through the
+entire collection and calls each of the destructor.
+
+Conclusion
+**********
+
+TODO
 
 
 
@@ -303,6 +413,118 @@ but is never the fastest on this benchmark.
     <script type="text/javascript">google.load('visualization', '1.0', {'packages':['corechart']});</script>
 
     <script type="text/javascript">
+    function draw_destruction___Trivial_8_(){
+    var data = google.visualization.arrayToDataTable([
+    ['x', 'colony', 'deque', 'list', 'vector'],
+    ['100000', 240, 22, 988, 0],
+    ['200000', 485, 45, 1963, 0],
+    ['300000', 707, 96, 2996, 0],
+    ['400000', 962, 100, 4004, 0],
+    ['500000', 1197, 114, 4989, 0],
+    ['600000', 1425, 138, 5986, 0],
+    ['700000', 1683, 214, 6967, 0],
+    ['800000', 1902, 189, 7985, 0],
+    ['900000', 2138, 263, 9532, 0],
+    ['1000000', 2409, 244, 10874, 0],
+    ]);
+    var graph = new google.visualization.LineChart(document.getElementById('graph_destruction___Trivial_8_'));
+    var options = {curveType: "function",title: "destruction - Trivial<8>",animation: {duration:1200, easing:"in"},width: 700, height: 400,hAxis: {title:"Number of elements", slantedText:true},vAxis: {viewWindow: {min:0}, title:"us"}};
+    graph.draw(data, options);
+    var button = document.getElementById('graph_button_destruction___Trivial_8_');
+    button.onclick = function(){
+    if(options.vAxis.logScale){
+    button.value="Logarithmic Scale";
+    } else {
+    button.value="Normal scale";
+    }
+    options.vAxis.logScale=!options.vAxis.logScale;
+    graph.draw(data, options);
+    };
+    }
+    function draw_destruction___Trivial_128_(){
+    var data = google.visualization.arrayToDataTable([
+    ['x', 'colony', 'deque', 'list', 'vector'],
+    ['100000', 251, 798, 2504, 0],
+    ['200000', 499, 1952, 5396, 0],
+    ['300000', 740, 3088, 8595, 1361],
+    ['400000', 1003, 4120, 12363, 1850],
+    ['500000', 1240, 5138, 15873, 2151],
+    ['600000', 1513, 6857, 19100, 2798],
+    ['700000', 4926, 7974, 22711, 4032],
+    ['800000', 5581, 9172, 28014, 4692],
+    ['900000', 6750, 10813, 32839, 5626],
+    ['1000000', 7523, 16168, 38987, 6070],
+    ]);
+    var graph = new google.visualization.LineChart(document.getElementById('graph_destruction___Trivial_128_'));
+    var options = {curveType: "function",title: "destruction - Trivial<128>",animation: {duration:1200, easing:"in"},width: 700, height: 400,hAxis: {title:"Number of elements", slantedText:true},vAxis: {viewWindow: {min:0}, title:"us"}};
+    graph.draw(data, options);
+    var button = document.getElementById('graph_button_destruction___Trivial_128_');
+    button.onclick = function(){
+    if(options.vAxis.logScale){
+    button.value="Logarithmic Scale";
+    } else {
+    button.value="Normal scale";
+    }
+    options.vAxis.logScale=!options.vAxis.logScale;
+    graph.draw(data, options);
+    };
+    }
+    function draw_destruction___Trivial_4096_(){
+    var data = google.visualization.arrayToDataTable([
+    ['x', 'colony', 'deque', 'list', 'vector'],
+    ['100000', 23042, 27594, 26377, 20120],
+    ['200000', 41537, 56241, 55568, 40759],
+    ['300000', 56177, 82809, 79245, 53583],
+    ['400000', 70974, 101075, 102419, 68183],
+    ['500000', 85402, 125446, 124540, 83074],
+    ['600000', 105598, 149797, 153420, 98360],
+    ['700000', 114786, 169089, 171255, 111156],
+    ['800000', 125951, 189993, 193192, 125769],
+    ['900000', 134245, 211323, 212633, 137547],
+    ['1000000', 146530, 227040, 228934, 145069],
+    ]);
+    var graph = new google.visualization.LineChart(document.getElementById('graph_destruction___Trivial_4096_'));
+    var options = {curveType: "function",title: "destruction - Trivial<4096>",animation: {duration:1200, easing:"in"},width: 700, height: 400,hAxis: {title:"Number of elements", slantedText:true},vAxis: {viewWindow: {min:0}, title:"us"}};
+    graph.draw(data, options);
+    var button = document.getElementById('graph_button_destruction___Trivial_4096_');
+    button.onclick = function(){
+    if(options.vAxis.logScale){
+    button.value="Logarithmic Scale";
+    } else {
+    button.value="Normal scale";
+    }
+    options.vAxis.logScale=!options.vAxis.logScale;
+    graph.draw(data, options);
+    };
+    }
+    function draw_destruction___NonTrivialStringMovable(){
+    var data = google.visualization.arrayToDataTable([
+    ['x', 'colony', 'deque', 'list', 'vector'],
+    ['100000', 251, 230, 1129, 247],
+    ['200000', 503, 452, 2682, 453],
+    ['300000', 755, 684, 3699, 685],
+    ['400000', 1018, 930, 5477, 910],
+    ['500000', 1281, 1208, 6278, 1157],
+    ['600000', 1551, 1502, 7664, 1411],
+    ['700000', 1813, 1789, 8733, 1799],
+    ['800000', 2089, 2126, 9732, 1821],
+    ['900000', 2347, 2442, 11301, 2053],
+    ['1000000', 2672, 2786, 12209, 2369],
+    ]);
+    var graph = new google.visualization.LineChart(document.getElementById('graph_destruction___NonTrivialStringMovable'));
+    var options = {curveType: "function",title: "destruction - NonTrivialStringMovable",animation: {duration:1200, easing:"in"},width: 700, height: 400,hAxis: {title:"Number of elements", slantedText:true},vAxis: {viewWindow: {min:0}, title:"us"}};
+    graph.draw(data, options);
+    var button = document.getElementById('graph_button_destruction___NonTrivialStringMovable');
+    button.onclick = function(){
+    if(options.vAxis.logScale){
+    button.value="Logarithmic Scale";
+    } else {
+    button.value="Normal scale";
+    }
+    options.vAxis.logScale=!options.vAxis.logScale;
+    graph.draw(data, options);
+    };
+    }
     function draw_fill_back___Trivial_8_(){
     var data = google.visualization.arrayToDataTable([
     ['x', 'colony_reserve', 'vector_reserve', 'colony', 'deque', 'list', 'vector'],
@@ -807,6 +1029,62 @@ but is never the fastest on this benchmark.
     graph.draw(data, options);
     };
     }
+    function draw_number_crunching___Trivial_8_(){
+    var data = google.visualization.arrayToDataTable([
+    ['x', 'deque', 'list', 'vector'],
+    ['10000', 14, 179, 10],
+    ['20000', 58, 1021, 43],
+    ['30000', 135, 2593, 102],
+    ['40000', 251, 4897, 194],
+    ['50000', 402, 7917, 330],
+    ['60000', 606, 11595, 472],
+    ['70000', 823, 15840, 655],
+    ['80000', 1094, 21019, 873],
+    ['90000', 1447, 26789, 1107],
+    ['100000', 1763, 33428, 1379],
+    ]);
+    var graph = new google.visualization.LineChart(document.getElementById('graph_number_crunching___Trivial_8_'));
+    var options = {curveType: "function",title: "number_crunching - Trivial<8>",animation: {duration:1200, easing:"in"},width: 700, height: 400,hAxis: {title:"Number of elements", slantedText:true},vAxis: {viewWindow: {min:0}, title:"ms"}};
+    graph.draw(data, options);
+    var button = document.getElementById('graph_button_number_crunching___Trivial_8_');
+    button.onclick = function(){
+    if(options.vAxis.logScale){
+    button.value="Logarithmic Scale";
+    } else {
+    button.value="Normal scale";
+    }
+    options.vAxis.logScale=!options.vAxis.logScale;
+    graph.draw(data, options);
+    };
+    }
+    function draw_number_crunching___Trivial_32_(){
+    var data = google.visualization.arrayToDataTable([
+    ['x', 'deque', 'list', 'vector'],
+    ['10000', 37, 255, 36],
+    ['20000', 170, 1262, 178],
+    ['30000', 405, 2945, 425],
+    ['40000', 736, 5383, 792],
+    ['50000', 1159, 8546, 1236],
+    ['60000', 1695, 12676, 1778],
+    ['70000', 2319, 17857, 2417],
+    ['80000', 3043, 23655, 3157],
+    ['90000', 3872, 30960, 4013],
+    ['100000', 4865, 40274, 5022],
+    ]);
+    var graph = new google.visualization.LineChart(document.getElementById('graph_number_crunching___Trivial_32_'));
+    var options = {curveType: "function",title: "number_crunching - Trivial<32>",animation: {duration:1200, easing:"in"},width: 700, height: 400,hAxis: {title:"Number of elements", slantedText:true},vAxis: {viewWindow: {min:0}, title:"ms"}};
+    graph.draw(data, options);
+    var button = document.getElementById('graph_button_number_crunching___Trivial_32_');
+    button.onclick = function(){
+    if(options.vAxis.logScale){
+    button.value="Logarithmic Scale";
+    } else {
+    button.value="Normal scale";
+    }
+    options.vAxis.logScale=!options.vAxis.logScale;
+    graph.draw(data, options);
+    };
+    }
     function draw_all(){
     draw_fill_back___Trivial_8_();
     draw_fill_back___Trivial_128_();
@@ -826,6 +1104,12 @@ but is never the fastest on this benchmark.
     draw_sort___Trivial_8_();
     draw_sort___Trivial_128_();
     draw_sort___Trivial_4096_();
+    draw_number_crunching___Trivial_8_();
+    draw_number_crunching___Trivial_32_();
+    draw_destruction___Trivial_8_();
+    draw_destruction___Trivial_128_();
+    draw_destruction___Trivial_4096_();
+    draw_destruction___NonTrivialStringMovable();
     }
     google.setOnLoadCallback(draw_all);
     </script>
