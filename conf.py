@@ -561,6 +561,7 @@ from nikola import filters
 FILTERS = {
   ".css": [filters.yui_compressor],
   ".js": [filters.yui_compressor],
+  ".html": [filters.deduplicate_ids],
 }
 
 # Put in global_context things you want available on all your templates.
