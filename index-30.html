@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html prefix="og: http://ogp.me/ns# article: http://ogp.me/ns/article# " lang="en">
 <head>
 <meta charset="utf-8">
@@ -78,7 +77,7 @@
                             <li class="navbar-block">
 
 
-                        <li class="wicht-navbar-right">
+                        </li><li class="wicht-navbar-right">
                             <a target="_blank" title="Follow @wichtounet on Twitter" href="https://twitter.com/wichtounet">
                                 <img src="assets/img/twitter.png" alt="Follow @wichtounet on Twitter"></a>
                         </li>
@@ -98,6 +97,152 @@
             <div id="content"></div>
             
         <article class="postbox h-entry post-text"><h1 class="p-name">
+<a href="posts/2017/03/release-zapcc-10-fast-cpp-compiler.html" class="u-url">Release of zapcc 1.0 - Fast C++ compiler</a>
+        <br><small>  
+             Posted: <time class="published dt-published" datetime="2017-03-02T14:50:04+01:00">2017-03-02 14:50</time></small>
+</h1>
+        <hr>
+<div class="p-summary">
+        <div>
+<p>If you remember, I recently wrote about <a class="reference external" href="http://baptiste-wicht.com/posts/2016/12/zapcc-cpp-compilation-speed-against-gcc-54-and-clang-39.html">zapcc C++ compilation speed against gcc 5.4 and clang 3.9</a> in which I was comparing the beta version of zapcc against gcc and clang.</p>
+<p>I just been informed that zapcc was just released in version 1.0. I though it
+was a good occasion to test it again. It will be compared against gcc-4.9,
+gcc-5.3 and clang-3.9. This version is based on the trunk of clang-5.0.</p>
+<p>Again, I will use my Expression Template Library (<a class="reference external" href="https://github.com/wichtounet/etl/">ETL</a>) project. This is a purely header-only
+library with lots of templates. I'm going to compile the full test cases. This
+is a perfect example for long compilation times.</p>
+<p>The current tests are made on the last version of the library and with slightly
+different parameters for compilation, therefore the absolute times are not
+comparable, but the speedups should be comparable.</p>
+<p>Just like last time, I have configured zapcc to let is use 2Go RAM per caching
+server, which is the maximum allowed. Moreover, I killed the servers before each
+tests.</p>
+<div class="section" id="debug-results">
+<h2>Debug results</h2>
+<p>Let's start with a debug build, with no optimizations enabled. Every build will
+use four threads. This is the equivalent of doing make -j4 debug/bin/etl_test
+without the link step.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="73%">
+<col width="27%">
+</colgroup>
+<thead valign="bottom"><tr>
+<th class="head">Compiler</th>
+<th class="head"> </th>
+</tr></thead>
+<tbody valign="top">
+<tr>
+<td>g++-4.9.3</td>
+<td>190.09s</td>
+</tr>
+<tr>
+<td>g++-5.3.0</td>
+<td>200.92s</td>
+</tr>
+<tr>
+<td>clang++-3.9</td>
+<td>313.85</td>
+</tr>
+<tr>
+<td>zapcc++</td>
+<td>81.25</td>
+</tr>
+<tr>
+<td>Speedup VS Clang</td>
+<td>3.86</td>
+</tr>
+<tr>
+<td>Speedup VS GCC-5.3</td>
+<td>2.47</td>
+</tr>
+<tr>
+<td>Speedup VS GCC-4.9</td>
+<td>2.33</td>
+</tr>
+</tbody>
+</table>
+<p>The speedups are even more impressive than last time! zapcc is <strong>almost four
+times fast than clang-3.9</strong> and around <strong>2.5 times faster than GCC-5.3</strong>.
+Interestingly, we can see that gcc-5.3 is slighly slower than GCC-4.9.</p>
+<p>It seems that they have the compiler even faster!</p>
+</div>
+<div class="section" id="release-results">
+<h2>Release results</h2>
+<p>Let's look now how the results are looking with optimizations enabled. Again,
+every build will use four threads. This is the equivalent of doing make -j4
+release_debug/bin/etl_test without the link step.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="75%">
+<col width="25%">
+</colgroup>
+<thead valign="bottom"><tr>
+<th class="head">Compiler</th>
+<th class="head"> </th>
+</tr></thead>
+<tbody valign="top">
+<tr>
+<td>g++-4.9.3</td>
+<td>252.99</td>
+</tr>
+<tr>
+<td>g++-5.3.0</td>
+<td>264.96</td>
+</tr>
+<tr>
+<td>clang++-3.9</td>
+<td>361.65</td>
+</tr>
+<tr>
+<td>zapcc++</td>
+<td>237.96</td>
+</tr>
+<tr>
+<td>Speedup VS Clang</td>
+<td>1.51</td>
+</tr>
+<tr>
+<td>Speedup VS GCC-5.3</td>
+<td>1.11</td>
+</tr>
+<tr>
+<td>Speedup VS GCC-4.9</td>
+<td>1.06</td>
+</tr>
+</tbody>
+</table>
+<p>We can see that this time the speedups are not as interesting as they were.
+Very interestingly, it's the compiler that suffers the more from the
+optimization overhead. Indeed, zapcc is three times slower in release mode than
+it was in debug mode. Nevertheless, it still manages to beat the three other
+compilers, by about 10% for Gcc and 50% than clang, which is already
+interesting.</p>
+<div class="section" id="conclusion-2">
+<h3>Conclusion</h3>
+<p>To conclude, we have observed that zapcc is always faster than the three
+compilers tested in this experiment. Moreover, in debug mode, the speedups are
+very significant, it was almost 4 times faster than clang and around 2.5 faster
+than gcc.</p>
+<p>I haven't seen any problem with the tool, it's like clang and it should generate
+code of the same performance, but just compile it much faster. One problem
+I have with zapcc is that it is not based on an already released version of
+clang but on the trunk. That means it is hard to be compare with the exact same
+version of clang and it is also a risk of running into clang bugs.</p>
+<p>Although the prices have not been published yet, it is indicated on the website
+that zapcc is free for non-commercial entities. Which is really great.</p>
+<p>If you want more information, you can go to the
+<a class="reference external" href="https://www.zapcc.com/">official website of zapcc</a></p>
+</div>
+</div>
+</div>
+        </div>
+            
+        
+    <a href="posts/2017/03/release-zapcc-10-fast-cpp-compiler.html#disqus_thread" data-disqus-identifier="cache/posts/2017/03/release-zapcc-10-fast-cpp-compiler.html">Comments</a>
+
+
+        </article><article class="postbox h-entry post-text"><h1 class="p-name">
 <a href="posts/2017/02/home-automation-first-attempt-voice-control-jarvis.html" class="u-url">Home Automation: First attempt at voice control with Jarvis</a>
         <br><small>  
              Posted: <time class="published dt-published" datetime="2017-02-14T18:34:19+01:00">2017-02-14 18:34</time></small>
@@ -463,23 +608,23 @@ moved the tab bar to the bottom and completely hidden the side panel. All that
 remained was the title bar and the scroll bar.</p>
 <p>To get rid of the title bar, you can use CSS. First, you have to only display
 the Vivaldi button in the settings page. Then, you can use this custom CSS:</p>
-<pre class="code CSS"><a name="rest_code_7854af45d3ff4a82946cc181fa02d398-1"></a><span class="nt">button</span><span class="p">.</span><span class="nc">vivaldi</span> <span class="p">{</span>
-<a name="rest_code_7854af45d3ff4a82946cc181fa02d398-2"></a>    <span class="k">display</span><span class="p">:</span> <span class="kc">none</span> <span class="cp">!important</span><span class="p">;</span>
-<a name="rest_code_7854af45d3ff4a82946cc181fa02d398-3"></a><span class="p">}</span>
-<a name="rest_code_7854af45d3ff4a82946cc181fa02d398-4"></a>
-<a name="rest_code_7854af45d3ff4a82946cc181fa02d398-5"></a><span class="p">#</span><span class="nn">header</span> <span class="p">{</span>
-<a name="rest_code_7854af45d3ff4a82946cc181fa02d398-6"></a>    <span class="k">min-height</span><span class="p">:</span> <span class="mi">0</span> <span class="cp">!important</span><span class="p">;</span>
-<a name="rest_code_7854af45d3ff4a82946cc181fa02d398-7"></a>    <span class="k">z-index</span><span class="p">:</span> <span class="kc">auto</span> <span class="cp">!important</span><span class="p">;</span>
-<a name="rest_code_7854af45d3ff4a82946cc181fa02d398-8"></a><span class="p">}</span>
-<a name="rest_code_7854af45d3ff4a82946cc181fa02d398-9"></a>
-<a name="rest_code_7854af45d3ff4a82946cc181fa02d398-10"></a><span class="p">.</span><span class="nc">button-toolbar</span><span class="p">.</span><span class="nc">home</span> <span class="p">{</span> <span class="k">display</span><span class="p">:</span> <span class="kc">none</span> <span class="p">}</span>
+<pre class="code CSS"><a name="rest_code_186fe8fab81a4aaa8c065de05d9d0460-1"></a><span class="nt">button</span><span class="p">.</span><span class="nc">vivaldi</span> <span class="p">{</span>
+<a name="rest_code_186fe8fab81a4aaa8c065de05d9d0460-2"></a>    <span class="k">display</span><span class="p">:</span> <span class="kc">none</span> <span class="cp">!important</span><span class="p">;</span>
+<a name="rest_code_186fe8fab81a4aaa8c065de05d9d0460-3"></a><span class="p">}</span>
+<a name="rest_code_186fe8fab81a4aaa8c065de05d9d0460-4"></a>
+<a name="rest_code_186fe8fab81a4aaa8c065de05d9d0460-5"></a><span class="p">#</span><span class="nn">header</span> <span class="p">{</span>
+<a name="rest_code_186fe8fab81a4aaa8c065de05d9d0460-6"></a>    <span class="k">min-height</span><span class="p">:</span> <span class="mi">0</span> <span class="cp">!important</span><span class="p">;</span>
+<a name="rest_code_186fe8fab81a4aaa8c065de05d9d0460-7"></a>    <span class="k">z-index</span><span class="p">:</span> <span class="kc">auto</span> <span class="cp">!important</span><span class="p">;</span>
+<a name="rest_code_186fe8fab81a4aaa8c065de05d9d0460-8"></a><span class="p">}</span>
+<a name="rest_code_186fe8fab81a4aaa8c065de05d9d0460-9"></a>
+<a name="rest_code_186fe8fab81a4aaa8c065de05d9d0460-10"></a><span class="p">.</span><span class="nc">button-toolbar</span><span class="p">.</span><span class="nc">home</span> <span class="p">{</span> <span class="k">display</span><span class="p">:</span> <span class="kc">none</span> <span class="p">}</span>
 </pre>
 <p>to hide the title completely! To get rid of the scroll bar, you need to use the
 Stylish extension and use this custom CSS:</p>
-<pre class="code CSS"><a name="rest_code_ee8f789f8daa404d91e352f92b7e833e-1"></a><span class="p">::</span><span class="nd">-webkit-scrollbar</span><span class="p">{</span><span class="k">display</span><span class="p">:</span><span class="kc">none</span> <span class="cp">!important</span><span class="p">;</span> <span class="k">width</span><span class="p">:</span><span class="mi">0</span><span class="kt">px</span><span class="p">;}</span>
-<a name="rest_code_ee8f789f8daa404d91e352f92b7e833e-2"></a><span class="p">::</span><span class="nd">-webkit-scrollbar-button</span><span class="o">,</span><span class="p">::</span><span class="nd">-webkit-scrollbar-track</span><span class="p">{</span><span class="k">display</span><span class="p">:</span><span class="kc">none</span> <span class="cp">!important</span><span class="p">;}</span>
-<a name="rest_code_ee8f789f8daa404d91e352f92b7e833e-3"></a><span class="p">::</span><span class="nd">-webkit-scrollbar-thumb</span><span class="p">{</span><span class="k">display</span><span class="p">:</span> <span class="kc">none</span> <span class="cp">!important</span><span class="p">;}</span>
-<a name="rest_code_ee8f789f8daa404d91e352f92b7e833e-4"></a><span class="p">::</span><span class="nd">-webkit-scrollbar-track</span><span class="p">{</span><span class="k">display</span><span class="p">:</span> <span class="kc">none</span> <span class="cp">!important</span><span class="p">;}</span>
+<pre class="code CSS"><a name="rest_code_0aba56aec8ab462280770f308f7c6469-1"></a><span class="p">::</span><span class="nd">-webkit-scrollbar</span><span class="p">{</span><span class="k">display</span><span class="p">:</span><span class="kc">none</span> <span class="cp">!important</span><span class="p">;</span> <span class="k">width</span><span class="p">:</span><span class="mi">0</span><span class="kt">px</span><span class="p">;}</span>
+<a name="rest_code_0aba56aec8ab462280770f308f7c6469-2"></a><span class="p">::</span><span class="nd">-webkit-scrollbar-button</span><span class="o">,</span><span class="p">::</span><span class="nd">-webkit-scrollbar-track</span><span class="p">{</span><span class="k">display</span><span class="p">:</span><span class="kc">none</span> <span class="cp">!important</span><span class="p">;}</span>
+<a name="rest_code_0aba56aec8ab462280770f308f7c6469-3"></a><span class="p">::</span><span class="nd">-webkit-scrollbar-thumb</span><span class="p">{</span><span class="k">display</span><span class="p">:</span> <span class="kc">none</span> <span class="cp">!important</span><span class="p">;}</span>
+<a name="rest_code_0aba56aec8ab462280770f308f7c6469-4"></a><span class="p">::</span><span class="nd">-webkit-scrollbar-track</span><span class="p">{</span><span class="k">display</span><span class="p">:</span> <span class="kc">none</span> <span class="cp">!important</span><span class="p">;}</span>
 </pre>
 <p>And then, no more scroll bar :)</p>
 <p>If you want to have full HTML5 video support, you need to install extra codecs.
@@ -552,7 +697,7 @@ simply the Raspberry on which Domoticz is installed.</p>
 <p>As for the installation of Domoticz, it's really simple. They also have images of
 Raspberry Pi directly, but since my Raspberry was already installed with
 Raspbian, I installed Domoticz on it directly. A simple matter of curl and bash:</p>
-<pre class="code bash"><a name="rest_code_3331f379d5014bc9a4b46abaacfa88db-1"></a>sudo curl -L install.domoticz.com <span class="p">|</span> sudo bash
+<pre class="code bash"><a name="rest_code_2f18ad65bc734bb0940e74ca0a51ffb5-1"></a>sudo curl -L install.domoticz.com <span class="p">|</span> sudo bash
 </pre>
 <p>After a few questions, your installation should be complete. You can browse your
 Domoticz installation at the IP of your Pi and at the given port.</p>
