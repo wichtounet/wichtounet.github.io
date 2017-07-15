@@ -52,3 +52,6 @@ So far, I cannot say that this is better than Owncloud, I just hope the next
 upgrade will fare better than they did on Owncloud. Moreover, I also hope that
 the security that they promise is really here and I won't have any problem with
 it. I'll see in the future!
+
+For more information about nextcloud and owncloud compared to each other, you
+can read `this in-depth comparison <https://civihosting.com/blog/nextcloud-vs-owncloud/>`_, by David Feldman.
