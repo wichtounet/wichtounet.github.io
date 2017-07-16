@@ -96,6 +96,237 @@
             <div id="content"></div>
             
         <article class="postbox h-entry post-text"><h1 class="p-name">
+<a href="posts/2017/07/update-on-deep-learning-library-dll-dropout-batch-normalization-adaptive-learning-rates.html" class="u-url">Update on Deep Learning Library (DLL): Dropout, Batch Normalization, Adaptive Learning Rates, ...</a>
+        <br><small>  
+             Posted: <time class="published dt-published" datetime="2017-07-16T15:41:51+02:00">2017-07-16 15:41</time></small>
+</h1>
+        <hr>
+<div class="p-summary">
+        <div>
+<p>It's been a while since I've posted something on this, especially since I had
+one month vacation. This year I've been able to integrate a great number of
+changes into my Deep Learning Library (DLL) project. It has seen a lot of
+refactorings and a lot of new features making it look like a real neural network
+library now. In this post, I'll try to outline the last new features and changes
+of the library.</p>
+<p>For those that don't know, DLL is a library for neural network training, written
+in C++ and for C++. You can train Fully-Connected Neural Networks and
+Convolutional Neural Networks. The focus of the framework is on speed and easy
+use in C++.</p>
+<p>As for my ETL project and again thanks to my thesis supervisor, the project now
+has a logo:</p>
+<img alt="DLL Logo" class="align-center" src="images/dll_logo.png"><div class="section" id="adaptive-learning-rates">
+<h2>Adaptive Learning Rates</h2>
+<p>Before, the framework only supported simple SGD and Momentum updates for the
+different parameters of the network. Moreover, it was not very well extendable.
+Therefore, I reviewed the system to be able to configure an optimizer for each
+network to train. Once that was done, the first thing I did was to add support
+for Nesterov Accelerated Gradients (NAG) as a third optimizer. After this,
+I realized it was then easy to integrate support for more advanced optimizers
+including support for adaptive learning rates. This means that the learning rate
+will be adapted for each parameter depending on what the network is learning.
+Some of the optimizers even don't need any learning rate. So far, I've
+implemented support for the following optimizers: Adagrad, RMSProp, Adam (with
+and without bias correction), Adamax (Adam with infinite norm), Nadam (Adam with
+Nesterov momentum) and Adadelta (no more learning rate). The user can now choose
+the optimizer of its choice, for instance NADAM, as a parameter of the network:</p>
+<pre class="code c++"><a name="rest_code_bd7b4fd6b91b4dcd8260a1bd7b40ea28-1"></a><span class="c1">// Use a Nadam optimizer</span>
+<a name="rest_code_bd7b4fd6b91b4dcd8260a1bd7b40ea28-2"></a><span class="n">dll</span><span class="o">::</span><span class="n">updater</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">updater_type</span><span class="o">::</span><span class="n">NADAM</span><span class="o">&gt;</span>
+</pre>
+<p>Another improvement in the same domain is that the learning rate can also be
+decayed over time automatically by the optimizer.</p>
+<p>If you want more information on the different optimizers, you can have a look at
+this very good article:
+<a class="reference external" href="http://ruder.io/optimizing-gradient-descent/">An overview of gradient descent optimization algorithms</a>
+from Sebastian Ruder.</p>
+</div>
+<div class="section" id="better-loss-support">
+<h2>Better loss support</h2>
+<p>Before, DLL was automatically using Categorical Cross Entropy Loss, but it was
+not possible to change it and it was not even possible to see the loss over
+time. Now, the current value of the loss is displayed after each epoch of
+training and the loss used for training is now configurable. So far, only three
+different losses are supported, but it it not difficult to add new loss to the
+system. The three losses supported are: Categorical Cross Entropy Loss, Binary
+Cross Entropy Loss and Mean Squared Error Loss.</p>
+<p>Again, each network can specify the loss to use:</p>
+<pre class="code C++"><a name="rest_code_74b29a3e933b48079821261aaff10ef1-1"></a><span class="c1">// Use a Binary Cross Entropy Loss</span>
+<a name="rest_code_74b29a3e933b48079821261aaff10ef1-2"></a><span class="n">dll</span><span class="o">::</span><span class="n">loss</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">loss_function</span><span class="o">::</span><span class="n">BINARY_CROSS_ENTROPY</span><span class="o">&gt;</span>
+</pre>
+</div>
+<div class="section" id="dropout">
+<h2>Dropout</h2>
+<p>Dropout is a relatively new technique for neural network training. This is
+especially made to reduce overfitting since a large number of sub networks will
+be trained and it should prevent co-adaptation between different neurons. This
+technique is relatively simple. Indeed, it simply randomly sets to zero some of
+the input neurons of layers. At each batch, a new mask will be used and this
+should lead to a large number of sub networks being trained.</p>
+<p>Here is example of a MLP with Dropout (p=0.5):</p>
+<pre class="code C++"><a name="rest_code_e510acf3c25046a49ee5431f2f55a747-1"></a><span class="k">using</span> <span class="n">network_t</span> <span class="o">=</span> <span class="n">dll</span><span class="o">::</span><span class="n">dyn_dbn_desc</span><span class="o">&lt;</span>
+<a name="rest_code_e510acf3c25046a49ee5431f2f55a747-2"></a>    <span class="n">dll</span><span class="o">::</span><span class="n">dbn_layers</span><span class="o">&lt;</span>
+<a name="rest_code_e510acf3c25046a49ee5431f2f55a747-3"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">dense_desc</span><span class="o">&lt;</span><span class="mi">28</span> <span class="o">*</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">500</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
+<a name="rest_code_e510acf3c25046a49ee5431f2f55a747-4"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">dropout_layer_desc</span><span class="o">&lt;</span><span class="mi">50</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
+<a name="rest_code_e510acf3c25046a49ee5431f2f55a747-5"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">dense_desc</span><span class="o">&lt;</span><span class="mi">500</span><span class="p">,</span> <span class="mi">250</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
+<a name="rest_code_e510acf3c25046a49ee5431f2f55a747-6"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">dropout_layer_desc</span><span class="o">&lt;</span><span class="mi">50</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
+<a name="rest_code_e510acf3c25046a49ee5431f2f55a747-7"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">dense_desc</span><span class="o">&lt;</span><span class="mi">250</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">activation</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">function</span><span class="o">::</span><span class="n">SOFTMAX</span><span class="o">&gt;&gt;::</span><span class="n">layer_t</span><span class="o">&gt;</span>
+<a name="rest_code_e510acf3c25046a49ee5431f2f55a747-8"></a>    <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">updater</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">updater_type</span><span class="o">::</span><span class="n">MOMENTUM</span><span class="o">&gt;</span>     <span class="c1">// Momentum</span>
+<a name="rest_code_e510acf3c25046a49ee5431f2f55a747-9"></a>    <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">batch_size</span><span class="o">&lt;</span><span class="mi">100</span><span class="o">&gt;</span>                          <span class="c1">// The mini-batch size</span>
+<a name="rest_code_e510acf3c25046a49ee5431f2f55a747-10"></a>    <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">shuffle</span>                                  <span class="c1">// Shuffle before each epoch</span>
+<a name="rest_code_e510acf3c25046a49ee5431f2f55a747-11"></a><span class="o">&gt;::</span><span class="n">dbn_t</span><span class="p">;</span>
+</pre>
+</div>
+<div class="section" id="batch-normalization">
+<h2>Batch Normalization</h2>
+<p>Batch Normalization is another new technique for training neural networks. This
+technique will ensure that each of the layer will receive inputs that look
+kind of similar. This is a very large advantage since then you reduce the
+different in impact of hyper parameters on different layers. Google reported
+much faster training with this technique by getting rid of Dropout and by
+increasing the learning rate of training.</p>
+<p>Here is an example of using Batch Normalization in a CNN:</p>
+<pre class="code C++"><a name="rest_code_3e62708dbcf94da4aada310037ea9485-1"></a><span class="k">using</span> <span class="n">network_t</span> <span class="o">=</span> <span class="n">dll</span><span class="o">::</span><span class="n">dyn_dbn_desc</span><span class="o">&lt;</span>
+<a name="rest_code_3e62708dbcf94da4aada310037ea9485-2"></a>    <span class="n">dll</span><span class="o">::</span><span class="n">dbn_layers</span><span class="o">&lt;</span>
+<a name="rest_code_3e62708dbcf94da4aada310037ea9485-3"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">conv_desc</span><span class="o">&lt;</span><span class="mi">1</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
+<a name="rest_code_3e62708dbcf94da4aada310037ea9485-4"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">batch_normalization_layer_4d_desc</span><span class="o">&lt;</span><span class="mi">8</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">24</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
+<a name="rest_code_3e62708dbcf94da4aada310037ea9485-5"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">mp_layer_2d_desc</span><span class="o">&lt;</span><span class="mi">8</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
+<a name="rest_code_3e62708dbcf94da4aada310037ea9485-6"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">conv_desc</span><span class="o">&lt;</span><span class="mi">8</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
+<a name="rest_code_3e62708dbcf94da4aada310037ea9485-7"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">batch_normalization_layer_4d_desc</span><span class="o">&lt;</span><span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
+<a name="rest_code_3e62708dbcf94da4aada310037ea9485-8"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">mp_layer_2d_desc</span><span class="o">&lt;</span><span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
+<a name="rest_code_3e62708dbcf94da4aada310037ea9485-9"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">dense_desc</span><span class="o">&lt;</span><span class="mi">8</span> <span class="o">*</span> <span class="mi">4</span> <span class="o">*</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">150</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
+<a name="rest_code_3e62708dbcf94da4aada310037ea9485-10"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">batch_normalization_layer_2d_desc</span><span class="o">&lt;</span><span class="mi">150</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
+<a name="rest_code_3e62708dbcf94da4aada310037ea9485-11"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">dense_desc</span><span class="o">&lt;</span><span class="mi">150</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">activation</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">function</span><span class="o">::</span><span class="n">SOFTMAX</span><span class="o">&gt;&gt;::</span><span class="n">layer_t</span><span class="o">&gt;</span>
+<a name="rest_code_3e62708dbcf94da4aada310037ea9485-12"></a>    <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">updater</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">updater_type</span><span class="o">::</span><span class="n">ADADELTA</span><span class="o">&gt;</span>     <span class="c1">// Adadelta</span>
+<a name="rest_code_3e62708dbcf94da4aada310037ea9485-13"></a>    <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">batch_size</span><span class="o">&lt;</span><span class="mi">100</span><span class="o">&gt;</span>                          <span class="c1">// The mini-batch size</span>
+<a name="rest_code_3e62708dbcf94da4aada310037ea9485-14"></a>    <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">shuffle</span>                                  <span class="c1">// Shuffle the dataset before each epoch</span>
+<a name="rest_code_3e62708dbcf94da4aada310037ea9485-15"></a><span class="o">&gt;::</span><span class="n">dbn_t</span><span class="p">;</span>
+</pre>
+<p>You may notice that the layer is set as 4D so should only be used after
+convolutional layer (or after the input). If you want to use it after
+fully-connected layers, you can use the 2D version that works the same way.</p>
+</div>
+<div class="section" id="better-dataset-support">
+<h2>Better dataset support</h2>
+<p>At the beginning, I designed DLL so that the user could directly pass data for
+training in the form of STL Containers such as the std::vector. This is good in
+some cases, but in some cases, the user does not know how to read the data , or
+does not want to be bothered with it. Therefore, several data sets reader are
+now available. Moreover, the entire system has been reworked to use generators
+for data. A generator is simply a concept that has some data to produce. The
+advantage of this new system is data augmentation is now supported every where
+and much more efficiently than before. It is now possible to perform random
+cropping and mirroring of images for instance. Moreover, the data augmentation
+can be done in a secondary thread so as to be sure that there is always enough
+data available for the training.</p>
+<p>The library now has a powerful dataset reader for both MNIST and CIFAR-10 and
+the reader for ImageNet is almost ready. The project has already been used and
+tested with these three datasets now. Moreover, the support for directly passing
+STL containers has been maintained. In this case, a generator is simply created
+around the data provided in the container and the generator is then passed to
+the system for training.</p>
+<p>Here for instance is how to read MNIST data and scale (divide) all pixel values
+by 255:</p>
+<pre class="code c++"><a name="rest_code_05d986848a8f411481f9b82c01e5cef6-1"></a><span class="c1">// Load the dataset</span>
+<a name="rest_code_05d986848a8f411481f9b82c01e5cef6-2"></a><span class="k">auto</span> <span class="n">dataset</span> <span class="o">=</span> <span class="n">dll</span><span class="o">::</span><span class="n">make_mnist_dataset</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">batch_size</span><span class="o">&lt;</span><span class="mi">100</span><span class="o">&gt;</span><span class="p">{},</span> <span class="n">dll</span><span class="o">::</span><span class="n">scale_pre</span><span class="o">&lt;</span><span class="mi">255</span><span class="o">&gt;</span><span class="p">{});</span>
+<a name="rest_code_05d986848a8f411481f9b82c01e5cef6-3"></a><span class="n">dataset</span><span class="p">.</span><span class="n">display</span><span class="p">();</span>
+<a name="rest_code_05d986848a8f411481f9b82c01e5cef6-4"></a>
+<a name="rest_code_05d986848a8f411481f9b82c01e5cef6-5"></a><span class="c1">// Train the network</span>
+<a name="rest_code_05d986848a8f411481f9b82c01e5cef6-6"></a><span class="n">net</span><span class="o">-&gt;</span><span class="n">fine_tune</span><span class="p">(</span><span class="n">dataset</span><span class="p">.</span><span class="n">train</span><span class="p">(),</span> <span class="mi">25</span><span class="p">);</span>
+<a name="rest_code_05d986848a8f411481f9b82c01e5cef6-7"></a>
+<a name="rest_code_05d986848a8f411481f9b82c01e5cef6-8"></a><span class="c1">// Test the network</span>
+<a name="rest_code_05d986848a8f411481f9b82c01e5cef6-9"></a><span class="n">net</span><span class="o">-&gt;</span><span class="n">evaluate</span><span class="p">(</span><span class="n">dataset</span><span class="p">.</span><span class="n">test</span><span class="p">());</span>
+</pre>
+</div>
+<div class="section" id="much-faster-performance">
+<h2>Much faster performance</h2>
+<p>I've spent quite a lot of time improving the performance of the framework. I've
+focused on every part of training in order to make training of neural networks
+as fast as possible. I've also made a comparison of the framework against
+several popular machine learning framework (Caffe, TensorFlow, Keras, Torch and
+DeepLearning4J). For instance, here are the results on a small CNN experiment on
+MNIST with all the different frameworks in CPU mode and in GPU mode:</p>
+<img alt="DLL Comparison Against other frameworks" class="align-center" src="images/dll_comparison.png"><p>As you can see, DLL is by far the fastest framework on CPU. On GPU, there is
+still some work to be done, but this is already ongoing (although a lot of work
+remains). This is confirmed on each of the four experiments performed on MNIST,
+CIFAR-10 and ImageNet, although the margin is smaller for larger networks (still
+about 40% faster than TensorFlow and Keras which are the fastest framework after
+DLL on CPU on my tests).</p>
+<p>Overall, DLL is between 2 and 4 times faster than before and is always the
+fastest framework for neural network training when training is performed on CPU.</p>
+<p>I proposed a talk about these optimizations and performance for Meeting C++ this
+year, but it has unfortunately not been accepted. We also have submitted
+a publication about the framework to a conference later this year.</p>
+</div>
+<div class="section" id="examples">
+<h2>Examples</h2>
+<p>The project now has a few examples (available <a class="reference external" href="https://github.com/wichtounet/dll/tree/master/examples/src">here</a>), well-designed and I try to update them with the latest updates of the framework.</p>
+<p>For instance, here is the CNN example for MNIST (without includes):</p>
+<pre class="code c++"><a name="rest_code_03eb0e13bf254c2687703de4974cdd45-1"></a><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="cm">/*argc*/</span><span class="p">,</span> <span class="kt">char</span><span class="o">*</span> <span class="cm">/*argv*/</span> <span class="p">[])</span> <span class="p">{</span>
+<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-2"></a>    <span class="c1">// Load the dataset</span>
+<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-3"></a>    <span class="k">auto</span> <span class="n">dataset</span> <span class="o">=</span> <span class="n">dll</span><span class="o">::</span><span class="n">make_mnist_dataset</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">batch_size</span><span class="o">&lt;</span><span class="mi">100</span><span class="o">&gt;</span><span class="p">{},</span> <span class="n">dll</span><span class="o">::</span><span class="n">scale_pre</span><span class="o">&lt;</span><span class="mi">255</span><span class="o">&gt;</span><span class="p">{});</span>
+<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-4"></a>
+<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-5"></a>    <span class="c1">// Build the network</span>
+<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-6"></a>
+<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-7"></a>    <span class="k">using</span> <span class="n">network_t</span> <span class="o">=</span> <span class="n">dll</span><span class="o">::</span><span class="n">dyn_dbn_desc</span><span class="o">&lt;</span>
+<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-8"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">dbn_layers</span><span class="o">&lt;</span>
+<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-9"></a>            <span class="n">dll</span><span class="o">::</span><span class="n">conv_desc</span><span class="o">&lt;</span><span class="mi">1</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
+<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-10"></a>            <span class="n">dll</span><span class="o">::</span><span class="n">mp_layer_2d_desc</span><span class="o">&lt;</span><span class="mi">8</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
+<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-11"></a>            <span class="n">dll</span><span class="o">::</span><span class="n">conv_desc</span><span class="o">&lt;</span><span class="mi">8</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
+<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-12"></a>            <span class="n">dll</span><span class="o">::</span><span class="n">mp_layer_2d_desc</span><span class="o">&lt;</span><span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
+<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-13"></a>            <span class="n">dll</span><span class="o">::</span><span class="n">dense_desc</span><span class="o">&lt;</span><span class="mi">8</span> <span class="o">*</span> <span class="mi">4</span> <span class="o">*</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">150</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
+<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-14"></a>            <span class="n">dll</span><span class="o">::</span><span class="n">dense_desc</span><span class="o">&lt;</span><span class="mi">150</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">activation</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">function</span><span class="o">::</span><span class="n">SOFTMAX</span><span class="o">&gt;&gt;::</span><span class="n">layer_t</span><span class="o">&gt;</span>
+<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-15"></a>        <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">updater</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">updater_type</span><span class="o">::</span><span class="n">MOMENTUM</span><span class="o">&gt;</span>     <span class="c1">// Momentum</span>
+<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-16"></a>        <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">batch_size</span><span class="o">&lt;</span><span class="mi">100</span><span class="o">&gt;</span>                          <span class="c1">// The mini-batch size</span>
+<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-17"></a>        <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">shuffle</span>                                  <span class="c1">// Shuffle the dataset before each epoch</span>
+<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-18"></a>    <span class="o">&gt;::</span><span class="n">dbn_t</span><span class="p">;</span>
+<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-19"></a>
+<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-20"></a>    <span class="k">auto</span> <span class="n">net</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_unique</span><span class="o">&lt;</span><span class="n">network_t</span><span class="o">&gt;</span><span class="p">();</span>
+<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-21"></a>
+<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-22"></a>    <span class="n">net</span><span class="o">-&gt;</span><span class="n">learning_rate</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">;</span>
+<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-23"></a>
+<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-24"></a>    <span class="c1">// Display the network and dataset</span>
+<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-25"></a>    <span class="n">net</span><span class="o">-&gt;</span><span class="n">display</span><span class="p">();</span>
+<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-26"></a>    <span class="n">dataset</span><span class="p">.</span><span class="n">display</span><span class="p">();</span>
+<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-27"></a>
+<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-28"></a>    <span class="c1">// Train the network</span>
+<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-29"></a>    <span class="n">net</span><span class="o">-&gt;</span><span class="n">fine_tune</span><span class="p">(</span><span class="n">dataset</span><span class="p">.</span><span class="n">train</span><span class="p">(),</span> <span class="mi">25</span><span class="p">);</span>
+<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-30"></a>
+<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-31"></a>    <span class="c1">// Test the network on test set</span>
+<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-32"></a>    <span class="n">net</span><span class="o">-&gt;</span><span class="n">evaluate</span><span class="p">(</span><span class="n">dataset</span><span class="p">.</span><span class="n">test</span><span class="p">());</span>
+<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-33"></a>
+<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-34"></a>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-35"></a><span class="p">}</span>
+</pre>
+</div>
+<div class="section" id="reproducible-results">
+<h2>Reproducible results</h2>
+<p>And last, but maybe not least, I've finally united all the random number
+generation code. This means that DLL can now set a global seed and that two
+training of the same network and data with the same seed will now produce
+exactly the same result.</p>
+<p>The usage is extremely simple:</p>
+<pre class="code c++"><a name="rest_code_ced2e2798d474784b972a6a58a52f49b-1"></a><span class="n">dll</span><span class="o">::</span><span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">);</span>
+</pre>
+</div>
+<div class="section" id="conclusion-3">
+<h2>Conclusion</h2>
+<p>After all these changes, I truly feel that the library is now in a much better
+state and could be useful in several projects. I hope that this will be useful
+to some more people. Moreover, as you can see by the performance results, the
+framework is now extremely efficient at training neural networks on CPU.</p>
+<p>If you want more information, you can consult the
+<a class="reference external" href="https://github.com/wichtounet/dll">dll Github Repository</a>. You can also add
+a comment to this post. If you find any problem on the project or have specific
+question or request, don't hesitate to open an issue on Github.</p>
+</div>
+</div>
+        </div>
+            
+        
+    <a href="posts/2017/07/update-on-deep-learning-library-dll-dropout-batch-normalization-adaptive-learning-rates.html#disqus_thread" data-disqus-identifier="cache/posts/2017/07/update-on-deep-learning-library-dll-dropout-batch-normalization-adaptive-learning-rates.html">Comments</a>
+
+
+        </article><article class="postbox h-entry post-text"><h1 class="p-name">
 <a href="posts/2017/06/jenkins-tip-send-notifications-fixed-builds-declarative-pipeline.html" class="u-url">Jenkins Tip: Send notifications on fixed builds in declarative pipeline</a>
         <br><small>  
              Posted: <time class="published dt-published" datetime="2017-06-07T09:52:57+02:00">2017-06-07 09:52</time></small>
@@ -870,7 +1101,7 @@ training.</p>
 configurations. This is not really an issue, since my personal machine at home
 is more powerful than what I have available here.</p>
 </div>
-<div class="section" id="results-3">
+<div class="section" id="results-2">
 <h2>Results</h2>
 <p>On a first experiment, I measured the difference before and after this change on
 the three executables of the library, with gcc:</p>
@@ -1022,7 +1253,7 @@ better at frontend than gcc, it is slower for optimizations. Note that this may
 also be an indication that clang performs more optimizations than gcc and may
 not be slower.</p>
 </div>
-<div class="section" id="conclusion-3">
+<div class="section" id="conclusion-2">
 <h2>Conclusion</h2>
 <p>By using some form of type erasing to simplify the templates types at compile
 time, I was able to reduce the overall compilation time of my Deep Learning
@@ -1113,7 +1344,7 @@ directly if you use the -fix option. Personally, I don't like this, but for
 a large code base and a carefully selected set of checks, this could be really
 useful. Note that not all the checks are automatically fixable by clang-tidy.</p>
 </div>
-<div class="section" id="results-2">
+<div class="section" id="results">
 <h2>Results</h2>
 <p>I have run clang-tidy on my cpp-utils library and here some interesting results.
 I have not run all the checks, here is the command I used:</p>
@@ -1192,7 +1423,7 @@ fix that so that clang-tidy can use on the other computer. I'll probably wait
 till the sonar-cxx 0.9.8 version is released before integrating all this in
 Sonarqube, but this is a great news for this plugin :)</p>
 </div>
-<div class="section" id="conclusion-2">
+<div class="section" id="conclusion">
 <h2>Conclusion</h2>
 <p>clang-tidy is C++ linter that can analyze your code and checks for hundreds of
 problems in it. With it, I have found some very interesting problems in the code
@@ -1206,210 +1437,6 @@ sonar-cxx 0.9.8 will be released.</p>
             
         
     <a href="posts/2017/03/clang-tidy-static-analysis-integration-in-sonarqube.html#disqus_thread" data-disqus-identifier="cache/posts/2017/03/clang-tidy-static-analysis-integration-in-sonarqube.html">Comments</a>
-
-
-        </article><article class="postbox h-entry post-text"><h1 class="p-name">
-<a href="posts/2017/03/disappointing-zapcc-performance-on-deep-learning-library-dll.html" class="u-url">Disappointing zapcc performance on Deep Learning Library (DLL)</a>
-        <br><small>  
-             Posted: <time class="published dt-published" datetime="2017-03-09T13:41:06+01:00">2017-03-09 13:41</time></small>
-</h1>
-        <hr>
-<div class="p-summary">
-        <div>
-<p>One week ago, zapcc 1.0 was released and I've observed it to be much faster than the other
-compilers in terms of compile time. This can be seen when
-<a class="reference external" href="http://baptiste-wicht.com/posts/2017/03/release-zapcc-10-fast-cpp-compiler.html">I tested it on my Expression Templates Library (ETL)</a>. It was almost four
-times faster than clang 3.9 and about 2.5 times faster than GCC.</p>
-<p>The ETL library is quite heavy to compile, but still reasonable. This is not the
-case for my Deep Learning Library (DLL) where compiling all the test cases takes
-a very long time. I have to admit that I have been going overboard with
-templates and such and I have now to pay the price. In practice, for the users
-of the library, this is not a big problem since only one or two neural networks
-will be compiled (and it will take hours to train), but in the test cases, there
-are hundreds of them and this is a huge pain. Anyway, enough with the ramble,
-I figured it would be very good to test zapcc on it and see what I can gain from
-using it.</p>
-<p>In this article, when I speak of a compiler thread, I mean an instance of the
-processor, so it's really a process in the Linux world.</p>
-<div class="section" id="results">
-<h2>Results</h2>
-<p>However, I soon realized that I would have more issues than I thought. The first
-problem is the memory consumed by zapcc. Indeed, it is based on clang and
-I always had problem with huge memory consumption from clang on this library and
-zapcc has even bigger memory consumption because some information is cached
-between runs. The amount of memory that zapcc is able to cache can be configured
-in the configuration file. By default, it can use 1.5Go of memory. When zapcc
-goes over the memory limit, it simply wipes out its caches. This means that all
-the gain for the next compilation will be lost, since the cache will have to be
-rebuilt from scratch. This is not a hard limit for the compilation itself.
-Indeed, if the compilation itself takes 3Go, it will still be able to complete
-it, but it is likely that the cache will be wiped after the compilation.</p>
-<p>When I tried compiling using several threads, it soon used all my memory and
-crashed. The same occurs with clang but I can still compile with 3 or 4 threads
-without too much issues on this computer. The same also occurs with GCC but it
-can still handle 4 or 5 threads (depending on the order of the compilation
-units).</p>
-<p>The tests are performed on my desktop computer at work, which is not really
-good... I have 12Go of RAM (I had to ask for extra...) and an old Sandy Bridge
-processor, but at least I have an SSD (also had to ask for extra).</p>
-<p>I started with testing with only one compiler thread. For zapcc, I set the
-maximum memory limit to 8Go. Even with such a limit, the zapcc server restarted
-more than 10 times during the compilation of the 84 test cases. After this first
-experiment, I increased the number of threads to 2 for each compiler, using 4Go
-limit for zapcc. The limit is for each server and each parallel thread will
-spawn a new server, so the effective limit is the number of threads times the
-limit. Even with two threads, I was unable to finish a compilation with zapcc.
-This is quite disappoint for me since clang is able to run with 4 threads in
-parallel. Moreover, a big problem with that is that the servers are not always
-killed when there is no no more memory, they just hang and use all the memory of
-the computer, which is evidently really inconvenient for service processes. When
-this happens with clang or gcc, the compiler simply crashes and the memory is
-released and make is interrupted. Since zapcc is not able to work with more than
-one thread on this computer, the results are the ones with one thread. I was
-also surprised to be able to compile the library with clang and four threads,
-this was not possible before clang-3.9.</p>
-<table border="1" class="docutils">
-<colgroup>
-<col width="36%">
-<col width="17%">
-<col width="17%">
-<col width="15%">
-<col width="15%">
-</colgroup>
-<thead valign="bottom"><tr>
-<th class="head">Compiler</th>
-<th class="head">-j1</th>
-<th class="head">-j2</th>
-<th class="head">-j3</th>
-<th class="head">-j4</th>
-</tr></thead>
-<tbody valign="top">
-<tr>
-<td>gcc-4.9.3</td>
-<td>2250.95</td>
-<td>1256.36</td>
-<td>912.67</td>
-<td>760.84</td>
-</tr>
-<tr>
-<td>gcc-5.3.0</td>
-<td>2305.37</td>
-<td>1279.49</td>
-<td>918.08</td>
-<td>741.38</td>
-</tr>
-<tr>
-<td>clang-3.9</td>
-<td>2047.61</td>
-<td><strong>1102.93</strong></td>
-<td><strong>899.13</strong></td>
-<td><strong>730.42</strong></td>
-</tr>
-<tr>
-<td>zapcc-1.0</td>
-<td><strong>1483.73</strong></td>
-<td>1483.73</td>
-<td>1483.73</td>
-<td>1483.73</td>
-</tr>
-<tr>
-<td>Difference against Clang</td>
-<td>-27.55%</td>
-<td>+25.69%</td>
-<td>+39.37%</td>
-<td>+50.77%</td>
-</tr>
-<tr>
-<td>Speedup VS GCC-5.3</td>
-<td>-35.66%</td>
-<td>+13.75%</td>
-<td>+38.09%</td>
-<td>+50.03%</td>
-</tr>
-<tr>
-<td>Speedup VS GCC-4.9</td>
-<td>-34.08%</td>
-<td>+15.30%</td>
-<td>+38.50%</td>
-<td>+48.75%</td>
-</tr>
-</tbody>
-</table>
-<p>If we look at the results with only one thread, we can see that there still are
-some significant improvements when using zapcc, but nowhere near as good as what
-was seen in the compilation of ETL. Here, the compilation time is reduced by 34%
-compared to gcc and by 27% compared to clang. This is not bad, since it is
-faster than the other compilers, but I would have expected better speedups. We
-can see that g++-4.9 is slightly faster than g++-5.3, but this is not really
-a significant difference. I'm actually very surprised to find that clang is
-faster than g++ on this experiment. On ETL, it is always very significantly
-slower and before, it was also significantly slower on DLL. I was so used to
-this, that I stopped using it on this project. I may have to reconsider my
-position when working on this project.</p>
-<p>Let's look at the results with more than two threads. Even with two threads,
-every compiler is faster than zapcc. Indeed, zapcc is slower than Clang by 25%
-and slower than GCC by about 15%. If we use more threads, the other compilers
-are becoming even faster and the slowdowns of zapcc are more important. When
-using four threads, zapcc is about 48% slower than gcc and about 50% slower than
-clang. This is really showing one big downside of zapcc that has a very large
-memory consumption. When it is used to compile really heavy template code, it is
-failing very early to use more processes. And even when there is enough memory,
-the speedups are not as great as for relatively simpler code.</p>
-<p>One may argue that this is not a fair comparison since zapcc does not have the
-same numbers of threads. However, considering that this is the best zapcc can do
-on this machine, I would argue that this is a fair comparison in this limited
-experimental setting. If we were to have a big machine for compilation, which
-I don't have at work, the zapcc results would likely be more interesting, but in
-this specific limited case, it shows that zapcc suffers from its high memory
-consumption. It should also be taken into account that this experiment was done
-with almost nothing else running on the machine (no browser for instance) to
-have as much memory as possible available for the compilers. This is not
-a common use case.  Most of the days, when I compile something, I have my
-browser open, which makes a large difference in memory available, and several
-other applications (but consoles and vim instances do not really consume memory
-:D).</p>
-<p>This experiment made me realize that the compilation times for this library were
-quickly becoming crazy. Most of the time, the complete test suite is only
-compiled on my Continuous Integration machine at home which has a much faster
-processor and much more RAM. Therefore, it is relatively fast since it uses more
-threads to compile.  Nevertheless, this is not a good point that the unit tests
-takes so much time to compile. I plan to split the test cases in several sets.
-Because, currently the real unit tests are compiled with the performance tests
-and other various tests. I'll probably end up generating three executables. This
-will help greatly during development. Moreover, I also have a technique to
-decrease the compilation time by erasing some template parameters at compilation
-time. This is already ready, but has currently a runtime overhead that I will
-try to remove and then use this technique everywhere to get back to reasonable
-compilation times. I'll also try to see if I can find obvious compilation
-bottlenecks in the code.</p>
-</div>
-<div class="section" id="conclusion">
-<h2>Conclusion</h2>
-<p>To conclude, while zapcc brings some very interesting compilation speedups in
-some cases like in my ETL library, it also has some downsides, namely
-<strong>huge memory consumption</strong>. This memory consumption may prevent the use of several
-compiler threads and render zapcc much less interesting than other compilers.</p>
-<p>When trying to compile my DLL library on a machine with 12Go of RAM with two
-zapcc threads, it was impossible for me to make it complete. While zapcc was
-faster with one thread than the other compilers, they were able to use up to
-four threads and in the end <strong>zapcc was about twice slower than clang</strong>.</p>
-<p>I knew that zapcc memory consumption was very large, but I would have not have
-expected something so critical. Another feature that would be interesting in
-zapcc would be to set a max memory hard limit for the server instead of simply
-a limit on the cache they are able to keep in memory. This would prevent hanging
-the complete computer when something goes wrong.</p>
-<p>I had a good surprise with clang that was actually faster than GCC and also able
-to work with four threads in parallel. This was not the case with previous
-version of clang. On ETL, it is still significantly slower than GCC though.</p>
-<p>For now, I'll continue using clang on this DLL project and use zapcc only on my
-ETL project. I'll also focus on improving the compilation time on this project
-and make it reasonable again.</p>
-</div>
-</div>
-        </div>
-            
-        
-    <a href="posts/2017/03/disappointing-zapcc-performance-on-deep-learning-library-dll.html#disqus_thread" data-disqus-identifier="cache/posts/2017/03/disappointing-zapcc-performance-on-deep-learning-library-dll.html">Comments</a>
 
 
         </article><nav class="postindexpager"><ul class="pager">
