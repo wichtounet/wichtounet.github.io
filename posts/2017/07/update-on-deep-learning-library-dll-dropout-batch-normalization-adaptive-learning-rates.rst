@@ -185,7 +185,7 @@ about 40% faster than TensorFlow and Keras which are the fastest framework after
 DLL on CPU on my tests).
 
 Overall, DLL is between 2 and 4 times faster than before and is always the
-fastest framework on CPU when trained on CPU.
+fastest framework for neural network training when training is performed on CPU.
 
 I proposed a talk about these optimizations and performance for Meeting C++ this
 year, but it has unfortunately not been accepted. We also have submitted
