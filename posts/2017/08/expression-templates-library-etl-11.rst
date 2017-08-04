@@ -11,10 +11,10 @@ for major version.
 
 It may be interesting to note that my machine learning framework (DLL), based on
 the ETL library, has shown to be faster than all the tested popular frameworks
-(Tensorflow, Keras, Caffee, Torch, DeepLearning4J) on CPU. I'll post more
-details on another post on the coming weeks, but that shows that special
-attention to performance has been done in this library and that it is well
-adapted to machine learning.
+(Tensorflow, Keras, Caffee, Torch, DeepLearning4J) for training various neural
+networks on CPU. I'll post more details on another post on the coming weeks, but
+that shows that special attention to performance has been done in this library
+and that it is well adapted to machine learning.
 
 For those of you that don't follow my blog, ETL is a library providing
 Expression Templates for computations on matrix and vector. For instance, if you
@@ -28,7 +28,7 @@ Or given vectors b, v, h and a matrix W, you could write code like this:
 
 .. code:: cpp
 
-    h = etl::sigmoid(b + v * W)
+    h = sigmoid(b + v * W)
 
 The goal of such library is two-fold. First, this makes the expression more
 readable and as close to math as possible. And then, it allows the library to
@@ -76,9 +76,9 @@ available with an addition parameter for the random generator, which can help to
 improve reproducibility or simply tune the random generator.
 
 I've also included support for adapters matrices. There are adapters for
-hermitian matrices, symmetric matrices and lower and upper triangular matrices. For now,
-the framework does not take advantage of this information, this will be done
-later, but the framework guarantee the different constrain on the content.
+hermitian matrices, symmetric matrices and lower and upper triangular matrices.
+For now, the framework does not take advantage of this information, this will be
+done later, but the framework guarantee the different constrain on the content.
 
 There are also a few new more minor features. Maybe not so minor, matrices can
 now be sliced into sub matrices. With that a matrix can be divided into several
@@ -94,85 +94,95 @@ booleans. In that case, they support logical operators such as and, not and or.
 Performance
 ===========
 
+I've always considered the performance of this library to be a feature itself.
+I consider the library to be quite fast, especially its convolution support,
+even though there is still room for improvement. Therefore, many improvements
+have been made to the performance of the library since the last release. As said
+before, this library was used in a machine learning framework which then proved
+faster than most popular neural network frameworks on CPU. I'll present here
+the most important new improvements to performance, in no real particular order,
+every bit being important in my opinion.
 
+First, several operations have been optimized to be faster.
 
+Multiplication of matrices or matrices and vectors are now much faster if one of
+the matrix is transposed. Instead of performing the slow transposition,
+different kernels are used in order to maximize performance without doing any
+transposition, although sometimes transposition is performed when it is faster.
+This leads to very significant improvements, up to 10 times faster in the best
+case. This is performed for vectorized kernels and also for BLAS and CUBLAS
+calls. These new kernels are also directly used when matrices of different
+storage order are used. For instance, multiplying a column major matrix with
+a row major matrix and storing the result in a column major matrix is now much
+more efficient than before. Moreover, the performance of the transpose operation
+itself is also much faster than before.
 
+A lot of machine learning operations have also been highly optimized. All the
+pooling and upsample operators are now parallelized and the most used kernel
+(2x2 pooling) is now more optimized. 4D convolution kernels (for machine
+learning) have been greatly improved. There are now very specialized vectorized
+kernels for classic kernel configurations (for instance 3x3 or 5x5) and the
+selection of implementations is now smarter than before. The support of padding
+is now much better than before for small amount of padding. Moreover, for small
+kernels the full convolution can now be evaluated using the valid convolution
+kernels directly with some padding, for much faster overall performance. The
+exponential operation is now vectorized which allows operations such as sigmoid
+or softmax to be much faster.
 
+Matrices and vector are automatically using aligned memory. This means that
+vectorized code can use aligned operations, which may be slightly faster.
+Moreover, matrices and vectors are now padded to a multiple of the vector size.
+This allows to remove the final non-vectorized remainder loop from the
+vectorized code. This is only done for the end of matrices, when they are
+accessed in flat way. Contrary to some frameworks, inner dimensions of the
+matrix are not padded.  Finally, accesses to 3D and 4D matrices is now much
+faster than before.
 
-
-
-TODO
-
-Several operations have been optimized for speed. All the pooling and upsample
-operators are now parallelized and the most used kernel (2x2 pooling) is now
-more optimized. 4D convolution kernels (for machine learning) have been greatly
-improved. There are now very specialized vectorized kernels for classic kernel
-configurations (for instance 3x3 or 5x5) and the selection of implementations is
-now smarter than before. The support of padding now much better than before for
-small amount of padding. Moreover, for small kernels the full convolution can
-now be evaluated using the valid convolution kernels directly with some padding,
-for much faster overall performance. Matrix-matrix multiplication with
-transposed matrices is now much faster when using BLAS kernels. Indeed, the
-transposition is not performed but handled inside the kernels. Moreover, the
-performance of the transposition itself is also much faster. Finally, accesses
-to 3D and 4D matrices is now much faster than before.
-
-The parallelization feature of ETL has been completely reworked. Before, there
-was a thread pool for each algorithm that was parallelized. Now, there is
+Then, the parallelization feature of ETL has been completely reworked. Before,
+there was a thread pool for each algorithm that was parallelized. Now, there is
 a global thread engine with one thread pool. Since parallelization is not nested
 in ETL, this improves performance slightly by greatly diminishing the number of
-threads that are created throughout an application.
+threads that are created throughout an application. Another big difference in
+parallel dispatching is that now it can detect good split based on alignment so
+that each split are aligned. This then allows the vectorization process to use
+aligned stores and loads instead of unaligned ones which may be faster on some
+processors.
 
 Vectorization has also been greatly improved in ETL. Integer operations are now
-automatically vectorized on processors that support this. The automatic
-vectorizer now is able to use non-temporal stores for very large operations.
-A non-temporal store bypasses the cache, thus gaining some time. Since very
-large matrices do not fit in cache, this is a net gain. Moreover, the alignment
-detection in the automatic vectorizer has also been improved. Support for
-Fused-Multiply-Add (FMA) operations has also been integrated in the algorithms
-that can make use of it. The matrix-matrix multiplications and vector-matrix
-multiplications now have optimized vectorized kernels. They also have versions
-for column-major matrices now. The old egblas version of the gemm, based on BLIS
-kernels, has been removed since it was only supporting double-precision and was
-not faster than the new vectorized algorithm. I plan to reintegrate a version of
-the GEMM based on BLIS in the future but with more optimizations and support for
-all precisions and integers. The sum and the dot product now also have
+automatically vectorized on processors that support this. Before, only floating
+points operations were vectorized. The automatic vectorizer now is able to use
+non-temporal stores for very large operations. A non-temporal store bypasses the
+cache, thus gaining some time. Since very large matrices do not fit in cache
+anyway and the cache would end up being overwritten anyway, this is a net gain.
+Moreover, the alignment detection in the automatic vectorizer has also been
+improved. Support for Fused-Multiply-Add (FMA) operations has also been
+integrated in the algorithms that can make use of it (multiplications and
+convolutions). The matrix-matrix multiplications and vector-matrix
+multiplications now have highly optimized vectorized kernels. They also have
+versions for column-major matrices now.  I plan to reintegrate a version of the
+GEMM based on BLIS in the future but with more optimizations and support for all
+precisions and integers, For my version is still slower than the simple
+vectorized version. The sum and the dot product operations now also have
 specialized vectorized implementations. The min and max operations are now
-automatically-vectorized.
+automatically-vectorized. Several others algorithms have also their own
+vectorized implementations.
 
-The GPU has also been almost completely reworked. Now, operations can be chained
-without any copies between GPU and CPU. Several new operations have also been
-added with support to GPU. Moreover, to complement operations that are not
+Last, but not least, the GPU support has also been almost completely reworked.
+Now, several operations can be chained without any copies between GPU and CPU.
+Several new operations have also been added with support to GPU (convolutions,
+pooling, sigmoid, ReLU, ...). Moreover, to complement operations that are not
 available in any of the supported NVIDIA libraries, I've created a simple
-library that can be used to add a few more GPU operations. Nevertheless a lot of
-operations are still missing and only algorithms are available not expressions
-(such as c = a + b * 1.0) that are entirely computed on CPU. I have plans to
-improve that further, but probably not before the version 1.2.
-
-* *Performance* Better dispatching for alignment
-* *Performance* Much faster multiplications between matrices of different major
-* *Performance* Highly improved performed of multiplications with transpose
-* *Performance* Vectorization of signed integer operations
-* *Performance* Faster CPU convolutions
-* *Performance* Better parallelization of convolutions
-* *Performance* Much better GEMM/GEMV/GEVM kernels (when BLAS not available)
-* *Performance* Reduced overhead for 3D/4D matrices access by indices
-* *Performance* Use of non-temporal stores for large matrices
-* *Performance* Forced alignment of matrices
-* *Performance* Force basic padding of vectors
-* *Performance* Better thread reuse
-* *Performance* Faster dot product
-* *Performance* Faster batched outer product
-* *Performance* Better usage of FMA
-* *Performance* SSE/AVX double-precision exponentiation
-* *Performance* Much faster Pooling for various dimensions
-
-* *GPU* Better usage of contexts
-* *GPU* Pooling and Upsample support
-* *GPU* batch_outer support
-* *GPU* sigmoid and RELU and derivatives
-* *GPU* Memory pool handling
-* *GPU* Avoid a lot of temporaries
+library that can be used to add a few more GPU operations.  Nevertheless a lot
+of operations are still missing and only algorithms are available not
+expressions (such as c = a + b * 1.0) that are entirely computed on CPU. I have
+plans to improve that further, probably for version 1.2. The different contexts
+necessary for NVIDIA library can now be cached (using an option from ETL),
+leading to much faster code. Only the main handle can be cached so far, I plan
+to try to cache all the descriptors, but I don't know yet when that will be
+ready. Finally, an option is also available to reuse GPU memory instead of
+directly releasing it to CUDA. This is using a custom memory pool and can save
+some time. Since this needs to be cleaned (by a call to etl::exit() or using
+ETL_PROLOGUE), this is only activated on demand.
 
 Other changes
 =============
@@ -233,6 +243,10 @@ For the future release, there always will tags pointing to the corresponding
 commits. I'm not following the git flow way, I'd rather try to have a more
 linear history with one eternal development branch, rather than an useless
 develop branch or a load of other branches for releases.
+
+The documentation is a bit sparse. There are a few examples and the Wiki, but
+there still is work to be done. If you have questions on how to use or configure
+the library, please don't hesitate.
 
 Don't hesitate to comment this post if you have any comment on this library or
 any question. You can also open an Issue on Github if you have a problem using
