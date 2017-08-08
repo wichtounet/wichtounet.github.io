@@ -44,7 +44,12 @@ In each case, a lot of warnings are enabled and the ETL options are the same.
 
 All the results have been gathered on a Gentoo machine running on Intel Core
 i7-2600 (Sandy Bridge...) @3.4GHz with 4 cores and 8 threads, 12Go of RAM and
-a SSD.
+a SSD. I do my best to isolate as much as possible the benchmark from
+perturbations and that my benchmark code is quite sound, it may well be that
+some results are not totally accurate. Moreover, some of the benchmarks are
+using multithreading, which may add some noise and unpredictability. When I was
+not sure about the results, I ran the benchmarks several time to confirm them
+and overall I'm confident of the results.
 
 Compilation Time
 ++++++++++++++++
@@ -72,14 +77,23 @@ Let's start with the results of the performance of the compilers themselves:
 Note: For Release_Debug and Benchmark, I only use three threads with zapcc,
 because 12Go of RAM is not enough memory for four threads.
 
-TODO
+There are some very significant differences between the different compilers.
+Overall, clang-4.0.1 is by far the fastest free compiler for Debug mode. When
+the tests are compiled with optimizations however, clang is falling behind.
+It's quite impressive how clang-4.0.1 manages to be so much faster than
+clang-3.9.1 both in debug mode and release mode. Really great work by the clang
+team here! With these optimizations, clang-4.0.1 is almost on par with gcc-7.1
+in release mode.  For GCC, it seems that the cost of optimization has been going
+up quite significantly. However, GCC 7.1 seems to have made optimization faster
+and standard compilation much faster as well. If we take into account zapcc,
+it's the fastest compiler on debug mode, but it's slower than several gcc
+versions on release mode.
 
-It's quite impressive how clang-4.0.1 manages to be faster than than
-clang-3.9.1.
-
-For GCC, it seems that the cost of optimization has been going up quite
-significantly. However, GCC 7.1 seems to have made optimization faster and
-standard compilation much faster as well.
+Overall, I'm quite impressed by the performance of clang-4.0.1 which seems
+really fast! I'll definitely make more tests with this new version of the
+compiler in the near future. It's also good to see that g++-7.1 also did make
+the build faster than gcc-6.3. However, the fastest gcc version for optimization
+is still gcc-4.9.4 which is already an old branch with low C++ standard support.
 
 Runtime Performance
 +++++++++++++++++++
@@ -114,7 +128,10 @@ vectors. Let's look first at the naive version:
 | zapcc++-1.0   | 61.14ns |  96.92ns | 125.95ns | 1.89us | 23.84us  | 285.80us | 1.24ms  | 1.92ms  | 2.55ms  | 3.16ms  | 6.34ms   |
 +---------------+---------+----------+----------+--------+----------+----------+---------+---------+---------+---------+----------+
 
-TODO
+The differences are not very significant between the different compilers. The
+clang-based compilers seem to be the compilers producing the fastest code.
+Interestingly, there seem to have been a big regression in gcc-6.3 for large
+containers, but that has been fixed in gcc-7.1.
 
 +---------------+---------+---------+----------+--------+---------+----------+---------+---------+---------+---------+----------+
 | dot (vec)     | 100     | 500     | 1000     | 10000  | 100000  | 1000000  | 2000000 | 3000000 | 4000000 | 5000000 | 10000000 |
@@ -134,7 +151,10 @@ TODO
 | zapcc++-1.0   | 45.11ns | 75.04ns | 111.28ns | 1.59us | 22.46us | 357.32us | 1.25ms  | 1.89ms  | 2.53ms  | 3.15ms  | 6.47ms   |
 +---------------+---------+---------+----------+--------+---------+----------+---------+---------+---------+---------+----------+
 
-TODO
+If we look at the optimized version, the differences are even slower. Again, the
+clang-based compilers are producing the fastest executables, but are closely
+followed by gcc, except for gcc-6.3 in which we can still see the same
+regression as before.
 
 Logistic Sigmoid
 ----------------
@@ -161,7 +181,11 @@ vectorization to compute it. Let's see how the different compilers fare:
 | zapcc++-1.0   | 7.51us | 5.26us | 6.48us | 28.86us | 258.31us | 1.95ms  |
 +---------------+--------+--------+--------+---------+----------+---------+
 
-TODO
+Interestingly, we can see that gcc-7.1 is the fastest for small vectors while
+clang-4.0 is the best for producing code for larger vectors. However, except for
+the biggest vector size, the difference is not really significantly. Apparently,
+there is a regression in zapcc (or clang-5.0) since it's slower than clang-4.0
+at the same level as clang-3.9.
 
 y = alpha * x + y (axpy)
 ------------------------
@@ -188,7 +212,11 @@ Let's see the results:
 | zapcc++-1.0   | 32.0ns | 54.0ns | 333ns | 3.32us | 38.7us | 447us   |
 +---------------+--------+--------+-------+--------+--------+---------+
 
-TODO
+Even on the biggest vector, this is a very fast operation, once vectorized and
+parallelized. At this speed, some of the differences observed may not be highly
+significant. Again clang-based versions are the fastest versions on this code,
+but by a small margin.  There also seems to be a slight regression in gcc-7.1,
+but again quite small.
 
 Matrix Matrix multiplication (GEMM)
 -----------------------------------
@@ -235,7 +263,14 @@ space, I've split the tables in two.
 | zapcc++-1.0   | 22.33ms | 75.80ms  | 181.27ms | 359.13ms | 0.63s | 1.02s | 1.52s | 2.24s | 3.21s |  5.62s |
 +---------------+---------+----------+----------+----------+-------+-------+-------+-------+-------+--------+
 
-TODO
+This time, the differences between the different compilers are very significant.
+The clang compilers are leading the way by a large margin here, with clang-4.0
+being the fastest of them (by another nice margin). Indeed, clang-4.0.1 is
+producing code that is, on average, about twice faster than the code generated
+by the best GCC compiler. Very interestingly as well, we can see a huge
+regression starting from GCC-5.4 and that is still here in GCC-7.1. Indeed, the
+best GCC version, in the tested versions, is again GCC-4.9.4. Clang is really
+doing an excellent job of compiling the GEMM code.
 
 +---------------+----------+--------+--------+----------+----------+---------+
 | sgemm (vec)   | 10       | 20     | 40     | 60       | 80       | 100     |
@@ -273,10 +308,25 @@ TODO
 | zapcc++-1.0   | 492.28us | 2.03ms | 3.90ms | 9.00ms | 14.31ms | 25.72ms | 37.09ms | 55.79ms | 67.88ms  | 119.92ms |
 +---------------+----------+--------+--------+--------+---------+---------+---------+---------+----------+----------+
 
-TODO
+As for the optimized version, it seems that the two families are reversed.
+Indeed, GCC is doing a better job than clang here, and although the margin is
+not as big as before, it's still significant. We can still observe a small
+regression in GCC versions because the 4.9 version is again the fastest. As for
+clang versions, it seems that clang-5.0 (used in zapcc) has had some performance
+improvements for this case.
+
+For this case of matrix-matrix multiplication, it's very impressive that the
+differences in the non-optimized code are so significant. And it's also
+impressive that each family of compilers has its own strength, clang being
+seemingly much better at handling unoptimized code while GCC is better at
+handling vectorized code.
 
 Convolution (2D)
 ----------------
+
+The last benchmark that I considered is the case of the valid convolution on 2D
+images. The code is quite similar to the GEMM code but more complicated to
+optimized due to cache locality.
 
 +--------------------+---------+---------+---------+---------+---------+---------+----------+----------+----------+
 | sconv2_valid (std) | 100x50  | 105x50  | 110x55  | 115x55  | 120x60  | 125x60  | 130x65   | 135x65   | 140x70   |
@@ -296,6 +346,10 @@ Convolution (2D)
 | zapcc++-1.0        | 15.29ms | 18.37ms | 22.00ms | 26.10ms | 30.75ms | 35.95ms |  41.85ms |  48.42ms |  55.74ms |
 +--------------------+---------+---------+---------+---------+---------+---------+----------+----------+----------+
 
+In that case, we can observe the same as for the GEMM. The clang-based versions
+are much producing significantly faster code than the GCC versions. Moreover, we
+can also observe the same large regression starting from GCC-5.4.
+
 +--------------------+----------+--------+--------+--------+--------+--------+--------+--------+--------+
 | sconv2_valid (vec) | 100x50   | 105x50 | 110x55 | 115x55 | 120x60 | 125x60 | 130x65 | 135x65 | 140x70 |
 +====================+==========+========+========+========+========+========+========+========+========+
@@ -314,7 +368,46 @@ Convolution (2D)
 | zapcc++-1.0        | 782.49us | 0.94ms | 1.06ms | 1.27ms | 1.62ms | 1.83ms | 2.24ms | 2.65ms | 2.85ms |
 +--------------------+----------+--------+--------+--------+--------+--------+--------+--------+--------+
 
+This time, clang manages to produce excellent results. Indeed, all the produced
+executables are significantly faster than the versions produced by GCC, except
+for GCC-7.1 which is producing similar results. The other versions of GCC are
+falling behind it seems. It seems that it was only for the GEMM that clang was
+having a lot of troubles handling the optimized code.
+
 Conclusion
 ++++++++++
 
-TODO
+Clang seems to have recently done a lot of optimizations regarding compilation
+time. Indeed, clang-4.0.1 is much faster for compilation than clang-3.9.
+Although GCC-7.1 is faster than GCC-6.3, all the GCC versions are slower than
+GCC-4.9.4 which is the fastest at compiling code with optimizations. GCC-7.1 is
+the fastest GCC version for compiling code in debug mode.
+
+In some cases, there is almost no difference between different compilers in the
+generated code. However, in more  complex algorithms such as the matrix-matrix
+multiplication or the two-dimensional convolution, the differences can be quite
+significant. In my tests, Clang have shown to be much better at compiling
+unoptimized code. However, and especially in the GEMM case, it seems to be worse
+than GCC at handling hand-optimized. I will investigate that case and try to
+tailor the code so that clang is having a better time with it.
+
+For me, it's really weird that the GCC regression, apparently starting from
+GCC-5.4, has still not been fixed in GCC 7.1. I was thinking of dropping support
+for GCC-4.9 in order to go full C++14 support, but now I may have to reconsider
+my position. However, seeing that GCC is generally the best at handling
+optimized code (especially for GEMM), I may be able to do the transition, since
+the optimized code will be used in most cases.
+
+As for zapcc, although it is still the fastest compiler in debug mode, with the
+new speed of clang-4.0.1, its margin is quite small. Moreover, on optimized
+build, it's not as fast as GCC. If you use clang and can have access to zapcc,
+it's still quite a good option to save some time.
+
+Overall, I have been quite pleased by clang-4.0.1 and GCC-7.1, the most recent
+versions I have been testing. It seems that they did quite some good work.
+I will definitely run some more tests with them and try to adapt the code. I'm
+still considering whether I will drop support for some older compilers.
+
+I hope this comparison was interesting :) My next post will probably be about
+the difference in performance between my machine learning framework and other
+frameworks to train neural networks.
