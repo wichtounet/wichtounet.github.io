@@ -4,7 +4,7 @@ First, take into account that some of these tips may depend on your configuratio
 
 In the examples, I use /dev/md0 as the raid array, you'll have to change this to your array name.
 
-The first 3 tips can be used even after the rebuild has started and you should the differences in real-time. But, these 3 tips will also be erased after each reboot.
+The first 3 tips can be used even after the rebuild has started and you should see the differences in real-time. But, these 3 tips will also be erased after each reboot.
 
 Increase speed limits
 #####################
@@ -56,6 +56,21 @@ These values are in 512B sector. You can set it to 32MB to be sure:
     blockdev --setra 65536 /dev/md0
 
 This can improve the performances, but don't expect this to be a game-changer unless it was configured really low at the first place.
+
+Tip: Reshape stuck at 0K/s
+##########################
+
+If reshape starts, but with a speed of 0K/s, you can try to issue this simple
+command:
+
+.. code:: bash
+
+    echo max > /sys/block/md0/md/sync_max
+
+And the reshape should start directly at your maximum speed.
+
+The solution is the same if you are growing any type of RAID level with parity
+(RAID5, RAID6, ...).
 
 Bonus: Speed up standard resync with a write-intent bitmap
 ##########################################################
