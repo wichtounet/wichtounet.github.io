@@ -18,8 +18,8 @@ The installation of Templar is much more convenient:
 .. code:: bash
 
     git clone https://github.com/schulmar/Templar.git
-    git checkout feature/templight2
     cd Templar
+    git checkout feature/templight2
     qmake .
     make
     sudo make install
