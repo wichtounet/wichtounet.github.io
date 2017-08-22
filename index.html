@@ -96,6 +96,124 @@
             <div id="content"></div>
             
         <article class="postbox h-entry post-text"><h1 class="p-name">
+<a href="posts/2017/08/simplify-your-type-traits-with-c%2B%2B14-variable-templates.html" class="u-url">Simplify your type traits with C++14 variable templates</a>
+        <br><small>  
+             Posted: <time class="published dt-published" datetime="2017-08-22T14:45:11+02:00">2017-08-22 14:45</time></small>
+</h1>
+        <hr>
+<div class="p-summary">
+        <div>
+<p>Often if you write templated code, you have to write and use a lot of different
+traits. In this article, I'll focus on the traits that are representing values,
+typically a boolean value. For instance, std::is_const, std::is_same or
+std::is_reference are type traits provided by the STL. They are giving you some
+information at compile time for a certain type. If you need to write a type
+traits, let's say is_float, here is how you would maybe do it in C++11:</p>
+<pre class="code c++"><a name="rest_code_96122f3b7f1c4cf9bfdfe98be586e88a-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<a name="rest_code_96122f3b7f1c4cf9bfdfe98be586e88a-2"></a><span class="k">struct</span> <span class="n">is_float</span> <span class="p">{</span>
+<a name="rest_code_96122f3b7f1c4cf9bfdfe98be586e88a-3"></a>    <span class="k">static</span> <span class="k">constexpr</span> <span class="kt">bool</span> <span class="n">value</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="kt">float</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">;</span>
+<a name="rest_code_96122f3b7f1c4cf9bfdfe98be586e88a-4"></a><span class="p">};</span>
+</pre>
+<p>or a bit nicer with a template type alias and std::integral constant:</p>
+<pre class="code c++"><a name="rest_code_a208154b2cad4415b3163cb20d6f9991-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<a name="rest_code_a208154b2cad4415b3163cb20d6f9991-2"></a><span class="k">using</span> <span class="n">is_float</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">integral_constant</span><span class="o">&lt;</span><span class="kt">bool</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="kt">float</span><span class="o">&gt;::</span><span class="n">value</span><span class="o">&gt;</span><span class="p">;</span>
+</pre>
+<p>Note that in some cases, you cannot use the using technique since it cannot be
+specialized and you often need specialization to write some more advanced
+traits.</p>
+<p>And then you would use your traits to do something specific based on that
+information. For instance with a very basic example:</p>
+<pre class="code C++"><a name="rest_code_2af5859c0eff42cc8013c0c392e98953-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<a name="rest_code_2af5859c0eff42cc8013c0c392e98953-2"></a><span class="kt">void</span> <span class="n">test</span><span class="p">(</span><span class="n">T</span> <span class="n">t</span><span class="p">){</span>
+<a name="rest_code_2af5859c0eff42cc8013c0c392e98953-3"></a>    <span class="k">if</span> <span class="p">(</span><span class="n">is_float</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">){</span>
+<a name="rest_code_2af5859c0eff42cc8013c0c392e98953-4"></a>        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"I'm a float"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<a name="rest_code_2af5859c0eff42cc8013c0c392e98953-5"></a>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<a name="rest_code_2af5859c0eff42cc8013c0c392e98953-6"></a>        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"I'm not a float"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<a name="rest_code_2af5859c0eff42cc8013c0c392e98953-7"></a>    <span class="p">}</span>
+<a name="rest_code_2af5859c0eff42cc8013c0c392e98953-8"></a><span class="p">}</span>
+</pre>
+<p>Really nothing fancy here, but that will be enough as examples.</p>
+<p>Even though all this works pretty, it can be made better on two points. First,
+every time you use a traits, you need to use the value member (via ::value).
+Secondly, every time you declare a new traits, you have to declare a new type or
+a type alias. But all you want is a boolean value.</p>
+<p>C++14 introduced a new feature, variable templates. As their name indicates,
+they are variables, parametrized with a type. This allows us to write type
+traits without using a type alias or struct, meaning we have a real value
+instead of a type. If we rewrite our is_float traits with variable templates, we
+have the following:</p>
+<pre class="code c++"><a name="rest_code_3af5c39da0bb49128dc309d1877438e9-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<a name="rest_code_3af5c39da0bb49128dc309d1877438e9-2"></a><span class="k">constexpr</span> <span class="n">is_float</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="kt">float</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">;</span>
+</pre>
+<p>I think it's much nicer, the intent is clearly stated and there is no
+unnecessary code. Moreover, it's also nicer to use:</p>
+<pre class="code C++"><a name="rest_code_1f5952620dfc49948dd9cb64dd69ed79-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<a name="rest_code_1f5952620dfc49948dd9cb64dd69ed79-2"></a><span class="kt">void</span> <span class="n">test</span><span class="p">(</span><span class="n">T</span> <span class="n">t</span><span class="p">){</span>
+<a name="rest_code_1f5952620dfc49948dd9cb64dd69ed79-3"></a>    <span class="k">if</span> <span class="p">(</span><span class="n">is_float</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">){</span>
+<a name="rest_code_1f5952620dfc49948dd9cb64dd69ed79-4"></a>        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"I'm a float"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<a name="rest_code_1f5952620dfc49948dd9cb64dd69ed79-5"></a>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<a name="rest_code_1f5952620dfc49948dd9cb64dd69ed79-6"></a>        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"I'm not a float"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<a name="rest_code_1f5952620dfc49948dd9cb64dd69ed79-7"></a>    <span class="p">}</span>
+<a name="rest_code_1f5952620dfc49948dd9cb64dd69ed79-8"></a><span class="p">}</span>
+</pre>
+<p>No more ::value everywhere :) I think it's really cool.</p>
+<p>Note that, unlike type alias template, they can be specialized, either fully or
+partially, so no more limitation on that side.</p>
+<p>Interestingly, variable templates are used in C++17 to provide helpers for each
+type traits with values. For instance, std::is_same will have a std::is_same_v
+helper that is a variable template. With that, we can simplify our traits a bit
+more:</p>
+<pre class="code c++"><a name="rest_code_126d5bb8e2e04f34ba0e392d54119bb1-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<a name="rest_code_126d5bb8e2e04f34ba0e392d54119bb1-2"></a><span class="k">constexpr</span> <span class="n">is_float</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">is_same_v</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="kt">float</span><span class="o">&gt;</span><span class="p">;</span>
+</pre>
+<p>Personally, I replaced all the type traits inside ETL using variable templates.
+If you don't want to do it, you can also introduce helpers like in the C++17 STL
+and start using the wrappers when you see fit so that you don't break any code.</p>
+<p>If you want to use this feature, you need a C++14 compiler, such as any version
+from GCC5 family or clang 3.6.</p>
+<p>Unfortunately there is a bug in both clang (fixed in clang 3.7) and GCC (fixed
+in GCC 6 only) that you may encounter if you start using variable templates in
+template classes or variable templates in another variable templates. If you
+plan to use variable templates inside a template, such as something like this:</p>
+<pre class="code c++"><a name="rest_code_6c8c6d58fdbe46f19eb974dd621e5abb-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<a name="rest_code_6c8c6d58fdbe46f19eb974dd621e5abb-2"></a><span class="k">struct</span> <span class="n">outer_traits</span> <span class="p">{</span>
+<a name="rest_code_6c8c6d58fdbe46f19eb974dd621e5abb-3"></a>    <span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">X</span><span class="o">&gt;</span>
+<a name="rest_code_6c8c6d58fdbe46f19eb974dd621e5abb-4"></a>    <span class="k">static</span> <span class="k">constexpr</span> <span class="kt">bool</span> <span class="n">sub_traits</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">X</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">;</span>
+<a name="rest_code_6c8c6d58fdbe46f19eb974dd621e5abb-5"></a><span class="p">};</span>
+<a name="rest_code_6c8c6d58fdbe46f19eb974dd621e5abb-6"></a>
+<a name="rest_code_6c8c6d58fdbe46f19eb974dd621e5abb-7"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span> <span class="n">X</span><span class="o">&gt;</span>
+<a name="rest_code_6c8c6d58fdbe46f19eb974dd621e5abb-8"></a><span class="k">constexpr</span> <span class="kt">bool</span> <span class="n">outer_helper</span> <span class="o">=</span> <span class="n">outer_traits</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;::</span><span class="k">template</span> <span class="n">sub_traits</span><span class="o">&lt;</span><span class="n">X</span><span class="o">&gt;</span><span class="p">;</span>
+<a name="rest_code_6c8c6d58fdbe46f19eb974dd621e5abb-9"></a>
+<a name="rest_code_6c8c6d58fdbe46f19eb974dd621e5abb-10"></a><span class="kt">int</span> <span class="nf">main</span><span class="p">(){</span>
+<a name="rest_code_6c8c6d58fdbe46f19eb974dd621e5abb-11"></a>    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">outer_helper</span><span class="o">&lt;</span><span class="kt">float</span><span class="p">,</span> <span class="kt">float</span><span class="o">&gt;</span><span class="p">;</span>
+<a name="rest_code_6c8c6d58fdbe46f19eb974dd621e5abb-12"></a>
+<a name="rest_code_6c8c6d58fdbe46f19eb974dd621e5abb-13"></a>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<a name="rest_code_6c8c6d58fdbe46f19eb974dd621e5abb-14"></a><span class="p">}</span>
+</pre>
+<p>You will encounter a not-helpful at all error message with GCC5 family, such as:</p>
+<pre class="code text"><a name="rest_code_afd827074c364035a782b1c816b4a8c9-1"></a>test.cpp: In instantiation of ‘constexpr const bool outer_helper&lt;float, float&gt;’:
+<a name="rest_code_afd827074c364035a782b1c816b4a8c9-2"></a>test.cpp:14:22:   required from here
+<a name="rest_code_afd827074c364035a782b1c816b4a8c9-3"></a>test.cpp:11:20: error: ‘template&lt;class X&gt; constexpr const bool outer_traits&lt;float&gt;::sub_traits&lt;X&gt;’ is not a function template
+<a name="rest_code_afd827074c364035a782b1c816b4a8c9-4"></a>     constexpr bool outer_helper = outer_traits&lt;T&gt;::template sub_trait
+<a name="rest_code_afd827074c364035a782b1c816b4a8c9-5"></a>                    ^
+<a name="rest_code_afd827074c364035a782b1c816b4a8c9-6"></a>test.cpp:11:20: error: ‘sub_traits&lt;X&gt;’ is not a member of ‘outer_traits&lt;float&gt;’
+</pre>
+<p>It comes from a bug in the handling of variable templates as dependent names. If
+you don't come in this cases, you can use GCC5 family directly, otherwise,
+you'll have to use GCC6 family only.</p>
+<p>I hope this can help some of you to improve your type traits or at least to
+discover the power of the new variable templates. Personally, I've rewritten all
+the traits from the ETL library using this new feature and I'm pretty satisfied
+with the result. Of course, that means that the compiler support was reduced,
+but since I don't have many users, it's not a real issue.</p>
+</div>
+        </div>
+            
+        
+    <a href="posts/2017/08/simplify-your-type-traits-with-c%2B%2B14-variable-templates.html#disqus_thread" data-disqus-identifier="cache/posts/2017/08/simplify-your-type-traits-with-c++14-variable-templates.html">Comments</a>
+
+
+        </article><article class="postbox h-entry post-text"><h1 class="p-name">
 <a href="posts/2017/08/how-to-fix-mdadm-raid5-raid6-growing-stuck-at-0ks.html" class="u-url">How to fix mdadm RAID5 / RAID6 growing stuck at 0K/s ?</a>
         <br><small>  
              Posted: <time class="published dt-published" datetime="2017-08-12T12:28:43+02:00">2017-08-12 12:28</time></small>
@@ -2487,85 +2605,6 @@ instance CUDA configuration if you want GPU support.</p>
             
         
     <a href="posts/2017/05/speed-up-tensorflow-inference-compiling-from-source.html#disqus_thread" data-disqus-identifier="cache/posts/2017/05/speed-up-tensorflow-inference-compiling-from-source.html">Comments</a>
-
-
-        </article><article class="postbox h-entry post-text"><h1 class="p-name">
-<a href="posts/2017/05/update-on-expression-templates-library-etl.html" class="u-url">Update on Expression Templates Library (ETL)</a>
-        <br><small>  
-             Posted: <time class="published dt-published" datetime="2017-05-06T21:31:48+02:00">2017-05-06 21:31</time></small>
-</h1>
-        <hr>
-<div class="p-summary">
-        <div>
-<p>It's been a while since I've <a class="reference external" href="https://baptiste-wicht.com/posts/2016/09/expression-templates-library-etl-10.html">released the version 1.0 of ETL</a>. There is some work to do before I release the next version, but I wanted to give you a quick update on what has been going on for ETL in the last months. There has been a lot of changes in the library and the next version will be a major update when I'm done with some refactorings and improvements.</p>
-<p>Thanks to my thesis supervisor, the project now has a logo:</p>
-<img alt="ETL Logo" class="align-center" src="images/logo.png"><p>There are quite a few new features, although probably nothing really major. The
-support for square root has been improved with cubic root and inverse root.
-Vectors can now be transformed using floor and ceil. Cross product of vector has
-been implemented as well. Batched outer product and batched bias averaging (for
-machine learning) are now supported. Reductions have also been improved with
-absolute sum and mean (asum/asum) support and min_index and max_index. argmax
-can now be used to get the max index in each sub dimensions. Matrix can now be
-decomposed into their Q/R decomposition rather than only their PALU
-decomposition. The matrices can now be sliced by getting only a sub part of the
-matrix. The pooling operators  have also been improved with stride and padding
-support. Matrices and vectors can also be shuffled. Moreover, a few adapters
-are now available for hermitian matrices, symmetric matrices and lower and upper
-matrices. So far the support for these adapters is not huge, but they are
-guaranteed to validate their constraints.</p>
-<p>Several operations have been optimized for speed. All the pooling and upsample
-operators are now parallelized and the most used kernel (2x2 pooling) is now
-more optimized. 4D convolution kernels (for machine learning) have been greatly
-improved. There are now very specialized vectorized kernels for classic kernel
-configurations (for instance 3x3 or 5x5) and the selection of implementations is
-now smarter than before. The support of padding now much better than before for
-small amount of padding. Moreover, for small kernels the full convolution can
-now be evaluated using the valid convolution kernels directly with some padding,
-for much faster overall performance. Matrix-matrix multiplication with
-transposed matrices is now much faster when using BLAS kernels. Indeed, the
-transposition is not performed but handled inside the kernels. Moreover, the
-performance of the transposition itself is also much faster. Finally, accesses
-to 3D and 4D matrices is now much faster than before.</p>
-<p>The parallelization feature of ETL has been completely reworked. Before, there
-was a thread pool for each algorithm that was parallelized. Now, there is
-a global thread engine with one thread pool. Since parallelization is not nested
-in ETL, this improves performance slightly by greatly diminishing the number of
-threads that are created throughout an application.</p>
-<p>Vectorization has also been greatly improved in ETL. Integer operations are now
-automatically vectorized on processors that support this. The automatic
-vectorizer now is able to use non-temporal stores for very large operations.
-A non-temporal store bypasses the cache, thus gaining some time. Since very
-large matrices do not fit in cache, this is a net gain. Moreover, the alignment
-detection in the automatic vectorizer has also been improved. Support for
-Fused-Multiply-Add (FMA) operations has also been integrated in the algorithms
-that can make use of it. The matrix-matrix multiplications and vector-matrix
-multiplications now have optimized vectorized kernels. They also have versions
-for column-major matrices now. The old egblas version of the gemm, based on BLIS
-kernels, has been removed since it was only supporting double-precision and was
-not faster than the new vectorized algorithm. I plan to reintegrate a version of
-the GEMM based on BLIS in the future but with more optimizations and support for
-all precisions and integers. The sum and the dot product now also have
-specialized vectorized implementations. The min and max operations are now
-automatically-vectorized.</p>
-<p>The GPU has also been almost completely reworked. Now, operations can be chained
-without any copies between GPU and CPU. Several new operations have also been
-added with support to GPU. Moreover, to complement operations that are not
-available in any of the supported NVIDIA libraries, I've created a simple
-library that can be used to add a few more GPU operations. Nevertheless a lot of
-operations are still missing and only algorithms are available not expressions
-(such as c = a + b * 1.0) that are entirely computed on CPU. I have plans to
-improve that further, but probably not before the version 1.2.</p>
-<p>There also have been a lot of refactorings in the code of the library. A lot of
-expressions now have less overhead and are specialized for performance.
-Moreover, temporary expressions are currently being reworked in order to be more
-simple and maintainable and easier to optimize in the future.</p>
-<p>Finally, there also was quite a few bug fixes. Most of them have been found by
-the use of the library in the Deep Learning Library (DLL) project.</p>
-</div>
-        </div>
-            
-        
-    <a href="posts/2017/05/update-on-expression-templates-library-etl.html#disqus_thread" data-disqus-identifier="cache/posts/2017/05/update-on-expression-templates-library-etl.html">Comments</a>
 
 
         </article><nav class="postindexpager"><ul class="pager">
