@@ -53,7 +53,7 @@ have the following:
 .. code:: c++
 
    template <typename T>
-   constexpr is_float = std::is_same<T, float>::value;
+   constexpr bool is_float = std::is_same<T, float>::value;
 
 I think it's much nicer, the intent is clearly stated and there is no
 unnecessary code. Moreover, it's also nicer to use:
@@ -82,7 +82,7 @@ more:
 .. code:: c++
 
    template <typename T>
-   constexpr is_float = std::is_same_v<T, float>;
+   constexpr bool is_float = std::is_same_v<T, float>;
 
 Personally, I replaced all the type traits inside ETL using variable templates.
 If you don't want to do it, you can also introduce helpers like in the C++17 STL
@@ -93,8 +93,9 @@ from GCC5 family or clang 3.6.
 
 Unfortunately there is a bug in both clang (fixed in clang 3.7) and GCC (fixed
 in GCC 6 only) that you may encounter if you start using variable templates in
-template classes or variable templates in another variable templates. If you
-plan to use variable templates inside a template, such as something like this:
+template classes or variable templates used in another variable templates. If
+you plan to use variable templates inside a template, such as something like
+this:
 
 .. code:: c++
 
