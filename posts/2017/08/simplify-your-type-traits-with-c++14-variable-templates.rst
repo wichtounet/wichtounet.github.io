@@ -98,7 +98,8 @@ If you don't want to do it, you can also introduce helpers like in the C++17 STL
 and start using the wrappers when you see fit so that you don't break any code.
 
 If you want to use this feature, you need a C++14 compiler, such as any version
-from GCC5 family or clang 3.6.
+from GCC5 family or clang 3.6. Although I haven't tested, it should also work on
+Microsoft VS2015 Update 2.
 
 Unfortunately there is a bug in both clang (fixed in clang 3.7) and GCC (fixed
 in GCC 6 only) that you may encounter if you start using variable templates in
