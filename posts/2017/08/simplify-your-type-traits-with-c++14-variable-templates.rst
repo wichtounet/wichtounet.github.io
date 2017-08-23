@@ -19,6 +19,15 @@ or a bit nicer with a template type alias and std::integral constant:
    template <typename T>
    using is_float = std::integral_constant<bool, std::is_same<T, float>::value>;
 
+or since is_same is itself a type traits, you can also directly alias it:
+
+.. code:: c++
+
+   template <typename T>
+   using is_float = std::is_same<T, float>;
+
+This makes for some very nice syntax, but we still have a type rather than a value.
+
 Note that in some cases, you cannot use the using technique since it cannot be
 specialized and you often need specialization to write some more advanced
 traits.

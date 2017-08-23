@@ -109,28 +109,33 @@ typically a boolean value. For instance, std::is_const, std::is_same or
 std::is_reference are type traits provided by the STL. They are giving you some
 information at compile time for a certain type. If you need to write a type
 traits, let's say is_float, here is how you would maybe do it in C++11:</p>
-<pre class="code c++"><a name="rest_code_f8c8bdcdefb543fc9ddc3381e4c1c16f-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
-<a name="rest_code_f8c8bdcdefb543fc9ddc3381e4c1c16f-2"></a><span class="k">struct</span> <span class="n">is_float</span> <span class="p">{</span>
-<a name="rest_code_f8c8bdcdefb543fc9ddc3381e4c1c16f-3"></a>    <span class="k">static</span> <span class="k">constexpr</span> <span class="kt">bool</span> <span class="n">value</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="kt">float</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">;</span>
-<a name="rest_code_f8c8bdcdefb543fc9ddc3381e4c1c16f-4"></a><span class="p">};</span>
+<pre class="code c++"><a name="rest_code_b7d02eca76314827bf39fce883c7ff65-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<a name="rest_code_b7d02eca76314827bf39fce883c7ff65-2"></a><span class="k">struct</span> <span class="n">is_float</span> <span class="p">{</span>
+<a name="rest_code_b7d02eca76314827bf39fce883c7ff65-3"></a>    <span class="k">static</span> <span class="k">constexpr</span> <span class="kt">bool</span> <span class="n">value</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="kt">float</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">;</span>
+<a name="rest_code_b7d02eca76314827bf39fce883c7ff65-4"></a><span class="p">};</span>
 </pre>
 <p>or a bit nicer with a template type alias and std::integral constant:</p>
-<pre class="code c++"><a name="rest_code_2a9bdb5af7a147fdb44aa84ab3ae1731-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
-<a name="rest_code_2a9bdb5af7a147fdb44aa84ab3ae1731-2"></a><span class="k">using</span> <span class="n">is_float</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">integral_constant</span><span class="o">&lt;</span><span class="kt">bool</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="kt">float</span><span class="o">&gt;::</span><span class="n">value</span><span class="o">&gt;</span><span class="p">;</span>
+<pre class="code c++"><a name="rest_code_900e8b5205584f3391506d277ef52874-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<a name="rest_code_900e8b5205584f3391506d277ef52874-2"></a><span class="k">using</span> <span class="n">is_float</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">integral_constant</span><span class="o">&lt;</span><span class="kt">bool</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="kt">float</span><span class="o">&gt;::</span><span class="n">value</span><span class="o">&gt;</span><span class="p">;</span>
 </pre>
+<p>or since is_same is itself a type traits, you can also directly alias it:</p>
+<pre class="code c++"><a name="rest_code_f0502e648c9e4908ad25842a7c114f2d-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<a name="rest_code_f0502e648c9e4908ad25842a7c114f2d-2"></a><span class="k">using</span> <span class="n">is_float</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="kt">float</span><span class="o">&gt;</span><span class="p">;</span>
+</pre>
+<p>This makes for some very nice syntax, but we still have a type rather than a value.</p>
 <p>Note that in some cases, you cannot use the using technique since it cannot be
 specialized and you often need specialization to write some more advanced
 traits.</p>
 <p>And then you would use your traits to do something specific based on that
 information. For instance with a very basic example:</p>
-<pre class="code C++"><a name="rest_code_7f7ad3492f164537b8e973df41aebb3f-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
-<a name="rest_code_7f7ad3492f164537b8e973df41aebb3f-2"></a><span class="kt">void</span> <span class="n">test</span><span class="p">(</span><span class="n">T</span> <span class="n">t</span><span class="p">){</span>
-<a name="rest_code_7f7ad3492f164537b8e973df41aebb3f-3"></a>    <span class="k">if</span> <span class="p">(</span><span class="n">is_float</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">){</span>
-<a name="rest_code_7f7ad3492f164537b8e973df41aebb3f-4"></a>        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"I'm a float"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
-<a name="rest_code_7f7ad3492f164537b8e973df41aebb3f-5"></a>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-<a name="rest_code_7f7ad3492f164537b8e973df41aebb3f-6"></a>        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"I'm not a float"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
-<a name="rest_code_7f7ad3492f164537b8e973df41aebb3f-7"></a>    <span class="p">}</span>
-<a name="rest_code_7f7ad3492f164537b8e973df41aebb3f-8"></a><span class="p">}</span>
+<pre class="code C++"><a name="rest_code_324249a8154d4dbf9afc8d752541dc61-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<a name="rest_code_324249a8154d4dbf9afc8d752541dc61-2"></a><span class="kt">void</span> <span class="n">test</span><span class="p">(</span><span class="n">T</span> <span class="n">t</span><span class="p">){</span>
+<a name="rest_code_324249a8154d4dbf9afc8d752541dc61-3"></a>    <span class="k">if</span> <span class="p">(</span><span class="n">is_float</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">){</span>
+<a name="rest_code_324249a8154d4dbf9afc8d752541dc61-4"></a>        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"I'm a float"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<a name="rest_code_324249a8154d4dbf9afc8d752541dc61-5"></a>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<a name="rest_code_324249a8154d4dbf9afc8d752541dc61-6"></a>        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"I'm not a float"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<a name="rest_code_324249a8154d4dbf9afc8d752541dc61-7"></a>    <span class="p">}</span>
+<a name="rest_code_324249a8154d4dbf9afc8d752541dc61-8"></a><span class="p">}</span>
 </pre>
 <p>Really nothing fancy here, but that will be enough as examples.</p>
 <p>Even though all this works pretty, it can be made better on two points. First,
@@ -142,19 +147,19 @@ they are variables, parametrized with a type. This allows us to write type
 traits without using a type alias or struct, meaning we have a real value
 instead of a type. If we rewrite our is_float traits with variable templates, we
 have the following:</p>
-<pre class="code c++"><a name="rest_code_10fbc4b7502a4fcf9f2c22ad8c7db7c7-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
-<a name="rest_code_10fbc4b7502a4fcf9f2c22ad8c7db7c7-2"></a><span class="k">constexpr</span> <span class="kt">bool</span> <span class="n">is_float</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="kt">float</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">;</span>
+<pre class="code c++"><a name="rest_code_e34452c3bc824eeab4fe277112d7c733-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<a name="rest_code_e34452c3bc824eeab4fe277112d7c733-2"></a><span class="k">constexpr</span> <span class="kt">bool</span> <span class="n">is_float</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="kt">float</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">;</span>
 </pre>
 <p>I think it's much nicer, the intent is clearly stated and there is no
 unnecessary code. Moreover, it's also nicer to use:</p>
-<pre class="code C++"><a name="rest_code_337f05e264324b2e8e1bece17cd3dc51-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
-<a name="rest_code_337f05e264324b2e8e1bece17cd3dc51-2"></a><span class="kt">void</span> <span class="n">test</span><span class="p">(</span><span class="n">T</span> <span class="n">t</span><span class="p">){</span>
-<a name="rest_code_337f05e264324b2e8e1bece17cd3dc51-3"></a>    <span class="k">if</span> <span class="p">(</span><span class="n">is_float</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">){</span>
-<a name="rest_code_337f05e264324b2e8e1bece17cd3dc51-4"></a>        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"I'm a float"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
-<a name="rest_code_337f05e264324b2e8e1bece17cd3dc51-5"></a>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-<a name="rest_code_337f05e264324b2e8e1bece17cd3dc51-6"></a>        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"I'm not a float"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
-<a name="rest_code_337f05e264324b2e8e1bece17cd3dc51-7"></a>    <span class="p">}</span>
-<a name="rest_code_337f05e264324b2e8e1bece17cd3dc51-8"></a><span class="p">}</span>
+<pre class="code C++"><a name="rest_code_416ce9c9027c4387907eabcbd5ac92fe-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<a name="rest_code_416ce9c9027c4387907eabcbd5ac92fe-2"></a><span class="kt">void</span> <span class="n">test</span><span class="p">(</span><span class="n">T</span> <span class="n">t</span><span class="p">){</span>
+<a name="rest_code_416ce9c9027c4387907eabcbd5ac92fe-3"></a>    <span class="k">if</span> <span class="p">(</span><span class="n">is_float</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">){</span>
+<a name="rest_code_416ce9c9027c4387907eabcbd5ac92fe-4"></a>        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"I'm a float"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<a name="rest_code_416ce9c9027c4387907eabcbd5ac92fe-5"></a>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<a name="rest_code_416ce9c9027c4387907eabcbd5ac92fe-6"></a>        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"I'm not a float"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<a name="rest_code_416ce9c9027c4387907eabcbd5ac92fe-7"></a>    <span class="p">}</span>
+<a name="rest_code_416ce9c9027c4387907eabcbd5ac92fe-8"></a><span class="p">}</span>
 </pre>
 <p>No more ::value everywhere :) I think it's really cool.</p>
 <p>Note that, unlike type alias template, they can be specialized, either fully or
@@ -163,8 +168,8 @@ partially, so no more limitation on that side.</p>
 type traits with values. For instance, std::is_same will have a std::is_same_v
 helper that is a variable template. With that, we can simplify our traits a bit
 more:</p>
-<pre class="code c++"><a name="rest_code_f15078ab6ae441808cd337012c3db350-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
-<a name="rest_code_f15078ab6ae441808cd337012c3db350-2"></a><span class="k">constexpr</span> <span class="kt">bool</span> <span class="n">is_float</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">is_same_v</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="kt">float</span><span class="o">&gt;</span><span class="p">;</span>
+<pre class="code c++"><a name="rest_code_fa2100a0b9bf4b06b6f9d5bf1e4f624b-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<a name="rest_code_fa2100a0b9bf4b06b6f9d5bf1e4f624b-2"></a><span class="k">constexpr</span> <span class="kt">bool</span> <span class="n">is_float</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">is_same_v</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="kt">float</span><span class="o">&gt;</span><span class="p">;</span>
 </pre>
 <p>Personally, I replaced all the type traits inside ETL using variable templates.
 If you don't want to do it, you can also introduce helpers like in the C++17 STL
@@ -176,28 +181,28 @@ in GCC 6 only) that you may encounter if you start using variable templates in
 template classes or variable templates used in another variable templates. If
 you plan to use variable templates inside a template, such as something like
 this:</p>
-<pre class="code c++"><a name="rest_code_7d421d02bbda4443ba4a14a41954c3cc-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
-<a name="rest_code_7d421d02bbda4443ba4a14a41954c3cc-2"></a><span class="k">struct</span> <span class="n">outer_traits</span> <span class="p">{</span>
-<a name="rest_code_7d421d02bbda4443ba4a14a41954c3cc-3"></a>    <span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">X</span><span class="o">&gt;</span>
-<a name="rest_code_7d421d02bbda4443ba4a14a41954c3cc-4"></a>    <span class="k">static</span> <span class="k">constexpr</span> <span class="kt">bool</span> <span class="n">sub_traits</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">X</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">;</span>
-<a name="rest_code_7d421d02bbda4443ba4a14a41954c3cc-5"></a><span class="p">};</span>
-<a name="rest_code_7d421d02bbda4443ba4a14a41954c3cc-6"></a>
-<a name="rest_code_7d421d02bbda4443ba4a14a41954c3cc-7"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span> <span class="n">X</span><span class="o">&gt;</span>
-<a name="rest_code_7d421d02bbda4443ba4a14a41954c3cc-8"></a><span class="k">constexpr</span> <span class="kt">bool</span> <span class="n">outer_helper</span> <span class="o">=</span> <span class="n">outer_traits</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;::</span><span class="k">template</span> <span class="n">sub_traits</span><span class="o">&lt;</span><span class="n">X</span><span class="o">&gt;</span><span class="p">;</span>
-<a name="rest_code_7d421d02bbda4443ba4a14a41954c3cc-9"></a>
-<a name="rest_code_7d421d02bbda4443ba4a14a41954c3cc-10"></a><span class="kt">int</span> <span class="nf">main</span><span class="p">(){</span>
-<a name="rest_code_7d421d02bbda4443ba4a14a41954c3cc-11"></a>    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">outer_helper</span><span class="o">&lt;</span><span class="kt">float</span><span class="p">,</span> <span class="kt">float</span><span class="o">&gt;</span><span class="p">;</span>
-<a name="rest_code_7d421d02bbda4443ba4a14a41954c3cc-12"></a>
-<a name="rest_code_7d421d02bbda4443ba4a14a41954c3cc-13"></a>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<a name="rest_code_7d421d02bbda4443ba4a14a41954c3cc-14"></a><span class="p">}</span>
+<pre class="code c++"><a name="rest_code_28ac0d7f4e4146aa99937dac05b3f946-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<a name="rest_code_28ac0d7f4e4146aa99937dac05b3f946-2"></a><span class="k">struct</span> <span class="n">outer_traits</span> <span class="p">{</span>
+<a name="rest_code_28ac0d7f4e4146aa99937dac05b3f946-3"></a>    <span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">X</span><span class="o">&gt;</span>
+<a name="rest_code_28ac0d7f4e4146aa99937dac05b3f946-4"></a>    <span class="k">static</span> <span class="k">constexpr</span> <span class="kt">bool</span> <span class="n">sub_traits</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">X</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">;</span>
+<a name="rest_code_28ac0d7f4e4146aa99937dac05b3f946-5"></a><span class="p">};</span>
+<a name="rest_code_28ac0d7f4e4146aa99937dac05b3f946-6"></a>
+<a name="rest_code_28ac0d7f4e4146aa99937dac05b3f946-7"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span> <span class="n">X</span><span class="o">&gt;</span>
+<a name="rest_code_28ac0d7f4e4146aa99937dac05b3f946-8"></a><span class="k">constexpr</span> <span class="kt">bool</span> <span class="n">outer_helper</span> <span class="o">=</span> <span class="n">outer_traits</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;::</span><span class="k">template</span> <span class="n">sub_traits</span><span class="o">&lt;</span><span class="n">X</span><span class="o">&gt;</span><span class="p">;</span>
+<a name="rest_code_28ac0d7f4e4146aa99937dac05b3f946-9"></a>
+<a name="rest_code_28ac0d7f4e4146aa99937dac05b3f946-10"></a><span class="kt">int</span> <span class="nf">main</span><span class="p">(){</span>
+<a name="rest_code_28ac0d7f4e4146aa99937dac05b3f946-11"></a>    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">outer_helper</span><span class="o">&lt;</span><span class="kt">float</span><span class="p">,</span> <span class="kt">float</span><span class="o">&gt;</span><span class="p">;</span>
+<a name="rest_code_28ac0d7f4e4146aa99937dac05b3f946-12"></a>
+<a name="rest_code_28ac0d7f4e4146aa99937dac05b3f946-13"></a>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<a name="rest_code_28ac0d7f4e4146aa99937dac05b3f946-14"></a><span class="p">}</span>
 </pre>
 <p>You will encounter a not-helpful at all error message with GCC5 family, such as:</p>
-<pre class="code text"><a name="rest_code_3379b7cc248249f1b84f29f0f501c05d-1"></a>test.cpp: In instantiation of ‘constexpr const bool outer_helper&lt;float, float&gt;’:
-<a name="rest_code_3379b7cc248249f1b84f29f0f501c05d-2"></a>test.cpp:14:22:   required from here
-<a name="rest_code_3379b7cc248249f1b84f29f0f501c05d-3"></a>test.cpp:11:20: error: ‘template&lt;class X&gt; constexpr const bool outer_traits&lt;float&gt;::sub_traits&lt;X&gt;’ is not a function template
-<a name="rest_code_3379b7cc248249f1b84f29f0f501c05d-4"></a>     constexpr bool outer_helper = outer_traits&lt;T&gt;::template sub_trait
-<a name="rest_code_3379b7cc248249f1b84f29f0f501c05d-5"></a>                    ^
-<a name="rest_code_3379b7cc248249f1b84f29f0f501c05d-6"></a>test.cpp:11:20: error: ‘sub_traits&lt;X&gt;’ is not a member of ‘outer_traits&lt;float&gt;’
+<pre class="code text"><a name="rest_code_4d2a5c6c41314e3eb28c4b5846d44bff-1"></a>test.cpp: In instantiation of ‘constexpr const bool outer_helper&lt;float, float&gt;’:
+<a name="rest_code_4d2a5c6c41314e3eb28c4b5846d44bff-2"></a>test.cpp:14:22:   required from here
+<a name="rest_code_4d2a5c6c41314e3eb28c4b5846d44bff-3"></a>test.cpp:11:20: error: ‘template&lt;class X&gt; constexpr const bool outer_traits&lt;float&gt;::sub_traits&lt;X&gt;’ is not a function template
+<a name="rest_code_4d2a5c6c41314e3eb28c4b5846d44bff-4"></a>     constexpr bool outer_helper = outer_traits&lt;T&gt;::template sub_trait
+<a name="rest_code_4d2a5c6c41314e3eb28c4b5846d44bff-5"></a>                    ^
+<a name="rest_code_4d2a5c6c41314e3eb28c4b5846d44bff-6"></a>test.cpp:11:20: error: ‘sub_traits&lt;X&gt;’ is not a member of ‘outer_traits&lt;float&gt;’
 </pre>
 <p>It comes from a bug in the handling of variable templates as dependent names. If
 you don't come in this cases, you can use GCC5 family directly, otherwise,
@@ -225,7 +230,7 @@ but since I don't have many users, it's not a real issue.</p>
 <p>I just started growing again my RAID6 array from 12 to 13 disks and
 I encountered a new issue. The reshape started, but with a speed of 0K/s. After
 some searching, I found a very simple solution:</p>
-<pre class="code bash"><a name="rest_code_ec6ba38cd92b40d9af8372bcb5791b44-1"></a><span class="nb">echo</span> max &gt; /sys/block/md0/md/sync_max
+<pre class="code bash"><a name="rest_code_843e2aea5bb2454984a2dc22194787bf-1"></a><span class="nb">echo</span> max &gt; /sys/block/md0/md/sync_max
 </pre>
 <p>And the reshape started directly at 50M/s :)</p>
 <p>The solution is the same if you are growing any type of RAID level with parity
@@ -1787,10 +1792,10 @@ and that it is well adapted to machine learning.</p>
 <p>For those of you that don't follow my blog, ETL is a library providing
 Expression Templates for computations on matrix and vector. For instance, if you
 have three matrices A, B and C you could write C++ code like this:</p>
-<pre class="code cpp"><a name="rest_code_daa245034ff44bc1996e8669bf789c8f-1"></a><span class="n">C</span> <span class="o">=</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">A</span> <span class="o">+</span> <span class="n">B</span><span class="p">))</span> <span class="o">/</span> <span class="n">sum</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
+<pre class="code cpp"><a name="rest_code_cdda4e594867474eb07b74b7bbf85302-1"></a><span class="n">C</span> <span class="o">=</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">A</span> <span class="o">+</span> <span class="n">B</span><span class="p">))</span> <span class="o">/</span> <span class="n">sum</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
 </pre>
 <p>Or given vectors b, v, h and a matrix W, you could write code like this:</p>
-<pre class="code cpp"><a name="rest_code_3c3eebe723424668a4a3de3ffb719fca-1"></a><span class="n">h</span> <span class="o">=</span> <span class="n">sigmoid</span><span class="p">(</span><span class="n">b</span> <span class="o">+</span> <span class="n">v</span> <span class="o">*</span> <span class="n">W</span><span class="p">)</span>
+<pre class="code cpp"><a name="rest_code_36d4714c04874554a4500bacdeabea09-1"></a><span class="n">h</span> <span class="o">=</span> <span class="n">sigmoid</span><span class="p">(</span><span class="n">b</span> <span class="o">+</span> <span class="n">v</span> <span class="o">*</span> <span class="n">W</span><span class="p">)</span>
 </pre>
 <p>The goal of such library is two-fold. First, this makes the expression more
 readable and as close to math as possible. And then, it allows the library to
@@ -2037,8 +2042,8 @@ implemented support for the following optimizers: Adagrad, RMSProp, Adam (with
 and without bias correction), Adamax (Adam with infinite norm), Nadam (Adam with
 Nesterov momentum) and Adadelta (no more learning rate). The user can now choose
 the optimizer of its choice, for instance NADAM, as a parameter of the network:</p>
-<pre class="code c++"><a name="rest_code_bd7b4fd6b91b4dcd8260a1bd7b40ea28-1"></a><span class="c1">// Use a Nadam optimizer</span>
-<a name="rest_code_bd7b4fd6b91b4dcd8260a1bd7b40ea28-2"></a><span class="n">dll</span><span class="o">::</span><span class="n">updater</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">updater_type</span><span class="o">::</span><span class="n">NADAM</span><span class="o">&gt;</span>
+<pre class="code c++"><a name="rest_code_4304ae4d8e8d4e3bb7fb584fd4ab466a-1"></a><span class="c1">// Use a Nadam optimizer</span>
+<a name="rest_code_4304ae4d8e8d4e3bb7fb584fd4ab466a-2"></a><span class="n">dll</span><span class="o">::</span><span class="n">updater</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">updater_type</span><span class="o">::</span><span class="n">NADAM</span><span class="o">&gt;</span>
 </pre>
 <p>Another improvement in the same domain is that the learning rate can also be
 decayed over time automatically by the optimizer.</p>
@@ -2057,8 +2062,8 @@ different losses are supported, but it it not difficult to add new loss to the
 system. The three losses supported are: Categorical Cross Entropy Loss, Binary
 Cross Entropy Loss and Mean Squared Error Loss.</p>
 <p>Again, each network can specify the loss to use:</p>
-<pre class="code C++"><a name="rest_code_74b29a3e933b48079821261aaff10ef1-1"></a><span class="c1">// Use a Binary Cross Entropy Loss</span>
-<a name="rest_code_74b29a3e933b48079821261aaff10ef1-2"></a><span class="n">dll</span><span class="o">::</span><span class="n">loss</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">loss_function</span><span class="o">::</span><span class="n">BINARY_CROSS_ENTROPY</span><span class="o">&gt;</span>
+<pre class="code C++"><a name="rest_code_3095cd93e1d84edeaa284e47433cbb7e-1"></a><span class="c1">// Use a Binary Cross Entropy Loss</span>
+<a name="rest_code_3095cd93e1d84edeaa284e47433cbb7e-2"></a><span class="n">dll</span><span class="o">::</span><span class="n">loss</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">loss_function</span><span class="o">::</span><span class="n">BINARY_CROSS_ENTROPY</span><span class="o">&gt;</span>
 </pre>
 </div>
 <div class="section" id="dropout">
@@ -2070,17 +2075,17 @@ technique is relatively simple. Indeed, it simply randomly sets to zero some of
 the input neurons of layers. At each batch, a new mask will be used and this
 should lead to a large number of sub networks being trained.</p>
 <p>Here is example of a MLP with Dropout (p=0.5):</p>
-<pre class="code C++"><a name="rest_code_e510acf3c25046a49ee5431f2f55a747-1"></a><span class="k">using</span> <span class="n">network_t</span> <span class="o">=</span> <span class="n">dll</span><span class="o">::</span><span class="n">dyn_dbn_desc</span><span class="o">&lt;</span>
-<a name="rest_code_e510acf3c25046a49ee5431f2f55a747-2"></a>    <span class="n">dll</span><span class="o">::</span><span class="n">dbn_layers</span><span class="o">&lt;</span>
-<a name="rest_code_e510acf3c25046a49ee5431f2f55a747-3"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">dense_desc</span><span class="o">&lt;</span><span class="mi">28</span> <span class="o">*</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">500</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
-<a name="rest_code_e510acf3c25046a49ee5431f2f55a747-4"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">dropout_layer_desc</span><span class="o">&lt;</span><span class="mi">50</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
-<a name="rest_code_e510acf3c25046a49ee5431f2f55a747-5"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">dense_desc</span><span class="o">&lt;</span><span class="mi">500</span><span class="p">,</span> <span class="mi">250</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
-<a name="rest_code_e510acf3c25046a49ee5431f2f55a747-6"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">dropout_layer_desc</span><span class="o">&lt;</span><span class="mi">50</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
-<a name="rest_code_e510acf3c25046a49ee5431f2f55a747-7"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">dense_desc</span><span class="o">&lt;</span><span class="mi">250</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">activation</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">function</span><span class="o">::</span><span class="n">SOFTMAX</span><span class="o">&gt;&gt;::</span><span class="n">layer_t</span><span class="o">&gt;</span>
-<a name="rest_code_e510acf3c25046a49ee5431f2f55a747-8"></a>    <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">updater</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">updater_type</span><span class="o">::</span><span class="n">MOMENTUM</span><span class="o">&gt;</span>     <span class="c1">// Momentum</span>
-<a name="rest_code_e510acf3c25046a49ee5431f2f55a747-9"></a>    <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">batch_size</span><span class="o">&lt;</span><span class="mi">100</span><span class="o">&gt;</span>                          <span class="c1">// The mini-batch size</span>
-<a name="rest_code_e510acf3c25046a49ee5431f2f55a747-10"></a>    <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">shuffle</span>                                  <span class="c1">// Shuffle before each epoch</span>
-<a name="rest_code_e510acf3c25046a49ee5431f2f55a747-11"></a><span class="o">&gt;::</span><span class="n">dbn_t</span><span class="p">;</span>
+<pre class="code C++"><a name="rest_code_db59bef6ecd94070b54d66a06e747b3f-1"></a><span class="k">using</span> <span class="n">network_t</span> <span class="o">=</span> <span class="n">dll</span><span class="o">::</span><span class="n">dyn_dbn_desc</span><span class="o">&lt;</span>
+<a name="rest_code_db59bef6ecd94070b54d66a06e747b3f-2"></a>    <span class="n">dll</span><span class="o">::</span><span class="n">dbn_layers</span><span class="o">&lt;</span>
+<a name="rest_code_db59bef6ecd94070b54d66a06e747b3f-3"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">dense_desc</span><span class="o">&lt;</span><span class="mi">28</span> <span class="o">*</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">500</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
+<a name="rest_code_db59bef6ecd94070b54d66a06e747b3f-4"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">dropout_layer_desc</span><span class="o">&lt;</span><span class="mi">50</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
+<a name="rest_code_db59bef6ecd94070b54d66a06e747b3f-5"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">dense_desc</span><span class="o">&lt;</span><span class="mi">500</span><span class="p">,</span> <span class="mi">250</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
+<a name="rest_code_db59bef6ecd94070b54d66a06e747b3f-6"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">dropout_layer_desc</span><span class="o">&lt;</span><span class="mi">50</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
+<a name="rest_code_db59bef6ecd94070b54d66a06e747b3f-7"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">dense_desc</span><span class="o">&lt;</span><span class="mi">250</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">activation</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">function</span><span class="o">::</span><span class="n">SOFTMAX</span><span class="o">&gt;&gt;::</span><span class="n">layer_t</span><span class="o">&gt;</span>
+<a name="rest_code_db59bef6ecd94070b54d66a06e747b3f-8"></a>    <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">updater</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">updater_type</span><span class="o">::</span><span class="n">MOMENTUM</span><span class="o">&gt;</span>     <span class="c1">// Momentum</span>
+<a name="rest_code_db59bef6ecd94070b54d66a06e747b3f-9"></a>    <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">batch_size</span><span class="o">&lt;</span><span class="mi">100</span><span class="o">&gt;</span>                          <span class="c1">// The mini-batch size</span>
+<a name="rest_code_db59bef6ecd94070b54d66a06e747b3f-10"></a>    <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">shuffle</span>                                  <span class="c1">// Shuffle before each epoch</span>
+<a name="rest_code_db59bef6ecd94070b54d66a06e747b3f-11"></a><span class="o">&gt;::</span><span class="n">dbn_t</span><span class="p">;</span>
 </pre>
 </div>
 <div class="section" id="batch-normalization">
@@ -2092,21 +2097,21 @@ different in impact of hyper parameters on different layers. Google reported
 much faster training with this technique by getting rid of Dropout and by
 increasing the learning rate of training.</p>
 <p>Here is an example of using Batch Normalization in a CNN:</p>
-<pre class="code C++"><a name="rest_code_3e62708dbcf94da4aada310037ea9485-1"></a><span class="k">using</span> <span class="n">network_t</span> <span class="o">=</span> <span class="n">dll</span><span class="o">::</span><span class="n">dyn_dbn_desc</span><span class="o">&lt;</span>
-<a name="rest_code_3e62708dbcf94da4aada310037ea9485-2"></a>    <span class="n">dll</span><span class="o">::</span><span class="n">dbn_layers</span><span class="o">&lt;</span>
-<a name="rest_code_3e62708dbcf94da4aada310037ea9485-3"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">conv_desc</span><span class="o">&lt;</span><span class="mi">1</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
-<a name="rest_code_3e62708dbcf94da4aada310037ea9485-4"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">batch_normalization_layer_4d_desc</span><span class="o">&lt;</span><span class="mi">8</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">24</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
-<a name="rest_code_3e62708dbcf94da4aada310037ea9485-5"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">mp_layer_2d_desc</span><span class="o">&lt;</span><span class="mi">8</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
-<a name="rest_code_3e62708dbcf94da4aada310037ea9485-6"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">conv_desc</span><span class="o">&lt;</span><span class="mi">8</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
-<a name="rest_code_3e62708dbcf94da4aada310037ea9485-7"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">batch_normalization_layer_4d_desc</span><span class="o">&lt;</span><span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
-<a name="rest_code_3e62708dbcf94da4aada310037ea9485-8"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">mp_layer_2d_desc</span><span class="o">&lt;</span><span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
-<a name="rest_code_3e62708dbcf94da4aada310037ea9485-9"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">dense_desc</span><span class="o">&lt;</span><span class="mi">8</span> <span class="o">*</span> <span class="mi">4</span> <span class="o">*</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">150</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
-<a name="rest_code_3e62708dbcf94da4aada310037ea9485-10"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">batch_normalization_layer_2d_desc</span><span class="o">&lt;</span><span class="mi">150</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
-<a name="rest_code_3e62708dbcf94da4aada310037ea9485-11"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">dense_desc</span><span class="o">&lt;</span><span class="mi">150</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">activation</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">function</span><span class="o">::</span><span class="n">SOFTMAX</span><span class="o">&gt;&gt;::</span><span class="n">layer_t</span><span class="o">&gt;</span>
-<a name="rest_code_3e62708dbcf94da4aada310037ea9485-12"></a>    <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">updater</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">updater_type</span><span class="o">::</span><span class="n">ADADELTA</span><span class="o">&gt;</span>     <span class="c1">// Adadelta</span>
-<a name="rest_code_3e62708dbcf94da4aada310037ea9485-13"></a>    <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">batch_size</span><span class="o">&lt;</span><span class="mi">100</span><span class="o">&gt;</span>                          <span class="c1">// The mini-batch size</span>
-<a name="rest_code_3e62708dbcf94da4aada310037ea9485-14"></a>    <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">shuffle</span>                                  <span class="c1">// Shuffle the dataset before each epoch</span>
-<a name="rest_code_3e62708dbcf94da4aada310037ea9485-15"></a><span class="o">&gt;::</span><span class="n">dbn_t</span><span class="p">;</span>
+<pre class="code C++"><a name="rest_code_cbd4e46f006f4ee9a9df5d9121d6e30d-1"></a><span class="k">using</span> <span class="n">network_t</span> <span class="o">=</span> <span class="n">dll</span><span class="o">::</span><span class="n">dyn_dbn_desc</span><span class="o">&lt;</span>
+<a name="rest_code_cbd4e46f006f4ee9a9df5d9121d6e30d-2"></a>    <span class="n">dll</span><span class="o">::</span><span class="n">dbn_layers</span><span class="o">&lt;</span>
+<a name="rest_code_cbd4e46f006f4ee9a9df5d9121d6e30d-3"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">conv_desc</span><span class="o">&lt;</span><span class="mi">1</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
+<a name="rest_code_cbd4e46f006f4ee9a9df5d9121d6e30d-4"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">batch_normalization_layer_4d_desc</span><span class="o">&lt;</span><span class="mi">8</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">24</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
+<a name="rest_code_cbd4e46f006f4ee9a9df5d9121d6e30d-5"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">mp_layer_2d_desc</span><span class="o">&lt;</span><span class="mi">8</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
+<a name="rest_code_cbd4e46f006f4ee9a9df5d9121d6e30d-6"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">conv_desc</span><span class="o">&lt;</span><span class="mi">8</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
+<a name="rest_code_cbd4e46f006f4ee9a9df5d9121d6e30d-7"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">batch_normalization_layer_4d_desc</span><span class="o">&lt;</span><span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
+<a name="rest_code_cbd4e46f006f4ee9a9df5d9121d6e30d-8"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">mp_layer_2d_desc</span><span class="o">&lt;</span><span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
+<a name="rest_code_cbd4e46f006f4ee9a9df5d9121d6e30d-9"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">dense_desc</span><span class="o">&lt;</span><span class="mi">8</span> <span class="o">*</span> <span class="mi">4</span> <span class="o">*</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">150</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
+<a name="rest_code_cbd4e46f006f4ee9a9df5d9121d6e30d-10"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">batch_normalization_layer_2d_desc</span><span class="o">&lt;</span><span class="mi">150</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
+<a name="rest_code_cbd4e46f006f4ee9a9df5d9121d6e30d-11"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">dense_desc</span><span class="o">&lt;</span><span class="mi">150</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">activation</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">function</span><span class="o">::</span><span class="n">SOFTMAX</span><span class="o">&gt;&gt;::</span><span class="n">layer_t</span><span class="o">&gt;</span>
+<a name="rest_code_cbd4e46f006f4ee9a9df5d9121d6e30d-12"></a>    <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">updater</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">updater_type</span><span class="o">::</span><span class="n">ADADELTA</span><span class="o">&gt;</span>     <span class="c1">// Adadelta</span>
+<a name="rest_code_cbd4e46f006f4ee9a9df5d9121d6e30d-13"></a>    <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">batch_size</span><span class="o">&lt;</span><span class="mi">100</span><span class="o">&gt;</span>                          <span class="c1">// The mini-batch size</span>
+<a name="rest_code_cbd4e46f006f4ee9a9df5d9121d6e30d-14"></a>    <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">shuffle</span>                                  <span class="c1">// Shuffle the dataset before each epoch</span>
+<a name="rest_code_cbd4e46f006f4ee9a9df5d9121d6e30d-15"></a><span class="o">&gt;::</span><span class="n">dbn_t</span><span class="p">;</span>
 </pre>
 <p>You may notice that the layer is set as 4D so should only be used after
 convolutional layer (or after the input). If you want to use it after
@@ -2133,15 +2138,15 @@ around the data provided in the container and the generator is then passed to
 the system for training.</p>
 <p>Here for instance is how to read MNIST data and scale (divide) all pixel values
 by 255:</p>
-<pre class="code c++"><a name="rest_code_05d986848a8f411481f9b82c01e5cef6-1"></a><span class="c1">// Load the dataset</span>
-<a name="rest_code_05d986848a8f411481f9b82c01e5cef6-2"></a><span class="k">auto</span> <span class="n">dataset</span> <span class="o">=</span> <span class="n">dll</span><span class="o">::</span><span class="n">make_mnist_dataset</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">batch_size</span><span class="o">&lt;</span><span class="mi">100</span><span class="o">&gt;</span><span class="p">{},</span> <span class="n">dll</span><span class="o">::</span><span class="n">scale_pre</span><span class="o">&lt;</span><span class="mi">255</span><span class="o">&gt;</span><span class="p">{});</span>
-<a name="rest_code_05d986848a8f411481f9b82c01e5cef6-3"></a><span class="n">dataset</span><span class="p">.</span><span class="n">display</span><span class="p">();</span>
-<a name="rest_code_05d986848a8f411481f9b82c01e5cef6-4"></a>
-<a name="rest_code_05d986848a8f411481f9b82c01e5cef6-5"></a><span class="c1">// Train the network</span>
-<a name="rest_code_05d986848a8f411481f9b82c01e5cef6-6"></a><span class="n">net</span><span class="o">-&gt;</span><span class="n">fine_tune</span><span class="p">(</span><span class="n">dataset</span><span class="p">.</span><span class="n">train</span><span class="p">(),</span> <span class="mi">25</span><span class="p">);</span>
-<a name="rest_code_05d986848a8f411481f9b82c01e5cef6-7"></a>
-<a name="rest_code_05d986848a8f411481f9b82c01e5cef6-8"></a><span class="c1">// Test the network</span>
-<a name="rest_code_05d986848a8f411481f9b82c01e5cef6-9"></a><span class="n">net</span><span class="o">-&gt;</span><span class="n">evaluate</span><span class="p">(</span><span class="n">dataset</span><span class="p">.</span><span class="n">test</span><span class="p">());</span>
+<pre class="code c++"><a name="rest_code_0fee2bacc75e4399bc9944a3f4048335-1"></a><span class="c1">// Load the dataset</span>
+<a name="rest_code_0fee2bacc75e4399bc9944a3f4048335-2"></a><span class="k">auto</span> <span class="n">dataset</span> <span class="o">=</span> <span class="n">dll</span><span class="o">::</span><span class="n">make_mnist_dataset</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">batch_size</span><span class="o">&lt;</span><span class="mi">100</span><span class="o">&gt;</span><span class="p">{},</span> <span class="n">dll</span><span class="o">::</span><span class="n">scale_pre</span><span class="o">&lt;</span><span class="mi">255</span><span class="o">&gt;</span><span class="p">{});</span>
+<a name="rest_code_0fee2bacc75e4399bc9944a3f4048335-3"></a><span class="n">dataset</span><span class="p">.</span><span class="n">display</span><span class="p">();</span>
+<a name="rest_code_0fee2bacc75e4399bc9944a3f4048335-4"></a>
+<a name="rest_code_0fee2bacc75e4399bc9944a3f4048335-5"></a><span class="c1">// Train the network</span>
+<a name="rest_code_0fee2bacc75e4399bc9944a3f4048335-6"></a><span class="n">net</span><span class="o">-&gt;</span><span class="n">fine_tune</span><span class="p">(</span><span class="n">dataset</span><span class="p">.</span><span class="n">train</span><span class="p">(),</span> <span class="mi">25</span><span class="p">);</span>
+<a name="rest_code_0fee2bacc75e4399bc9944a3f4048335-7"></a>
+<a name="rest_code_0fee2bacc75e4399bc9944a3f4048335-8"></a><span class="c1">// Test the network</span>
+<a name="rest_code_0fee2bacc75e4399bc9944a3f4048335-9"></a><span class="n">net</span><span class="o">-&gt;</span><span class="n">evaluate</span><span class="p">(</span><span class="n">dataset</span><span class="p">.</span><span class="n">test</span><span class="p">());</span>
 </pre>
 </div>
 <div class="section" id="much-faster-performance">
@@ -2168,41 +2173,41 @@ a publication about the framework to a conference later this year.</p>
 <h2>Examples</h2>
 <p>The project now has a few examples (available <a class="reference external" href="https://github.com/wichtounet/dll/tree/master/examples/src">here</a>), well-designed and I try to update them with the latest updates of the framework.</p>
 <p>For instance, here is the CNN example for MNIST (without includes):</p>
-<pre class="code c++"><a name="rest_code_03eb0e13bf254c2687703de4974cdd45-1"></a><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="cm">/*argc*/</span><span class="p">,</span> <span class="kt">char</span><span class="o">*</span> <span class="cm">/*argv*/</span> <span class="p">[])</span> <span class="p">{</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-2"></a>    <span class="c1">// Load the dataset</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-3"></a>    <span class="k">auto</span> <span class="n">dataset</span> <span class="o">=</span> <span class="n">dll</span><span class="o">::</span><span class="n">make_mnist_dataset</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">batch_size</span><span class="o">&lt;</span><span class="mi">100</span><span class="o">&gt;</span><span class="p">{},</span> <span class="n">dll</span><span class="o">::</span><span class="n">scale_pre</span><span class="o">&lt;</span><span class="mi">255</span><span class="o">&gt;</span><span class="p">{});</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-4"></a>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-5"></a>    <span class="c1">// Build the network</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-6"></a>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-7"></a>    <span class="k">using</span> <span class="n">network_t</span> <span class="o">=</span> <span class="n">dll</span><span class="o">::</span><span class="n">dyn_dbn_desc</span><span class="o">&lt;</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-8"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">dbn_layers</span><span class="o">&lt;</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-9"></a>            <span class="n">dll</span><span class="o">::</span><span class="n">conv_desc</span><span class="o">&lt;</span><span class="mi">1</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-10"></a>            <span class="n">dll</span><span class="o">::</span><span class="n">mp_layer_2d_desc</span><span class="o">&lt;</span><span class="mi">8</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-11"></a>            <span class="n">dll</span><span class="o">::</span><span class="n">conv_desc</span><span class="o">&lt;</span><span class="mi">8</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-12"></a>            <span class="n">dll</span><span class="o">::</span><span class="n">mp_layer_2d_desc</span><span class="o">&lt;</span><span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-13"></a>            <span class="n">dll</span><span class="o">::</span><span class="n">dense_desc</span><span class="o">&lt;</span><span class="mi">8</span> <span class="o">*</span> <span class="mi">4</span> <span class="o">*</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">150</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-14"></a>            <span class="n">dll</span><span class="o">::</span><span class="n">dense_desc</span><span class="o">&lt;</span><span class="mi">150</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">activation</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">function</span><span class="o">::</span><span class="n">SOFTMAX</span><span class="o">&gt;&gt;::</span><span class="n">layer_t</span><span class="o">&gt;</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-15"></a>        <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">updater</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">updater_type</span><span class="o">::</span><span class="n">MOMENTUM</span><span class="o">&gt;</span>     <span class="c1">// Momentum</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-16"></a>        <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">batch_size</span><span class="o">&lt;</span><span class="mi">100</span><span class="o">&gt;</span>                          <span class="c1">// The mini-batch size</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-17"></a>        <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">shuffle</span>                                  <span class="c1">// Shuffle the dataset before each epoch</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-18"></a>    <span class="o">&gt;::</span><span class="n">dbn_t</span><span class="p">;</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-19"></a>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-20"></a>    <span class="k">auto</span> <span class="n">net</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_unique</span><span class="o">&lt;</span><span class="n">network_t</span><span class="o">&gt;</span><span class="p">();</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-21"></a>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-22"></a>    <span class="n">net</span><span class="o">-&gt;</span><span class="n">learning_rate</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">;</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-23"></a>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-24"></a>    <span class="c1">// Display the network and dataset</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-25"></a>    <span class="n">net</span><span class="o">-&gt;</span><span class="n">display</span><span class="p">();</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-26"></a>    <span class="n">dataset</span><span class="p">.</span><span class="n">display</span><span class="p">();</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-27"></a>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-28"></a>    <span class="c1">// Train the network</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-29"></a>    <span class="n">net</span><span class="o">-&gt;</span><span class="n">fine_tune</span><span class="p">(</span><span class="n">dataset</span><span class="p">.</span><span class="n">train</span><span class="p">(),</span> <span class="mi">25</span><span class="p">);</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-30"></a>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-31"></a>    <span class="c1">// Test the network on test set</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-32"></a>    <span class="n">net</span><span class="o">-&gt;</span><span class="n">evaluate</span><span class="p">(</span><span class="n">dataset</span><span class="p">.</span><span class="n">test</span><span class="p">());</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-33"></a>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-34"></a>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-35"></a><span class="p">}</span>
+<pre class="code c++"><a name="rest_code_7e111b5b454246c7aafdd792baf2398b-1"></a><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="cm">/*argc*/</span><span class="p">,</span> <span class="kt">char</span><span class="o">*</span> <span class="cm">/*argv*/</span> <span class="p">[])</span> <span class="p">{</span>
+<a name="rest_code_7e111b5b454246c7aafdd792baf2398b-2"></a>    <span class="c1">// Load the dataset</span>
+<a name="rest_code_7e111b5b454246c7aafdd792baf2398b-3"></a>    <span class="k">auto</span> <span class="n">dataset</span> <span class="o">=</span> <span class="n">dll</span><span class="o">::</span><span class="n">make_mnist_dataset</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">batch_size</span><span class="o">&lt;</span><span class="mi">100</span><span class="o">&gt;</span><span class="p">{},</span> <span class="n">dll</span><span class="o">::</span><span class="n">scale_pre</span><span class="o">&lt;</span><span class="mi">255</span><span class="o">&gt;</span><span class="p">{});</span>
+<a name="rest_code_7e111b5b454246c7aafdd792baf2398b-4"></a>
+<a name="rest_code_7e111b5b454246c7aafdd792baf2398b-5"></a>    <span class="c1">// Build the network</span>
+<a name="rest_code_7e111b5b454246c7aafdd792baf2398b-6"></a>
+<a name="rest_code_7e111b5b454246c7aafdd792baf2398b-7"></a>    <span class="k">using</span> <span class="n">network_t</span> <span class="o">=</span> <span class="n">dll</span><span class="o">::</span><span class="n">dyn_dbn_desc</span><span class="o">&lt;</span>
+<a name="rest_code_7e111b5b454246c7aafdd792baf2398b-8"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">dbn_layers</span><span class="o">&lt;</span>
+<a name="rest_code_7e111b5b454246c7aafdd792baf2398b-9"></a>            <span class="n">dll</span><span class="o">::</span><span class="n">conv_desc</span><span class="o">&lt;</span><span class="mi">1</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
+<a name="rest_code_7e111b5b454246c7aafdd792baf2398b-10"></a>            <span class="n">dll</span><span class="o">::</span><span class="n">mp_layer_2d_desc</span><span class="o">&lt;</span><span class="mi">8</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
+<a name="rest_code_7e111b5b454246c7aafdd792baf2398b-11"></a>            <span class="n">dll</span><span class="o">::</span><span class="n">conv_desc</span><span class="o">&lt;</span><span class="mi">8</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
+<a name="rest_code_7e111b5b454246c7aafdd792baf2398b-12"></a>            <span class="n">dll</span><span class="o">::</span><span class="n">mp_layer_2d_desc</span><span class="o">&lt;</span><span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
+<a name="rest_code_7e111b5b454246c7aafdd792baf2398b-13"></a>            <span class="n">dll</span><span class="o">::</span><span class="n">dense_desc</span><span class="o">&lt;</span><span class="mi">8</span> <span class="o">*</span> <span class="mi">4</span> <span class="o">*</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">150</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
+<a name="rest_code_7e111b5b454246c7aafdd792baf2398b-14"></a>            <span class="n">dll</span><span class="o">::</span><span class="n">dense_desc</span><span class="o">&lt;</span><span class="mi">150</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">activation</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">function</span><span class="o">::</span><span class="n">SOFTMAX</span><span class="o">&gt;&gt;::</span><span class="n">layer_t</span><span class="o">&gt;</span>
+<a name="rest_code_7e111b5b454246c7aafdd792baf2398b-15"></a>        <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">updater</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">updater_type</span><span class="o">::</span><span class="n">MOMENTUM</span><span class="o">&gt;</span>     <span class="c1">// Momentum</span>
+<a name="rest_code_7e111b5b454246c7aafdd792baf2398b-16"></a>        <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">batch_size</span><span class="o">&lt;</span><span class="mi">100</span><span class="o">&gt;</span>                          <span class="c1">// The mini-batch size</span>
+<a name="rest_code_7e111b5b454246c7aafdd792baf2398b-17"></a>        <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">shuffle</span>                                  <span class="c1">// Shuffle the dataset before each epoch</span>
+<a name="rest_code_7e111b5b454246c7aafdd792baf2398b-18"></a>    <span class="o">&gt;::</span><span class="n">dbn_t</span><span class="p">;</span>
+<a name="rest_code_7e111b5b454246c7aafdd792baf2398b-19"></a>
+<a name="rest_code_7e111b5b454246c7aafdd792baf2398b-20"></a>    <span class="k">auto</span> <span class="n">net</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_unique</span><span class="o">&lt;</span><span class="n">network_t</span><span class="o">&gt;</span><span class="p">();</span>
+<a name="rest_code_7e111b5b454246c7aafdd792baf2398b-21"></a>
+<a name="rest_code_7e111b5b454246c7aafdd792baf2398b-22"></a>    <span class="n">net</span><span class="o">-&gt;</span><span class="n">learning_rate</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">;</span>
+<a name="rest_code_7e111b5b454246c7aafdd792baf2398b-23"></a>
+<a name="rest_code_7e111b5b454246c7aafdd792baf2398b-24"></a>    <span class="c1">// Display the network and dataset</span>
+<a name="rest_code_7e111b5b454246c7aafdd792baf2398b-25"></a>    <span class="n">net</span><span class="o">-&gt;</span><span class="n">display</span><span class="p">();</span>
+<a name="rest_code_7e111b5b454246c7aafdd792baf2398b-26"></a>    <span class="n">dataset</span><span class="p">.</span><span class="n">display</span><span class="p">();</span>
+<a name="rest_code_7e111b5b454246c7aafdd792baf2398b-27"></a>
+<a name="rest_code_7e111b5b454246c7aafdd792baf2398b-28"></a>    <span class="c1">// Train the network</span>
+<a name="rest_code_7e111b5b454246c7aafdd792baf2398b-29"></a>    <span class="n">net</span><span class="o">-&gt;</span><span class="n">fine_tune</span><span class="p">(</span><span class="n">dataset</span><span class="p">.</span><span class="n">train</span><span class="p">(),</span> <span class="mi">25</span><span class="p">);</span>
+<a name="rest_code_7e111b5b454246c7aafdd792baf2398b-30"></a>
+<a name="rest_code_7e111b5b454246c7aafdd792baf2398b-31"></a>    <span class="c1">// Test the network on test set</span>
+<a name="rest_code_7e111b5b454246c7aafdd792baf2398b-32"></a>    <span class="n">net</span><span class="o">-&gt;</span><span class="n">evaluate</span><span class="p">(</span><span class="n">dataset</span><span class="p">.</span><span class="n">test</span><span class="p">());</span>
+<a name="rest_code_7e111b5b454246c7aafdd792baf2398b-33"></a>
+<a name="rest_code_7e111b5b454246c7aafdd792baf2398b-34"></a>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<a name="rest_code_7e111b5b454246c7aafdd792baf2398b-35"></a><span class="p">}</span>
 </pre>
 </div>
 <div class="section" id="reproducible-results">
@@ -2212,7 +2217,7 @@ generation code. This means that DLL can now set a global seed and that two
 training of the same network and data with the same seed will now produce
 exactly the same result.</p>
 <p>The usage is extremely simple:</p>
-<pre class="code c++"><a name="rest_code_ced2e2798d474784b972a6a58a52f49b-1"></a><span class="n">dll</span><span class="o">::</span><span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">);</span>
+<pre class="code c++"><a name="rest_code_2eb7b8c9cebe473ca961ad6e240584c7-1"></a><span class="n">dll</span><span class="o">::</span><span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">);</span>
 </pre>
 </div>
 <div class="section" id="conclusion">
@@ -2251,37 +2256,37 @@ same problem that was already present in scripted pipelines. Namely, the status
 of the current build is not set early enough for the notification.  Basically,
 you have to set the notification yourself. Here is what a declarative pipeline
 looks like:</p>
-<pre class="code groovy"><a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-1"></a><span class="n">pipeline</span> <span class="o">{</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-2"></a>    <span class="n">agent</span> <span class="n">any</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-3"></a>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-4"></a>    <span class="n">stages</span> <span class="o">{</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-5"></a>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-6"></a>        <span class="c1">// Normal Stages</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-7"></a>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-8"></a>        <span class="n">stage</span> <span class="o">(</span><span class="s1">'success'</span><span class="o">){</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-9"></a>            <span class="n">steps</span> <span class="o">{</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-10"></a>                <span class="n">script</span> <span class="o">{</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-11"></a>                    <span class="n">currentBuild</span><span class="o">.</span><span class="na">result</span> <span class="o">=</span> <span class="s1">'SUCCESS'</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-12"></a>                <span class="o">}</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-13"></a>            <span class="o">}</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-14"></a>        <span class="o">}</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-15"></a>    <span class="o">}</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-16"></a>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-17"></a>    <span class="n">post</span> <span class="o">{</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-18"></a>        <span class="n">failure</span> <span class="o">{</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-19"></a>            <span class="n">script</span> <span class="o">{</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-20"></a>                <span class="n">currentBuild</span><span class="o">.</span><span class="na">result</span> <span class="o">=</span> <span class="s1">'FAILURE'</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-21"></a>            <span class="o">}</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-22"></a>        <span class="o">}</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-23"></a>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-24"></a>        <span class="n">always</span> <span class="o">{</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-25"></a>            <span class="n">step</span><span class="o">([</span><span class="n">$class</span><span class="o">:</span> <span class="s1">'Mailer'</span><span class="o">,</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-26"></a>                <span class="nl">notifyEveryUnstableBuild:</span> <span class="kc">true</span><span class="o">,</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-27"></a>                <span class="nl">recipients:</span> <span class="s2">"baptiste.wicht@gmail.com"</span><span class="o">,</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-28"></a>                <span class="nl">sendToIndividuals:</span> <span class="kc">true</span><span class="o">])</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-29"></a>        <span class="o">}</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-30"></a>    <span class="o">}</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-31"></a><span class="o">}</span>
+<pre class="code groovy"><a name="rest_code_6c021919d26742468f3514d23fffdb2a-1"></a><span class="n">pipeline</span> <span class="o">{</span>
+<a name="rest_code_6c021919d26742468f3514d23fffdb2a-2"></a>    <span class="n">agent</span> <span class="n">any</span>
+<a name="rest_code_6c021919d26742468f3514d23fffdb2a-3"></a>
+<a name="rest_code_6c021919d26742468f3514d23fffdb2a-4"></a>    <span class="n">stages</span> <span class="o">{</span>
+<a name="rest_code_6c021919d26742468f3514d23fffdb2a-5"></a>
+<a name="rest_code_6c021919d26742468f3514d23fffdb2a-6"></a>        <span class="c1">// Normal Stages</span>
+<a name="rest_code_6c021919d26742468f3514d23fffdb2a-7"></a>
+<a name="rest_code_6c021919d26742468f3514d23fffdb2a-8"></a>        <span class="n">stage</span> <span class="o">(</span><span class="s1">'success'</span><span class="o">){</span>
+<a name="rest_code_6c021919d26742468f3514d23fffdb2a-9"></a>            <span class="n">steps</span> <span class="o">{</span>
+<a name="rest_code_6c021919d26742468f3514d23fffdb2a-10"></a>                <span class="n">script</span> <span class="o">{</span>
+<a name="rest_code_6c021919d26742468f3514d23fffdb2a-11"></a>                    <span class="n">currentBuild</span><span class="o">.</span><span class="na">result</span> <span class="o">=</span> <span class="s1">'SUCCESS'</span>
+<a name="rest_code_6c021919d26742468f3514d23fffdb2a-12"></a>                <span class="o">}</span>
+<a name="rest_code_6c021919d26742468f3514d23fffdb2a-13"></a>            <span class="o">}</span>
+<a name="rest_code_6c021919d26742468f3514d23fffdb2a-14"></a>        <span class="o">}</span>
+<a name="rest_code_6c021919d26742468f3514d23fffdb2a-15"></a>    <span class="o">}</span>
+<a name="rest_code_6c021919d26742468f3514d23fffdb2a-16"></a>
+<a name="rest_code_6c021919d26742468f3514d23fffdb2a-17"></a>    <span class="n">post</span> <span class="o">{</span>
+<a name="rest_code_6c021919d26742468f3514d23fffdb2a-18"></a>        <span class="n">failure</span> <span class="o">{</span>
+<a name="rest_code_6c021919d26742468f3514d23fffdb2a-19"></a>            <span class="n">script</span> <span class="o">{</span>
+<a name="rest_code_6c021919d26742468f3514d23fffdb2a-20"></a>                <span class="n">currentBuild</span><span class="o">.</span><span class="na">result</span> <span class="o">=</span> <span class="s1">'FAILURE'</span>
+<a name="rest_code_6c021919d26742468f3514d23fffdb2a-21"></a>            <span class="o">}</span>
+<a name="rest_code_6c021919d26742468f3514d23fffdb2a-22"></a>        <span class="o">}</span>
+<a name="rest_code_6c021919d26742468f3514d23fffdb2a-23"></a>
+<a name="rest_code_6c021919d26742468f3514d23fffdb2a-24"></a>        <span class="n">always</span> <span class="o">{</span>
+<a name="rest_code_6c021919d26742468f3514d23fffdb2a-25"></a>            <span class="n">step</span><span class="o">([</span><span class="n">$class</span><span class="o">:</span> <span class="s1">'Mailer'</span><span class="o">,</span>
+<a name="rest_code_6c021919d26742468f3514d23fffdb2a-26"></a>                <span class="nl">notifyEveryUnstableBuild:</span> <span class="kc">true</span><span class="o">,</span>
+<a name="rest_code_6c021919d26742468f3514d23fffdb2a-27"></a>                <span class="nl">recipients:</span> <span class="s2">"baptiste.wicht@gmail.com"</span><span class="o">,</span>
+<a name="rest_code_6c021919d26742468f3514d23fffdb2a-28"></a>                <span class="nl">sendToIndividuals:</span> <span class="kc">true</span><span class="o">])</span>
+<a name="rest_code_6c021919d26742468f3514d23fffdb2a-29"></a>        <span class="o">}</span>
+<a name="rest_code_6c021919d26742468f3514d23fffdb2a-30"></a>    <span class="o">}</span>
+<a name="rest_code_6c021919d26742468f3514d23fffdb2a-31"></a><span class="o">}</span>
 </pre>
 <p>There are two important things here. First, a new stage (success) is added that
 simply set the result of the current build to SUCCESS once it is done. It must
@@ -2360,87 +2365,87 @@ views of it:</p>
 <img alt="Jenkins Blue Ocean view of a build tests for DLL project" class="align-center" src="images/jenkins_blue_ocean_dll_build_tests.png"><p>It's likely that it won't appeal to everyone, but I think it's pretty nice.</p>
 <p>If we get back to the declarative Pipeline, here is the declarative pipeline for
 my Expression Templates Library (ETL) project:</p>
-<pre class="code groovy"><a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-1"></a><span class="n">pipeline</span> <span class="o">{</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-2"></a>    <span class="n">agent</span> <span class="n">any</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-3"></a>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-4"></a>    <span class="n">environment</span> <span class="o">{</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-5"></a>       <span class="n">CXX</span> <span class="o">=</span> <span class="s2">"g++-4.9.4"</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-6"></a>       <span class="n">LD</span> <span class="o">=</span> <span class="s2">"g++-4.9.4"</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-7"></a>       <span class="n">ETL_MKL</span> <span class="o">=</span> <span class="s1">'true'</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-8"></a>    <span class="o">}</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-9"></a>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-10"></a>    <span class="n">stages</span> <span class="o">{</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-11"></a>        <span class="n">stage</span> <span class="o">(</span><span class="s1">'git'</span><span class="o">){</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-12"></a>            <span class="n">steps</span> <span class="o">{</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-13"></a>                <span class="n">checkout</span><span class="o">([</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-14"></a>                    <span class="n">$class</span><span class="o">:</span> <span class="s1">'GitSCM'</span><span class="o">,</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-15"></a>                    <span class="nl">branches:</span> <span class="n">scm</span><span class="o">.</span><span class="na">branches</span><span class="o">,</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-16"></a>                    <span class="nl">doGenerateSubmoduleConfigurations:</span> <span class="kc">false</span><span class="o">,</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-17"></a>                    <span class="nl">extensions:</span> <span class="n">scm</span><span class="o">.</span><span class="na">extensions</span> <span class="o">+</span> <span class="o">[[</span><span class="n">$class</span><span class="o">:</span> <span class="s1">'SubmoduleOption'</span><span class="o">,</span> <span class="nl">disableSubmodules:</span> <span class="kc">false</span><span class="o">,</span> <span class="nl">recursiveSubmodules:</span> <span class="kc">true</span><span class="o">,</span> <span class="nl">reference:</span> <span class="s1">''</span><span class="o">,</span> <span class="nl">trackingSubmodules:</span> <span class="kc">false</span><span class="o">]],</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-18"></a>                    <span class="nl">submoduleCfg:</span> <span class="o">[],</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-19"></a>                    <span class="nl">userRemoteConfigs:</span> <span class="n">scm</span><span class="o">.</span><span class="na">userRemoteConfigs</span><span class="o">])</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-20"></a>            <span class="o">}</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-21"></a>        <span class="o">}</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-22"></a>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-23"></a>        <span class="n">stage</span> <span class="o">(</span><span class="s1">'pre-analysis'</span><span class="o">)</span> <span class="o">{</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-24"></a>            <span class="n">steps</span> <span class="o">{</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-25"></a>                <span class="n">sh</span> <span class="s1">'cppcheck --xml-version=2 -j3 --enable=all --std=c++11 `git ls-files "*.hpp" "*.cpp"` 2&gt; cppcheck_report.xml'</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-26"></a>                <span class="n">sh</span> <span class="s1">'sloccount --duplicates --wide --details include/etl test workbench &gt; sloccount.sc'</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-27"></a>                <span class="n">sh</span> <span class="s1">'cccc include/etl/*.hpp test/*.cpp workbench/*.cpp || true'</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-28"></a>            <span class="o">}</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-29"></a>        <span class="o">}</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-30"></a>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-31"></a>        <span class="n">stage</span> <span class="o">(</span><span class="s1">'build'</span><span class="o">){</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-32"></a>            <span class="n">steps</span> <span class="o">{</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-33"></a>                <span class="n">sh</span> <span class="s1">'make clean'</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-34"></a>                <span class="n">sh</span> <span class="s1">'make -j6 release'</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-35"></a>            <span class="o">}</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-36"></a>        <span class="o">}</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-37"></a>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-38"></a>        <span class="n">stage</span> <span class="o">(</span><span class="s1">'test'</span><span class="o">){</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-39"></a>            <span class="n">steps</span> <span class="o">{</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-40"></a>                <span class="n">sh</span> <span class="s1">'ETL_THREADS=-j6 ETL_GPP=g++-4.9.4 LD_LIBRARY_PATH=\"${LD_LIBRARY_PATH}:/opt/intel/mkl/lib/intel64:/opt/intel/lib/intel64\" ./scripts/test_runner.sh'</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-41"></a>                <span class="n">archive</span> <span class="s1">'catch_report.xml'</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-42"></a>                <span class="n">junit</span> <span class="s1">'catch_report.xml'</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-43"></a>            <span class="o">}</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-44"></a>        <span class="o">}</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-45"></a>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-46"></a>        <span class="n">stage</span> <span class="o">(</span><span class="s1">'sonar-master'</span><span class="o">){</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-47"></a>            <span class="n">when</span> <span class="o">{</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-48"></a>                <span class="n">branch</span> <span class="s1">'master'</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-49"></a>            <span class="o">}</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-50"></a>            <span class="n">steps</span> <span class="o">{</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-51"></a>                <span class="n">sh</span> <span class="s2">"/opt/sonar-runner/bin/sonar-runner"</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-52"></a>            <span class="o">}</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-53"></a>        <span class="o">}</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-54"></a>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-55"></a>        <span class="n">stage</span> <span class="o">(</span><span class="s1">'sonar-branch'</span><span class="o">){</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-56"></a>            <span class="n">when</span> <span class="o">{</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-57"></a>                <span class="n">not</span> <span class="o">{</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-58"></a>                    <span class="n">branch</span> <span class="s1">'master'</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-59"></a>                <span class="o">}</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-60"></a>            <span class="o">}</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-61"></a>            <span class="n">steps</span> <span class="o">{</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-62"></a>                <span class="n">sh</span> <span class="s2">"/opt/sonar-runner/bin/sonar-runner -Dsonar.branch=${env.BRANCH_NAME}"</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-63"></a>            <span class="o">}</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-64"></a>        <span class="o">}</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-65"></a>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-66"></a>        <span class="n">stage</span> <span class="o">(</span><span class="s1">'bench'</span><span class="o">){</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-67"></a>            <span class="n">steps</span> <span class="o">{</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-68"></a>                <span class="n">build</span> <span class="nl">job:</span> <span class="s1">'etl - benchmark'</span><span class="o">,</span> <span class="nl">wait:</span> <span class="kc">false</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-69"></a>            <span class="o">}</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-70"></a>        <span class="o">}</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-71"></a>    <span class="o">}</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-72"></a>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-73"></a>    <span class="n">post</span> <span class="o">{</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-74"></a>        <span class="n">always</span> <span class="o">{</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-75"></a>            <span class="n">step</span><span class="o">([</span><span class="n">$class</span><span class="o">:</span> <span class="s1">'Mailer'</span><span class="o">,</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-76"></a>                <span class="nl">notifyEveryUnstableBuild:</span> <span class="kc">true</span><span class="o">,</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-77"></a>                <span class="nl">recipients:</span> <span class="s2">"baptiste.wicht@gmail.com"</span><span class="o">,</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-78"></a>                <span class="nl">sendToIndividuals:</span> <span class="kc">true</span><span class="o">])</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-79"></a>        <span class="o">}</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-80"></a>    <span class="o">}</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-81"></a><span class="o">}</span>
+<pre class="code groovy"><a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-1"></a><span class="n">pipeline</span> <span class="o">{</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-2"></a>    <span class="n">agent</span> <span class="n">any</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-3"></a>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-4"></a>    <span class="n">environment</span> <span class="o">{</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-5"></a>       <span class="n">CXX</span> <span class="o">=</span> <span class="s2">"g++-4.9.4"</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-6"></a>       <span class="n">LD</span> <span class="o">=</span> <span class="s2">"g++-4.9.4"</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-7"></a>       <span class="n">ETL_MKL</span> <span class="o">=</span> <span class="s1">'true'</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-8"></a>    <span class="o">}</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-9"></a>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-10"></a>    <span class="n">stages</span> <span class="o">{</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-11"></a>        <span class="n">stage</span> <span class="o">(</span><span class="s1">'git'</span><span class="o">){</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-12"></a>            <span class="n">steps</span> <span class="o">{</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-13"></a>                <span class="n">checkout</span><span class="o">([</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-14"></a>                    <span class="n">$class</span><span class="o">:</span> <span class="s1">'GitSCM'</span><span class="o">,</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-15"></a>                    <span class="nl">branches:</span> <span class="n">scm</span><span class="o">.</span><span class="na">branches</span><span class="o">,</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-16"></a>                    <span class="nl">doGenerateSubmoduleConfigurations:</span> <span class="kc">false</span><span class="o">,</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-17"></a>                    <span class="nl">extensions:</span> <span class="n">scm</span><span class="o">.</span><span class="na">extensions</span> <span class="o">+</span> <span class="o">[[</span><span class="n">$class</span><span class="o">:</span> <span class="s1">'SubmoduleOption'</span><span class="o">,</span> <span class="nl">disableSubmodules:</span> <span class="kc">false</span><span class="o">,</span> <span class="nl">recursiveSubmodules:</span> <span class="kc">true</span><span class="o">,</span> <span class="nl">reference:</span> <span class="s1">''</span><span class="o">,</span> <span class="nl">trackingSubmodules:</span> <span class="kc">false</span><span class="o">]],</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-18"></a>                    <span class="nl">submoduleCfg:</span> <span class="o">[],</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-19"></a>                    <span class="nl">userRemoteConfigs:</span> <span class="n">scm</span><span class="o">.</span><span class="na">userRemoteConfigs</span><span class="o">])</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-20"></a>            <span class="o">}</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-21"></a>        <span class="o">}</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-22"></a>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-23"></a>        <span class="n">stage</span> <span class="o">(</span><span class="s1">'pre-analysis'</span><span class="o">)</span> <span class="o">{</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-24"></a>            <span class="n">steps</span> <span class="o">{</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-25"></a>                <span class="n">sh</span> <span class="s1">'cppcheck --xml-version=2 -j3 --enable=all --std=c++11 `git ls-files "*.hpp" "*.cpp"` 2&gt; cppcheck_report.xml'</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-26"></a>                <span class="n">sh</span> <span class="s1">'sloccount --duplicates --wide --details include/etl test workbench &gt; sloccount.sc'</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-27"></a>                <span class="n">sh</span> <span class="s1">'cccc include/etl/*.hpp test/*.cpp workbench/*.cpp || true'</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-28"></a>            <span class="o">}</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-29"></a>        <span class="o">}</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-30"></a>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-31"></a>        <span class="n">stage</span> <span class="o">(</span><span class="s1">'build'</span><span class="o">){</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-32"></a>            <span class="n">steps</span> <span class="o">{</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-33"></a>                <span class="n">sh</span> <span class="s1">'make clean'</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-34"></a>                <span class="n">sh</span> <span class="s1">'make -j6 release'</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-35"></a>            <span class="o">}</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-36"></a>        <span class="o">}</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-37"></a>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-38"></a>        <span class="n">stage</span> <span class="o">(</span><span class="s1">'test'</span><span class="o">){</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-39"></a>            <span class="n">steps</span> <span class="o">{</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-40"></a>                <span class="n">sh</span> <span class="s1">'ETL_THREADS=-j6 ETL_GPP=g++-4.9.4 LD_LIBRARY_PATH=\"${LD_LIBRARY_PATH}:/opt/intel/mkl/lib/intel64:/opt/intel/lib/intel64\" ./scripts/test_runner.sh'</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-41"></a>                <span class="n">archive</span> <span class="s1">'catch_report.xml'</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-42"></a>                <span class="n">junit</span> <span class="s1">'catch_report.xml'</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-43"></a>            <span class="o">}</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-44"></a>        <span class="o">}</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-45"></a>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-46"></a>        <span class="n">stage</span> <span class="o">(</span><span class="s1">'sonar-master'</span><span class="o">){</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-47"></a>            <span class="n">when</span> <span class="o">{</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-48"></a>                <span class="n">branch</span> <span class="s1">'master'</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-49"></a>            <span class="o">}</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-50"></a>            <span class="n">steps</span> <span class="o">{</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-51"></a>                <span class="n">sh</span> <span class="s2">"/opt/sonar-runner/bin/sonar-runner"</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-52"></a>            <span class="o">}</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-53"></a>        <span class="o">}</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-54"></a>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-55"></a>        <span class="n">stage</span> <span class="o">(</span><span class="s1">'sonar-branch'</span><span class="o">){</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-56"></a>            <span class="n">when</span> <span class="o">{</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-57"></a>                <span class="n">not</span> <span class="o">{</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-58"></a>                    <span class="n">branch</span> <span class="s1">'master'</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-59"></a>                <span class="o">}</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-60"></a>            <span class="o">}</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-61"></a>            <span class="n">steps</span> <span class="o">{</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-62"></a>                <span class="n">sh</span> <span class="s2">"/opt/sonar-runner/bin/sonar-runner -Dsonar.branch=${env.BRANCH_NAME}"</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-63"></a>            <span class="o">}</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-64"></a>        <span class="o">}</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-65"></a>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-66"></a>        <span class="n">stage</span> <span class="o">(</span><span class="s1">'bench'</span><span class="o">){</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-67"></a>            <span class="n">steps</span> <span class="o">{</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-68"></a>                <span class="n">build</span> <span class="nl">job:</span> <span class="s1">'etl - benchmark'</span><span class="o">,</span> <span class="nl">wait:</span> <span class="kc">false</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-69"></a>            <span class="o">}</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-70"></a>        <span class="o">}</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-71"></a>    <span class="o">}</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-72"></a>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-73"></a>    <span class="n">post</span> <span class="o">{</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-74"></a>        <span class="n">always</span> <span class="o">{</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-75"></a>            <span class="n">step</span><span class="o">([</span><span class="n">$class</span><span class="o">:</span> <span class="s1">'Mailer'</span><span class="o">,</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-76"></a>                <span class="nl">notifyEveryUnstableBuild:</span> <span class="kc">true</span><span class="o">,</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-77"></a>                <span class="nl">recipients:</span> <span class="s2">"baptiste.wicht@gmail.com"</span><span class="o">,</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-78"></a>                <span class="nl">sendToIndividuals:</span> <span class="kc">true</span><span class="o">])</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-79"></a>        <span class="o">}</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-80"></a>    <span class="o">}</span>
+<a name="rest_code_6d4c263a82dd42c7aed28d385f3ff212-81"></a><span class="o">}</span>
 </pre>
 <p>There is nothing really fancy about, it's probably average. Moreover, since I'm
 not an expert on pipelines and I've just discovered declarative pipelines, it

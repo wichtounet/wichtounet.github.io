@@ -143,28 +143,33 @@ typically a boolean value. For instance, std::is_const, std::is_same or
 std::is_reference are type traits provided by the STL. They are giving you some
 information at compile time for a certain type. If you need to write a type
 traits, let's say is_float, here is how you would maybe do it in C++11:</p>
-<pre class="code c++"><a name="rest_code_f8c8bdcdefb543fc9ddc3381e4c1c16f-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
-<a name="rest_code_f8c8bdcdefb543fc9ddc3381e4c1c16f-2"></a><span class="k">struct</span> <span class="n">is_float</span> <span class="p">{</span>
-<a name="rest_code_f8c8bdcdefb543fc9ddc3381e4c1c16f-3"></a>    <span class="k">static</span> <span class="k">constexpr</span> <span class="kt">bool</span> <span class="n">value</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="kt">float</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">;</span>
-<a name="rest_code_f8c8bdcdefb543fc9ddc3381e4c1c16f-4"></a><span class="p">};</span>
+<pre class="code c++"><a name="rest_code_b7d02eca76314827bf39fce883c7ff65-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<a name="rest_code_b7d02eca76314827bf39fce883c7ff65-2"></a><span class="k">struct</span> <span class="n">is_float</span> <span class="p">{</span>
+<a name="rest_code_b7d02eca76314827bf39fce883c7ff65-3"></a>    <span class="k">static</span> <span class="k">constexpr</span> <span class="kt">bool</span> <span class="n">value</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="kt">float</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">;</span>
+<a name="rest_code_b7d02eca76314827bf39fce883c7ff65-4"></a><span class="p">};</span>
 </pre>
 <p>or a bit nicer with a template type alias and std::integral constant:</p>
-<pre class="code c++"><a name="rest_code_2a9bdb5af7a147fdb44aa84ab3ae1731-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
-<a name="rest_code_2a9bdb5af7a147fdb44aa84ab3ae1731-2"></a><span class="k">using</span> <span class="n">is_float</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">integral_constant</span><span class="o">&lt;</span><span class="kt">bool</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="kt">float</span><span class="o">&gt;::</span><span class="n">value</span><span class="o">&gt;</span><span class="p">;</span>
+<pre class="code c++"><a name="rest_code_900e8b5205584f3391506d277ef52874-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<a name="rest_code_900e8b5205584f3391506d277ef52874-2"></a><span class="k">using</span> <span class="n">is_float</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">integral_constant</span><span class="o">&lt;</span><span class="kt">bool</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="kt">float</span><span class="o">&gt;::</span><span class="n">value</span><span class="o">&gt;</span><span class="p">;</span>
 </pre>
+<p>or since is_same is itself a type traits, you can also directly alias it:</p>
+<pre class="code c++"><a name="rest_code_f0502e648c9e4908ad25842a7c114f2d-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<a name="rest_code_f0502e648c9e4908ad25842a7c114f2d-2"></a><span class="k">using</span> <span class="n">is_float</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="kt">float</span><span class="o">&gt;</span><span class="p">;</span>
+</pre>
+<p>This makes for some very nice syntax, but we still have a type rather than a value.</p>
 <p>Note that in some cases, you cannot use the using technique since it cannot be
 specialized and you often need specialization to write some more advanced
 traits.</p>
 <p>And then you would use your traits to do something specific based on that
 information. For instance with a very basic example:</p>
-<pre class="code C++"><a name="rest_code_7f7ad3492f164537b8e973df41aebb3f-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
-<a name="rest_code_7f7ad3492f164537b8e973df41aebb3f-2"></a><span class="kt">void</span> <span class="n">test</span><span class="p">(</span><span class="n">T</span> <span class="n">t</span><span class="p">){</span>
-<a name="rest_code_7f7ad3492f164537b8e973df41aebb3f-3"></a>    <span class="k">if</span> <span class="p">(</span><span class="n">is_float</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">){</span>
-<a name="rest_code_7f7ad3492f164537b8e973df41aebb3f-4"></a>        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"I'm a float"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
-<a name="rest_code_7f7ad3492f164537b8e973df41aebb3f-5"></a>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-<a name="rest_code_7f7ad3492f164537b8e973df41aebb3f-6"></a>        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"I'm not a float"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
-<a name="rest_code_7f7ad3492f164537b8e973df41aebb3f-7"></a>    <span class="p">}</span>
-<a name="rest_code_7f7ad3492f164537b8e973df41aebb3f-8"></a><span class="p">}</span>
+<pre class="code C++"><a name="rest_code_324249a8154d4dbf9afc8d752541dc61-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<a name="rest_code_324249a8154d4dbf9afc8d752541dc61-2"></a><span class="kt">void</span> <span class="n">test</span><span class="p">(</span><span class="n">T</span> <span class="n">t</span><span class="p">){</span>
+<a name="rest_code_324249a8154d4dbf9afc8d752541dc61-3"></a>    <span class="k">if</span> <span class="p">(</span><span class="n">is_float</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">){</span>
+<a name="rest_code_324249a8154d4dbf9afc8d752541dc61-4"></a>        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"I'm a float"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<a name="rest_code_324249a8154d4dbf9afc8d752541dc61-5"></a>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<a name="rest_code_324249a8154d4dbf9afc8d752541dc61-6"></a>        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"I'm not a float"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<a name="rest_code_324249a8154d4dbf9afc8d752541dc61-7"></a>    <span class="p">}</span>
+<a name="rest_code_324249a8154d4dbf9afc8d752541dc61-8"></a><span class="p">}</span>
 </pre>
 <p>Really nothing fancy here, but that will be enough as examples.</p>
 <p>Even though all this works pretty, it can be made better on two points. First,
@@ -176,19 +181,19 @@ they are variables, parametrized with a type. This allows us to write type
 traits without using a type alias or struct, meaning we have a real value
 instead of a type. If we rewrite our is_float traits with variable templates, we
 have the following:</p>
-<pre class="code c++"><a name="rest_code_10fbc4b7502a4fcf9f2c22ad8c7db7c7-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
-<a name="rest_code_10fbc4b7502a4fcf9f2c22ad8c7db7c7-2"></a><span class="k">constexpr</span> <span class="kt">bool</span> <span class="n">is_float</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="kt">float</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">;</span>
+<pre class="code c++"><a name="rest_code_e34452c3bc824eeab4fe277112d7c733-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<a name="rest_code_e34452c3bc824eeab4fe277112d7c733-2"></a><span class="k">constexpr</span> <span class="kt">bool</span> <span class="n">is_float</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="kt">float</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">;</span>
 </pre>
 <p>I think it's much nicer, the intent is clearly stated and there is no
 unnecessary code. Moreover, it's also nicer to use:</p>
-<pre class="code C++"><a name="rest_code_337f05e264324b2e8e1bece17cd3dc51-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
-<a name="rest_code_337f05e264324b2e8e1bece17cd3dc51-2"></a><span class="kt">void</span> <span class="n">test</span><span class="p">(</span><span class="n">T</span> <span class="n">t</span><span class="p">){</span>
-<a name="rest_code_337f05e264324b2e8e1bece17cd3dc51-3"></a>    <span class="k">if</span> <span class="p">(</span><span class="n">is_float</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">){</span>
-<a name="rest_code_337f05e264324b2e8e1bece17cd3dc51-4"></a>        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"I'm a float"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
-<a name="rest_code_337f05e264324b2e8e1bece17cd3dc51-5"></a>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-<a name="rest_code_337f05e264324b2e8e1bece17cd3dc51-6"></a>        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"I'm not a float"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
-<a name="rest_code_337f05e264324b2e8e1bece17cd3dc51-7"></a>    <span class="p">}</span>
-<a name="rest_code_337f05e264324b2e8e1bece17cd3dc51-8"></a><span class="p">}</span>
+<pre class="code C++"><a name="rest_code_416ce9c9027c4387907eabcbd5ac92fe-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<a name="rest_code_416ce9c9027c4387907eabcbd5ac92fe-2"></a><span class="kt">void</span> <span class="n">test</span><span class="p">(</span><span class="n">T</span> <span class="n">t</span><span class="p">){</span>
+<a name="rest_code_416ce9c9027c4387907eabcbd5ac92fe-3"></a>    <span class="k">if</span> <span class="p">(</span><span class="n">is_float</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">){</span>
+<a name="rest_code_416ce9c9027c4387907eabcbd5ac92fe-4"></a>        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"I'm a float"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<a name="rest_code_416ce9c9027c4387907eabcbd5ac92fe-5"></a>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<a name="rest_code_416ce9c9027c4387907eabcbd5ac92fe-6"></a>        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"I'm not a float"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<a name="rest_code_416ce9c9027c4387907eabcbd5ac92fe-7"></a>    <span class="p">}</span>
+<a name="rest_code_416ce9c9027c4387907eabcbd5ac92fe-8"></a><span class="p">}</span>
 </pre>
 <p>No more ::value everywhere :) I think it's really cool.</p>
 <p>Note that, unlike type alias template, they can be specialized, either fully or
@@ -197,8 +202,8 @@ partially, so no more limitation on that side.</p>
 type traits with values. For instance, std::is_same will have a std::is_same_v
 helper that is a variable template. With that, we can simplify our traits a bit
 more:</p>
-<pre class="code c++"><a name="rest_code_f15078ab6ae441808cd337012c3db350-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
-<a name="rest_code_f15078ab6ae441808cd337012c3db350-2"></a><span class="k">constexpr</span> <span class="kt">bool</span> <span class="n">is_float</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">is_same_v</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="kt">float</span><span class="o">&gt;</span><span class="p">;</span>
+<pre class="code c++"><a name="rest_code_fa2100a0b9bf4b06b6f9d5bf1e4f624b-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<a name="rest_code_fa2100a0b9bf4b06b6f9d5bf1e4f624b-2"></a><span class="k">constexpr</span> <span class="kt">bool</span> <span class="n">is_float</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">is_same_v</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="kt">float</span><span class="o">&gt;</span><span class="p">;</span>
 </pre>
 <p>Personally, I replaced all the type traits inside ETL using variable templates.
 If you don't want to do it, you can also introduce helpers like in the C++17 STL
@@ -210,28 +215,28 @@ in GCC 6 only) that you may encounter if you start using variable templates in
 template classes or variable templates used in another variable templates. If
 you plan to use variable templates inside a template, such as something like
 this:</p>
-<pre class="code c++"><a name="rest_code_7d421d02bbda4443ba4a14a41954c3cc-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
-<a name="rest_code_7d421d02bbda4443ba4a14a41954c3cc-2"></a><span class="k">struct</span> <span class="n">outer_traits</span> <span class="p">{</span>
-<a name="rest_code_7d421d02bbda4443ba4a14a41954c3cc-3"></a>    <span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">X</span><span class="o">&gt;</span>
-<a name="rest_code_7d421d02bbda4443ba4a14a41954c3cc-4"></a>    <span class="k">static</span> <span class="k">constexpr</span> <span class="kt">bool</span> <span class="n">sub_traits</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">X</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">;</span>
-<a name="rest_code_7d421d02bbda4443ba4a14a41954c3cc-5"></a><span class="p">};</span>
-<a name="rest_code_7d421d02bbda4443ba4a14a41954c3cc-6"></a>
-<a name="rest_code_7d421d02bbda4443ba4a14a41954c3cc-7"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span> <span class="n">X</span><span class="o">&gt;</span>
-<a name="rest_code_7d421d02bbda4443ba4a14a41954c3cc-8"></a><span class="k">constexpr</span> <span class="kt">bool</span> <span class="n">outer_helper</span> <span class="o">=</span> <span class="n">outer_traits</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;::</span><span class="k">template</span> <span class="n">sub_traits</span><span class="o">&lt;</span><span class="n">X</span><span class="o">&gt;</span><span class="p">;</span>
-<a name="rest_code_7d421d02bbda4443ba4a14a41954c3cc-9"></a>
-<a name="rest_code_7d421d02bbda4443ba4a14a41954c3cc-10"></a><span class="kt">int</span> <span class="nf">main</span><span class="p">(){</span>
-<a name="rest_code_7d421d02bbda4443ba4a14a41954c3cc-11"></a>    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">outer_helper</span><span class="o">&lt;</span><span class="kt">float</span><span class="p">,</span> <span class="kt">float</span><span class="o">&gt;</span><span class="p">;</span>
-<a name="rest_code_7d421d02bbda4443ba4a14a41954c3cc-12"></a>
-<a name="rest_code_7d421d02bbda4443ba4a14a41954c3cc-13"></a>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<a name="rest_code_7d421d02bbda4443ba4a14a41954c3cc-14"></a><span class="p">}</span>
+<pre class="code c++"><a name="rest_code_28ac0d7f4e4146aa99937dac05b3f946-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<a name="rest_code_28ac0d7f4e4146aa99937dac05b3f946-2"></a><span class="k">struct</span> <span class="n">outer_traits</span> <span class="p">{</span>
+<a name="rest_code_28ac0d7f4e4146aa99937dac05b3f946-3"></a>    <span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">X</span><span class="o">&gt;</span>
+<a name="rest_code_28ac0d7f4e4146aa99937dac05b3f946-4"></a>    <span class="k">static</span> <span class="k">constexpr</span> <span class="kt">bool</span> <span class="n">sub_traits</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">X</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">;</span>
+<a name="rest_code_28ac0d7f4e4146aa99937dac05b3f946-5"></a><span class="p">};</span>
+<a name="rest_code_28ac0d7f4e4146aa99937dac05b3f946-6"></a>
+<a name="rest_code_28ac0d7f4e4146aa99937dac05b3f946-7"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span> <span class="n">X</span><span class="o">&gt;</span>
+<a name="rest_code_28ac0d7f4e4146aa99937dac05b3f946-8"></a><span class="k">constexpr</span> <span class="kt">bool</span> <span class="n">outer_helper</span> <span class="o">=</span> <span class="n">outer_traits</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;::</span><span class="k">template</span> <span class="n">sub_traits</span><span class="o">&lt;</span><span class="n">X</span><span class="o">&gt;</span><span class="p">;</span>
+<a name="rest_code_28ac0d7f4e4146aa99937dac05b3f946-9"></a>
+<a name="rest_code_28ac0d7f4e4146aa99937dac05b3f946-10"></a><span class="kt">int</span> <span class="nf">main</span><span class="p">(){</span>
+<a name="rest_code_28ac0d7f4e4146aa99937dac05b3f946-11"></a>    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">outer_helper</span><span class="o">&lt;</span><span class="kt">float</span><span class="p">,</span> <span class="kt">float</span><span class="o">&gt;</span><span class="p">;</span>
+<a name="rest_code_28ac0d7f4e4146aa99937dac05b3f946-12"></a>
+<a name="rest_code_28ac0d7f4e4146aa99937dac05b3f946-13"></a>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<a name="rest_code_28ac0d7f4e4146aa99937dac05b3f946-14"></a><span class="p">}</span>
 </pre>
 <p>You will encounter a not-helpful at all error message with GCC5 family, such as:</p>
-<pre class="code text"><a name="rest_code_3379b7cc248249f1b84f29f0f501c05d-1"></a>test.cpp: In instantiation of ‘constexpr const bool outer_helper&lt;float, float&gt;’:
-<a name="rest_code_3379b7cc248249f1b84f29f0f501c05d-2"></a>test.cpp:14:22:   required from here
-<a name="rest_code_3379b7cc248249f1b84f29f0f501c05d-3"></a>test.cpp:11:20: error: ‘template&lt;class X&gt; constexpr const bool outer_traits&lt;float&gt;::sub_traits&lt;X&gt;’ is not a function template
-<a name="rest_code_3379b7cc248249f1b84f29f0f501c05d-4"></a>     constexpr bool outer_helper = outer_traits&lt;T&gt;::template sub_trait
-<a name="rest_code_3379b7cc248249f1b84f29f0f501c05d-5"></a>                    ^
-<a name="rest_code_3379b7cc248249f1b84f29f0f501c05d-6"></a>test.cpp:11:20: error: ‘sub_traits&lt;X&gt;’ is not a member of ‘outer_traits&lt;float&gt;’
+<pre class="code text"><a name="rest_code_4d2a5c6c41314e3eb28c4b5846d44bff-1"></a>test.cpp: In instantiation of ‘constexpr const bool outer_helper&lt;float, float&gt;’:
+<a name="rest_code_4d2a5c6c41314e3eb28c4b5846d44bff-2"></a>test.cpp:14:22:   required from here
+<a name="rest_code_4d2a5c6c41314e3eb28c4b5846d44bff-3"></a>test.cpp:11:20: error: ‘template&lt;class X&gt; constexpr const bool outer_traits&lt;float&gt;::sub_traits&lt;X&gt;’ is not a function template
+<a name="rest_code_4d2a5c6c41314e3eb28c4b5846d44bff-4"></a>     constexpr bool outer_helper = outer_traits&lt;T&gt;::template sub_trait
+<a name="rest_code_4d2a5c6c41314e3eb28c4b5846d44bff-5"></a>                    ^
+<a name="rest_code_4d2a5c6c41314e3eb28c4b5846d44bff-6"></a>test.cpp:11:20: error: ‘sub_traits&lt;X&gt;’ is not a member of ‘outer_traits&lt;float&gt;’
 </pre>
 <p>It comes from a bug in the handling of variable templates as dependent names. If
 you don't come in this cases, you can use GCC5 family directly, otherwise,
