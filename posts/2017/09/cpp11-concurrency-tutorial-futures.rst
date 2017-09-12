@@ -1,7 +1,7 @@
 I've been recently reminded that a long time ago I was doing a series of
-tutorial on C++11 Concurrency. For some, I didn't continue this series. The next
-post in the series was supposed to be about Futures, so I'm finally going to do
-it :)
+tutorial on C++11 Concurrency. For some reason, I haven't continued these
+tutorials.  The next post in the series was supposed to be about Futures, so I'm
+finally going to do it :)
 
 Here are the links to the current posts of the C++11 Concurrency Tutorial:
 
@@ -151,9 +151,9 @@ result is available, we simply do something else. This example is important to
 understand, it covers pretty much every concept of the futures.
 
 One interesting thing that remains is that you can pass parameters to your task
-via std::async. Indeed, all the extra parameters that you pass to std::async
-will be passed to the task itself. Here is an example of spawning tasks in
-a loop with different parameters:
+via :code:`std::async`. Indeed, all the extra parameters that you pass to
+:code:`std::async` will be passed to the task itself. Here is an example of
+spawning tasks in a loop with different parameters:
 
 .. code:: c++
 
