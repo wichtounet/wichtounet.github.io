@@ -9,22 +9,20 @@
 <meta name="generator" content="Nikola (getnikola.com)">
 <link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
 <link rel="canonical" href="http://baptiste-wicht.com/posts/2016/02/use-templight-and-templar-to-debug-cpp-templates.html">
-<!--[if lt IE 9]><script src="../../../assets/js/html5.js"></script><![endif]--><script type="text/javascript">
-  var _gaq = _gaq || [];
-  _gaq.push(['_setAccount', 'UA-2175227-7']);
-  _gaq.push(['_trackPageview']);
-  (function() {
-    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-    var metas = document.getElementsByTagName('meta'), tagsList = [];
-    for (var i=0; i<metas.length; i++) {
-      if (metas[i].getAttribute('property') == 'article:tag') {
-         tagsList.push( metas[i].getAttribute('content'));
-      }
+<!--[if lt IE 9]><script src="../../../assets/js/html5.js"></script><![endif]--><script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-2175227-7', 'auto');
+  var metas = document.getElementsByTagName('meta'), tagsList = [];
+  for (var i=0; i<metas.length; i++) {
+    if (metas[i].getAttribute('property') == 'article:tag') {
+      tagsList.push( metas[i].getAttribute('content'));
     }
-    ga('set', 'dimension1', tagsList.join('|'))
-    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-  })();
+  }
+  ga('set', 'dimension1', tagsList.join('|'));
+  ga('send', 'pageview');
 </script><meta name="author" content="Baptiste Wicht">
 <link rel="prev" href="../01/improve-dll-and-etl-compile-time-further.html" title="Improve DLL and ETL Compile Time further" type="text/html">
 <link rel="next" href="../04/simplify-deep-learning-library-usage-on-linux-and-windows.html" title="Simplify Deep Learning Library usage on Linux and Windows!" type="text/html">
@@ -151,42 +149,42 @@ Templight is a Clang-based tool to profile the time and memory consumption of te
 <h2>Installation</h2>
 <p>Unfortunately, the templight installation is not user-friendly at all. You need to clone the complete LLVM/Clang tree and add templight inside it before compiling the complete clang toolchain. But that is the case for all clang-based tools... You also need to patch clang but that may not be necessary in the future. The complete instructions are available <a class="reference external" href="https://github.com/mikael-s-persson/templight#getting-and-compiling-templight">here</a>.</p>
 <p>The installation of Templar is much more convenient:</p>
-<pre class="code bash"><a name="rest_code_d30f6dcb90ca4c58bce899c9ffb58629-1"></a>git clone https://github.com/schulmar/Templar.git
-<a name="rest_code_d30f6dcb90ca4c58bce899c9ffb58629-2"></a><span class="nb">cd</span> Templar
-<a name="rest_code_d30f6dcb90ca4c58bce899c9ffb58629-3"></a>git checkout feature/templight2
-<a name="rest_code_d30f6dcb90ca4c58bce899c9ffb58629-4"></a>qmake .
-<a name="rest_code_d30f6dcb90ca4c58bce899c9ffb58629-5"></a>make
-<a name="rest_code_d30f6dcb90ca4c58bce899c9ffb58629-6"></a>sudo make install
+<pre class="code bash"><a name="rest_code_c618ee8d49ac412e90744573f871648d-1"></a>git clone https://github.com/schulmar/Templar.git
+<a name="rest_code_c618ee8d49ac412e90744573f871648d-2"></a><span class="nb">cd</span> Templar
+<a name="rest_code_c618ee8d49ac412e90744573f871648d-3"></a>git checkout feature/templight2
+<a name="rest_code_c618ee8d49ac412e90744573f871648d-4"></a>qmake .
+<a name="rest_code_c618ee8d49ac412e90744573f871648d-5"></a>make
+<a name="rest_code_c618ee8d49ac412e90744573f871648d-6"></a>sudo make install
 </pre>
 <p>The branch feature/templight2 has much more features than the master and should support both Qt4 and Qt5, but I have only tested it on Qt4.</p>
 </div>
 <div class="section" id="example">
 <h2>Example</h2>
 <p>Let's use the class Fibonacci function as an example:</p>
-<pre class="code cpp"><a name="rest_code_8c49a810f9784b8bbd9b69e558417cb7-1"></a><span class="cp">#include</span> <span class="cpf">&lt;iostream&gt;</span><span class="cp"></span>
-<a name="rest_code_8c49a810f9784b8bbd9b69e558417cb7-2"></a>
-<a name="rest_code_8c49a810f9784b8bbd9b69e558417cb7-3"></a><span class="k">template</span> <span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">N</span><span class="o">&gt;</span>
-<a name="rest_code_8c49a810f9784b8bbd9b69e558417cb7-4"></a><span class="k">struct</span> <span class="n">Fibonacci</span> <span class="p">{</span>
-<a name="rest_code_8c49a810f9784b8bbd9b69e558417cb7-5"></a>    <span class="k">static</span> <span class="k">constexpr</span> <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">value</span> <span class="o">=</span> <span class="n">Fibonacci</span><span class="o">&lt;</span><span class="n">N</span><span class="o">-</span><span class="mi">1</span><span class="o">&gt;::</span><span class="n">value</span> <span class="o">+</span> <span class="n">Fibonacci</span><span class="o">&lt;</span><span class="n">N</span><span class="o">-</span><span class="mi">2</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">;</span>
-<a name="rest_code_8c49a810f9784b8bbd9b69e558417cb7-6"></a><span class="p">};</span>
-<a name="rest_code_8c49a810f9784b8bbd9b69e558417cb7-7"></a>
-<a name="rest_code_8c49a810f9784b8bbd9b69e558417cb7-8"></a><span class="k">template</span> <span class="o">&lt;&gt;</span>
-<a name="rest_code_8c49a810f9784b8bbd9b69e558417cb7-9"></a><span class="k">struct</span> <span class="n">Fibonacci</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;</span> <span class="p">{</span>
-<a name="rest_code_8c49a810f9784b8bbd9b69e558417cb7-10"></a>    <span class="k">static</span> <span class="k">constexpr</span> <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">value</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
-<a name="rest_code_8c49a810f9784b8bbd9b69e558417cb7-11"></a><span class="p">};</span>
-<a name="rest_code_8c49a810f9784b8bbd9b69e558417cb7-12"></a>
-<a name="rest_code_8c49a810f9784b8bbd9b69e558417cb7-13"></a><span class="k">template</span> <span class="o">&lt;&gt;</span>
-<a name="rest_code_8c49a810f9784b8bbd9b69e558417cb7-14"></a><span class="k">struct</span> <span class="n">Fibonacci</span><span class="o">&lt;</span><span class="mi">0</span><span class="o">&gt;</span> <span class="p">{</span>
-<a name="rest_code_8c49a810f9784b8bbd9b69e558417cb7-15"></a>    <span class="k">static</span> <span class="k">constexpr</span> <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">value</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-<a name="rest_code_8c49a810f9784b8bbd9b69e558417cb7-16"></a><span class="p">};</span>
-<a name="rest_code_8c49a810f9784b8bbd9b69e558417cb7-17"></a>
-<a name="rest_code_8c49a810f9784b8bbd9b69e558417cb7-18"></a><span class="kt">int</span> <span class="nf">main</span><span class="p">(){</span>
-<a name="rest_code_8c49a810f9784b8bbd9b69e558417cb7-19"></a>    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"Fibonacci&lt;5&gt;:"</span> <span class="o">&lt;&lt;</span> <span class="n">Fibonacci</span><span class="o">&lt;</span><span class="mi">5</span><span class="o">&gt;::</span><span class="n">value</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
-<a name="rest_code_8c49a810f9784b8bbd9b69e558417cb7-20"></a><span class="p">}</span>
+<pre class="code cpp"><a name="rest_code_122d2ec066934ca78f8d142e77895cf6-1"></a><span class="cp">#include</span> <span class="cpf">&lt;iostream&gt;</span><span class="cp"></span>
+<a name="rest_code_122d2ec066934ca78f8d142e77895cf6-2"></a>
+<a name="rest_code_122d2ec066934ca78f8d142e77895cf6-3"></a><span class="k">template</span> <span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">N</span><span class="o">&gt;</span>
+<a name="rest_code_122d2ec066934ca78f8d142e77895cf6-4"></a><span class="k">struct</span> <span class="n">Fibonacci</span> <span class="p">{</span>
+<a name="rest_code_122d2ec066934ca78f8d142e77895cf6-5"></a>    <span class="k">static</span> <span class="k">constexpr</span> <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">value</span> <span class="o">=</span> <span class="n">Fibonacci</span><span class="o">&lt;</span><span class="n">N</span><span class="o">-</span><span class="mi">1</span><span class="o">&gt;::</span><span class="n">value</span> <span class="o">+</span> <span class="n">Fibonacci</span><span class="o">&lt;</span><span class="n">N</span><span class="o">-</span><span class="mi">2</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">;</span>
+<a name="rest_code_122d2ec066934ca78f8d142e77895cf6-6"></a><span class="p">};</span>
+<a name="rest_code_122d2ec066934ca78f8d142e77895cf6-7"></a>
+<a name="rest_code_122d2ec066934ca78f8d142e77895cf6-8"></a><span class="k">template</span> <span class="o">&lt;&gt;</span>
+<a name="rest_code_122d2ec066934ca78f8d142e77895cf6-9"></a><span class="k">struct</span> <span class="n">Fibonacci</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;</span> <span class="p">{</span>
+<a name="rest_code_122d2ec066934ca78f8d142e77895cf6-10"></a>    <span class="k">static</span> <span class="k">constexpr</span> <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">value</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+<a name="rest_code_122d2ec066934ca78f8d142e77895cf6-11"></a><span class="p">};</span>
+<a name="rest_code_122d2ec066934ca78f8d142e77895cf6-12"></a>
+<a name="rest_code_122d2ec066934ca78f8d142e77895cf6-13"></a><span class="k">template</span> <span class="o">&lt;&gt;</span>
+<a name="rest_code_122d2ec066934ca78f8d142e77895cf6-14"></a><span class="k">struct</span> <span class="n">Fibonacci</span><span class="o">&lt;</span><span class="mi">0</span><span class="o">&gt;</span> <span class="p">{</span>
+<a name="rest_code_122d2ec066934ca78f8d142e77895cf6-15"></a>    <span class="k">static</span> <span class="k">constexpr</span> <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">value</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<a name="rest_code_122d2ec066934ca78f8d142e77895cf6-16"></a><span class="p">};</span>
+<a name="rest_code_122d2ec066934ca78f8d142e77895cf6-17"></a>
+<a name="rest_code_122d2ec066934ca78f8d142e77895cf6-18"></a><span class="kt">int</span> <span class="nf">main</span><span class="p">(){</span>
+<a name="rest_code_122d2ec066934ca78f8d142e77895cf6-19"></a>    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"Fibonacci&lt;5&gt;:"</span> <span class="o">&lt;&lt;</span> <span class="n">Fibonacci</span><span class="o">&lt;</span><span class="mi">5</span><span class="o">&gt;::</span><span class="n">value</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<a name="rest_code_122d2ec066934ca78f8d142e77895cf6-20"></a><span class="p">}</span>
 </pre>
 <p>Nothing fancy here, we're simply printing the fifth Fibonacci number on the console.</p>
 <p>You can compile it with templight++:</p>
-<pre class="code bash"><a name="rest_code_a1ff7ae712954baa8f6ff90c091bb1e7-1"></a>templight++ -Xtemplight -profiler -Xtemplight -memory -Xtemplight -ignore-system -std<span class="o">=</span>c++14 main.cpp
+<pre class="code bash"><a name="rest_code_35d6d890071f4f89a83bce7f47053f1e-1"></a>templight++ -Xtemplight -profiler -Xtemplight -memory -Xtemplight -ignore-system -std<span class="o">=</span>c++14 main.cpp
 </pre>
 <p>All the templight options starts with -Xtemplight and then you can use any clang++ options. This will generate a <em>a.memory.trace.pbf</em> file in the current directory. You can then run Templar. use File &gt; Open Trace to open the trace file. This should open a window of this sort:</p>
 <img alt="/images/templar.png" class="align-center" src="../../../images/templar.png"><p>The top-left panel contains the source code of the application, automatically
