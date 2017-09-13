@@ -15,6 +15,13 @@
   _gaq.push(['_trackPageview']);
   (function() {
     var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    var metas = document.getElementsByTagName('meta'), tagsList = [];
+    for (var i=0; i<metas.length; i++) {
+      if (metas[i].getAttribute('property') == 'article:tag') {
+         tagsList.push( metas[i].getAttribute('content'));
+      }
+    }
+    ga('set', 'dimension1', tagsList.join('|'))
     ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
     var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
   })();
@@ -90,7 +97,7 @@ compilation time of the complete test suite from 7">
 <li><a href="../09/blazing-fast-unit-test-compilation-with-doctest-11.html">Blazing fast unit test compilation with doctest 1.1</a></li>
 <li><a href="../../2010/05/better-exception-handling-in-java-7-multicatch-and-final-rethrow.html">Better exception handling in Java 7 : Multicatch and final rethrow</a></li>
 <li><a href="../../2015/06/how-i-improved-a-bit-compile-time-of-etl.html">How I improved (a bit) compile time of ETL ?</a></li>
-<li><a href="../12/pvs-studio-on-cpp-library-review.html">PVS-Studio on C++ Library Review</a></li>
+<li><a href="../01/improve-dll-and-etl-compile-time-further.html">Improve DLL and ETL Compile Time further</a></li>
 
 
                             <li class="navbar-block">
@@ -148,50 +155,50 @@ everything I need from a test framework.</p>
 <p>Contrary to some popular test frameworks that provides ASSERT_EQUALS,
 ASSERT_GREATER and all fashion of assert macros, Catch only provides one
 version: REQUIRE. For instance:</p>
-<pre class="code cpp"><a name="rest_code_60f22e4761cc47f2956aee42ba2e08ce-1"></a><span class="n">REQUIRE</span><span class="p">(</span><span class="n">x</span> <span class="o">==</span> <span class="mf">1.0</span><span class="p">);</span>
-<a name="rest_code_60f22e4761cc47f2956aee42ba2e08ce-2"></a><span class="n">REQUIRE</span><span class="p">(</span><span class="n">y</span> <span class="o">&lt;</span> <span class="mf">5.5</span><span class="p">);</span>
-<a name="rest_code_60f22e4761cc47f2956aee42ba2e08ce-3"></a><span class="n">REQUIRE</span><span class="p">((</span><span class="n">z</span> <span class="o">+</span> <span class="n">x</span><span class="p">)</span> <span class="o">!=</span> <span class="mf">22.01f</span><span class="p">);</span>
+<pre class="code cpp"><a name="rest_code_f534dee571cc4ec9a106e41148537df9-1"></a><span class="n">REQUIRE</span><span class="p">(</span><span class="n">x</span> <span class="o">==</span> <span class="mf">1.0</span><span class="p">);</span>
+<a name="rest_code_f534dee571cc4ec9a106e41148537df9-2"></a><span class="n">REQUIRE</span><span class="p">(</span><span class="n">y</span> <span class="o">&lt;</span> <span class="mf">5.5</span><span class="p">);</span>
+<a name="rest_code_f534dee571cc4ec9a106e41148537df9-3"></a><span class="n">REQUIRE</span><span class="p">((</span><span class="n">z</span> <span class="o">+</span> <span class="n">x</span><span class="p">)</span> <span class="o">!=</span> <span class="mf">22.01f</span><span class="p">);</span>
 </pre>
 <p>The left and right part are detected with some smart template and operator
 overloading techniques and this makes for very nice test output in case of
 errors, for instance:</p>
-<pre class="code text"><a name="rest_code_4f655d8279ef4496830e114f9d9f2938-1"></a>test/src/dyn_matrix.cpp:16: FAILED:
-<a name="rest_code_4f655d8279ef4496830e114f9d9f2938-2"></a>  REQUIRE( test_matrix.rows() == 2UL )
-<a name="rest_code_4f655d8279ef4496830e114f9d9f2938-3"></a>with expansion:
-<a name="rest_code_4f655d8279ef4496830e114f9d9f2938-4"></a>  3 == 2
+<pre class="code text"><a name="rest_code_3889ed5d244f43e19c2904cac6f70e3a-1"></a>test/src/dyn_matrix.cpp:16: FAILED:
+<a name="rest_code_3889ed5d244f43e19c2904cac6f70e3a-2"></a>  REQUIRE( test_matrix.rows() == 2UL )
+<a name="rest_code_3889ed5d244f43e19c2904cac6f70e3a-3"></a>with expansion:
+<a name="rest_code_3889ed5d244f43e19c2904cac6f70e3a-4"></a>  3 == 2
 </pre>
 <p>I think this is pretty nice and the tests are really clear. However, <em>it comes
 with a cost</em> and I underestimated this at first.</p>
 <p>To overcome this, I create two new macros (and few other variations)
 REQUIRE_EQUALS and REQUIRE_DIRECT that simply bypass Catch deduction of the
 expression:</p>
-<pre class="code cpp"><a name="rest_code_ee72a7fe66934c3ca14e149b2f99288d-1"></a><span class="kr">inline</span> <span class="kt">void</span> <span class="nf">evaluate_result_direct</span><span class="p">(</span><span class="n">Catch</span><span class="o">::</span><span class="n">ResultBuilder</span><span class="o">&amp;&amp;</span> <span class="n">__result</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">value</span><span class="p">){</span>
-<a name="rest_code_ee72a7fe66934c3ca14e149b2f99288d-2"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">setResultType</span><span class="p">(</span><span class="n">value</span><span class="p">);</span>
-<a name="rest_code_ee72a7fe66934c3ca14e149b2f99288d-3"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">setLhs</span><span class="p">(</span><span class="n">value</span> <span class="o">?</span> <span class="s">"true"</span> <span class="o">:</span> <span class="s">"false"</span><span class="p">);</span>
-<a name="rest_code_ee72a7fe66934c3ca14e149b2f99288d-4"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">setOp</span><span class="p">(</span><span class="s">""</span><span class="p">);</span>
-<a name="rest_code_ee72a7fe66934c3ca14e149b2f99288d-5"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">endExpression</span><span class="p">();</span>
-<a name="rest_code_ee72a7fe66934c3ca14e149b2f99288d-6"></a><span class="p">}</span>
-<a name="rest_code_ee72a7fe66934c3ca14e149b2f99288d-7"></a>
-<a name="rest_code_ee72a7fe66934c3ca14e149b2f99288d-8"></a><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">L</span><span class="p">,</span> <span class="k">typename</span> <span class="n">R</span><span class="o">&gt;</span>
-<a name="rest_code_ee72a7fe66934c3ca14e149b2f99288d-9"></a><span class="kt">void</span> <span class="n">evaluate_result</span><span class="p">(</span><span class="n">Catch</span><span class="o">::</span><span class="n">ResultBuilder</span><span class="o">&amp;&amp;</span> <span class="n">__result</span><span class="p">,</span> <span class="n">L</span> <span class="n">lhs</span><span class="p">,</span> <span class="n">R</span> <span class="n">rhs</span><span class="p">){</span>
-<a name="rest_code_ee72a7fe66934c3ca14e149b2f99288d-10"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">setResultType</span><span class="p">(</span><span class="n">lhs</span> <span class="o">==</span> <span class="n">rhs</span><span class="p">);</span>
-<a name="rest_code_ee72a7fe66934c3ca14e149b2f99288d-11"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">setLhs</span><span class="p">(</span><span class="n">Catch</span><span class="o">::</span><span class="n">toString</span><span class="p">(</span><span class="n">lhs</span><span class="p">));</span>
-<a name="rest_code_ee72a7fe66934c3ca14e149b2f99288d-12"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">setRhs</span><span class="p">(</span><span class="n">Catch</span><span class="o">::</span><span class="n">toString</span><span class="p">(</span><span class="n">rhs</span><span class="p">));</span>
-<a name="rest_code_ee72a7fe66934c3ca14e149b2f99288d-13"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">setOp</span><span class="p">(</span><span class="s">"=="</span><span class="p">);</span>
-<a name="rest_code_ee72a7fe66934c3ca14e149b2f99288d-14"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">endExpression</span><span class="p">();</span>
-<a name="rest_code_ee72a7fe66934c3ca14e149b2f99288d-15"></a><span class="p">}</span>
-<a name="rest_code_ee72a7fe66934c3ca14e149b2f99288d-16"></a>
-<a name="rest_code_ee72a7fe66934c3ca14e149b2f99288d-17"></a><span class="cp">#define REQUIRE_DIRECT(value) \</span>
-<a name="rest_code_ee72a7fe66934c3ca14e149b2f99288d-18"></a><span class="cp">    evaluate_result_direct(Catch::ResultBuilder( "REQUIRE", CATCH_INTERNAL_LINEINFO, #value, Catch::ResultDisposition::Normal ), value);</span>
-<a name="rest_code_ee72a7fe66934c3ca14e149b2f99288d-19"></a>
-<a name="rest_code_ee72a7fe66934c3ca14e149b2f99288d-20"></a><span class="cp">#define REQUIRE_EQUALS(lhs, rhs) \</span>
-<a name="rest_code_ee72a7fe66934c3ca14e149b2f99288d-21"></a><span class="cp">    evaluate_result(Catch::ResultBuilder( "REQUIRE", CATCH_INTERNAL_LINEINFO, #lhs " == " #rhs, Catch::ResultDisposition::Normal ), lhs, rhs);</span>
+<pre class="code cpp"><a name="rest_code_86873f6b822046caac9d82032161db23-1"></a><span class="kr">inline</span> <span class="kt">void</span> <span class="nf">evaluate_result_direct</span><span class="p">(</span><span class="n">Catch</span><span class="o">::</span><span class="n">ResultBuilder</span><span class="o">&amp;&amp;</span> <span class="n">__result</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">value</span><span class="p">){</span>
+<a name="rest_code_86873f6b822046caac9d82032161db23-2"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">setResultType</span><span class="p">(</span><span class="n">value</span><span class="p">);</span>
+<a name="rest_code_86873f6b822046caac9d82032161db23-3"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">setLhs</span><span class="p">(</span><span class="n">value</span> <span class="o">?</span> <span class="s">"true"</span> <span class="o">:</span> <span class="s">"false"</span><span class="p">);</span>
+<a name="rest_code_86873f6b822046caac9d82032161db23-4"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">setOp</span><span class="p">(</span><span class="s">""</span><span class="p">);</span>
+<a name="rest_code_86873f6b822046caac9d82032161db23-5"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">endExpression</span><span class="p">();</span>
+<a name="rest_code_86873f6b822046caac9d82032161db23-6"></a><span class="p">}</span>
+<a name="rest_code_86873f6b822046caac9d82032161db23-7"></a>
+<a name="rest_code_86873f6b822046caac9d82032161db23-8"></a><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">L</span><span class="p">,</span> <span class="k">typename</span> <span class="n">R</span><span class="o">&gt;</span>
+<a name="rest_code_86873f6b822046caac9d82032161db23-9"></a><span class="kt">void</span> <span class="n">evaluate_result</span><span class="p">(</span><span class="n">Catch</span><span class="o">::</span><span class="n">ResultBuilder</span><span class="o">&amp;&amp;</span> <span class="n">__result</span><span class="p">,</span> <span class="n">L</span> <span class="n">lhs</span><span class="p">,</span> <span class="n">R</span> <span class="n">rhs</span><span class="p">){</span>
+<a name="rest_code_86873f6b822046caac9d82032161db23-10"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">setResultType</span><span class="p">(</span><span class="n">lhs</span> <span class="o">==</span> <span class="n">rhs</span><span class="p">);</span>
+<a name="rest_code_86873f6b822046caac9d82032161db23-11"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">setLhs</span><span class="p">(</span><span class="n">Catch</span><span class="o">::</span><span class="n">toString</span><span class="p">(</span><span class="n">lhs</span><span class="p">));</span>
+<a name="rest_code_86873f6b822046caac9d82032161db23-12"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">setRhs</span><span class="p">(</span><span class="n">Catch</span><span class="o">::</span><span class="n">toString</span><span class="p">(</span><span class="n">rhs</span><span class="p">));</span>
+<a name="rest_code_86873f6b822046caac9d82032161db23-13"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">setOp</span><span class="p">(</span><span class="s">"=="</span><span class="p">);</span>
+<a name="rest_code_86873f6b822046caac9d82032161db23-14"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">endExpression</span><span class="p">();</span>
+<a name="rest_code_86873f6b822046caac9d82032161db23-15"></a><span class="p">}</span>
+<a name="rest_code_86873f6b822046caac9d82032161db23-16"></a>
+<a name="rest_code_86873f6b822046caac9d82032161db23-17"></a><span class="cp">#define REQUIRE_DIRECT(value) \</span>
+<a name="rest_code_86873f6b822046caac9d82032161db23-18"></a><span class="cp">    evaluate_result_direct(Catch::ResultBuilder( "REQUIRE", CATCH_INTERNAL_LINEINFO, #value, Catch::ResultDisposition::Normal ), value);</span>
+<a name="rest_code_86873f6b822046caac9d82032161db23-19"></a>
+<a name="rest_code_86873f6b822046caac9d82032161db23-20"></a><span class="cp">#define REQUIRE_EQUALS(lhs, rhs) \</span>
+<a name="rest_code_86873f6b822046caac9d82032161db23-21"></a><span class="cp">    evaluate_result(Catch::ResultBuilder( "REQUIRE", CATCH_INTERNAL_LINEINFO, #lhs " == " #rhs, Catch::ResultDisposition::Normal ), lhs, rhs);</span>
 </pre>
 <p>There is really nothing too special about it, I simply followed the macros and
 functions in Catch source code until I found out what to bypass.</p>
 <p>And now, we use them directly:</p>
-<pre class="code cpp"><a name="rest_code_5d64874cbb2c4ab3bb7d9ea20c568de4-1"></a><span class="n">REQUIRE_DIRECT</span><span class="p">(</span><span class="n">am_i_true</span><span class="p">());</span>
-<a name="rest_code_5d64874cbb2c4ab3bb7d9ea20c568de4-2"></a><span class="n">REQUIRE_EQUALS</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">);</span>
+<pre class="code cpp"><a name="rest_code_5fcc00ca4936405593cebbe5b1e4d4d2-1"></a><span class="n">REQUIRE_DIRECT</span><span class="p">(</span><span class="n">am_i_true</span><span class="p">());</span>
+<a name="rest_code_5fcc00ca4936405593cebbe5b1e4d4d2-2"></a><span class="n">REQUIRE_EQUALS</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">);</span>
 </pre>
 <p>This is a bit less nice and it requires to know a few more macros, I admit, but
 it turns out to be much faster (and who really cares about the beauty of test

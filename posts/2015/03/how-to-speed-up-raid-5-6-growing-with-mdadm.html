@@ -15,6 +15,13 @@
   _gaq.push(['_trackPageview']);
   (function() {
     var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    var metas = document.getElementsByTagName('meta'), tagsList = [];
+    for (var i=0; i<metas.length; i++) {
+      if (metas[i].getAttribute('property') == 'article:tag') {
+         tagsList.push( metas[i].getAttribute('content'));
+      }
+    }
+    ga('set', 'dimension1', tagsList.join('|'))
     ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
     var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
   })();
@@ -91,7 +98,7 @@
 <li><a href="../../2010/02/hardware-guide-hard-disks.html">Hardware Guide : The Hard Disks</a></li>
 <li><a href="../../2014/01/home-server-adventure-step-3.html">Home Server Adventure – Step 3</a></li>
 <li><a href="../../2011/06/upload-files-to-ftp-using-bash.html">Upload files to FTP using Bash</a></li>
-<li><a href="../../2010/05/improve-performances-wordpress-w3-total-cache.html">Improve performances of WordPress with W3 Total Cache</a></li>
+<li><a href="../../2009/12/improve-performance-web-site.html">Improve performance of your web site with Page Speed</a></li>
 
 
                             <li class="navbar-block">
@@ -143,20 +150,20 @@
 <div class="section" id="increase-speed-limits">
 <h2>Increase speed limits</h2>
 <p>The easiest thing to do is to increase the system speed limits on raid. You can see the current limits on your system by using these commands:</p>
-<pre class="code bash"><a name="rest_code_754bf7dc75464b2e892b113d45eb870f-1"></a>sysctl dev.raid.speed_limit_min
-<a name="rest_code_754bf7dc75464b2e892b113d45eb870f-2"></a>sysctl dev.raid.speed_limit_max
+<pre class="code bash"><a name="rest_code_599d76e9cdbc47db873166f2963f1eca-1"></a>sysctl dev.raid.speed_limit_min
+<a name="rest_code_599d76e9cdbc47db873166f2963f1eca-2"></a>sysctl dev.raid.speed_limit_max
 </pre>
 <p>These values are set in Kibibytes per second (KiB/s).</p>
 <p>You can put them to high values:</p>
-<pre class="code bash"><a name="rest_code_ae9b8fb1de4e47148b7bd35872cf4089-1"></a>sysctl -w dev.raid.speed_limit_min<span class="o">=</span><span class="m">100000</span>
-<a name="rest_code_ae9b8fb1de4e47148b7bd35872cf4089-2"></a>sysctl -w dev.raid.speed_limit_max<span class="o">=</span><span class="m">500000</span>
+<pre class="code bash"><a name="rest_code_41609d724bd449f8885f94a9fd0d8283-1"></a>sysctl -w dev.raid.speed_limit_min<span class="o">=</span><span class="m">100000</span>
+<a name="rest_code_41609d724bd449f8885f94a9fd0d8283-2"></a>sysctl -w dev.raid.speed_limit_max<span class="o">=</span><span class="m">500000</span>
 </pre>
 <p>At least with these values, you won't be limited by the system.</p>
 </div>
 <div class="section" id="increase-stripe-cache-size">
 <h2>Increase stripe cache size</h2>
 <p>By allowing the array to use more memory for its stripe cache, you may improve the performances. In some cases, it can improve performances by up to 6 times. By default, the size of the stripe cache is 256, in pages. By default, Linux uses 4096B pages. If you use 256 pages for the stripe cache and you have 10 disks, the cache would use 10*256*4096=10MiB of RAM. In my case, I have increased it to 4096:</p>
-<pre class="code bash"><a name="rest_code_e49375e31fc84dcab657f9a36f28eecc-1"></a><span class="nb">echo</span> <span class="m">4096</span> &gt; /sys/block/md0/md/stripe_cache_size
+<pre class="code bash"><a name="rest_code_a41aba527d5e4c3caa7b45dc1fa68c5a-1"></a><span class="nb">echo</span> <span class="m">4096</span> &gt; /sys/block/md0/md/stripe_cache_size
 </pre>
 <p>The maximum value is 32768. If you have many disks, this may well take all your available memory. I don't think values higher than 4096 will improve performance, but feel free to try it ;)</p>
 </div>
@@ -164,10 +171,10 @@
 <h2>Increase read-ahead</h2>
 <p>If configured too low, the read-ahead of your array may make things slower.</p>
 <p>You can see get the current read-ahead value with this command:</p>
-<pre class="code bash"><a name="rest_code_51a6a3aa970147388176ef6c67a5b778-1"></a>blockdev --getra /dev/md0
+<pre class="code bash"><a name="rest_code_a0573406845045b08518e43a68e6e0e1-1"></a>blockdev --getra /dev/md0
 </pre>
 <p>These values are in 512B sector. You can set it to 32MB to be sure:</p>
-<pre class="code bash"><a name="rest_code_07cc2acad4f34fdeb6997663541bffc5-1"></a>blockdev --setra <span class="m">65536</span> /dev/md0
+<pre class="code bash"><a name="rest_code_04b2d092cdd14ea39f9566b075b33c1a-1"></a>blockdev --setra <span class="m">65536</span> /dev/md0
 </pre>
 <p>This can improve the performances, but don't expect this to be a game-changer unless it was configured really low at the first place.</p>
 </div>
@@ -175,7 +182,7 @@
 <h2>Tip: Reshape stuck at 0K/s</h2>
 <p>If reshape starts, but with a speed of 0K/s, you can try to issue this simple
 command:</p>
-<pre class="code bash"><a name="rest_code_62c25b51ae064866b4e835722c58a4cd-1"></a><span class="nb">echo</span> max &gt; /sys/block/md0/md/sync_max
+<pre class="code bash"><a name="rest_code_f1ead2fdeeb64281b9dcd142b088d21d-1"></a><span class="nb">echo</span> max &gt; /sys/block/md0/md/sync_max
 </pre>
 <p>And the reshape should start directly at your maximum speed.</p>
 <p>The solution is the same if you are growing any type of RAID level with parity
@@ -190,39 +197,39 @@ command:</p>
 </ul>
 <p>In these case, it may totally avoid the need of a rebuild which is great in my opinion. Moreover, it does not take any space on the array since it uses space that is not usable by the array.</p>
 <p>Here is how to enable it:</p>
-<pre class="code bash"><a name="rest_code_26584eb892da45c99474731115067df1-1"></a>mdadm --grow --bitmap<span class="o">=</span>internal /dev/md0
+<pre class="code bash"><a name="rest_code_eaa590ebf04a428bade0f0f16591b89c-1"></a>mdadm --grow --bitmap<span class="o">=</span>internal /dev/md0
 </pre>
 <p>However, it may cause some write performance degradation. In my case, I haven't seen any noticeable degradation, but if it is the case, you may want to disable it:</p>
-<pre class="code bash"><a name="rest_code_36af30017aaf460eb0eb02909c70afc6-1"></a>mdadm --grow --bitmap<span class="o">=</span>none /dev/md0
+<pre class="code bash"><a name="rest_code_acbdd03010a24a9b8bd6cf17886a2bc9-1"></a>mdadm --grow --bitmap<span class="o">=</span>none /dev/md0
 </pre>
 </div>
 <div class="section" id="bonus-monitor-rebuild-process">
 <h2>Bonus: Monitor rebuild process</h2>
 <p>If you want to monitor the build process, you can use the watch command:</p>
-<pre class="code bash"><a name="rest_code_abd6e502078a43bab4baf66459b3636f-1"></a>watch cat /proc/mdstat
+<pre class="code bash"><a name="rest_code_896c6b88d15d4276afb972e4c10470e3-1"></a>watch cat /proc/mdstat
 </pre>
 <p>With that you'll see the rebuild going in real-time.</p>
 <p>You can also monitor the I/O statistics:</p>
-<pre class="code bash"><a name="rest_code_64279f83b3234ac2b27bf5a7b746664f-1"></a>watch iostat -k <span class="m">1</span> <span class="m">2</span>
+<pre class="code bash"><a name="rest_code_d323e5aff48c49e284113ac7761515ba-1"></a>watch iostat -k <span class="m">1</span> <span class="m">2</span>
 </pre>
 </div>
 <div class="section" id="bonus-how-to-grow-a-raid-5-6-array">
 <h2>Bonus: How to grow a RAID 5-6 array</h2>
 <p>As a sidenote, this section indicates how to grow an array. If you  want to add the disk /dev/sdl to the array /dev/md0, you'll first have to add it:</p>
-<pre class="code bash"><a name="rest_code_5fb538cfcc004d62806f93c531694d32-1"></a>mdadm --add /dev/md0 /dev/sdl
+<pre class="code bash"><a name="rest_code_34d275a06e294c3db9389fab22f9f047-1"></a>mdadm --add /dev/md0 /dev/sdl
 </pre>
 <p>This will add the disk as a spare disk. If you had 5 disks before, you'll want to grow it to 6:</p>
-<pre class="code bash"><a name="rest_code_ee3c916de0354276a2ba9c6bb5a88719-1"></a>mdadm --grow --backup-file<span class="o">=</span>/root/grow_md0_backup_file --raid-devices<span class="o">=</span><span class="m">6</span> /dev/md0
+<pre class="code bash"><a name="rest_code_b55c473fe1af4cf7a804bb5682b6b25a-1"></a>mdadm --grow --backup-file<span class="o">=</span>/root/grow_md0_backup_file --raid-devices<span class="o">=</span><span class="m">6</span> /dev/md0
 </pre>
 <p>The backup file must be on another disk of course. The backup file is optional but improves the chance of success if you have a power shutdown or another form of unexpected shutdown. If you know what you're doing, you can grow it without backup-file:</p>
-<pre class="code bash"><a name="rest_code_f10f229b805a4fe483c6e3e33b9f36fa-1"></a>mdadm --grow --raid-devices<span class="o">=</span><span class="m">6</span> /dev/md0
+<pre class="code bash"><a name="rest_code_ef55d0bd8b6e44c0af1affb9389e3767-1"></a>mdadm --grow --raid-devices<span class="o">=</span><span class="m">6</span> /dev/md0
 </pre>
 <p>This command will return almost instantly, but the actual reshape won't likely be finished for hours (maybe days).</p>
 <p>Once the rebuild is finished, you'll still have to extend the partitions with resize2fs. If you use LVM on top of the array, you'll have to resize the Physical Volume (PV) first:</p>
-<pre class="code bash"><a name="rest_code_d59328cf87f6471ebb38e7185a583c05-1"></a>pvresize /dev/md0
+<pre class="code bash"><a name="rest_code_15a7641acac64724b97e31563b2c1c68-1"></a>pvresize /dev/md0
 </pre>
 <p>and then extend the Logical Volume (s) (LV). For instance, if you want to add 1T to a LV named /dev/vgraid/work:</p>
-<pre class="code bash"><a name="rest_code_1eed2bdace2f4451891c949d8ed1bdd6-1"></a>vgextend -r -L+1T /dev/vgraid/work
+<pre class="code bash"><a name="rest_code_76c152fb0f5d488787e1c387f516842c-1"></a>vgextend -r -L+1T /dev/vgraid/work
 </pre>
 <p>The -r option will automatically resize the underlying filesystem. Otherwise, you'd still have to resize it with resize2fs.</p>
 </div>

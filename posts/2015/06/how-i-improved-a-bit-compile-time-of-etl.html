@@ -15,6 +15,13 @@
   _gaq.push(['_trackPageview']);
   (function() {
     var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    var metas = document.getElementsByTagName('meta'), tagsList = [];
+    for (var i=0; i<metas.length; i++) {
+      if (metas[i].getAttribute('property') == 'article:tag') {
+         tagsList.push( metas[i].getAttribute('content'));
+      }
+    }
+    ga('set', 'dimension1', tagsList.join('|'))
     ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
     var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
   })();
@@ -90,7 +97,7 @@
 <li><a href="../../2016/09/expression-templates-library-etl-10.html">Expression Templates Library (ETL) 1.0</a></li>
 <li><a href="../../2012/11/gcc-4-7-clang-3-1-eddic.html">GCC 4.7 vs CLang 3.1 on eddic</a></li>
 <li><a href="../../2017/03/disappointing-zapcc-performance-on-deep-learning-library-dll.html">Disappointing zapcc performance on Deep Learning Library (DLL)</a></li>
-<li><a href="../../2012/11/eddic-compiles-with-clang-3-1.html">eddic compiles with CLang 3.1</a></li>
+<li><a href="../../2017/08/expression-templates-library-etl-11.html">Expression Templates Library (ETL) 1.1</a></li>
 
 
                             <li class="navbar-block">
@@ -144,10 +151,10 @@
 <h2>Compile and generate dependency files at the same time</h2>
 <p>To help write my makefiles, I'm using a set of functions that I have written. This includes automatic dependency generation using -MM -MT options of the compiler. Until now, I had two targets, one to compile the cpp file into the object file and another one to generate the dependency file. I recently saw that compilers were able to do both at the same time! Clang, G++ and the Intel compiler all have a -MD -MF options that lets you generate the dependency file at the same time you compile your file, saving you at least one read of the file.</p>
 <p>My compilation rule in my makefile has now become:</p>
-<pre class="code makefile"><a name="rest_code_9c06c6eb1c52405e9c79fb5460efde54-1"></a><span class="nf">release/$(1)/%.cpp.o</span><span class="o">:</span> <span class="k">$(</span>1<span class="k">)</span>/%.<span class="n">cpp</span>
-<a name="rest_code_9c06c6eb1c52405e9c79fb5460efde54-2"></a>    @ mkdir -p release/<span class="k">$(</span><span class="m">1</span><span class="k">)</span>/
-<a name="rest_code_9c06c6eb1c52405e9c79fb5460efde54-3"></a>    <span class="k">$(</span>CXX<span class="k">)</span> <span class="k">$(</span>CXX_FLAGS<span class="k">)</span> <span class="k">$(</span>RELEASE_FLAGS<span class="k">)</span> <span class="k">$(</span><span class="m">2</span><span class="k">)</span> -MD -MF release/<span class="k">$(</span><span class="m">1</span><span class="k">)</span>/<span class="nv">$$</span>*.cpp.d -o release/<span class="k">$(</span><span class="m">1</span><span class="k">)</span>/<span class="nv">$$</span>*.cpp.o -c <span class="k">$(</span><span class="m">1</span><span class="k">)</span>/<span class="nv">$$</span>*.cpp
-<a name="rest_code_9c06c6eb1c52405e9c79fb5460efde54-4"></a>    @ sed -i -e <span class="s1">'s@^\(.*\)\.o:@\1.d \1.o:@'</span> release/<span class="k">$(</span><span class="m">1</span><span class="k">)</span>/<span class="nv">$$</span>*.cpp.d
+<pre class="code makefile"><a name="rest_code_3e21b9827c004fe0a94469abf6b2ecc3-1"></a><span class="nf">release/$(1)/%.cpp.o</span><span class="o">:</span> <span class="k">$(</span>1<span class="k">)</span>/%.<span class="n">cpp</span>
+<a name="rest_code_3e21b9827c004fe0a94469abf6b2ecc3-2"></a>    @ mkdir -p release/<span class="k">$(</span><span class="m">1</span><span class="k">)</span>/
+<a name="rest_code_3e21b9827c004fe0a94469abf6b2ecc3-3"></a>    <span class="k">$(</span>CXX<span class="k">)</span> <span class="k">$(</span>CXX_FLAGS<span class="k">)</span> <span class="k">$(</span>RELEASE_FLAGS<span class="k">)</span> <span class="k">$(</span><span class="m">2</span><span class="k">)</span> -MD -MF release/<span class="k">$(</span><span class="m">1</span><span class="k">)</span>/<span class="nv">$$</span>*.cpp.d -o release/<span class="k">$(</span><span class="m">1</span><span class="k">)</span>/<span class="nv">$$</span>*.cpp.o -c <span class="k">$(</span><span class="m">1</span><span class="k">)</span>/<span class="nv">$$</span>*.cpp
+<a name="rest_code_3e21b9827c004fe0a94469abf6b2ecc3-4"></a>    @ sed -i -e <span class="s1">'s@^\(.*\)\.o:@\1.d \1.o:@'</span> release/<span class="k">$(</span><span class="m">1</span><span class="k">)</span>/<span class="nv">$$</span>*.cpp.d
 </pre>
 <p>This reduced the compilation time to 86.8 seconds. Not that much reduction, but it still is quite nice to know that. I would have expected this to reduce more the compile time.</p>
 <div class="section" id="use-pragma-once">
