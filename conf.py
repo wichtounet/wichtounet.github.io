@@ -437,23 +437,8 @@ ENABLED_EXTRAS = []
 
 # Extra things you want in the pages HEAD tag. This will be added right
 # before </head>
-EXTRA_HEAD_DATA = """
-<script>
-  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-  ga('create', 'UA-2175227-7', 'auto');
-  var metas = document.getElementsByTagName('meta'), tagsList = [];
-  for (var i=0; i<metas.length; i++) {
-    if (metas[i].getAttribute('property') == 'article:tag') {
-      tagsList.push( metas[i].getAttribute('content'));
-    }
-  }
-  ga('set', 'dimension1', tagsList.join('|'));
-  ga('send', 'pageview');
-</script>
-"""
+#EXTRA_HEAD_DATA = """
+#"""
 
 # Google Analytics or whatever else you use. Added to the bottom of <body>
 # in the default template (base.tmpl).
