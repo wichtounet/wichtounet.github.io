@@ -9,21 +9,7 @@
 <meta name="generator" content="Nikola (getnikola.com)">
 <link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
 <link rel="canonical" href="http://baptiste-wicht.com/posts/2015/06/how-i-improved-a-bit-compile-time-of-etl.html">
-<!--[if lt IE 9]><script src="../../../assets/js/html5.js"></script><![endif]--><script>
-  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-  ga('create', 'UA-2175227-7', 'auto');
-  var metas = document.getElementsByTagName('meta'), tagsList = [];
-  for (var i=0; i<metas.length; i++) {
-    if (metas[i].getAttribute('property') == 'article:tag') {
-      tagsList.push( metas[i].getAttribute('content'));
-    }
-  }
-  ga('set', 'dimension1', tagsList.join('|'));
-  ga('send', 'pageview');
-</script><meta name="author" content="Baptiste Wicht">
+<!--[if lt IE 9]><script src="../../../assets/js/html5.js"></script><![endif]--><meta name="author" content="Baptiste Wicht">
 <link rel="prev" href="continuous-performance-management-with-cpm-for-cpp.html" title="Continuous Performance Management with CPM for C++" type="text/html">
 <link rel="next" href="improve-etl-compile-time-with-precompiled-headers.html" title="Improve ETL compile-time with Precompiled Headers" type="text/html">
 <meta property="og:site_name" content='Blog blog("Baptiste Wicht");'>
@@ -38,6 +24,21 @@
 <meta property="article:tag" content="Performance">
 <link href="../../../favicon.ico" rel="icon" type="image/x-icon">
 <link rel="publisher" href="https://plus.google.com/+BaptisteWicht">
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-2175227-7', 'auto');
+  var metas = document.getElementsByTagName('meta'), tagsList = [];
+  for (var i=0; i<metas.length; i++) {
+    if (metas[i].getAttribute('property') == 'article:tag') {
+      tagsList.push( metas[i].getAttribute('content'));
+    }
+  }
+  ga('set', 'dimension1', tagsList.join('|'));
+  ga('send', 'pageview');
+</script>
 </head>
 <body>
 
@@ -149,10 +150,10 @@
 <h2>Compile and generate dependency files at the same time</h2>
 <p>To help write my makefiles, I'm using a set of functions that I have written. This includes automatic dependency generation using -MM -MT options of the compiler. Until now, I had two targets, one to compile the cpp file into the object file and another one to generate the dependency file. I recently saw that compilers were able to do both at the same time! Clang, G++ and the Intel compiler all have a -MD -MF options that lets you generate the dependency file at the same time you compile your file, saving you at least one read of the file.</p>
 <p>My compilation rule in my makefile has now become:</p>
-<pre class="code makefile"><a name="rest_code_f9035fc823cc413ba61ed3bf38249f5f-1"></a><span class="nf">release/$(1)/%.cpp.o</span><span class="o">:</span> <span class="k">$(</span>1<span class="k">)</span>/%.<span class="n">cpp</span>
-<a name="rest_code_f9035fc823cc413ba61ed3bf38249f5f-2"></a>    @ mkdir -p release/<span class="k">$(</span><span class="m">1</span><span class="k">)</span>/
-<a name="rest_code_f9035fc823cc413ba61ed3bf38249f5f-3"></a>    <span class="k">$(</span>CXX<span class="k">)</span> <span class="k">$(</span>CXX_FLAGS<span class="k">)</span> <span class="k">$(</span>RELEASE_FLAGS<span class="k">)</span> <span class="k">$(</span><span class="m">2</span><span class="k">)</span> -MD -MF release/<span class="k">$(</span><span class="m">1</span><span class="k">)</span>/<span class="nv">$$</span>*.cpp.d -o release/<span class="k">$(</span><span class="m">1</span><span class="k">)</span>/<span class="nv">$$</span>*.cpp.o -c <span class="k">$(</span><span class="m">1</span><span class="k">)</span>/<span class="nv">$$</span>*.cpp
-<a name="rest_code_f9035fc823cc413ba61ed3bf38249f5f-4"></a>    @ sed -i -e <span class="s1">'s@^\(.*\)\.o:@\1.d \1.o:@'</span> release/<span class="k">$(</span><span class="m">1</span><span class="k">)</span>/<span class="nv">$$</span>*.cpp.d
+<pre class="code makefile"><a name="rest_code_beecff16548f40deaf356274949bfa82-1"></a><span class="nf">release/$(1)/%.cpp.o</span><span class="o">:</span> <span class="k">$(</span>1<span class="k">)</span>/%.<span class="n">cpp</span>
+<a name="rest_code_beecff16548f40deaf356274949bfa82-2"></a>    @ mkdir -p release/<span class="k">$(</span><span class="m">1</span><span class="k">)</span>/
+<a name="rest_code_beecff16548f40deaf356274949bfa82-3"></a>    <span class="k">$(</span>CXX<span class="k">)</span> <span class="k">$(</span>CXX_FLAGS<span class="k">)</span> <span class="k">$(</span>RELEASE_FLAGS<span class="k">)</span> <span class="k">$(</span><span class="m">2</span><span class="k">)</span> -MD -MF release/<span class="k">$(</span><span class="m">1</span><span class="k">)</span>/<span class="nv">$$</span>*.cpp.d -o release/<span class="k">$(</span><span class="m">1</span><span class="k">)</span>/<span class="nv">$$</span>*.cpp.o -c <span class="k">$(</span><span class="m">1</span><span class="k">)</span>/<span class="nv">$$</span>*.cpp
+<a name="rest_code_beecff16548f40deaf356274949bfa82-4"></a>    @ sed -i -e <span class="s1">'s@^\(.*\)\.o:@\1.d \1.o:@'</span> release/<span class="k">$(</span><span class="m">1</span><span class="k">)</span>/<span class="nv">$$</span>*.cpp.d
 </pre>
 <p>This reduced the compilation time to 86.8 seconds. Not that much reduction, but it still is quite nice to know that. I would have expected this to reduce more the compile time.</p>
 <div class="section" id="use-pragma-once">
