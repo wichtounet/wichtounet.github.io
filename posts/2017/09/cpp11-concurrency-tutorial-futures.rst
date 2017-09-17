@@ -8,7 +8,7 @@ Here are the links to the current posts of the C++11 Concurrency Tutorial:
 * `Part 1: Start Threads <https://baptiste-wicht.com/posts/2012/03/cpp11-concurrency-part1-start-threads.html>`_
 * `Part 2: Protect Shared Data <https://baptiste-wicht.com/posts/2012/03/cp11-concurrency-tutorial-part-2-protect-shared-data.html>`_
 * `Part 3: Advanced Locking and condition variables <https://baptiste-wicht.com/posts/2012/04/c11-concurrency-tutorial-advanced-locking-and-condition-variables.html>`_
-* `Part 4: Atomic Types <https://baptiste-wicht.com/posts/2012/07/c11-concurrency-tutorial-part-4-atomic-type.htm>`_
+* `Part 4: Atomic Types <https://baptiste-wicht.com/posts/2012/07/c11-concurrency-tutorial-part-4-atomic-type.html>`_
 
 In this post, we are going to talk about futures, more precisely
 :code:`std::future<T>`. What is a future ? It's a very nice and simple mechanism
