@@ -374,7 +374,7 @@ For those interested in the code of the benchmark, it's available
     }
     function draw_graph_pow_double_3(){
     var data = google.visualization.arrayToDataTable([
-    ['N', 'pow(x, 2)', 'std::pow(x, 2)', 'x * x'],
+    ['N', 'pow(x, 3)', 'std::pow(x, 3)', 'x * x * x'],
     ['100',      27,      16,       0.1],
     ['1000',     122,     119,      1],
     ['10000',    1179,    1181,     13],
