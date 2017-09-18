@@ -104,6 +104,185 @@
             <div id="content"></div>
             
         <article class="postbox h-entry post-text"><h1 class="p-name">
+<a href="posts/2017/06/jenkins-declarative-pipeline-and-awesome-github-integration.html" class="u-url">Jenkins Declarative Pipeline and Awesome Github Integration</a>
+        <br><small>  
+             Posted: <time class="published dt-published" datetime="2017-06-04T20:52:10+02:00">2017-06-04 20:52</time></small>
+</h1>
+        <hr>
+<div class="p-summary">
+        <div>
+<p>This post is about some news about Jenkins and how I've updated my Jenkins
+usage. This may be a bit of an enthusiastic post ;)</p>
+<p>At the beginning of Jenkins, the best way to define the commands to be executed
+for your builds was simply to write the commands in the Jenkins interface. This
+worked quite well. Later on, Jenkins introduced the notion of Pipeline. Instead
+of a single set of commands to be executed, the build was defined in
+multi-stages pipeline of commands. This is defined as a Groovy script. One big
+advantage of this is that all the code for creating the build is inside the
+repository. This has the advantage that each build is reproducible. This enabled
+to define complex pipelines of commands for your builds. Moreover, this also
+allows to have a clean view of which steps are failing and which steps are
+taking how much of the time of the build. For instance, here it's a view of the
+pipeline steps for my DLL project:</p>
+<img alt="Jenkins stage view for DLL pipeline." class="align-center" src="images/jenkins_pipeline_dll.png"><p>I think that's pretty cool :)</p>
+<p>They recently added a new feature, the declarative pipelines. Instead of
+scripting the Pipeline in Groovy, the new system uses its own syntax, completely
+declarative, to put blocks together and add ways of doing actions at specific
+points and setting environment and so on. I think the new syntax is much nicer
+than the Groovy scripted Pipeline way, so I started converting my scripts. I'll
+give an example in a few paragraphs. But first, I'd like to talk about Github
+integration. Before, every time I created a new project, I add to add it to
+Jenkins by creating a new project, updating the link to the Github project and
+a few things in order to add it. This is not so bad but what if you want to
+build on several branches and keep track of the status of the branches and maybe
+of the Pull Requests as well. All of this is now very simple. You can now
+declare the Github organizations (and users) you are of building projects from
+and the projects inside the organization will be automatically detected as long
+as they have a Jenkinsfile inside. That means that you'll never have to create
+a project yourself or handle branches. Indeed, all the created projects can now
+handle multiples. For instance, here is the status of the two current branches
+of my dll project:</p>
+<img alt="Jenkins branches for DLL Github project" class="align-center" src="images/jenkins_github_branches.png"><p>It's maybe not the best example since one branch is failing and the other is
+unstable, but you can see that you can track the builds for each branch in
+a nice way.</p>
+<p>A very good feature of this integration is that Jenkins will now automatically
+marks commits on your Github with the status of your builds at no cost! For
+instance, here is the status on my ETL project after I configured on Jenkins and
+made the first builds:</p>
+<img alt="Jenkins marking commits in Github" class="align-center" src="images/jenkins_github_integration_marks.png"><p>Pretty cool I think :)</p>
+<p>Another nice thing in Jenkins is the Blue Ocean interface. This is an
+alternative interface, especially well-suited for multi-branch projects and
+pipelines. It looks much more modern and I think it's quite good. Here are a few
+views of it:</p>
+<p>The Activity view for the last events of the project:</p>
+<img alt="Jenkins Blue Ocean Activity view for DLL project" class="align-center" src="images/jenkins_blue_ocean_dll_activity.png"><p>The Branches view for the status of each branch:</p>
+<img alt="Jenkins Blue Ocean Branches view for DLL project" class="align-center" src="images/jenkins_blue_ocean_dll_branches.png"><p>The view of the status of a build:</p>
+<img alt="Jenkins Blue Ocean view of a build for DLL project" class="align-center" src="images/jenkins_blue_ocean_dll_build.png"><p>The status of the tests for a given build:</p>
+<img alt="Jenkins Blue Ocean view of a build tests for DLL project" class="align-center" src="images/jenkins_blue_ocean_dll_build_tests.png"><p>It's likely that it won't appeal to everyone, but I think it's pretty nice.</p>
+<p>If we get back to the declarative Pipeline, here is the declarative pipeline for
+my Expression Templates Library (ETL) project:</p>
+<pre class="code groovy"><a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-1"></a><span class="n">pipeline</span> <span class="o">{</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-2"></a>    <span class="n">agent</span> <span class="n">any</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-3"></a>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-4"></a>    <span class="n">environment</span> <span class="o">{</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-5"></a>       <span class="n">CXX</span> <span class="o">=</span> <span class="s2">"g++-4.9.4"</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-6"></a>       <span class="n">LD</span> <span class="o">=</span> <span class="s2">"g++-4.9.4"</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-7"></a>       <span class="n">ETL_MKL</span> <span class="o">=</span> <span class="s1">'true'</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-8"></a>    <span class="o">}</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-9"></a>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-10"></a>    <span class="n">stages</span> <span class="o">{</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-11"></a>        <span class="n">stage</span> <span class="o">(</span><span class="s1">'git'</span><span class="o">){</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-12"></a>            <span class="n">steps</span> <span class="o">{</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-13"></a>                <span class="n">checkout</span><span class="o">([</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-14"></a>                    <span class="n">$class</span><span class="o">:</span> <span class="s1">'GitSCM'</span><span class="o">,</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-15"></a>                    <span class="nl">branches:</span> <span class="n">scm</span><span class="o">.</span><span class="na">branches</span><span class="o">,</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-16"></a>                    <span class="nl">doGenerateSubmoduleConfigurations:</span> <span class="kc">false</span><span class="o">,</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-17"></a>                    <span class="nl">extensions:</span> <span class="n">scm</span><span class="o">.</span><span class="na">extensions</span> <span class="o">+</span> <span class="o">[[</span><span class="n">$class</span><span class="o">:</span> <span class="s1">'SubmoduleOption'</span><span class="o">,</span> <span class="nl">disableSubmodules:</span> <span class="kc">false</span><span class="o">,</span> <span class="nl">recursiveSubmodules:</span> <span class="kc">true</span><span class="o">,</span> <span class="nl">reference:</span> <span class="s1">''</span><span class="o">,</span> <span class="nl">trackingSubmodules:</span> <span class="kc">false</span><span class="o">]],</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-18"></a>                    <span class="nl">submoduleCfg:</span> <span class="o">[],</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-19"></a>                    <span class="nl">userRemoteConfigs:</span> <span class="n">scm</span><span class="o">.</span><span class="na">userRemoteConfigs</span><span class="o">])</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-20"></a>            <span class="o">}</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-21"></a>        <span class="o">}</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-22"></a>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-23"></a>        <span class="n">stage</span> <span class="o">(</span><span class="s1">'pre-analysis'</span><span class="o">)</span> <span class="o">{</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-24"></a>            <span class="n">steps</span> <span class="o">{</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-25"></a>                <span class="n">sh</span> <span class="s1">'cppcheck --xml-version=2 -j3 --enable=all --std=c++11 `git ls-files "*.hpp" "*.cpp"` 2&gt; cppcheck_report.xml'</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-26"></a>                <span class="n">sh</span> <span class="s1">'sloccount --duplicates --wide --details include/etl test workbench &gt; sloccount.sc'</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-27"></a>                <span class="n">sh</span> <span class="s1">'cccc include/etl/*.hpp test/*.cpp workbench/*.cpp || true'</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-28"></a>            <span class="o">}</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-29"></a>        <span class="o">}</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-30"></a>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-31"></a>        <span class="n">stage</span> <span class="o">(</span><span class="s1">'build'</span><span class="o">){</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-32"></a>            <span class="n">steps</span> <span class="o">{</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-33"></a>                <span class="n">sh</span> <span class="s1">'make clean'</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-34"></a>                <span class="n">sh</span> <span class="s1">'make -j6 release'</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-35"></a>            <span class="o">}</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-36"></a>        <span class="o">}</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-37"></a>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-38"></a>        <span class="n">stage</span> <span class="o">(</span><span class="s1">'test'</span><span class="o">){</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-39"></a>            <span class="n">steps</span> <span class="o">{</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-40"></a>                <span class="n">sh</span> <span class="s1">'ETL_THREADS=-j6 ETL_GPP=g++-4.9.4 LD_LIBRARY_PATH=\"${LD_LIBRARY_PATH}:/opt/intel/mkl/lib/intel64:/opt/intel/lib/intel64\" ./scripts/test_runner.sh'</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-41"></a>                <span class="n">archive</span> <span class="s1">'catch_report.xml'</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-42"></a>                <span class="n">junit</span> <span class="s1">'catch_report.xml'</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-43"></a>            <span class="o">}</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-44"></a>        <span class="o">}</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-45"></a>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-46"></a>        <span class="n">stage</span> <span class="o">(</span><span class="s1">'sonar-master'</span><span class="o">){</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-47"></a>            <span class="n">when</span> <span class="o">{</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-48"></a>                <span class="n">branch</span> <span class="s1">'master'</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-49"></a>            <span class="o">}</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-50"></a>            <span class="n">steps</span> <span class="o">{</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-51"></a>                <span class="n">sh</span> <span class="s2">"/opt/sonar-runner/bin/sonar-runner"</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-52"></a>            <span class="o">}</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-53"></a>        <span class="o">}</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-54"></a>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-55"></a>        <span class="n">stage</span> <span class="o">(</span><span class="s1">'sonar-branch'</span><span class="o">){</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-56"></a>            <span class="n">when</span> <span class="o">{</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-57"></a>                <span class="n">not</span> <span class="o">{</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-58"></a>                    <span class="n">branch</span> <span class="s1">'master'</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-59"></a>                <span class="o">}</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-60"></a>            <span class="o">}</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-61"></a>            <span class="n">steps</span> <span class="o">{</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-62"></a>                <span class="n">sh</span> <span class="s2">"/opt/sonar-runner/bin/sonar-runner -Dsonar.branch=${env.BRANCH_NAME}"</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-63"></a>            <span class="o">}</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-64"></a>        <span class="o">}</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-65"></a>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-66"></a>        <span class="n">stage</span> <span class="o">(</span><span class="s1">'bench'</span><span class="o">){</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-67"></a>            <span class="n">steps</span> <span class="o">{</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-68"></a>                <span class="n">build</span> <span class="nl">job:</span> <span class="s1">'etl - benchmark'</span><span class="o">,</span> <span class="nl">wait:</span> <span class="kc">false</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-69"></a>            <span class="o">}</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-70"></a>        <span class="o">}</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-71"></a>    <span class="o">}</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-72"></a>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-73"></a>    <span class="n">post</span> <span class="o">{</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-74"></a>        <span class="n">always</span> <span class="o">{</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-75"></a>            <span class="n">step</span><span class="o">([</span><span class="n">$class</span><span class="o">:</span> <span class="s1">'Mailer'</span><span class="o">,</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-76"></a>                <span class="nl">notifyEveryUnstableBuild:</span> <span class="kc">true</span><span class="o">,</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-77"></a>                <span class="nl">recipients:</span> <span class="s2">"baptiste.wicht@gmail.com"</span><span class="o">,</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-78"></a>                <span class="nl">sendToIndividuals:</span> <span class="kc">true</span><span class="o">])</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-79"></a>        <span class="o">}</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-80"></a>    <span class="o">}</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-81"></a><span class="o">}</span>
+</pre>
+<p>There is nothing really fancy about, it's probably average. Moreover, since I'm
+not an expert on pipelines and I've just discovered declarative pipelines, it
+may not be optimal, but it works. As you'll see there are some problems
+I haven't been able to fix.</p>
+<p>The first part declares the environment variables for the build. Then, the
+multiple build stages are listed. The first stage checkout the code from the
+SCM. This ugly piece of code is here to allow to checkout the submodules. It is
+the only solution I have found so far. It's very ugly but it works. The second
+steps is simply some basic static analysis. The next step is the classical build
+step. Then, the tests are run. In that case, I'm using a script because the
+tests are compiled with several different sets of options and it was much easier
+to put that in a script that in the Pipeline. Moreover, that also means I can
+run them standalone. The variables in the line to run the script is another
+problem I haven't been able to fix so far. If I declare these variables in an
+environment block, they are not passed to the script for some reason, so I had
+to use this ugly line. The next two blocks are for Sonar analysis. If you start
+with Sonar, you can simply the second block that passed the branch information
+to Sonar. Unfortunately, Sonar is very limited in terms of Git branches. Each
+branch is considered as another totally different project. That means the false
+positives defined in the master branch will not be used in the second branch.
+Therefore, I kept a clean master and several different projects for the other
+branches. Once Sonar improves this branch handling stuff, if they ever do, I'll
+be able to get rid of one of these conditional stages. The last stage is simple
+running the benchmark job. Finally, the post block is using the Mailer plugin to
+send failed builds information. Again, there is a problem here since this does
+not send "Back to normal" information as it used to do before. I've asked this
+question on StackOverflow, but haven't received an answer so far. I'll post
+a better solution on this blog once I have one. If any of you have some
+solutions to these problems, don't hesitate to post in the comments below or to
+contact me on Github.</p>
+<p>Here it is. I really think Jenkins is getting even greater now with all this
+cool stuff and I advice you to try it out!</p>
+</div>
+        </div>
+            
+        
+    <a href="posts/2017/06/jenkins-declarative-pipeline-and-awesome-github-integration.html#disqus_thread" data-disqus-identifier="cache/posts/2017/06/jenkins-declarative-pipeline-and-awesome-github-integration.html">Comments</a>
+
+
+        </article><article class="postbox h-entry post-text"><h1 class="p-name">
 <a href="posts/2017/05/cpp-containers-benchmark-vector-list-deque-plf-colony.html" class="u-url">C++ Containers Benchmark: vector/list/deque and plf::colony</a>
         <br><small>  
              Posted: <time class="published dt-published" datetime="2017-05-21T12:46:23+02:00">2017-05-21 12:46</time></small>
