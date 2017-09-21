@@ -188,6 +188,7 @@ struct BoundedBuffer {
         rear = (rear + 1) % capacity;
         ++count;
 
+        l.unlock();
         not_empty.notify_one();
     }
 
@@ -200,6 +201,7 @@ struct BoundedBuffer {
         front = (front + 1) % capacity;
         --count;
 
+        l.unlock();
         not_full.notify_one();
 
         return result;
@@ -207,7 +209,7 @@ struct BoundedBuffer {
 };
 ```
 
-The mutexes are managed by a <strong>std::unique_lock</strong>. It is a wrapper to manage a lock. This is necessary to be used with the condition variables. To wake up a thread that is waiting on a condition variable, the <em>notify_one()</em> function is used. The wait function is a bit special. It takes as the first argument the unique lock and a the second one a predicate. The predicate must return false when the waiting must be continued (it is equivalent to while(!pred()){cv.wait(l);}). The rest of the example has nothing special.
+The mutexes are managed by a <strong>std::unique_lock</strong>. It is a wrapper to manage a lock. This is necessary to be used with the condition variables. To wake up a thread that is waiting on a condition variable, the <em>notify_one()</em> function is used. The unlock before the notify_one is not totally necessary. If you omit it, it will be done automatically by destructor of the unique_lock. But, it is then possible that the notify_one() call will wake up a waiting thread that will then directly block again since the lock itself is still locked by the notifier thread. Therefore, if you do it before, the notified thread should be able to get the lock directly. Therefore, it's a slight optimization, but it won't make a lot of differences. The wait function is a bit special. It takes as the first argument the unique lock and a the second one a predicate. The predicate must return false when the waiting must be continued (it is equivalent to while(!pred()){cv.wait(l);}). The rest of the example has nothing special.
 
 We can use this structure to fix multiple consumers / multiple producers problem. This problem is very common in concurrent programming. Several threads (consumers) are waiting from data produced by another several threads (producers). Here is an example with several threads using the structure:
 

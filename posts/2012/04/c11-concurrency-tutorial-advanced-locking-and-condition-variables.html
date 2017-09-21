@@ -314,6 +314,7 @@
         <span class="n">rear</span> <span class="o">=</span> <span class="p">(</span><span class="n">rear</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="n">capacity</span><span class="p">;</span>
         <span class="o">++</span><span class="n">count</span><span class="p">;</span>
 
+        <span class="n">l</span><span class="p">.</span><span class="n">unlock</span><span class="p">();</span>
         <span class="n">not_empty</span><span class="p">.</span><span class="n">notify_one</span><span class="p">();</span>
     <span class="p">}</span>
 
@@ -326,6 +327,7 @@
         <span class="n">front</span> <span class="o">=</span> <span class="p">(</span><span class="n">front</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="n">capacity</span><span class="p">;</span>
         <span class="o">--</span><span class="n">count</span><span class="p">;</span>
 
+        <span class="n">l</span><span class="p">.</span><span class="n">unlock</span><span class="p">();</span>
         <span class="n">not_full</span><span class="p">.</span><span class="n">notify_one</span><span class="p">();</span>
 
         <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
@@ -334,7 +336,7 @@
 </pre>
 
 
-<p>The mutexes are managed by a <strong>std::unique_lock</strong>. It is a wrapper to manage a lock. This is necessary to be used with the condition variables. To wake up a thread that is waiting on a condition variable, the <em>notify_one()</em> function is used. The wait function is a bit special. It takes as the first argument the unique lock and a the second one a predicate. The predicate must return false when the waiting must be continued (it is equivalent to while(!pred()){cv.wait(l);}). The rest of the example has nothing special.</p>
+<p>The mutexes are managed by a <strong>std::unique_lock</strong>. It is a wrapper to manage a lock. This is necessary to be used with the condition variables. To wake up a thread that is waiting on a condition variable, the <em>notify_one()</em> function is used. The unlock before the notify_one is not totally necessary. If you omit it, it will be done automatically by destructor of the unique_lock. But, it is then possible that the notify_one() call will wake up a waiting thread that will then directly block again since the lock itself is still locked by the notifier thread. Therefore, if you do it before, the notified thread should be able to get the lock directly. Therefore, it's a slight optimization, but it won't make a lot of differences. The wait function is a bit special. It takes as the first argument the unique lock and a the second one a predicate. The predicate must return false when the waiting must be continued (it is equivalent to while(!pred()){cv.wait(l);}). The rest of the example has nothing special.</p>
 <p>We can use this structure to fix multiple consumers / multiple producers problem. This problem is very common in concurrent programming. Several threads (consumers) are waiting from data produced by another several threads (producers). Here is an example with several threads using the structure:</p>
 <pre class="code literal-block"><span></span><span class="kt">void</span> <span class="nf">consumer</span><span class="p">(</span><span class="kt">int</span> <span class="n">id</span><span class="p">,</span> <span class="n">BoundedBuffer</span><span class="o">&amp;</span> <span class="n">buffer</span><span class="p">){</span>
     <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">50</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">){</span>
