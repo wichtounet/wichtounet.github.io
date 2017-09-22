@@ -102,6 +102,114 @@
             <div id="content"></div>
             
         <article class="postbox h-entry post-text"><h1 class="p-name">
+<a href="posts/2017/09/cpp11-performance-tip-update-when-to-use-std-pow.html" class="u-url">C++11 Performance tip: Update on when to use std::pow ?</a>
+        <br><small>  
+             Posted: <time class="published dt-published" datetime="2017-09-22T11:21:07+02:00">2017-09-22 11:21</time></small>
+</h1>
+        <hr>
+<div class="p-summary">
+        <div>
+<p>A few days ago, I published a post comparing the
+<a class="reference external" href="https://baptiste-wicht.com/posts/2017/09/cpp11-performance-tip-when-to-use-std-pow.html">performance of std::pow against direct multiplications</a>. When not compiling with -ffast-math, direct multiplication was significantly faster than <code>std::pow</code>, around two orders of magnitude faster when comparing <code>x * x * x</code> and <code>code:std::pow(x, 3)</code>.
+One comment that I've got was to test for which <code>n</code> is
+<code>code:std::pow(x, n)</code> becoming faster than multiplying in a loop. Since
+std::pow is using a special algorithm to perform the computation rather than be
+simply loop-based multiplications, there may be a point after which it's more interesting to use the
+algorithm rather than a loop. So I decided to do the tests. You can also find
+the result in the original article, which I've updated.</p>
+<p>First, our pow function:</p>
+<pre class="code c++"><a name="rest_code_37b07bb7e42843bcacd05fc3087f3ab1-1"></a><span class="kt">double</span> <span class="nf">my_pow</span><span class="p">(</span><span class="kt">double</span> <span class="n">x</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">n</span><span class="p">){</span>
+<a name="rest_code_37b07bb7e42843bcacd05fc3087f3ab1-2"></a>    <span class="kt">double</span> <span class="n">r</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">;</span>
+<a name="rest_code_37b07bb7e42843bcacd05fc3087f3ab1-3"></a>
+<a name="rest_code_37b07bb7e42843bcacd05fc3087f3ab1-4"></a>    <span class="k">while</span><span class="p">(</span><span class="n">n</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">){</span>
+<a name="rest_code_37b07bb7e42843bcacd05fc3087f3ab1-5"></a>        <span class="n">r</span> <span class="o">*=</span> <span class="n">x</span><span class="p">;</span>
+<a name="rest_code_37b07bb7e42843bcacd05fc3087f3ab1-6"></a>        <span class="o">--</span><span class="n">n</span><span class="p">;</span>
+<a name="rest_code_37b07bb7e42843bcacd05fc3087f3ab1-7"></a>    <span class="p">}</span>
+<a name="rest_code_37b07bb7e42843bcacd05fc3087f3ab1-8"></a>
+<a name="rest_code_37b07bb7e42843bcacd05fc3087f3ab1-9"></a>    <span class="k">return</span> <span class="n">r</span><span class="p">;</span>
+<a name="rest_code_37b07bb7e42843bcacd05fc3087f3ab1-10"></a><span class="p">}</span>
+</pre>
+<p>And now, let's see the performance. I've compiled my benchmark with GCC 4.9.3
+and running on my old Sandy Bridge processor. Here are the results for 1000
+calls to each functions:</p>
+<div id="graph_std_pow_my_pow_1" style="width: 700px; height: 400px;"></div>
+<p>We can see that between <code>n=100</code> and <code>n=110</code>, <code>std::pow(x, n)</code>
+starts to be faster than <code>my_pow(x, n)</code>. At this point, you should only
+use <code>std::pow(x, n)</code>.  Interestingly too, the time for <code>std::pow(x,
+n)</code> is decreasing. Let's see how is the performance with higher range of
+<code>n</code>:</p>
+<div id="graph_std_pow_my_pow_2" style="width: 700px; height: 400px;"></div>
+<p>We can see that the pow function time still remains stable while our loop-based
+pow function still increases linearly. At <code>n=1000</code>, <code>std::pow</code> is
+one order of magnitude faster than <code>my_pow</code>.</p>
+<p>Overall, if you do not care much about extreme accuracy, you may consider using
+you own pow function for small-ish (integer) <code>n</code> values. After
+<code>n=100</code>, it becomes more interesting to use <code>std::pow</code>.</p>
+<p>If you want more results on the subject, you take a look at the
+<a class="reference external" href="https://baptiste-wicht.com/posts/2017/09/cpp11-performance-tip-when-to-use-std-pow.html">original article</a>.</p>
+<p>If you are interested in the code of this benchmark, it's available online:
+<a class="reference external" href="https://github.com/wichtounet/articles/blob/master/src/bench_pow_my_pow.cpp">bench_pow_my_pow.cpp</a></p>
+<script type="text/javascript" src="https://www.google.com/jsapi"></script><script type="text/javascript">google.load('visualization', '1.0', {'packages':['corechart']});</script><script type="text/javascript">
+function draw_graph_pow_my_pow_1(){
+var data = google.visualization.arrayToDataTable([
+['n', 'my_pow(x, n)', 'std::pow(x, n)'],
+['10',   2,     127],
+['20',   17,     123],
+['30',   26,     127],
+['40',   36,     123],
+['50',   43,     123],
+['60',   55,     123],
+['70',   72,     123],
+['80',   85,     123],
+['90',   102,    126],
+['100',  114,    125],
+['110',  131,    115],
+['120',  144,    111],
+['130',  165,    111],
+['140',  173,    108],
+['150',  189,    107],
+['160',  202,    112],
+['170',  219,    106],
+['180',  232,    105],
+['190',  249,    108],
+['200',  261,    105],
+]);
+var graph = new google.visualization.LineChart(document.getElementById('graph_std_pow_my_pow_1'));
+var options = {curveType: "function",title: "std::pow(x, 2) (float)",animation: {duration:1200, easing:"in"},width: 700, height: 400,hAxis: {title:"Number of elements", slantedText:true},vAxis: {viewWindow: {min:0}, title:"us"}};
+graph.draw(data, options);
+}
+function draw_graph_pow_my_pow_2(){
+var data = google.visualization.arrayToDataTable([
+['n', 'my_pow(x, n)', 'std::pow(x, n)'],
+['100',  114,    125],
+['200',  261,    105],
+['300',  410,    104],
+['400',  558,    104],
+['500',  708,    104],
+['600',  855,    104],
+['700',  1002,   104],
+['800',  1148,   104],
+['900',  1300,   104],
+['1000', 1442,   104],
+]);
+var graph = new google.visualization.LineChart(document.getElementById('graph_std_pow_my_pow_2'));
+var options = {curveType: "function",title: "std::pow(x, 2) (float)",animation: {duration:1200, easing:"in"},width: 700, height: 400,hAxis: {title:"Number of elements", slantedText:true},vAxis: {viewWindow: {min:0}, title:"us"}};
+graph.draw(data, options);
+}
+function draw_all(){
+draw_graph_pow_my_pow_1();
+draw_graph_pow_my_pow_2();
+}
+google.setOnLoadCallback(draw_all);
+</script>
+</div>
+        </div>
+            
+        
+    <a href="posts/2017/09/cpp11-performance-tip-update-when-to-use-std-pow.html#disqus_thread" data-disqus-identifier="cache/posts/2017/09/cpp11-performance-tip-update-when-to-use-std-pow.html">Comments</a>
+
+
+        </article><article class="postbox h-entry post-text"><h1 class="p-name">
 <a href="posts/2017/09/how-i-made-deep-learning-library-38-faster-to-compile-optimization-and-cpp17-if-constexpr.html" class="u-url">How I made my Deep Learning Library 38% faster to compile (Optimization and C++17 if constexpr)</a>
         <br><small>  
              Posted: <time class="published dt-published" datetime="2017-09-21T19:44:34+02:00">2017-09-21 19:44</time></small>
@@ -136,6 +244,7 @@ the total compilation of the DLL unit tests by up to 38%.</p>
         <hr>
 <div class="p-summary">
         <div>
+<p>Update: I've added a new section for larger values of <code>n</code>.</p>
 <p>Recently, I've been wondering about the performance of <code>std::pow(x, n)</code>.
 I'm talking here about the case when <code>n</code> is an integer. In the case when
 <code>n</code> is not an integer, I believe, you should always use <code>std::pow</code>
@@ -217,7 +326,7 @@ make
 sudo make install
 </pre>
 </div>
-<div class="section" id="conclusion-4">
+<div class="section" id="conclusion-3">
 <h2>Conclusion</h2>
 <p>A brief tutorial is available on Github: <a class="reference external" href="https://github.com/wichtounet/budgetwarrior/wiki/Start-tutorial">Starting guide</a>.</p>
 <p>If you are interested by the sources, you can download them on Github:
@@ -264,19 +373,19 @@ will be computed in the future. How to create a future ? The simplest way is to
 use <code>std::async</code> that will create an asynchronous task and return
 a <code>std::future</code>.</p>
 <p>Let's start with the simplest of the examples:</p>
-<pre class="code c++"><a name="rest_code_a0b782c0e9794ea7a06f3cd7b84dc744-1"></a><span class="cp">#include</span> <span class="cpf">&lt;thread&gt;</span><span class="cp"></span>
-<a name="rest_code_a0b782c0e9794ea7a06f3cd7b84dc744-2"></a><span class="cp">#include</span> <span class="cpf">&lt;future&gt;</span><span class="cp"></span>
-<a name="rest_code_a0b782c0e9794ea7a06f3cd7b84dc744-3"></a><span class="cp">#include</span> <span class="cpf">&lt;iostream&gt;</span><span class="cp"></span>
-<a name="rest_code_a0b782c0e9794ea7a06f3cd7b84dc744-4"></a>
-<a name="rest_code_a0b782c0e9794ea7a06f3cd7b84dc744-5"></a><span class="kt">int</span> <span class="nf">main</span><span class="p">(){</span>
-<a name="rest_code_a0b782c0e9794ea7a06f3cd7b84dc744-6"></a>    <span class="k">auto</span> <span class="n">future</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">async</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">launch</span><span class="o">::</span><span class="n">async</span><span class="p">,</span> <span class="p">[](){</span>
-<a name="rest_code_a0b782c0e9794ea7a06f3cd7b84dc744-7"></a>        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"I'm a thread"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
-<a name="rest_code_a0b782c0e9794ea7a06f3cd7b84dc744-8"></a>    <span class="p">});</span>
-<a name="rest_code_a0b782c0e9794ea7a06f3cd7b84dc744-9"></a>
-<a name="rest_code_a0b782c0e9794ea7a06f3cd7b84dc744-10"></a>    <span class="n">future</span><span class="p">.</span><span class="n">get</span><span class="p">();</span>
-<a name="rest_code_a0b782c0e9794ea7a06f3cd7b84dc744-11"></a>
-<a name="rest_code_a0b782c0e9794ea7a06f3cd7b84dc744-12"></a>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<a name="rest_code_a0b782c0e9794ea7a06f3cd7b84dc744-13"></a><span class="p">}</span>
+<pre class="code c++"><a name="rest_code_ad4721c034d14e3590004fb24adb51f4-1"></a><span class="cp">#include</span> <span class="cpf">&lt;thread&gt;</span><span class="cp"></span>
+<a name="rest_code_ad4721c034d14e3590004fb24adb51f4-2"></a><span class="cp">#include</span> <span class="cpf">&lt;future&gt;</span><span class="cp"></span>
+<a name="rest_code_ad4721c034d14e3590004fb24adb51f4-3"></a><span class="cp">#include</span> <span class="cpf">&lt;iostream&gt;</span><span class="cp"></span>
+<a name="rest_code_ad4721c034d14e3590004fb24adb51f4-4"></a>
+<a name="rest_code_ad4721c034d14e3590004fb24adb51f4-5"></a><span class="kt">int</span> <span class="nf">main</span><span class="p">(){</span>
+<a name="rest_code_ad4721c034d14e3590004fb24adb51f4-6"></a>    <span class="k">auto</span> <span class="n">future</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">async</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">launch</span><span class="o">::</span><span class="n">async</span><span class="p">,</span> <span class="p">[](){</span>
+<a name="rest_code_ad4721c034d14e3590004fb24adb51f4-7"></a>        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"I'm a thread"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<a name="rest_code_ad4721c034d14e3590004fb24adb51f4-8"></a>    <span class="p">});</span>
+<a name="rest_code_ad4721c034d14e3590004fb24adb51f4-9"></a>
+<a name="rest_code_ad4721c034d14e3590004fb24adb51f4-10"></a>    <span class="n">future</span><span class="p">.</span><span class="n">get</span><span class="p">();</span>
+<a name="rest_code_ad4721c034d14e3590004fb24adb51f4-11"></a>
+<a name="rest_code_ad4721c034d14e3590004fb24adb51f4-12"></a>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<a name="rest_code_ad4721c034d14e3590004fb24adb51f4-13"></a><span class="p">}</span>
 </pre>
 <p>Nothing really special here. <code>std::async</code> will execute the task that we
 give it (here a lambda) and return a <code>std::future</code>. Once you use the
@@ -290,23 +399,23 @@ want to use the result several times, you need to store it yourself after you
 called <code>get()</code>.</p>
 <p>Let's see with something that returns a value and actually takes some time
 before returning it:</p>
-<pre class="code c++"><a name="rest_code_cda8edd43d0a4b09aaeb6f3081573610-1"></a><span class="cp">#include</span> <span class="cpf">&lt;thread&gt;</span><span class="cp"></span>
-<a name="rest_code_cda8edd43d0a4b09aaeb6f3081573610-2"></a><span class="cp">#include</span> <span class="cpf">&lt;future&gt;</span><span class="cp"></span>
-<a name="rest_code_cda8edd43d0a4b09aaeb6f3081573610-3"></a><span class="cp">#include</span> <span class="cpf">&lt;iostream&gt;</span><span class="cp"></span>
-<a name="rest_code_cda8edd43d0a4b09aaeb6f3081573610-4"></a><span class="cp">#include</span> <span class="cpf">&lt;chrono&gt;</span><span class="cp"></span>
-<a name="rest_code_cda8edd43d0a4b09aaeb6f3081573610-5"></a>
-<a name="rest_code_cda8edd43d0a4b09aaeb6f3081573610-6"></a><span class="kt">int</span> <span class="nf">main</span><span class="p">(){</span>
-<a name="rest_code_cda8edd43d0a4b09aaeb6f3081573610-7"></a>    <span class="k">auto</span> <span class="n">future</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">async</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">launch</span><span class="o">::</span><span class="n">async</span><span class="p">,</span> <span class="p">[](){</span>
-<a name="rest_code_cda8edd43d0a4b09aaeb6f3081573610-8"></a>        <span class="n">std</span><span class="o">::</span><span class="n">this_thread</span><span class="o">::</span><span class="n">sleep_for</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">seconds</span><span class="p">(</span><span class="mi">5</span><span class="p">));</span>
-<a name="rest_code_cda8edd43d0a4b09aaeb6f3081573610-9"></a>        <span class="k">return</span> <span class="mi">42</span><span class="p">;</span>
-<a name="rest_code_cda8edd43d0a4b09aaeb6f3081573610-10"></a>    <span class="p">});</span>
-<a name="rest_code_cda8edd43d0a4b09aaeb6f3081573610-11"></a>
-<a name="rest_code_cda8edd43d0a4b09aaeb6f3081573610-12"></a>    <span class="c1">// Do something else ?</span>
-<a name="rest_code_cda8edd43d0a4b09aaeb6f3081573610-13"></a>
-<a name="rest_code_cda8edd43d0a4b09aaeb6f3081573610-14"></a>    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">future</span><span class="p">.</span><span class="n">get</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
-<a name="rest_code_cda8edd43d0a4b09aaeb6f3081573610-15"></a>
-<a name="rest_code_cda8edd43d0a4b09aaeb6f3081573610-16"></a>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<a name="rest_code_cda8edd43d0a4b09aaeb6f3081573610-17"></a><span class="p">}</span>
+<pre class="code c++"><a name="rest_code_07c4f7d45f9c4bfd995475b5c7d9500b-1"></a><span class="cp">#include</span> <span class="cpf">&lt;thread&gt;</span><span class="cp"></span>
+<a name="rest_code_07c4f7d45f9c4bfd995475b5c7d9500b-2"></a><span class="cp">#include</span> <span class="cpf">&lt;future&gt;</span><span class="cp"></span>
+<a name="rest_code_07c4f7d45f9c4bfd995475b5c7d9500b-3"></a><span class="cp">#include</span> <span class="cpf">&lt;iostream&gt;</span><span class="cp"></span>
+<a name="rest_code_07c4f7d45f9c4bfd995475b5c7d9500b-4"></a><span class="cp">#include</span> <span class="cpf">&lt;chrono&gt;</span><span class="cp"></span>
+<a name="rest_code_07c4f7d45f9c4bfd995475b5c7d9500b-5"></a>
+<a name="rest_code_07c4f7d45f9c4bfd995475b5c7d9500b-6"></a><span class="kt">int</span> <span class="nf">main</span><span class="p">(){</span>
+<a name="rest_code_07c4f7d45f9c4bfd995475b5c7d9500b-7"></a>    <span class="k">auto</span> <span class="n">future</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">async</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">launch</span><span class="o">::</span><span class="n">async</span><span class="p">,</span> <span class="p">[](){</span>
+<a name="rest_code_07c4f7d45f9c4bfd995475b5c7d9500b-8"></a>        <span class="n">std</span><span class="o">::</span><span class="n">this_thread</span><span class="o">::</span><span class="n">sleep_for</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">seconds</span><span class="p">(</span><span class="mi">5</span><span class="p">));</span>
+<a name="rest_code_07c4f7d45f9c4bfd995475b5c7d9500b-9"></a>        <span class="k">return</span> <span class="mi">42</span><span class="p">;</span>
+<a name="rest_code_07c4f7d45f9c4bfd995475b5c7d9500b-10"></a>    <span class="p">});</span>
+<a name="rest_code_07c4f7d45f9c4bfd995475b5c7d9500b-11"></a>
+<a name="rest_code_07c4f7d45f9c4bfd995475b5c7d9500b-12"></a>    <span class="c1">// Do something else ?</span>
+<a name="rest_code_07c4f7d45f9c4bfd995475b5c7d9500b-13"></a>
+<a name="rest_code_07c4f7d45f9c4bfd995475b5c7d9500b-14"></a>    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">future</span><span class="p">.</span><span class="n">get</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<a name="rest_code_07c4f7d45f9c4bfd995475b5c7d9500b-15"></a>
+<a name="rest_code_07c4f7d45f9c4bfd995475b5c7d9500b-16"></a>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<a name="rest_code_07c4f7d45f9c4bfd995475b5c7d9500b-17"></a><span class="p">}</span>
 </pre>
 <p>This time, the future will be of the time <code>std::future&lt;int&gt;</code> and thus
 <code>get()</code> will also return an <code>int</code>. <code>std::async</code> will again
@@ -330,51 +439,51 @@ a common scenario. You can imagine that you want to process the results as fast
 as possible, so you want to ask the futures for their result several times. If
 no result is available, maybe you want to do something else. Here is a possible
 implementation:</p>
-<pre class="code c++"><a name="rest_code_58242deea52649409e8e4766a5be6a65-1"></a><span class="cp">#include</span> <span class="cpf">&lt;thread&gt;</span><span class="cp"></span>
-<a name="rest_code_58242deea52649409e8e4766a5be6a65-2"></a><span class="cp">#include</span> <span class="cpf">&lt;future&gt;</span><span class="cp"></span>
-<a name="rest_code_58242deea52649409e8e4766a5be6a65-3"></a><span class="cp">#include</span> <span class="cpf">&lt;iostream&gt;</span><span class="cp"></span>
-<a name="rest_code_58242deea52649409e8e4766a5be6a65-4"></a><span class="cp">#include</span> <span class="cpf">&lt;chrono&gt;</span><span class="cp"></span>
-<a name="rest_code_58242deea52649409e8e4766a5be6a65-5"></a>
-<a name="rest_code_58242deea52649409e8e4766a5be6a65-6"></a><span class="kt">int</span> <span class="nf">main</span><span class="p">(){</span>
-<a name="rest_code_58242deea52649409e8e4766a5be6a65-7"></a>    <span class="k">auto</span> <span class="n">f1</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">async</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">launch</span><span class="o">::</span><span class="n">async</span><span class="p">,</span> <span class="p">[](){</span>
-<a name="rest_code_58242deea52649409e8e4766a5be6a65-8"></a>        <span class="n">std</span><span class="o">::</span><span class="n">this_thread</span><span class="o">::</span><span class="n">sleep_for</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">seconds</span><span class="p">(</span><span class="mi">9</span><span class="p">));</span>
-<a name="rest_code_58242deea52649409e8e4766a5be6a65-9"></a>        <span class="k">return</span> <span class="mi">42</span><span class="p">;</span>
-<a name="rest_code_58242deea52649409e8e4766a5be6a65-10"></a>    <span class="p">});</span>
-<a name="rest_code_58242deea52649409e8e4766a5be6a65-11"></a>
-<a name="rest_code_58242deea52649409e8e4766a5be6a65-12"></a>    <span class="k">auto</span> <span class="n">f2</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">async</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">launch</span><span class="o">::</span><span class="n">async</span><span class="p">,</span> <span class="p">[](){</span>
-<a name="rest_code_58242deea52649409e8e4766a5be6a65-13"></a>        <span class="n">std</span><span class="o">::</span><span class="n">this_thread</span><span class="o">::</span><span class="n">sleep_for</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">seconds</span><span class="p">(</span><span class="mi">3</span><span class="p">));</span>
-<a name="rest_code_58242deea52649409e8e4766a5be6a65-14"></a>        <span class="k">return</span> <span class="mi">13</span><span class="p">;</span>
-<a name="rest_code_58242deea52649409e8e4766a5be6a65-15"></a>    <span class="p">});</span>
-<a name="rest_code_58242deea52649409e8e4766a5be6a65-16"></a>
-<a name="rest_code_58242deea52649409e8e4766a5be6a65-17"></a>    <span class="k">auto</span> <span class="n">f3</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">async</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">launch</span><span class="o">::</span><span class="n">async</span><span class="p">,</span> <span class="p">[](){</span>
-<a name="rest_code_58242deea52649409e8e4766a5be6a65-18"></a>        <span class="n">std</span><span class="o">::</span><span class="n">this_thread</span><span class="o">::</span><span class="n">sleep_for</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">seconds</span><span class="p">(</span><span class="mi">6</span><span class="p">));</span>
-<a name="rest_code_58242deea52649409e8e4766a5be6a65-19"></a>        <span class="k">return</span> <span class="mi">666</span><span class="p">;</span>
-<a name="rest_code_58242deea52649409e8e4766a5be6a65-20"></a>    <span class="p">});</span>
-<a name="rest_code_58242deea52649409e8e4766a5be6a65-21"></a>
-<a name="rest_code_58242deea52649409e8e4766a5be6a65-22"></a>    <span class="k">auto</span> <span class="n">timeout</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">milliseconds</span><span class="p">(</span><span class="mi">10</span><span class="p">);</span>
-<a name="rest_code_58242deea52649409e8e4766a5be6a65-23"></a>
-<a name="rest_code_58242deea52649409e8e4766a5be6a65-24"></a>    <span class="k">while</span><span class="p">(</span><span class="n">f1</span><span class="p">.</span><span class="n">valid</span><span class="p">()</span> <span class="o">||</span> <span class="n">f2</span><span class="p">.</span><span class="n">valid</span><span class="p">()</span> <span class="o">||</span> <span class="n">f3</span><span class="p">.</span><span class="n">valid</span><span class="p">()){</span>
-<a name="rest_code_58242deea52649409e8e4766a5be6a65-25"></a>        <span class="k">if</span><span class="p">(</span><span class="n">f1</span><span class="p">.</span><span class="n">valid</span><span class="p">()</span> <span class="o">&amp;&amp;</span> <span class="n">f1</span><span class="p">.</span><span class="n">wait_for</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span> <span class="o">==</span> <span class="n">std</span><span class="o">::</span><span class="n">future_status</span><span class="o">::</span><span class="n">ready</span><span class="p">){</span>
-<a name="rest_code_58242deea52649409e8e4766a5be6a65-26"></a>            <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"Task1 is done! "</span> <span class="o">&lt;&lt;</span> <span class="n">f1</span><span class="p">.</span><span class="n">get</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
-<a name="rest_code_58242deea52649409e8e4766a5be6a65-27"></a>        <span class="p">}</span>
-<a name="rest_code_58242deea52649409e8e4766a5be6a65-28"></a>
-<a name="rest_code_58242deea52649409e8e4766a5be6a65-29"></a>        <span class="k">if</span><span class="p">(</span><span class="n">f2</span><span class="p">.</span><span class="n">valid</span><span class="p">()</span> <span class="o">&amp;&amp;</span> <span class="n">f2</span><span class="p">.</span><span class="n">wait_for</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span> <span class="o">==</span> <span class="n">std</span><span class="o">::</span><span class="n">future_status</span><span class="o">::</span><span class="n">ready</span><span class="p">){</span>
-<a name="rest_code_58242deea52649409e8e4766a5be6a65-30"></a>            <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"Task2 is done! "</span> <span class="o">&lt;&lt;</span> <span class="n">f2</span><span class="p">.</span><span class="n">get</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
-<a name="rest_code_58242deea52649409e8e4766a5be6a65-31"></a>        <span class="p">}</span>
-<a name="rest_code_58242deea52649409e8e4766a5be6a65-32"></a>
-<a name="rest_code_58242deea52649409e8e4766a5be6a65-33"></a>        <span class="k">if</span><span class="p">(</span><span class="n">f3</span><span class="p">.</span><span class="n">valid</span><span class="p">()</span> <span class="o">&amp;&amp;</span> <span class="n">f3</span><span class="p">.</span><span class="n">wait_for</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span> <span class="o">==</span> <span class="n">std</span><span class="o">::</span><span class="n">future_status</span><span class="o">::</span><span class="n">ready</span><span class="p">){</span>
-<a name="rest_code_58242deea52649409e8e4766a5be6a65-34"></a>            <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"Task3 is done! "</span> <span class="o">&lt;&lt;</span> <span class="n">f3</span><span class="p">.</span><span class="n">get</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
-<a name="rest_code_58242deea52649409e8e4766a5be6a65-35"></a>        <span class="p">}</span>
-<a name="rest_code_58242deea52649409e8e4766a5be6a65-36"></a>
-<a name="rest_code_58242deea52649409e8e4766a5be6a65-37"></a>        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"I'm doing my own work!"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
-<a name="rest_code_58242deea52649409e8e4766a5be6a65-38"></a>        <span class="n">std</span><span class="o">::</span><span class="n">this_thread</span><span class="o">::</span><span class="n">sleep_for</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">seconds</span><span class="p">(</span><span class="mi">1</span><span class="p">));</span>
-<a name="rest_code_58242deea52649409e8e4766a5be6a65-39"></a>        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"I'm done with my own work!"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
-<a name="rest_code_58242deea52649409e8e4766a5be6a65-40"></a>    <span class="p">}</span>
-<a name="rest_code_58242deea52649409e8e4766a5be6a65-41"></a>
-<a name="rest_code_58242deea52649409e8e4766a5be6a65-42"></a>    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"Everything is done, let's go back to the tutorial"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
-<a name="rest_code_58242deea52649409e8e4766a5be6a65-43"></a>
-<a name="rest_code_58242deea52649409e8e4766a5be6a65-44"></a>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<a name="rest_code_58242deea52649409e8e4766a5be6a65-45"></a><span class="p">}</span>
+<pre class="code c++"><a name="rest_code_16d19b5753c34d4ba58aa5ee397f18a3-1"></a><span class="cp">#include</span> <span class="cpf">&lt;thread&gt;</span><span class="cp"></span>
+<a name="rest_code_16d19b5753c34d4ba58aa5ee397f18a3-2"></a><span class="cp">#include</span> <span class="cpf">&lt;future&gt;</span><span class="cp"></span>
+<a name="rest_code_16d19b5753c34d4ba58aa5ee397f18a3-3"></a><span class="cp">#include</span> <span class="cpf">&lt;iostream&gt;</span><span class="cp"></span>
+<a name="rest_code_16d19b5753c34d4ba58aa5ee397f18a3-4"></a><span class="cp">#include</span> <span class="cpf">&lt;chrono&gt;</span><span class="cp"></span>
+<a name="rest_code_16d19b5753c34d4ba58aa5ee397f18a3-5"></a>
+<a name="rest_code_16d19b5753c34d4ba58aa5ee397f18a3-6"></a><span class="kt">int</span> <span class="nf">main</span><span class="p">(){</span>
+<a name="rest_code_16d19b5753c34d4ba58aa5ee397f18a3-7"></a>    <span class="k">auto</span> <span class="n">f1</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">async</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">launch</span><span class="o">::</span><span class="n">async</span><span class="p">,</span> <span class="p">[](){</span>
+<a name="rest_code_16d19b5753c34d4ba58aa5ee397f18a3-8"></a>        <span class="n">std</span><span class="o">::</span><span class="n">this_thread</span><span class="o">::</span><span class="n">sleep_for</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">seconds</span><span class="p">(</span><span class="mi">9</span><span class="p">));</span>
+<a name="rest_code_16d19b5753c34d4ba58aa5ee397f18a3-9"></a>        <span class="k">return</span> <span class="mi">42</span><span class="p">;</span>
+<a name="rest_code_16d19b5753c34d4ba58aa5ee397f18a3-10"></a>    <span class="p">});</span>
+<a name="rest_code_16d19b5753c34d4ba58aa5ee397f18a3-11"></a>
+<a name="rest_code_16d19b5753c34d4ba58aa5ee397f18a3-12"></a>    <span class="k">auto</span> <span class="n">f2</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">async</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">launch</span><span class="o">::</span><span class="n">async</span><span class="p">,</span> <span class="p">[](){</span>
+<a name="rest_code_16d19b5753c34d4ba58aa5ee397f18a3-13"></a>        <span class="n">std</span><span class="o">::</span><span class="n">this_thread</span><span class="o">::</span><span class="n">sleep_for</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">seconds</span><span class="p">(</span><span class="mi">3</span><span class="p">));</span>
+<a name="rest_code_16d19b5753c34d4ba58aa5ee397f18a3-14"></a>        <span class="k">return</span> <span class="mi">13</span><span class="p">;</span>
+<a name="rest_code_16d19b5753c34d4ba58aa5ee397f18a3-15"></a>    <span class="p">});</span>
+<a name="rest_code_16d19b5753c34d4ba58aa5ee397f18a3-16"></a>
+<a name="rest_code_16d19b5753c34d4ba58aa5ee397f18a3-17"></a>    <span class="k">auto</span> <span class="n">f3</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">async</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">launch</span><span class="o">::</span><span class="n">async</span><span class="p">,</span> <span class="p">[](){</span>
+<a name="rest_code_16d19b5753c34d4ba58aa5ee397f18a3-18"></a>        <span class="n">std</span><span class="o">::</span><span class="n">this_thread</span><span class="o">::</span><span class="n">sleep_for</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">seconds</span><span class="p">(</span><span class="mi">6</span><span class="p">));</span>
+<a name="rest_code_16d19b5753c34d4ba58aa5ee397f18a3-19"></a>        <span class="k">return</span> <span class="mi">666</span><span class="p">;</span>
+<a name="rest_code_16d19b5753c34d4ba58aa5ee397f18a3-20"></a>    <span class="p">});</span>
+<a name="rest_code_16d19b5753c34d4ba58aa5ee397f18a3-21"></a>
+<a name="rest_code_16d19b5753c34d4ba58aa5ee397f18a3-22"></a>    <span class="k">auto</span> <span class="n">timeout</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">milliseconds</span><span class="p">(</span><span class="mi">10</span><span class="p">);</span>
+<a name="rest_code_16d19b5753c34d4ba58aa5ee397f18a3-23"></a>
+<a name="rest_code_16d19b5753c34d4ba58aa5ee397f18a3-24"></a>    <span class="k">while</span><span class="p">(</span><span class="n">f1</span><span class="p">.</span><span class="n">valid</span><span class="p">()</span> <span class="o">||</span> <span class="n">f2</span><span class="p">.</span><span class="n">valid</span><span class="p">()</span> <span class="o">||</span> <span class="n">f3</span><span class="p">.</span><span class="n">valid</span><span class="p">()){</span>
+<a name="rest_code_16d19b5753c34d4ba58aa5ee397f18a3-25"></a>        <span class="k">if</span><span class="p">(</span><span class="n">f1</span><span class="p">.</span><span class="n">valid</span><span class="p">()</span> <span class="o">&amp;&amp;</span> <span class="n">f1</span><span class="p">.</span><span class="n">wait_for</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span> <span class="o">==</span> <span class="n">std</span><span class="o">::</span><span class="n">future_status</span><span class="o">::</span><span class="n">ready</span><span class="p">){</span>
+<a name="rest_code_16d19b5753c34d4ba58aa5ee397f18a3-26"></a>            <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"Task1 is done! "</span> <span class="o">&lt;&lt;</span> <span class="n">f1</span><span class="p">.</span><span class="n">get</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<a name="rest_code_16d19b5753c34d4ba58aa5ee397f18a3-27"></a>        <span class="p">}</span>
+<a name="rest_code_16d19b5753c34d4ba58aa5ee397f18a3-28"></a>
+<a name="rest_code_16d19b5753c34d4ba58aa5ee397f18a3-29"></a>        <span class="k">if</span><span class="p">(</span><span class="n">f2</span><span class="p">.</span><span class="n">valid</span><span class="p">()</span> <span class="o">&amp;&amp;</span> <span class="n">f2</span><span class="p">.</span><span class="n">wait_for</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span> <span class="o">==</span> <span class="n">std</span><span class="o">::</span><span class="n">future_status</span><span class="o">::</span><span class="n">ready</span><span class="p">){</span>
+<a name="rest_code_16d19b5753c34d4ba58aa5ee397f18a3-30"></a>            <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"Task2 is done! "</span> <span class="o">&lt;&lt;</span> <span class="n">f2</span><span class="p">.</span><span class="n">get</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<a name="rest_code_16d19b5753c34d4ba58aa5ee397f18a3-31"></a>        <span class="p">}</span>
+<a name="rest_code_16d19b5753c34d4ba58aa5ee397f18a3-32"></a>
+<a name="rest_code_16d19b5753c34d4ba58aa5ee397f18a3-33"></a>        <span class="k">if</span><span class="p">(</span><span class="n">f3</span><span class="p">.</span><span class="n">valid</span><span class="p">()</span> <span class="o">&amp;&amp;</span> <span class="n">f3</span><span class="p">.</span><span class="n">wait_for</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span> <span class="o">==</span> <span class="n">std</span><span class="o">::</span><span class="n">future_status</span><span class="o">::</span><span class="n">ready</span><span class="p">){</span>
+<a name="rest_code_16d19b5753c34d4ba58aa5ee397f18a3-34"></a>            <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"Task3 is done! "</span> <span class="o">&lt;&lt;</span> <span class="n">f3</span><span class="p">.</span><span class="n">get</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<a name="rest_code_16d19b5753c34d4ba58aa5ee397f18a3-35"></a>        <span class="p">}</span>
+<a name="rest_code_16d19b5753c34d4ba58aa5ee397f18a3-36"></a>
+<a name="rest_code_16d19b5753c34d4ba58aa5ee397f18a3-37"></a>        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"I'm doing my own work!"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<a name="rest_code_16d19b5753c34d4ba58aa5ee397f18a3-38"></a>        <span class="n">std</span><span class="o">::</span><span class="n">this_thread</span><span class="o">::</span><span class="n">sleep_for</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">seconds</span><span class="p">(</span><span class="mi">1</span><span class="p">));</span>
+<a name="rest_code_16d19b5753c34d4ba58aa5ee397f18a3-39"></a>        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"I'm done with my own work!"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<a name="rest_code_16d19b5753c34d4ba58aa5ee397f18a3-40"></a>    <span class="p">}</span>
+<a name="rest_code_16d19b5753c34d4ba58aa5ee397f18a3-41"></a>
+<a name="rest_code_16d19b5753c34d4ba58aa5ee397f18a3-42"></a>    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"Everything is done, let's go back to the tutorial"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<a name="rest_code_16d19b5753c34d4ba58aa5ee397f18a3-43"></a>
+<a name="rest_code_16d19b5753c34d4ba58aa5ee397f18a3-44"></a>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<a name="rest_code_16d19b5753c34d4ba58aa5ee397f18a3-45"></a><span class="p">}</span>
 </pre>
 <p>The three tasks are started asynchronously with <code>std::async</code> and the
 resulting <code>std::future</code> are stored. Then, as long as one of the tasks is
@@ -385,30 +494,30 @@ understand, it covers pretty much every concept of the futures.</p>
 via <code>std::async</code>. Indeed, all the extra parameters that you pass to
 <code>std::async</code> will be passed to the task itself. Here is an example of
 spawning tasks in a loop with different parameters:</p>
-<pre class="code c++"><a name="rest_code_3b2147c682c04d7fa38a4eb06490bff7-1"></a><span class="cp">#include</span> <span class="cpf">&lt;thread&gt;</span><span class="cp"></span>
-<a name="rest_code_3b2147c682c04d7fa38a4eb06490bff7-2"></a><span class="cp">#include</span> <span class="cpf">&lt;future&gt;</span><span class="cp"></span>
-<a name="rest_code_3b2147c682c04d7fa38a4eb06490bff7-3"></a><span class="cp">#include</span> <span class="cpf">&lt;iostream&gt;</span><span class="cp"></span>
-<a name="rest_code_3b2147c682c04d7fa38a4eb06490bff7-4"></a><span class="cp">#include</span> <span class="cpf">&lt;chrono&gt;</span><span class="cp"></span>
-<a name="rest_code_3b2147c682c04d7fa38a4eb06490bff7-5"></a><span class="cp">#include</span> <span class="cpf">&lt;vector&gt;</span><span class="cp"></span>
-<a name="rest_code_3b2147c682c04d7fa38a4eb06490bff7-6"></a>
-<a name="rest_code_3b2147c682c04d7fa38a4eb06490bff7-7"></a><span class="kt">int</span> <span class="nf">main</span><span class="p">(){</span>
-<a name="rest_code_3b2147c682c04d7fa38a4eb06490bff7-8"></a>    <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">future</span><span class="o">&lt;</span><span class="kt">size_t</span><span class="o">&gt;&gt;</span> <span class="n">futures</span><span class="p">;</span>
-<a name="rest_code_3b2147c682c04d7fa38a4eb06490bff7-9"></a>
-<a name="rest_code_3b2147c682c04d7fa38a4eb06490bff7-10"></a>    <span class="k">for</span> <span class="p">(</span><span class="kt">size_t</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
-<a name="rest_code_3b2147c682c04d7fa38a4eb06490bff7-11"></a>        <span class="n">futures</span><span class="p">.</span><span class="n">emplace_back</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">async</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">launch</span><span class="o">::</span><span class="n">async</span><span class="p">,</span> <span class="p">[](</span><span class="kt">size_t</span> <span class="n">param</span><span class="p">){</span>
-<a name="rest_code_3b2147c682c04d7fa38a4eb06490bff7-12"></a>            <span class="n">std</span><span class="o">::</span><span class="n">this_thread</span><span class="o">::</span><span class="n">sleep_for</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">seconds</span><span class="p">(</span><span class="n">param</span><span class="p">));</span>
-<a name="rest_code_3b2147c682c04d7fa38a4eb06490bff7-13"></a>            <span class="k">return</span> <span class="n">param</span><span class="p">;</span>
-<a name="rest_code_3b2147c682c04d7fa38a4eb06490bff7-14"></a>        <span class="p">},</span> <span class="n">i</span><span class="p">));</span>
-<a name="rest_code_3b2147c682c04d7fa38a4eb06490bff7-15"></a>    <span class="p">}</span>
-<a name="rest_code_3b2147c682c04d7fa38a4eb06490bff7-16"></a>
-<a name="rest_code_3b2147c682c04d7fa38a4eb06490bff7-17"></a>    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"Start querying"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
-<a name="rest_code_3b2147c682c04d7fa38a4eb06490bff7-18"></a>
-<a name="rest_code_3b2147c682c04d7fa38a4eb06490bff7-19"></a>    <span class="k">for</span> <span class="p">(</span><span class="k">auto</span> <span class="o">&amp;</span><span class="nl">future</span> <span class="p">:</span> <span class="n">futures</span><span class="p">)</span> <span class="p">{</span>
-<a name="rest_code_3b2147c682c04d7fa38a4eb06490bff7-20"></a>      <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">future</span><span class="p">.</span><span class="n">get</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
-<a name="rest_code_3b2147c682c04d7fa38a4eb06490bff7-21"></a>    <span class="p">}</span>
-<a name="rest_code_3b2147c682c04d7fa38a4eb06490bff7-22"></a>
-<a name="rest_code_3b2147c682c04d7fa38a4eb06490bff7-23"></a>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<a name="rest_code_3b2147c682c04d7fa38a4eb06490bff7-24"></a><span class="p">}</span>
+<pre class="code c++"><a name="rest_code_a6f52c350c4f43ad9373caffd83421af-1"></a><span class="cp">#include</span> <span class="cpf">&lt;thread&gt;</span><span class="cp"></span>
+<a name="rest_code_a6f52c350c4f43ad9373caffd83421af-2"></a><span class="cp">#include</span> <span class="cpf">&lt;future&gt;</span><span class="cp"></span>
+<a name="rest_code_a6f52c350c4f43ad9373caffd83421af-3"></a><span class="cp">#include</span> <span class="cpf">&lt;iostream&gt;</span><span class="cp"></span>
+<a name="rest_code_a6f52c350c4f43ad9373caffd83421af-4"></a><span class="cp">#include</span> <span class="cpf">&lt;chrono&gt;</span><span class="cp"></span>
+<a name="rest_code_a6f52c350c4f43ad9373caffd83421af-5"></a><span class="cp">#include</span> <span class="cpf">&lt;vector&gt;</span><span class="cp"></span>
+<a name="rest_code_a6f52c350c4f43ad9373caffd83421af-6"></a>
+<a name="rest_code_a6f52c350c4f43ad9373caffd83421af-7"></a><span class="kt">int</span> <span class="nf">main</span><span class="p">(){</span>
+<a name="rest_code_a6f52c350c4f43ad9373caffd83421af-8"></a>    <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">future</span><span class="o">&lt;</span><span class="kt">size_t</span><span class="o">&gt;&gt;</span> <span class="n">futures</span><span class="p">;</span>
+<a name="rest_code_a6f52c350c4f43ad9373caffd83421af-9"></a>
+<a name="rest_code_a6f52c350c4f43ad9373caffd83421af-10"></a>    <span class="k">for</span> <span class="p">(</span><span class="kt">size_t</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+<a name="rest_code_a6f52c350c4f43ad9373caffd83421af-11"></a>        <span class="n">futures</span><span class="p">.</span><span class="n">emplace_back</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">async</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">launch</span><span class="o">::</span><span class="n">async</span><span class="p">,</span> <span class="p">[](</span><span class="kt">size_t</span> <span class="n">param</span><span class="p">){</span>
+<a name="rest_code_a6f52c350c4f43ad9373caffd83421af-12"></a>            <span class="n">std</span><span class="o">::</span><span class="n">this_thread</span><span class="o">::</span><span class="n">sleep_for</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">seconds</span><span class="p">(</span><span class="n">param</span><span class="p">));</span>
+<a name="rest_code_a6f52c350c4f43ad9373caffd83421af-13"></a>            <span class="k">return</span> <span class="n">param</span><span class="p">;</span>
+<a name="rest_code_a6f52c350c4f43ad9373caffd83421af-14"></a>        <span class="p">},</span> <span class="n">i</span><span class="p">));</span>
+<a name="rest_code_a6f52c350c4f43ad9373caffd83421af-15"></a>    <span class="p">}</span>
+<a name="rest_code_a6f52c350c4f43ad9373caffd83421af-16"></a>
+<a name="rest_code_a6f52c350c4f43ad9373caffd83421af-17"></a>    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"Start querying"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<a name="rest_code_a6f52c350c4f43ad9373caffd83421af-18"></a>
+<a name="rest_code_a6f52c350c4f43ad9373caffd83421af-19"></a>    <span class="k">for</span> <span class="p">(</span><span class="k">auto</span> <span class="o">&amp;</span><span class="nl">future</span> <span class="p">:</span> <span class="n">futures</span><span class="p">)</span> <span class="p">{</span>
+<a name="rest_code_a6f52c350c4f43ad9373caffd83421af-20"></a>      <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">future</span><span class="p">.</span><span class="n">get</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<a name="rest_code_a6f52c350c4f43ad9373caffd83421af-21"></a>    <span class="p">}</span>
+<a name="rest_code_a6f52c350c4f43ad9373caffd83421af-22"></a>
+<a name="rest_code_a6f52c350c4f43ad9373caffd83421af-23"></a>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<a name="rest_code_a6f52c350c4f43ad9373caffd83421af-24"></a><span class="p">}</span>
 </pre>
 <p>Pretty practical :) All The created <code>std::future&lt;size_t&gt;</code> are stored in
 a <code>std::vector</code> and then are all queried for their result.</p>
@@ -443,18 +552,18 @@ typically a boolean value. For instance, std::is_const, std::is_same or
 std::is_reference are type traits provided by the STL. They are giving you some
 information at compile time for a certain type. If you need to write a type
 traits, let's say is_float, here is how you would maybe do it in C++11:</p>
-<pre class="code c++"><a name="rest_code_45b11d66ae264c94b9aa702fd745c672-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
-<a name="rest_code_45b11d66ae264c94b9aa702fd745c672-2"></a><span class="k">struct</span> <span class="n">is_float</span> <span class="p">{</span>
-<a name="rest_code_45b11d66ae264c94b9aa702fd745c672-3"></a>    <span class="k">static</span> <span class="k">constexpr</span> <span class="kt">bool</span> <span class="n">value</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="kt">float</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">;</span>
-<a name="rest_code_45b11d66ae264c94b9aa702fd745c672-4"></a><span class="p">};</span>
+<pre class="code c++"><a name="rest_code_dac41d3239e0427d88d2cbf6ba474616-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<a name="rest_code_dac41d3239e0427d88d2cbf6ba474616-2"></a><span class="k">struct</span> <span class="n">is_float</span> <span class="p">{</span>
+<a name="rest_code_dac41d3239e0427d88d2cbf6ba474616-3"></a>    <span class="k">static</span> <span class="k">constexpr</span> <span class="kt">bool</span> <span class="n">value</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="kt">float</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">;</span>
+<a name="rest_code_dac41d3239e0427d88d2cbf6ba474616-4"></a><span class="p">};</span>
 </pre>
 <p>or a bit nicer with a template type alias and std::integral constant:</p>
-<pre class="code c++"><a name="rest_code_5b7514df48de41949d3cb2865dffa98c-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
-<a name="rest_code_5b7514df48de41949d3cb2865dffa98c-2"></a><span class="k">using</span> <span class="n">is_float</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">integral_constant</span><span class="o">&lt;</span><span class="kt">bool</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="kt">float</span><span class="o">&gt;::</span><span class="n">value</span><span class="o">&gt;</span><span class="p">;</span>
+<pre class="code c++"><a name="rest_code_98437923a7b8418785b97631aa905ba8-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<a name="rest_code_98437923a7b8418785b97631aa905ba8-2"></a><span class="k">using</span> <span class="n">is_float</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">integral_constant</span><span class="o">&lt;</span><span class="kt">bool</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="kt">float</span><span class="o">&gt;::</span><span class="n">value</span><span class="o">&gt;</span><span class="p">;</span>
 </pre>
 <p>or since is_same is itself a type traits, you can also directly alias it:</p>
-<pre class="code c++"><a name="rest_code_38f6a207f06249eaa4e2e427d8e07c1a-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
-<a name="rest_code_38f6a207f06249eaa4e2e427d8e07c1a-2"></a><span class="k">using</span> <span class="n">is_float</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="kt">float</span><span class="o">&gt;</span><span class="p">;</span>
+<pre class="code c++"><a name="rest_code_c9c6b48e1bb243819945620c6c4ec6f3-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<a name="rest_code_c9c6b48e1bb243819945620c6c4ec6f3-2"></a><span class="k">using</span> <span class="n">is_float</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="kt">float</span><span class="o">&gt;</span><span class="p">;</span>
 </pre>
 <p>This makes for some very nice syntax, but we still have a type rather than a value.</p>
 <p>Note that in some cases, you cannot use the using technique since it cannot be
@@ -462,14 +571,14 @@ specialized and you often need specialization to write some more advanced
 traits.</p>
 <p>And then you would use your traits to do something specific based on that
 information. For instance with a very basic example:</p>
-<pre class="code C++"><a name="rest_code_06a0f8637289401b880e671fcd672628-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
-<a name="rest_code_06a0f8637289401b880e671fcd672628-2"></a><span class="kt">void</span> <span class="n">test</span><span class="p">(</span><span class="n">T</span> <span class="n">t</span><span class="p">){</span>
-<a name="rest_code_06a0f8637289401b880e671fcd672628-3"></a>    <span class="k">if</span> <span class="p">(</span><span class="n">is_float</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">){</span>
-<a name="rest_code_06a0f8637289401b880e671fcd672628-4"></a>        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"I'm a float"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
-<a name="rest_code_06a0f8637289401b880e671fcd672628-5"></a>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-<a name="rest_code_06a0f8637289401b880e671fcd672628-6"></a>        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"I'm not a float"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
-<a name="rest_code_06a0f8637289401b880e671fcd672628-7"></a>    <span class="p">}</span>
-<a name="rest_code_06a0f8637289401b880e671fcd672628-8"></a><span class="p">}</span>
+<pre class="code C++"><a name="rest_code_17eb047bcf784b749c286632e2bf64ad-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<a name="rest_code_17eb047bcf784b749c286632e2bf64ad-2"></a><span class="kt">void</span> <span class="n">test</span><span class="p">(</span><span class="n">T</span> <span class="n">t</span><span class="p">){</span>
+<a name="rest_code_17eb047bcf784b749c286632e2bf64ad-3"></a>    <span class="k">if</span> <span class="p">(</span><span class="n">is_float</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">){</span>
+<a name="rest_code_17eb047bcf784b749c286632e2bf64ad-4"></a>        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"I'm a float"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<a name="rest_code_17eb047bcf784b749c286632e2bf64ad-5"></a>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<a name="rest_code_17eb047bcf784b749c286632e2bf64ad-6"></a>        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"I'm not a float"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<a name="rest_code_17eb047bcf784b749c286632e2bf64ad-7"></a>    <span class="p">}</span>
+<a name="rest_code_17eb047bcf784b749c286632e2bf64ad-8"></a><span class="p">}</span>
 </pre>
 <p>Really nothing fancy here, but that will be enough as examples.</p>
 <p>Even though all this works pretty, it can be made better on two points. First,
@@ -481,19 +590,19 @@ they are variables, parametrized with a type. This allows us to write type
 traits without using a type alias or struct, meaning we have a real value
 instead of a type. If we rewrite our is_float traits with variable templates, we
 have the following:</p>
-<pre class="code c++"><a name="rest_code_794ce898460249cf8128e8f03cdbabf0-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
-<a name="rest_code_794ce898460249cf8128e8f03cdbabf0-2"></a><span class="k">constexpr</span> <span class="kt">bool</span> <span class="n">is_float</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="kt">float</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">;</span>
+<pre class="code c++"><a name="rest_code_ce013db6b109420b88e0880ff16e1150-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<a name="rest_code_ce013db6b109420b88e0880ff16e1150-2"></a><span class="k">constexpr</span> <span class="kt">bool</span> <span class="n">is_float</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="kt">float</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">;</span>
 </pre>
 <p>I think it's much nicer, the intent is clearly stated and there is no
 unnecessary code. Moreover, it's also nicer to use:</p>
-<pre class="code C++"><a name="rest_code_4a69bf93945e4964a57a9536d106353a-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
-<a name="rest_code_4a69bf93945e4964a57a9536d106353a-2"></a><span class="kt">void</span> <span class="n">test</span><span class="p">(</span><span class="n">T</span> <span class="n">t</span><span class="p">){</span>
-<a name="rest_code_4a69bf93945e4964a57a9536d106353a-3"></a>    <span class="k">if</span> <span class="p">(</span><span class="n">is_float</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">){</span>
-<a name="rest_code_4a69bf93945e4964a57a9536d106353a-4"></a>        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"I'm a float"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
-<a name="rest_code_4a69bf93945e4964a57a9536d106353a-5"></a>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-<a name="rest_code_4a69bf93945e4964a57a9536d106353a-6"></a>        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"I'm not a float"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
-<a name="rest_code_4a69bf93945e4964a57a9536d106353a-7"></a>    <span class="p">}</span>
-<a name="rest_code_4a69bf93945e4964a57a9536d106353a-8"></a><span class="p">}</span>
+<pre class="code C++"><a name="rest_code_c3360721c4f4457fbe80a152dda6758c-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<a name="rest_code_c3360721c4f4457fbe80a152dda6758c-2"></a><span class="kt">void</span> <span class="n">test</span><span class="p">(</span><span class="n">T</span> <span class="n">t</span><span class="p">){</span>
+<a name="rest_code_c3360721c4f4457fbe80a152dda6758c-3"></a>    <span class="k">if</span> <span class="p">(</span><span class="n">is_float</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">){</span>
+<a name="rest_code_c3360721c4f4457fbe80a152dda6758c-4"></a>        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"I'm a float"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<a name="rest_code_c3360721c4f4457fbe80a152dda6758c-5"></a>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<a name="rest_code_c3360721c4f4457fbe80a152dda6758c-6"></a>        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"I'm not a float"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<a name="rest_code_c3360721c4f4457fbe80a152dda6758c-7"></a>    <span class="p">}</span>
+<a name="rest_code_c3360721c4f4457fbe80a152dda6758c-8"></a><span class="p">}</span>
 </pre>
 <p>No more ::value everywhere :) I think it's really cool.</p>
 <p>Note that, unlike type alias template, they can be specialized, either fully or
@@ -502,8 +611,8 @@ partially, so no more limitation on that side.</p>
 type traits with values. For instance, std::is_same will have a std::is_same_v
 helper that is a variable template. With that, we can simplify our traits a bit
 more:</p>
-<pre class="code c++"><a name="rest_code_32ed21ff43bc4b289e77ba2279eabc04-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
-<a name="rest_code_32ed21ff43bc4b289e77ba2279eabc04-2"></a><span class="k">constexpr</span> <span class="kt">bool</span> <span class="n">is_float</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">is_same_v</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="kt">float</span><span class="o">&gt;</span><span class="p">;</span>
+<pre class="code c++"><a name="rest_code_f6b41928468e41cb82cf7446e65d1321-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<a name="rest_code_f6b41928468e41cb82cf7446e65d1321-2"></a><span class="k">constexpr</span> <span class="kt">bool</span> <span class="n">is_float</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">is_same_v</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="kt">float</span><span class="o">&gt;</span><span class="p">;</span>
 </pre>
 <p>Personally, I replaced all the type traits inside ETL using variable templates.
 If you don't want to do it, you can also introduce helpers like in the C++17 STL
@@ -516,28 +625,28 @@ in GCC 6 only) that you may encounter if you start using variable templates in
 template classes or variable templates used in another variable templates. If
 you plan to use variable templates inside a template, such as something like
 this:</p>
-<pre class="code c++"><a name="rest_code_cadac6599e3749ee8bbb1105d0bb7ef0-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
-<a name="rest_code_cadac6599e3749ee8bbb1105d0bb7ef0-2"></a><span class="k">struct</span> <span class="n">outer_traits</span> <span class="p">{</span>
-<a name="rest_code_cadac6599e3749ee8bbb1105d0bb7ef0-3"></a>    <span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">X</span><span class="o">&gt;</span>
-<a name="rest_code_cadac6599e3749ee8bbb1105d0bb7ef0-4"></a>    <span class="k">static</span> <span class="k">constexpr</span> <span class="kt">bool</span> <span class="n">sub_traits</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">X</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">;</span>
-<a name="rest_code_cadac6599e3749ee8bbb1105d0bb7ef0-5"></a><span class="p">};</span>
-<a name="rest_code_cadac6599e3749ee8bbb1105d0bb7ef0-6"></a>
-<a name="rest_code_cadac6599e3749ee8bbb1105d0bb7ef0-7"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span> <span class="n">X</span><span class="o">&gt;</span>
-<a name="rest_code_cadac6599e3749ee8bbb1105d0bb7ef0-8"></a><span class="k">constexpr</span> <span class="kt">bool</span> <span class="n">outer_helper</span> <span class="o">=</span> <span class="n">outer_traits</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;::</span><span class="k">template</span> <span class="n">sub_traits</span><span class="o">&lt;</span><span class="n">X</span><span class="o">&gt;</span><span class="p">;</span>
-<a name="rest_code_cadac6599e3749ee8bbb1105d0bb7ef0-9"></a>
-<a name="rest_code_cadac6599e3749ee8bbb1105d0bb7ef0-10"></a><span class="kt">int</span> <span class="nf">main</span><span class="p">(){</span>
-<a name="rest_code_cadac6599e3749ee8bbb1105d0bb7ef0-11"></a>    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">outer_helper</span><span class="o">&lt;</span><span class="kt">float</span><span class="p">,</span> <span class="kt">float</span><span class="o">&gt;</span><span class="p">;</span>
-<a name="rest_code_cadac6599e3749ee8bbb1105d0bb7ef0-12"></a>
-<a name="rest_code_cadac6599e3749ee8bbb1105d0bb7ef0-13"></a>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<a name="rest_code_cadac6599e3749ee8bbb1105d0bb7ef0-14"></a><span class="p">}</span>
+<pre class="code c++"><a name="rest_code_788bc97112c54160a25c16871b631cc7-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<a name="rest_code_788bc97112c54160a25c16871b631cc7-2"></a><span class="k">struct</span> <span class="n">outer_traits</span> <span class="p">{</span>
+<a name="rest_code_788bc97112c54160a25c16871b631cc7-3"></a>    <span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">X</span><span class="o">&gt;</span>
+<a name="rest_code_788bc97112c54160a25c16871b631cc7-4"></a>    <span class="k">static</span> <span class="k">constexpr</span> <span class="kt">bool</span> <span class="n">sub_traits</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">X</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">;</span>
+<a name="rest_code_788bc97112c54160a25c16871b631cc7-5"></a><span class="p">};</span>
+<a name="rest_code_788bc97112c54160a25c16871b631cc7-6"></a>
+<a name="rest_code_788bc97112c54160a25c16871b631cc7-7"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span> <span class="n">X</span><span class="o">&gt;</span>
+<a name="rest_code_788bc97112c54160a25c16871b631cc7-8"></a><span class="k">constexpr</span> <span class="kt">bool</span> <span class="n">outer_helper</span> <span class="o">=</span> <span class="n">outer_traits</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;::</span><span class="k">template</span> <span class="n">sub_traits</span><span class="o">&lt;</span><span class="n">X</span><span class="o">&gt;</span><span class="p">;</span>
+<a name="rest_code_788bc97112c54160a25c16871b631cc7-9"></a>
+<a name="rest_code_788bc97112c54160a25c16871b631cc7-10"></a><span class="kt">int</span> <span class="nf">main</span><span class="p">(){</span>
+<a name="rest_code_788bc97112c54160a25c16871b631cc7-11"></a>    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">outer_helper</span><span class="o">&lt;</span><span class="kt">float</span><span class="p">,</span> <span class="kt">float</span><span class="o">&gt;</span><span class="p">;</span>
+<a name="rest_code_788bc97112c54160a25c16871b631cc7-12"></a>
+<a name="rest_code_788bc97112c54160a25c16871b631cc7-13"></a>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<a name="rest_code_788bc97112c54160a25c16871b631cc7-14"></a><span class="p">}</span>
 </pre>
 <p>You will encounter a not-helpful at all error message with GCC5 family, such as:</p>
-<pre class="code text"><a name="rest_code_d50ed49e99294025a1490dc4f343eac5-1"></a>test.cpp: In instantiation of ‘constexpr const bool outer_helper&lt;float, float&gt;’:
-<a name="rest_code_d50ed49e99294025a1490dc4f343eac5-2"></a>test.cpp:14:22:   required from here
-<a name="rest_code_d50ed49e99294025a1490dc4f343eac5-3"></a>test.cpp:11:20: error: ‘template&lt;class X&gt; constexpr const bool outer_traits&lt;float&gt;::sub_traits&lt;X&gt;’ is not a function template
-<a name="rest_code_d50ed49e99294025a1490dc4f343eac5-4"></a>     constexpr bool outer_helper = outer_traits&lt;T&gt;::template sub_trait
-<a name="rest_code_d50ed49e99294025a1490dc4f343eac5-5"></a>                    ^
-<a name="rest_code_d50ed49e99294025a1490dc4f343eac5-6"></a>test.cpp:11:20: error: ‘sub_traits&lt;X&gt;’ is not a member of ‘outer_traits&lt;float&gt;’
+<pre class="code text"><a name="rest_code_ae5d855f51d64234b2746c00dd4e5a84-1"></a>test.cpp: In instantiation of ‘constexpr const bool outer_helper&lt;float, float&gt;’:
+<a name="rest_code_ae5d855f51d64234b2746c00dd4e5a84-2"></a>test.cpp:14:22:   required from here
+<a name="rest_code_ae5d855f51d64234b2746c00dd4e5a84-3"></a>test.cpp:11:20: error: ‘template&lt;class X&gt; constexpr const bool outer_traits&lt;float&gt;::sub_traits&lt;X&gt;’ is not a function template
+<a name="rest_code_ae5d855f51d64234b2746c00dd4e5a84-4"></a>     constexpr bool outer_helper = outer_traits&lt;T&gt;::template sub_trait
+<a name="rest_code_ae5d855f51d64234b2746c00dd4e5a84-5"></a>                    ^
+<a name="rest_code_ae5d855f51d64234b2746c00dd4e5a84-6"></a>test.cpp:11:20: error: ‘sub_traits&lt;X&gt;’ is not a member of ‘outer_traits&lt;float&gt;’
 </pre>
 <p>It comes from a bug in the handling of variable templates as dependent names. If
 you don't come in this cases, you can use GCC5 family directly, otherwise,
@@ -565,7 +674,7 @@ but since I don't have many users, it's not a real issue.</p>
 <p>I just started growing again my RAID6 array from 12 to 13 disks and
 I encountered a new issue. The reshape started, but with a speed of 0K/s. After
 some searching, I found a very simple solution:</p>
-<pre class="code bash"><a name="rest_code_ec6ba38cd92b40d9af8372bcb5791b44-1"></a><span class="nb">echo</span> max &gt; /sys/block/md0/md/sync_max
+<pre class="code bash"><a name="rest_code_3292154f65b644f082ea03717625820e-1"></a><span class="nb">echo</span> max &gt; /sys/block/md0/md/sync_max
 </pre>
 <p>And the reshape started directly at 50M/s :)</p>
 <p>The solution is the same if you are growing any type of RAID level with parity
@@ -750,7 +859,7 @@ on several posts on the internet, I suspect that this comes from the model of
 GPU I have been used (GTX 960), but all the other frameworks seem to handle this
 card pretty well.</p>
 </div>
-<div class="section" id="conclusion-3">
+<div class="section" id="conclusion-2">
 <h2>Conclusion</h2>
 <p>I hope this is not too much of a bragging post :P We can see that my efforts to
 make the code as fast as possible have paid :) As was shown in the experiments,
@@ -2065,7 +2174,7 @@ falling behind it seems. It seems that it was only for the GEMM that clang was
 having a lot of troubles handling the optimized code.</p>
 </div>
 </div>
-<div class="section" id="conclusion-2">
+<div class="section" id="conclusion">
 <h2>Conclusion</h2>
 <p>Clang seems to have recently done a lot of optimizations regarding compilation
 time. Indeed, clang-4.0.1 is much faster for compilation than clang-3.9.
@@ -2127,10 +2236,10 @@ and that it is well adapted to machine learning.</p>
 <p>For those of you that don't follow my blog, ETL is a library providing
 Expression Templates for computations on matrix and vector. For instance, if you
 have three matrices A, B and C you could write C++ code like this:</p>
-<pre class="code cpp"><a name="rest_code_daa245034ff44bc1996e8669bf789c8f-1"></a><span class="n">C</span> <span class="o">=</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">A</span> <span class="o">+</span> <span class="n">B</span><span class="p">))</span> <span class="o">/</span> <span class="n">sum</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
+<pre class="code cpp"><a name="rest_code_400266acd04e4d91a5cb87e11ce88cfc-1"></a><span class="n">C</span> <span class="o">=</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">A</span> <span class="o">+</span> <span class="n">B</span><span class="p">))</span> <span class="o">/</span> <span class="n">sum</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
 </pre>
 <p>Or given vectors b, v, h and a matrix W, you could write code like this:</p>
-<pre class="code cpp"><a name="rest_code_3c3eebe723424668a4a3de3ffb719fca-1"></a><span class="n">h</span> <span class="o">=</span> <span class="n">sigmoid</span><span class="p">(</span><span class="n">b</span> <span class="o">+</span> <span class="n">v</span> <span class="o">*</span> <span class="n">W</span><span class="p">)</span>
+<pre class="code cpp"><a name="rest_code_21fdc2f53d834faf9aa9ca5c031334ba-1"></a><span class="n">h</span> <span class="o">=</span> <span class="n">sigmoid</span><span class="p">(</span><span class="n">b</span> <span class="o">+</span> <span class="n">v</span> <span class="o">*</span> <span class="n">W</span><span class="p">)</span>
 </pre>
 <p>The goal of such library is two-fold. First, this makes the expression more
 readable and as close to math as possible. And then, it allows the library to
@@ -2340,237 +2449,6 @@ to make to the library.</p>
             
         
     <a href="posts/2017/08/expression-templates-library-etl-11.html#disqus_thread" data-disqus-identifier="cache/posts/2017/08/expression-templates-library-etl-11.html">Comments</a>
-
-
-        </article><article class="postbox h-entry post-text"><h1 class="p-name">
-<a href="posts/2017/07/update-on-deep-learning-library-dll-dropout-batch-normalization-adaptive-learning-rates.html" class="u-url">Update on Deep Learning Library (DLL): Dropout, Batch Normalization, Adaptive Learning Rates, ...</a>
-        <br><small>  
-             Posted: <time class="published dt-published" datetime="2017-07-16T15:41:51+02:00">2017-07-16 15:41</time></small>
-</h1>
-        <hr>
-<div class="p-summary">
-        <div>
-<p>It's been a while since I've posted something on this, especially since I had
-one month vacation. This year I've been able to integrate a great number of
-changes into my Deep Learning Library (DLL) project. It has seen a lot of
-refactorings and a lot of new features making it look like a real neural network
-library now. In this post, I'll try to outline the last new features and changes
-of the library.</p>
-<p>For those that don't know, DLL is a library for neural network training, written
-in C++ and for C++. You can train Fully-Connected Neural Networks and
-Convolutional Neural Networks. The focus of the framework is on speed and easy
-use in C++.</p>
-<p>As for my ETL project and again thanks to my thesis supervisor, the project now
-has a logo:</p>
-<img alt="DLL Logo" class="align-center" src="images/dll_logo.png"><div class="section" id="adaptive-learning-rates">
-<h2>Adaptive Learning Rates</h2>
-<p>Before, the framework only supported simple SGD and Momentum updates for the
-different parameters of the network. Moreover, it was not very well extendable.
-Therefore, I reviewed the system to be able to configure an optimizer for each
-network to train. Once that was done, the first thing I did was to add support
-for Nesterov Accelerated Gradients (NAG) as a third optimizer. After this,
-I realized it was then easy to integrate support for more advanced optimizers
-including support for adaptive learning rates. This means that the learning rate
-will be adapted for each parameter depending on what the network is learning.
-Some of the optimizers even don't need any learning rate. So far, I've
-implemented support for the following optimizers: Adagrad, RMSProp, Adam (with
-and without bias correction), Adamax (Adam with infinite norm), Nadam (Adam with
-Nesterov momentum) and Adadelta (no more learning rate). The user can now choose
-the optimizer of its choice, for instance NADAM, as a parameter of the network:</p>
-<pre class="code c++"><a name="rest_code_bd7b4fd6b91b4dcd8260a1bd7b40ea28-1"></a><span class="c1">// Use a Nadam optimizer</span>
-<a name="rest_code_bd7b4fd6b91b4dcd8260a1bd7b40ea28-2"></a><span class="n">dll</span><span class="o">::</span><span class="n">updater</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">updater_type</span><span class="o">::</span><span class="n">NADAM</span><span class="o">&gt;</span>
-</pre>
-<p>Another improvement in the same domain is that the learning rate can also be
-decayed over time automatically by the optimizer.</p>
-<p>If you want more information on the different optimizers, you can have a look at
-this very good article:
-<a class="reference external" href="http://ruder.io/optimizing-gradient-descent/">An overview of gradient descent optimization algorithms</a>
-from Sebastian Ruder.</p>
-</div>
-<div class="section" id="better-loss-support">
-<h2>Better loss support</h2>
-<p>Before, DLL was automatically using Categorical Cross Entropy Loss, but it was
-not possible to change it and it was not even possible to see the loss over
-time. Now, the current value of the loss is displayed after each epoch of
-training and the loss used for training is now configurable. So far, only three
-different losses are supported, but it it not difficult to add new loss to the
-system. The three losses supported are: Categorical Cross Entropy Loss, Binary
-Cross Entropy Loss and Mean Squared Error Loss.</p>
-<p>Again, each network can specify the loss to use:</p>
-<pre class="code C++"><a name="rest_code_74b29a3e933b48079821261aaff10ef1-1"></a><span class="c1">// Use a Binary Cross Entropy Loss</span>
-<a name="rest_code_74b29a3e933b48079821261aaff10ef1-2"></a><span class="n">dll</span><span class="o">::</span><span class="n">loss</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">loss_function</span><span class="o">::</span><span class="n">BINARY_CROSS_ENTROPY</span><span class="o">&gt;</span>
-</pre>
-</div>
-<div class="section" id="dropout">
-<h2>Dropout</h2>
-<p>Dropout is a relatively new technique for neural network training. This is
-especially made to reduce overfitting since a large number of sub networks will
-be trained and it should prevent co-adaptation between different neurons. This
-technique is relatively simple. Indeed, it simply randomly sets to zero some of
-the input neurons of layers. At each batch, a new mask will be used and this
-should lead to a large number of sub networks being trained.</p>
-<p>Here is example of a MLP with Dropout (p=0.5):</p>
-<pre class="code C++"><a name="rest_code_e510acf3c25046a49ee5431f2f55a747-1"></a><span class="k">using</span> <span class="n">network_t</span> <span class="o">=</span> <span class="n">dll</span><span class="o">::</span><span class="n">dyn_dbn_desc</span><span class="o">&lt;</span>
-<a name="rest_code_e510acf3c25046a49ee5431f2f55a747-2"></a>    <span class="n">dll</span><span class="o">::</span><span class="n">dbn_layers</span><span class="o">&lt;</span>
-<a name="rest_code_e510acf3c25046a49ee5431f2f55a747-3"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">dense_desc</span><span class="o">&lt;</span><span class="mi">28</span> <span class="o">*</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">500</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
-<a name="rest_code_e510acf3c25046a49ee5431f2f55a747-4"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">dropout_layer_desc</span><span class="o">&lt;</span><span class="mi">50</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
-<a name="rest_code_e510acf3c25046a49ee5431f2f55a747-5"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">dense_desc</span><span class="o">&lt;</span><span class="mi">500</span><span class="p">,</span> <span class="mi">250</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
-<a name="rest_code_e510acf3c25046a49ee5431f2f55a747-6"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">dropout_layer_desc</span><span class="o">&lt;</span><span class="mi">50</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
-<a name="rest_code_e510acf3c25046a49ee5431f2f55a747-7"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">dense_desc</span><span class="o">&lt;</span><span class="mi">250</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">activation</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">function</span><span class="o">::</span><span class="n">SOFTMAX</span><span class="o">&gt;&gt;::</span><span class="n">layer_t</span><span class="o">&gt;</span>
-<a name="rest_code_e510acf3c25046a49ee5431f2f55a747-8"></a>    <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">updater</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">updater_type</span><span class="o">::</span><span class="n">MOMENTUM</span><span class="o">&gt;</span>     <span class="c1">// Momentum</span>
-<a name="rest_code_e510acf3c25046a49ee5431f2f55a747-9"></a>    <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">batch_size</span><span class="o">&lt;</span><span class="mi">100</span><span class="o">&gt;</span>                          <span class="c1">// The mini-batch size</span>
-<a name="rest_code_e510acf3c25046a49ee5431f2f55a747-10"></a>    <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">shuffle</span>                                  <span class="c1">// Shuffle before each epoch</span>
-<a name="rest_code_e510acf3c25046a49ee5431f2f55a747-11"></a><span class="o">&gt;::</span><span class="n">dbn_t</span><span class="p">;</span>
-</pre>
-</div>
-<div class="section" id="batch-normalization">
-<h2>Batch Normalization</h2>
-<p>Batch Normalization is another new technique for training neural networks. This
-technique will ensure that each of the layer will receive inputs that look
-kind of similar. This is a very large advantage since then you reduce the
-different in impact of hyper parameters on different layers. Google reported
-much faster training with this technique by getting rid of Dropout and by
-increasing the learning rate of training.</p>
-<p>Here is an example of using Batch Normalization in a CNN:</p>
-<pre class="code C++"><a name="rest_code_3e62708dbcf94da4aada310037ea9485-1"></a><span class="k">using</span> <span class="n">network_t</span> <span class="o">=</span> <span class="n">dll</span><span class="o">::</span><span class="n">dyn_dbn_desc</span><span class="o">&lt;</span>
-<a name="rest_code_3e62708dbcf94da4aada310037ea9485-2"></a>    <span class="n">dll</span><span class="o">::</span><span class="n">dbn_layers</span><span class="o">&lt;</span>
-<a name="rest_code_3e62708dbcf94da4aada310037ea9485-3"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">conv_desc</span><span class="o">&lt;</span><span class="mi">1</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
-<a name="rest_code_3e62708dbcf94da4aada310037ea9485-4"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">batch_normalization_layer_4d_desc</span><span class="o">&lt;</span><span class="mi">8</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">24</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
-<a name="rest_code_3e62708dbcf94da4aada310037ea9485-5"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">mp_layer_2d_desc</span><span class="o">&lt;</span><span class="mi">8</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
-<a name="rest_code_3e62708dbcf94da4aada310037ea9485-6"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">conv_desc</span><span class="o">&lt;</span><span class="mi">8</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
-<a name="rest_code_3e62708dbcf94da4aada310037ea9485-7"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">batch_normalization_layer_4d_desc</span><span class="o">&lt;</span><span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
-<a name="rest_code_3e62708dbcf94da4aada310037ea9485-8"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">mp_layer_2d_desc</span><span class="o">&lt;</span><span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
-<a name="rest_code_3e62708dbcf94da4aada310037ea9485-9"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">dense_desc</span><span class="o">&lt;</span><span class="mi">8</span> <span class="o">*</span> <span class="mi">4</span> <span class="o">*</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">150</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
-<a name="rest_code_3e62708dbcf94da4aada310037ea9485-10"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">batch_normalization_layer_2d_desc</span><span class="o">&lt;</span><span class="mi">150</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
-<a name="rest_code_3e62708dbcf94da4aada310037ea9485-11"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">dense_desc</span><span class="o">&lt;</span><span class="mi">150</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">activation</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">function</span><span class="o">::</span><span class="n">SOFTMAX</span><span class="o">&gt;&gt;::</span><span class="n">layer_t</span><span class="o">&gt;</span>
-<a name="rest_code_3e62708dbcf94da4aada310037ea9485-12"></a>    <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">updater</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">updater_type</span><span class="o">::</span><span class="n">ADADELTA</span><span class="o">&gt;</span>     <span class="c1">// Adadelta</span>
-<a name="rest_code_3e62708dbcf94da4aada310037ea9485-13"></a>    <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">batch_size</span><span class="o">&lt;</span><span class="mi">100</span><span class="o">&gt;</span>                          <span class="c1">// The mini-batch size</span>
-<a name="rest_code_3e62708dbcf94da4aada310037ea9485-14"></a>    <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">shuffle</span>                                  <span class="c1">// Shuffle the dataset before each epoch</span>
-<a name="rest_code_3e62708dbcf94da4aada310037ea9485-15"></a><span class="o">&gt;::</span><span class="n">dbn_t</span><span class="p">;</span>
-</pre>
-<p>You may notice that the layer is set as 4D so should only be used after
-convolutional layer (or after the input). If you want to use it after
-fully-connected layers, you can use the 2D version that works the same way.</p>
-</div>
-<div class="section" id="better-dataset-support">
-<h2>Better dataset support</h2>
-<p>At the beginning, I designed DLL so that the user could directly pass data for
-training in the form of STL Containers such as the std::vector. This is good in
-some cases, but in some cases, the user does not know how to read the data , or
-does not want to be bothered with it. Therefore, several data sets reader are
-now available. Moreover, the entire system has been reworked to use generators
-for data. A generator is simply a concept that has some data to produce. The
-advantage of this new system is data augmentation is now supported every where
-and much more efficiently than before. It is now possible to perform random
-cropping and mirroring of images for instance. Moreover, the data augmentation
-can be done in a secondary thread so as to be sure that there is always enough
-data available for the training.</p>
-<p>The library now has a powerful dataset reader for both MNIST and CIFAR-10 and
-the reader for ImageNet is almost ready. The project has already been used and
-tested with these three datasets now. Moreover, the support for directly passing
-STL containers has been maintained. In this case, a generator is simply created
-around the data provided in the container and the generator is then passed to
-the system for training.</p>
-<p>Here for instance is how to read MNIST data and scale (divide) all pixel values
-by 255:</p>
-<pre class="code c++"><a name="rest_code_05d986848a8f411481f9b82c01e5cef6-1"></a><span class="c1">// Load the dataset</span>
-<a name="rest_code_05d986848a8f411481f9b82c01e5cef6-2"></a><span class="k">auto</span> <span class="n">dataset</span> <span class="o">=</span> <span class="n">dll</span><span class="o">::</span><span class="n">make_mnist_dataset</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">batch_size</span><span class="o">&lt;</span><span class="mi">100</span><span class="o">&gt;</span><span class="p">{},</span> <span class="n">dll</span><span class="o">::</span><span class="n">scale_pre</span><span class="o">&lt;</span><span class="mi">255</span><span class="o">&gt;</span><span class="p">{});</span>
-<a name="rest_code_05d986848a8f411481f9b82c01e5cef6-3"></a><span class="n">dataset</span><span class="p">.</span><span class="n">display</span><span class="p">();</span>
-<a name="rest_code_05d986848a8f411481f9b82c01e5cef6-4"></a>
-<a name="rest_code_05d986848a8f411481f9b82c01e5cef6-5"></a><span class="c1">// Train the network</span>
-<a name="rest_code_05d986848a8f411481f9b82c01e5cef6-6"></a><span class="n">net</span><span class="o">-&gt;</span><span class="n">fine_tune</span><span class="p">(</span><span class="n">dataset</span><span class="p">.</span><span class="n">train</span><span class="p">(),</span> <span class="mi">25</span><span class="p">);</span>
-<a name="rest_code_05d986848a8f411481f9b82c01e5cef6-7"></a>
-<a name="rest_code_05d986848a8f411481f9b82c01e5cef6-8"></a><span class="c1">// Test the network</span>
-<a name="rest_code_05d986848a8f411481f9b82c01e5cef6-9"></a><span class="n">net</span><span class="o">-&gt;</span><span class="n">evaluate</span><span class="p">(</span><span class="n">dataset</span><span class="p">.</span><span class="n">test</span><span class="p">());</span>
-</pre>
-</div>
-<div class="section" id="much-faster-performance">
-<h2>Much faster performance</h2>
-<p>I've spent quite a lot of time improving the performance of the framework. I've
-focused on every part of training in order to make training of neural networks
-as fast as possible. I've also made a comparison of the framework against
-several popular machine learning framework (Caffe, TensorFlow, Keras, Torch and
-DeepLearning4J). For instance, here are the results on a small CNN experiment on
-MNIST with all the different frameworks in CPU mode and in GPU mode:</p>
-<img alt="DLL Comparison Against other frameworks" class="align-center" src="images/dll_comparison.png"><p>As you can see, DLL is by far the fastest framework on CPU. On GPU, there is
-still some work to be done, but this is already ongoing (although a lot of work
-remains). This is confirmed on each of the four experiments performed on MNIST,
-CIFAR-10 and ImageNet, although the margin is smaller for larger networks (still
-about 40% faster than TensorFlow and Keras which are the fastest framework after
-DLL on CPU on my tests).</p>
-<p>Overall, DLL is between 2 and 4 times faster than before and is always the
-fastest framework for neural network training when training is performed on CPU.</p>
-<p>I proposed a talk about these optimizations and performance for Meeting C++ this
-year, but it has unfortunately not been accepted. We also have submitted
-a publication about the framework to a conference later this year.</p>
-</div>
-<div class="section" id="examples">
-<h2>Examples</h2>
-<p>The project now has a few examples (available <a class="reference external" href="https://github.com/wichtounet/dll/tree/master/examples/src">here</a>), well-designed and I try to update them with the latest updates of the framework.</p>
-<p>For instance, here is the CNN example for MNIST (without includes):</p>
-<pre class="code c++"><a name="rest_code_03eb0e13bf254c2687703de4974cdd45-1"></a><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="cm">/*argc*/</span><span class="p">,</span> <span class="kt">char</span><span class="o">*</span> <span class="cm">/*argv*/</span> <span class="p">[])</span> <span class="p">{</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-2"></a>    <span class="c1">// Load the dataset</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-3"></a>    <span class="k">auto</span> <span class="n">dataset</span> <span class="o">=</span> <span class="n">dll</span><span class="o">::</span><span class="n">make_mnist_dataset</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">batch_size</span><span class="o">&lt;</span><span class="mi">100</span><span class="o">&gt;</span><span class="p">{},</span> <span class="n">dll</span><span class="o">::</span><span class="n">scale_pre</span><span class="o">&lt;</span><span class="mi">255</span><span class="o">&gt;</span><span class="p">{});</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-4"></a>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-5"></a>    <span class="c1">// Build the network</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-6"></a>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-7"></a>    <span class="k">using</span> <span class="n">network_t</span> <span class="o">=</span> <span class="n">dll</span><span class="o">::</span><span class="n">dyn_dbn_desc</span><span class="o">&lt;</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-8"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">dbn_layers</span><span class="o">&lt;</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-9"></a>            <span class="n">dll</span><span class="o">::</span><span class="n">conv_desc</span><span class="o">&lt;</span><span class="mi">1</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-10"></a>            <span class="n">dll</span><span class="o">::</span><span class="n">mp_layer_2d_desc</span><span class="o">&lt;</span><span class="mi">8</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-11"></a>            <span class="n">dll</span><span class="o">::</span><span class="n">conv_desc</span><span class="o">&lt;</span><span class="mi">8</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-12"></a>            <span class="n">dll</span><span class="o">::</span><span class="n">mp_layer_2d_desc</span><span class="o">&lt;</span><span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-13"></a>            <span class="n">dll</span><span class="o">::</span><span class="n">dense_desc</span><span class="o">&lt;</span><span class="mi">8</span> <span class="o">*</span> <span class="mi">4</span> <span class="o">*</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">150</span><span class="o">&gt;::</span><span class="n">layer_t</span><span class="p">,</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-14"></a>            <span class="n">dll</span><span class="o">::</span><span class="n">dense_desc</span><span class="o">&lt;</span><span class="mi">150</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">activation</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">function</span><span class="o">::</span><span class="n">SOFTMAX</span><span class="o">&gt;&gt;::</span><span class="n">layer_t</span><span class="o">&gt;</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-15"></a>        <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">updater</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">updater_type</span><span class="o">::</span><span class="n">MOMENTUM</span><span class="o">&gt;</span>     <span class="c1">// Momentum</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-16"></a>        <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">batch_size</span><span class="o">&lt;</span><span class="mi">100</span><span class="o">&gt;</span>                          <span class="c1">// The mini-batch size</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-17"></a>        <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">shuffle</span>                                  <span class="c1">// Shuffle the dataset before each epoch</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-18"></a>    <span class="o">&gt;::</span><span class="n">dbn_t</span><span class="p">;</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-19"></a>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-20"></a>    <span class="k">auto</span> <span class="n">net</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_unique</span><span class="o">&lt;</span><span class="n">network_t</span><span class="o">&gt;</span><span class="p">();</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-21"></a>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-22"></a>    <span class="n">net</span><span class="o">-&gt;</span><span class="n">learning_rate</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">;</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-23"></a>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-24"></a>    <span class="c1">// Display the network and dataset</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-25"></a>    <span class="n">net</span><span class="o">-&gt;</span><span class="n">display</span><span class="p">();</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-26"></a>    <span class="n">dataset</span><span class="p">.</span><span class="n">display</span><span class="p">();</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-27"></a>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-28"></a>    <span class="c1">// Train the network</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-29"></a>    <span class="n">net</span><span class="o">-&gt;</span><span class="n">fine_tune</span><span class="p">(</span><span class="n">dataset</span><span class="p">.</span><span class="n">train</span><span class="p">(),</span> <span class="mi">25</span><span class="p">);</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-30"></a>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-31"></a>    <span class="c1">// Test the network on test set</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-32"></a>    <span class="n">net</span><span class="o">-&gt;</span><span class="n">evaluate</span><span class="p">(</span><span class="n">dataset</span><span class="p">.</span><span class="n">test</span><span class="p">());</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-33"></a>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-34"></a>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<a name="rest_code_03eb0e13bf254c2687703de4974cdd45-35"></a><span class="p">}</span>
-</pre>
-</div>
-<div class="section" id="reproducible-results">
-<h2>Reproducible results</h2>
-<p>And last, but maybe not least, I've finally united all the random number
-generation code. This means that DLL can now set a global seed and that two
-training of the same network and data with the same seed will now produce
-exactly the same result.</p>
-<p>The usage is extremely simple:</p>
-<pre class="code c++"><a name="rest_code_ced2e2798d474784b972a6a58a52f49b-1"></a><span class="n">dll</span><span class="o">::</span><span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">);</span>
-</pre>
-</div>
-<div class="section" id="conclusion">
-<h2>Conclusion</h2>
-<p>After all these changes, I truly feel that the library is now in a much better
-state and could be useful in several projects. I hope that this will be useful
-to some more people. Moreover, as you can see by the performance results, the
-framework is now extremely efficient at training neural networks on CPU.</p>
-<p>If you want more information, you can consult the
-<a class="reference external" href="https://github.com/wichtounet/dll">dll Github Repository</a>. You can also add
-a comment to this post. If you find any problem on the project or have specific
-question or request, don't hesitate to open an issue on Github.</p>
-</div>
-</div>
-        </div>
-            
-        
-    <a href="posts/2017/07/update-on-deep-learning-library-dll-dropout-batch-normalization-adaptive-learning-rates.html#disqus_thread" data-disqus-identifier="cache/posts/2017/07/update-on-deep-learning-library-dll-dropout-batch-normalization-adaptive-learning-rates.html">Comments</a>
 
 
         </article><nav class="postindexpager"><ul class="pager">
