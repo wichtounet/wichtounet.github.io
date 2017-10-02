@@ -1,5 +1,126 @@
 <?xml version="1.0" encoding="utf-8"?>
-<?xml-stylesheet type="text/xsl" href="../assets/xml/rss.xsl" media="all"?><rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Blog blog("Baptiste Wicht"); (Posts about C++)</title><link>http://baptiste-wicht.com/</link><description></description><atom:link type="application/rss+xml" href="http://baptiste-wicht.com/categories/c%2B%2B.xml" rel="self"></atom:link><language>en</language><lastBuildDate>Fri, 22 Sep 2017 11:54:52 GMT</lastBuildDate><generator>Nikola (getnikola.com)</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>C++11 Performance tip: Update on when to use std::pow ?</title><link>http://baptiste-wicht.com/posts/2017/09/cpp11-performance-tip-update-when-to-use-std-pow.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;A few days ago, I published a post comparing the
+<?xml-stylesheet type="text/xsl" href="../assets/xml/rss.xsl" media="all"?><rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Blog blog("Baptiste Wicht"); (Posts about C++)</title><link>http://baptiste-wicht.com/</link><description></description><atom:link rel="self" type="application/rss+xml" href="http://baptiste-wicht.com/categories/c%2B%2B.xml"></atom:link><language>en</language><lastBuildDate>Mon, 02 Oct 2017 10:12:53 GMT</lastBuildDate><generator>Nikola (getnikola.com)</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>Expression Templates Library (ETL) 1.2 - Complete GPU support</title><link>http://baptiste-wicht.com/posts/2017/10/expression-templates-library-etl-1-2-complete-gpu-support.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;img alt="ETL Logo" class="align-center" src="http://baptiste-wicht.com/images/logo.png"&gt;
+&lt;p&gt;I'm happy to announce the version 1.2 of my Expression Templates Library (ETL):
+ETL 1.2, two months after &lt;a class="reference external" href="https://baptiste-wicht.com/posts/2017/08/expression-templates-library-etl-11.html"&gt;I released the version 1.1&lt;/a&gt;.
+This version features much better GPU Support, a few new features and a lot of
+changes in the internal code.&lt;/p&gt;
+&lt;div class="section" id="gpu-support"&gt;
+&lt;h2&gt;GPU Support&lt;/h2&gt;
+&lt;p&gt;Before, only algorithms such as 4D convolution or matrix-matrix multiplication
+were computed in the GPU and lots of operations were causing copies between CPU
+and GPU version. Now, the support for basic operations has also been completed
+and therefore, expressions like this:&lt;/p&gt;
+&lt;pre class="code cpp"&gt;&lt;a name="rest_code_f107c67002374c99a9eed690b0568b47-1"&gt;&lt;/a&gt;&lt;span class="n"&gt;C&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;sigmoid&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mf"&gt;2.0&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;A&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;B&lt;/span&gt;&lt;span class="p"&gt;))&lt;/span&gt; &lt;span class="o"&gt;/&lt;/span&gt; &lt;span class="n"&gt;sum&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;A&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;/pre&gt;&lt;p&gt;Can be computed entirely on GPU.&lt;/p&gt;
+&lt;p&gt;Each matrix and vector containers have a secondary GPU memory space.  During the
+execution, the status of both memory spaces is being managed and when necessary,
+copies are made between two spaces. In the best case, there should only be
+initial copies to the GPU and then everything should be done on the GPU. I've
+also considered using Unified Memory in place of this system, but this is
+a problem for fast matrix and I'd rather not have two different systems.&lt;/p&gt;
+&lt;p&gt;If you have an expression such as &lt;code&gt;c = a + b * 2&lt;/code&gt;, it can be entirely computed
+on GPU, however, it will be computed in two GPU operations such as:&lt;/p&gt;
+&lt;pre class="code cpp"&gt;&lt;a name="rest_code_88ab9861b9494d8ab9de99991b8bb8cc-1"&gt;&lt;/a&gt;&lt;span class="n"&gt;t1&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;b&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="mi"&gt;2&lt;/span&gt;
+&lt;a name="rest_code_88ab9861b9494d8ab9de99991b8bb8cc-2"&gt;&lt;/a&gt;&lt;span class="n"&gt;c&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;t1&lt;/span&gt;
+&lt;/pre&gt;&lt;p&gt;This is not perfect in terms of performance but this will be done without any
+copies between CPU and GPU memory. I plan to improve this system with a bit more
+complex operations to avoid too many GPU operations, but there will always be
+more operations than in CPU where this can easily be done in one go.&lt;/p&gt;
+&lt;p&gt;There are a few expressions that are not computable on the GPU, such as random
+generations. A few transformations are also not fully compatible with GPU.
+Moreover, if you access an element with operators &lt;code&gt;[]&lt;/code&gt; or &lt;code&gt;()&lt;/code&gt;, this
+will invalidate the GPU memory and force an update to the CPU memory.&lt;/p&gt;
+&lt;p&gt;GPU operations are not implemented directly in ETL, there are coming from
+various libraries. ETL is using NVIDIA CUDNN, CUFFT and CUDNN for most
+algorithms. Moreover, for other operations, I've implemented a libraries with
+simple GPU operations: ETL-GPU-BLAS (EGBLAS). You can have a look at
+&lt;a class="reference external" href="https://github.com/wichtounet/etl-gpu-blas"&gt;egblas&lt;/a&gt; if you are interested.&lt;/p&gt;
+&lt;p&gt;My Deep Learning Library (DLL) project is based on ETL and its performances are
+mostly dependent on ETL's performances. Now that ETL fully supports GPU, the
+GPU performance of DLL is much improved. You may remember a few weeks ago
+I posted &lt;a class="reference external" href="https://baptiste-wicht.com/posts/2017/08/dll-blazing-fast-neural-network-library.html"&gt;very high CPU performance of DLL&lt;/a&gt;.
+Now, I've run again the tests to see the GPU performance with DLL. Here is the
+performance for training a small CNN on the MNIST data set:&lt;/p&gt;
+&lt;img alt="Performances for training a Convolutional Neural Network on MNIST" class="align-center" src="http://baptiste-wicht.com/images/etl_12_dll_gpu_mnist.png"&gt;
+&lt;p&gt;As you can see, the performances on GPU are now excellent. DLL's performances
+are on par with Tensorflow and Keras!&lt;/p&gt;
+&lt;p&gt;The next results are for training a much larger CNN on ImageNet, with the time
+necessary to train a single batch:&lt;/p&gt;
+&lt;img alt="Performances for training a Convolutional Neural Network on Imagenet" class="align-center" src="http://baptiste-wicht.com/images/etl_12_dll_gpu_imagenet.png"&gt;
+&lt;p&gt;Again, using the new version of ETL inside DLL has led to excellent performance.
+The framework is again on par with TensorFlow and Keras and faster than all the
+other frameworks. The large difference between DLL and Tensorflow and Keras is
+due to the inefficiency of reading the dataset in the two frameworks, so the
+performance of the three framework themselves are about the same.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="other-changes"&gt;
+&lt;h2&gt;Other Changes&lt;/h2&gt;
+&lt;p&gt;The library also has a few other new features. Logarithms of base 2 and base 10
+are now supported in complement to the base e that was already available before.
+Categorical Cross Entropy (CCE) computation is also available now, the CCE loss
+and error can be computed for one or many samples. Convolutions have also been
+improved in that you can use mixed types in both the image and the kernel and
+different storage order as well. Nevertheless, the most optimized version
+remains the version with the same storage order and the same data type.&lt;/p&gt;
+&lt;p&gt;I've also made a major change in the way implementations are selected for each
+operation. The tests and the benchmark are using a system to force the selection
+of an algorithm. This system is now disabled by default. This makes the
+compilation much faster by default. Since it's not necessary in most cases, this
+will help regular use cases of the library by compiling much faster.&lt;/p&gt;
+&lt;p&gt;Overall, the support for complex numbers has been improved in ETL. There are
+more routines that are supported and &lt;code&gt;etl::complex&lt;/code&gt; is better supported
+throughout the code. I'll still work on this in the future to make it totally
+complete.&lt;/p&gt;
+&lt;p&gt;The internal code also has a few new changes. First, all traits have been
+rewritten to use variable templates instead of struct traits. This makes the
+code much nicer in my opinion. Moreover, I've started experimenting with C++17
+&lt;code&gt;if constexpr&lt;/code&gt;. Most of the if conditions that can be transformed to if
+constexpr have been annotated with comments that I can quickly enable or disable
+so that I can test the impact of C++17, especially on compilation time.&lt;/p&gt;
+&lt;p&gt;Finally, a few bugs have been fixed. ETL is now working better with parallel
+BLAS library. There should not be issues with double parallelization in ETL and
+BLAS. There was a slight bug in the Column-Major matrix-matrix multiplication
+kernel. Binary operations with different types in the left and right hand sides
+was also problematic with vectorization. The last bug was about GPU status in
+case ETL containers were moved.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="what-s-next"&gt;
+&lt;h2&gt;What's next ?&lt;/h2&gt;
+&lt;p&gt;I don't yet know exactly on which features I'm going to focus for the next
+version of ETL. I plan to focus a bit more in the near future on Deep Learning
+Library (DLL) for which I should release the version 1.0 soon. I also plan to
+start support for Recurrent Neural Networks on it, so that will take me quite
+some time.&lt;/p&gt;
+&lt;p&gt;Nevertheless, I'm still planning to consider the switch to C++17, since it is
+&lt;a class="reference external" href="https://baptiste-wicht.com/posts/2017/09/how-i-made-deep-learning-library-38-faster-to-compile-optimization-and-cpp17-if-constexpr.html"&gt;a bit faster to compile ETL with if constexpr&lt;/a&gt;. The next version of ETL will also probably have GPU-support for
+integers, at least in the cases that depend on the etl-gpu-blas library, which
+is the standard operators. I also plan to improve the support for complex
+numbers, especially in terms of performance and tests. Hopefully, I will have also time (and motivation)
+to start working on  the sparse capabilities of ETL. It really needs much more
+unit tests and the performance should be improved as well.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="download-etl"&gt;
+&lt;h2&gt;Download ETL&lt;/h2&gt;
+&lt;p&gt;You can download ETL &lt;a class="reference external" href="https://github.com/wichtounet/etl"&gt;on Github&lt;/a&gt;. If you
+only interested in the 1.2 version, you can look at the
+&lt;a class="reference external" href="https://github.com/wichtounet/etl/releases"&gt;Releases pages&lt;/a&gt; or clone the tag
+1.2. There are several branches:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;&lt;em&gt;master&lt;/em&gt; Is the eternal development branch, may not always be stable&lt;/li&gt;
+&lt;li&gt;&lt;em&gt;stable&lt;/em&gt; Is a branch always pointing to the last tag, no development here&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;For the future release, there always will tags pointing to the corresponding
+commits. You can also have access to previous releases on Github or via the
+release tags.&lt;/p&gt;
+&lt;p&gt;The documentation is still a bit sparse. There are a few examples and the Wiki,
+but there still is work to be done. If you have questions on how to use or
+configure the library, please don't hesitate.&lt;/p&gt;
+&lt;p&gt;Don't hesitate to comment this post if you have any comment on this library or
+any question. You can also open an Issue on Github if you have a problem using
+this library or propose a Pull Request if you have any contribution you'd like
+to make to the library.&lt;/p&gt;
+&lt;p&gt;Hope this may be useful to some of you :)&lt;/p&gt;
+&lt;/div&gt;&lt;/div&gt;</description><category>C++</category><category>C++14</category><category>C++17</category><category>Compilers</category><category>dll</category><category>etl</category><category>Performance</category><category>projects</category><guid>http://baptiste-wicht.com/posts/2017/10/expression-templates-library-etl-1-2-complete-gpu-support.html</guid><pubDate>Mon, 02 Oct 2017 08:49:02 GMT</pubDate></item><item><title>C++11 Performance tip: Update on when to use std::pow ?</title><link>http://baptiste-wicht.com/posts/2017/09/cpp11-performance-tip-update-when-to-use-std-pow.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;A few days ago, I published a post comparing the
 &lt;a class="reference external" href="https://baptiste-wicht.com/posts/2017/09/cpp11-performance-tip-when-to-use-std-pow.html"&gt;performance of std::pow against direct multiplications&lt;/a&gt;. When not compiling with -ffast-math, direct multiplication was significantly faster than &lt;code&gt;std::pow&lt;/code&gt;, around two orders of magnitude faster when comparing &lt;code&gt;x * x * x&lt;/code&gt; and &lt;code&gt;code:std::pow(x, 3)&lt;/code&gt;.
 One comment that I've got was to test for which &lt;code&gt;n&lt;/code&gt; is
 &lt;code&gt;code:std::pow(x, n)&lt;/code&gt; becoming faster than multiplying in a loop. Since
@@ -1894,9 +2015,9 @@ and that it is well adapted to machine learning.&lt;/p&gt;
 &lt;p&gt;For those of you that don't follow my blog, ETL is a library providing
 Expression Templates for computations on matrix and vector. For instance, if you
 have three matrices A, B and C you could write C++ code like this:&lt;/p&gt;
-&lt;pre class="code cpp"&gt;&lt;a name="rest_code_400266acd04e4d91a5cb87e11ce88cfc-1"&gt;&lt;/a&gt;&lt;span class="n"&gt;C&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mf"&gt;2.0&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;A&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;B&lt;/span&gt;&lt;span class="p"&gt;))&lt;/span&gt; &lt;span class="o"&gt;/&lt;/span&gt; &lt;span class="n"&gt;sum&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;A&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;pre class="code cpp"&gt;&lt;a name="rest_code_981f24fa13c343b19932751c168941e8-1"&gt;&lt;/a&gt;&lt;span class="n"&gt;C&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mf"&gt;2.0&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;A&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;B&lt;/span&gt;&lt;span class="p"&gt;))&lt;/span&gt; &lt;span class="o"&gt;/&lt;/span&gt; &lt;span class="n"&gt;sum&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;A&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
 &lt;/pre&gt;&lt;p&gt;Or given vectors b, v, h and a matrix W, you could write code like this:&lt;/p&gt;
-&lt;pre class="code cpp"&gt;&lt;a name="rest_code_21fdc2f53d834faf9aa9ca5c031334ba-1"&gt;&lt;/a&gt;&lt;span class="n"&gt;h&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;sigmoid&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;b&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;v&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="n"&gt;W&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;pre class="code cpp"&gt;&lt;a name="rest_code_c919ee56fc6b485aa830fcfeffa932ac-1"&gt;&lt;/a&gt;&lt;span class="n"&gt;h&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;sigmoid&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;b&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;v&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="n"&gt;W&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
 &lt;/pre&gt;&lt;p&gt;The goal of such library is two-fold. First, this makes the expression more
 readable and as close to math as possible. And then, it allows the library to
 compute the expressions as fast as possible.  In the first case, the framework
@@ -2097,7 +2218,7 @@ any question. You can also open an Issue on Github if you have a problem using
 this library or propose a Pull Request if you have any contribution you'd like
 to make to the library.&lt;/p&gt;
 &lt;p&gt;Hope this may be useful to some of you :)&lt;/p&gt;
-&lt;/div&gt;&lt;/div&gt;</description><category>C++</category><category>C++14</category><category>C++17</category><category>Compilers</category><category>Performance</category><category>projects</category><guid>http://baptiste-wicht.com/posts/2017/08/expression-templates-library-etl-11.html</guid><pubDate>Fri, 04 Aug 2017 13:13:03 GMT</pubDate></item><item><title>C++ Containers Benchmark: vector/list/deque and plf::colony</title><link>http://baptiste-wicht.com/posts/2017/05/cpp-containers-benchmark-vector-list-deque-plf-colony.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;Already more than three years ago, I've written a &lt;a class="reference external" href="https://baptiste-wicht.com/posts/2012/12/cpp-benchmark-vector-list-deque.html"&gt;benchmark of some of the STL containers&lt;/a&gt;,
+&lt;/div&gt;&lt;/div&gt;</description><category>C++</category><category>C++14</category><category>C++17</category><category>Compilers</category><category>dll</category><category>etl</category><category>Performance</category><category>projects</category><guid>http://baptiste-wicht.com/posts/2017/08/expression-templates-library-etl-11.html</guid><pubDate>Fri, 04 Aug 2017 13:13:03 GMT</pubDate></item><item><title>C++ Containers Benchmark: vector/list/deque and plf::colony</title><link>http://baptiste-wicht.com/posts/2017/05/cpp-containers-benchmark-vector-list-deque-plf-colony.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;Already more than three years ago, I've written a &lt;a class="reference external" href="https://baptiste-wicht.com/posts/2012/12/cpp-benchmark-vector-list-deque.html"&gt;benchmark of some of the STL containers&lt;/a&gt;,
 namely the vector, the list and the deque. Since this article was very popular,
 I decided to improve the benchmarks and collect again all the results. There are
 now more benchmarks and some problems have been fixed in the benchmark code.
@@ -4371,111 +4492,4 @@ update on this.&lt;/p&gt;
 development to do on my home automation system: &lt;a class="reference external" href="https://github.com/wichtounet/asgard-server"&gt;asgard-server&lt;/a&gt; that I plan to finalize and deploy in a useful way this weekend in my apartment. You can also expect some updates on my deep learning library where I've started work to make it more user-friendly (kind of). I'm also still waiting on the first stable version of doctest for a new comparison with Catch.&lt;/p&gt;
 &lt;p&gt;I really want to try to publish again some more posts on the blog. I'll
 especially try to publish some more updates about Thor.&lt;/p&gt;
-&lt;/div&gt;&lt;/div&gt;</description><category>C++</category><category>C++11</category><category>deep learning</category><category>osdev</category><category>publications</category><category>thor</category><guid>http://baptiste-wicht.com/posts/2016/08/update-thor-thesis-and-publications.html</guid><pubDate>Tue, 23 Aug 2016 05:40:13 GMT</pubDate></item><item><title>eddic 1.2.4: New Boost Spirit X3 parser and minor cleanups</title><link>http://baptiste-wicht.com/posts/2016/06/eddic-124-new-boost-spirit-x3-parser-and-minor-cleanups.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;After almost 2 years, the new version of eddic (the compiler of the EDDI
-programming language) is out! eddic 1.2.4&lt;/p&gt;
-&lt;p&gt;I haven't worked a lot on this project in the last years, I have been busy with
-my Ph.D. related projects (ETL and DLL), my operating systems, cpm, ... I've
-mostly worked on the parser to test the new version of Boost Spirit: X3. This
-will be described on the next section, with the other changes in the later
-section.&lt;/p&gt;
-&lt;div class="section" id="new-boost-spirit-x3"&gt;
-&lt;h2&gt;New Boost Spirit X3&lt;/h2&gt;
-&lt;p&gt;Boost Spirit X3 is a completely revamped version of Boost Spirit X3. It's aimed
-at performance, both at compile-time and at runtime and uses recent features of
-modern C++. It's not compatible with Boost Spirit Qi, so you'll most likely
-have to rewrite a lot of stuff, in the parser, in the Abstract Syntax Tree
-(AST) and in the AST passes as well.&lt;/p&gt;
-&lt;p&gt;For reference, I'm using the Boost 1.59 version.&lt;/p&gt;
-&lt;div class="section" id="pros"&gt;
-&lt;h3&gt;Pros&lt;/h3&gt;
-&lt;p&gt;Let's start with the pros.&lt;/p&gt;
-&lt;p&gt;First, the runtime performance is definitely better. Parsing all my eddi test
-cases and samples, &lt;em&gt;takes 42% less time than with the previous parser&lt;/em&gt;. It is
-important to know that the old parser was very optimized, with moves instead of
-copies and with a static lexer. You can take a look at &lt;a class="reference external" href="http://baptiste-wicht.com/posts/2013/06/improving-eddic-boost-spirit-parser-performances.html"&gt;this post&lt;/a&gt;
-to see what was necessary to optimize the old Qi. I think it's a good result
-since the new grammar does not use a lexer (x3 does not support it) and does
-not need these optimizations. This improvement really was my objective. I'll
-try to push it farther in the future.&lt;/p&gt;
-&lt;p&gt;Compile-time performance is also much better. It takes 3 times less time to
-compile the new parser (1 minute to around 20 seconds). Moreover, the new
-parser is now in only one file, rather than being it necessary to split it all
-over the place for compile-time performance. Even though it's not really
-important for me, it's still good to have :)&lt;/p&gt;
-&lt;p&gt;Especially due to the performance point, I've been able to remove some code,
-the lexer, the generated static lexer and the special pointers optimizations of
-the AST.&lt;/p&gt;
-&lt;/div&gt;
-&lt;div class="section" id="cons"&gt;
-&lt;h3&gt;Cons&lt;/h3&gt;
-&lt;p&gt;Unfortunately, there are some disadvantages of using the new Spirit X3.&lt;/p&gt;
-&lt;p&gt;First, the AST needs to be changed. For good parsing performance, you need to
-use x3::variant and x3::forward_ast. This is a major pain in the ass since
-x3::variant is much less practical to use than boost::variant. Almost
-everything is explicit, meaning uglier code than before, in my opinion.
-Moreover, you need to work around x3::forward_ast for boost::get, whereas
-boost::recursive_wrapper was working better in that matter. I've had to create
-my own wrapper around boost::get in order to be able to use the new tree. In my
-opinion, this is clearly a regression.&lt;/p&gt;
-&lt;p&gt;Secondly, although X3 was also meant to remove the need to use some hacks in
-the grammar, I ended up having more hacks than before. For instance, many AST
-node have a fake field in order to make X3 happy. I've still had to use the
-horrible eps hack at one place. I've had to create a few more rules in order to
-fix type deduction that is working differently than before (worse for me). And
-for some reasons, I had to replace some expectations from the grammar to make it
-parse correctly. This is a really important regression in my opinion, since it
-may make the parsing slower and will make the error message less nice.&lt;/p&gt;
-&lt;p&gt;The previous error handling system allowed me to track the file from which an
-AST node was parsed from. Although the new error handler is a lot nicer than
-the old system, it does not have this feature, so I had to work around this by
-using new annotation nodes and a new global handler. Overall, it's probably a
-bit worse than before, but makes for lighter AST nodes.&lt;/p&gt;
-&lt;p&gt;Finally, for some reason, I haven't been able to use the debug option of the
-library (lots of compile time errors). That complicated a bit the debugging of
-the parser.&lt;/p&gt;
-&lt;/div&gt;
-&lt;div class="section" id="spirit-x3-or-spirit-qi"&gt;
-&lt;h3&gt;Spirit X3 or Spirit Qi ?&lt;/h3&gt;
-&lt;p&gt;Overall, I have to say I'm a bit disappointed by Spirit X3. Even though it's
-faster at runtime and faster to compile, I was really expecting less issues
-with it. What I really did not like was all the changes I had to make because
-of x3::variant and x3::forward_ast. Overall, I really don't think it was worth
-the trouble porting my parser to Spirit X3.&lt;/p&gt;
-&lt;p&gt;If you have a new project, I would still consider using Boost Spirit X3.&lt;/p&gt;
-&lt;p&gt;If you have an existing parser, I would probably not advice porting it to X3.
-Unless you really have issues with parsing performances (and especially if you
-have not already optimized QI parser), it's probably not worth the trouble and
-all the time necessary for all the changes.&lt;/p&gt;
-&lt;/div&gt;
-&lt;/div&gt;
-&lt;div class="section" id="other-changes"&gt;
-&lt;h2&gt;Other changes&lt;/h2&gt;
-&lt;p&gt;The other changes are much more minor. First of all, I've gotten rid of CMake.
-This project has really made me hate CMake. I have actually gotten rid of it on
-all my projects. I'm now using plain Makefiles and having a much better time
-with them. I've also replaced boost Program Options with cxxopts. It's a much
-more modern approach for program options parsing. Moreover, it's much more
-lightweight and it's header only. Only advantages. There also have been lots of
-changes to code (still not very good quality though).&lt;/p&gt;
-&lt;/div&gt;
-&lt;div class="section" id="future"&gt;
-&lt;h2&gt;Future&lt;/h2&gt;
-&lt;p&gt;eddic was my first real project in C++ and this can be seen in the code and the
-organization. The quality of the code is really bad now that I read it again.
-Some things are actually terrible :P It's probably normal since I was a
-beginner in C++ at the time.&lt;/p&gt;
-&lt;p&gt;For the future version of the compiler, I want to clean the code a lot more and
-focus on the EDDI language adding new features. Moreover, I'll also get rid of
-Boost Test Framework by using Catch (or doctest if it is ready).&lt;/p&gt;
-&lt;p&gt;As for now, I'm not sure on which project I'm going to focus. Either I'll
-continue working on the compiler or I'll start working again on my operating
-system (thor-os) in which I was working on process concurrency (without too
-much success :P). I'll probably post next updates on this post in the coming
-months.&lt;/p&gt;
-&lt;/div&gt;
-&lt;div class="section" id="download"&gt;
-&lt;h2&gt;Download&lt;/h2&gt;
-&lt;p&gt;You can find the EDDI Compiler sources on the &lt;a class="reference external" href="https://github.com/wichtounet/eddic"&gt;Github repository&lt;/a&gt;&lt;/p&gt;
-&lt;p&gt;The version is available in the &lt;em&gt;v1.2.4&lt;/em&gt; tag available in the GitHub
-repository, in the releases pages or directly in the &amp;lt;em&amp;gt;master&amp;lt;/em&amp;gt; branch.&lt;/p&gt;
-&lt;/div&gt;&lt;/div&gt;</description><category>Boost</category><category>C++</category><category>C++14</category><category>eddic</category><guid>http://baptiste-wicht.com/posts/2016/06/eddic-124-new-boost-spirit-x3-parser-and-minor-cleanups.html</guid><pubDate>Sun, 26 Jun 2016 20:35:04 GMT</pubDate></item></channel></rss>
+&lt;/div&gt;&lt;/div&gt;</description><category>C++</category><category>C++11</category><category>deep learning</category><category>osdev</category><category>publications</category><category>thor</category><guid>http://baptiste-wicht.com/posts/2016/08/update-thor-thesis-and-publications.html</guid><pubDate>Tue, 23 Aug 2016 05:40:13 GMT</pubDate></item></channel></rss>

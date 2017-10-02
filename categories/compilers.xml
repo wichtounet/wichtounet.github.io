@@ -1,5 +1,126 @@
 <?xml version="1.0" encoding="utf-8"?>
-<?xml-stylesheet type="text/xsl" href="../assets/xml/rss.xsl" media="all"?><rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Blog blog("Baptiste Wicht"); (Posts about Compilers)</title><link>http://baptiste-wicht.com/</link><description></description><atom:link type="application/rss+xml" rel="self" href="http://baptiste-wicht.com/categories/compilers.xml"></atom:link><language>en</language><lastBuildDate>Fri, 22 Sep 2017 10:37:28 GMT</lastBuildDate><generator>Nikola (getnikola.com)</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>How I made my Deep Learning Library 38% faster to compile (Optimization and C++17 if constexpr)</title><link>http://baptiste-wicht.com/posts/2017/09/how-i-made-deep-learning-library-38-faster-to-compile-optimization-and-cpp17-if-constexpr.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;My Deep Learning Library (DLL) project is a C++ library for training and using
+<?xml-stylesheet type="text/xsl" href="../assets/xml/rss.xsl" media="all"?><rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Blog blog("Baptiste Wicht"); (Posts about Compilers)</title><link>http://baptiste-wicht.com/</link><description></description><atom:link rel="self" type="application/rss+xml" href="http://baptiste-wicht.com/categories/compilers.xml"></atom:link><language>en</language><lastBuildDate>Mon, 02 Oct 2017 10:12:53 GMT</lastBuildDate><generator>Nikola (getnikola.com)</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>Expression Templates Library (ETL) 1.2 - Complete GPU support</title><link>http://baptiste-wicht.com/posts/2017/10/expression-templates-library-etl-1-2-complete-gpu-support.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;img alt="ETL Logo" class="align-center" src="http://baptiste-wicht.com/images/logo.png"&gt;
+&lt;p&gt;I'm happy to announce the version 1.2 of my Expression Templates Library (ETL):
+ETL 1.2, two months after &lt;a class="reference external" href="https://baptiste-wicht.com/posts/2017/08/expression-templates-library-etl-11.html"&gt;I released the version 1.1&lt;/a&gt;.
+This version features much better GPU Support, a few new features and a lot of
+changes in the internal code.&lt;/p&gt;
+&lt;div class="section" id="gpu-support"&gt;
+&lt;h2&gt;GPU Support&lt;/h2&gt;
+&lt;p&gt;Before, only algorithms such as 4D convolution or matrix-matrix multiplication
+were computed in the GPU and lots of operations were causing copies between CPU
+and GPU version. Now, the support for basic operations has also been completed
+and therefore, expressions like this:&lt;/p&gt;
+&lt;pre class="code cpp"&gt;&lt;a name="rest_code_f107c67002374c99a9eed690b0568b47-1"&gt;&lt;/a&gt;&lt;span class="n"&gt;C&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;sigmoid&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mf"&gt;2.0&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;A&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;B&lt;/span&gt;&lt;span class="p"&gt;))&lt;/span&gt; &lt;span class="o"&gt;/&lt;/span&gt; &lt;span class="n"&gt;sum&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;A&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;/pre&gt;&lt;p&gt;Can be computed entirely on GPU.&lt;/p&gt;
+&lt;p&gt;Each matrix and vector containers have a secondary GPU memory space.  During the
+execution, the status of both memory spaces is being managed and when necessary,
+copies are made between two spaces. In the best case, there should only be
+initial copies to the GPU and then everything should be done on the GPU. I've
+also considered using Unified Memory in place of this system, but this is
+a problem for fast matrix and I'd rather not have two different systems.&lt;/p&gt;
+&lt;p&gt;If you have an expression such as &lt;code&gt;c = a + b * 2&lt;/code&gt;, it can be entirely computed
+on GPU, however, it will be computed in two GPU operations such as:&lt;/p&gt;
+&lt;pre class="code cpp"&gt;&lt;a name="rest_code_88ab9861b9494d8ab9de99991b8bb8cc-1"&gt;&lt;/a&gt;&lt;span class="n"&gt;t1&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;b&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="mi"&gt;2&lt;/span&gt;
+&lt;a name="rest_code_88ab9861b9494d8ab9de99991b8bb8cc-2"&gt;&lt;/a&gt;&lt;span class="n"&gt;c&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;t1&lt;/span&gt;
+&lt;/pre&gt;&lt;p&gt;This is not perfect in terms of performance but this will be done without any
+copies between CPU and GPU memory. I plan to improve this system with a bit more
+complex operations to avoid too many GPU operations, but there will always be
+more operations than in CPU where this can easily be done in one go.&lt;/p&gt;
+&lt;p&gt;There are a few expressions that are not computable on the GPU, such as random
+generations. A few transformations are also not fully compatible with GPU.
+Moreover, if you access an element with operators &lt;code&gt;[]&lt;/code&gt; or &lt;code&gt;()&lt;/code&gt;, this
+will invalidate the GPU memory and force an update to the CPU memory.&lt;/p&gt;
+&lt;p&gt;GPU operations are not implemented directly in ETL, there are coming from
+various libraries. ETL is using NVIDIA CUDNN, CUFFT and CUDNN for most
+algorithms. Moreover, for other operations, I've implemented a libraries with
+simple GPU operations: ETL-GPU-BLAS (EGBLAS). You can have a look at
+&lt;a class="reference external" href="https://github.com/wichtounet/etl-gpu-blas"&gt;egblas&lt;/a&gt; if you are interested.&lt;/p&gt;
+&lt;p&gt;My Deep Learning Library (DLL) project is based on ETL and its performances are
+mostly dependent on ETL's performances. Now that ETL fully supports GPU, the
+GPU performance of DLL is much improved. You may remember a few weeks ago
+I posted &lt;a class="reference external" href="https://baptiste-wicht.com/posts/2017/08/dll-blazing-fast-neural-network-library.html"&gt;very high CPU performance of DLL&lt;/a&gt;.
+Now, I've run again the tests to see the GPU performance with DLL. Here is the
+performance for training a small CNN on the MNIST data set:&lt;/p&gt;
+&lt;img alt="Performances for training a Convolutional Neural Network on MNIST" class="align-center" src="http://baptiste-wicht.com/images/etl_12_dll_gpu_mnist.png"&gt;
+&lt;p&gt;As you can see, the performances on GPU are now excellent. DLL's performances
+are on par with Tensorflow and Keras!&lt;/p&gt;
+&lt;p&gt;The next results are for training a much larger CNN on ImageNet, with the time
+necessary to train a single batch:&lt;/p&gt;
+&lt;img alt="Performances for training a Convolutional Neural Network on Imagenet" class="align-center" src="http://baptiste-wicht.com/images/etl_12_dll_gpu_imagenet.png"&gt;
+&lt;p&gt;Again, using the new version of ETL inside DLL has led to excellent performance.
+The framework is again on par with TensorFlow and Keras and faster than all the
+other frameworks. The large difference between DLL and Tensorflow and Keras is
+due to the inefficiency of reading the dataset in the two frameworks, so the
+performance of the three framework themselves are about the same.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="other-changes"&gt;
+&lt;h2&gt;Other Changes&lt;/h2&gt;
+&lt;p&gt;The library also has a few other new features. Logarithms of base 2 and base 10
+are now supported in complement to the base e that was already available before.
+Categorical Cross Entropy (CCE) computation is also available now, the CCE loss
+and error can be computed for one or many samples. Convolutions have also been
+improved in that you can use mixed types in both the image and the kernel and
+different storage order as well. Nevertheless, the most optimized version
+remains the version with the same storage order and the same data type.&lt;/p&gt;
+&lt;p&gt;I've also made a major change in the way implementations are selected for each
+operation. The tests and the benchmark are using a system to force the selection
+of an algorithm. This system is now disabled by default. This makes the
+compilation much faster by default. Since it's not necessary in most cases, this
+will help regular use cases of the library by compiling much faster.&lt;/p&gt;
+&lt;p&gt;Overall, the support for complex numbers has been improved in ETL. There are
+more routines that are supported and &lt;code&gt;etl::complex&lt;/code&gt; is better supported
+throughout the code. I'll still work on this in the future to make it totally
+complete.&lt;/p&gt;
+&lt;p&gt;The internal code also has a few new changes. First, all traits have been
+rewritten to use variable templates instead of struct traits. This makes the
+code much nicer in my opinion. Moreover, I've started experimenting with C++17
+&lt;code&gt;if constexpr&lt;/code&gt;. Most of the if conditions that can be transformed to if
+constexpr have been annotated with comments that I can quickly enable or disable
+so that I can test the impact of C++17, especially on compilation time.&lt;/p&gt;
+&lt;p&gt;Finally, a few bugs have been fixed. ETL is now working better with parallel
+BLAS library. There should not be issues with double parallelization in ETL and
+BLAS. There was a slight bug in the Column-Major matrix-matrix multiplication
+kernel. Binary operations with different types in the left and right hand sides
+was also problematic with vectorization. The last bug was about GPU status in
+case ETL containers were moved.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="what-s-next"&gt;
+&lt;h2&gt;What's next ?&lt;/h2&gt;
+&lt;p&gt;I don't yet know exactly on which features I'm going to focus for the next
+version of ETL. I plan to focus a bit more in the near future on Deep Learning
+Library (DLL) for which I should release the version 1.0 soon. I also plan to
+start support for Recurrent Neural Networks on it, so that will take me quite
+some time.&lt;/p&gt;
+&lt;p&gt;Nevertheless, I'm still planning to consider the switch to C++17, since it is
+&lt;a class="reference external" href="https://baptiste-wicht.com/posts/2017/09/how-i-made-deep-learning-library-38-faster-to-compile-optimization-and-cpp17-if-constexpr.html"&gt;a bit faster to compile ETL with if constexpr&lt;/a&gt;. The next version of ETL will also probably have GPU-support for
+integers, at least in the cases that depend on the etl-gpu-blas library, which
+is the standard operators. I also plan to improve the support for complex
+numbers, especially in terms of performance and tests. Hopefully, I will have also time (and motivation)
+to start working on  the sparse capabilities of ETL. It really needs much more
+unit tests and the performance should be improved as well.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="download-etl"&gt;
+&lt;h2&gt;Download ETL&lt;/h2&gt;
+&lt;p&gt;You can download ETL &lt;a class="reference external" href="https://github.com/wichtounet/etl"&gt;on Github&lt;/a&gt;. If you
+only interested in the 1.2 version, you can look at the
+&lt;a class="reference external" href="https://github.com/wichtounet/etl/releases"&gt;Releases pages&lt;/a&gt; or clone the tag
+1.2. There are several branches:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;&lt;em&gt;master&lt;/em&gt; Is the eternal development branch, may not always be stable&lt;/li&gt;
+&lt;li&gt;&lt;em&gt;stable&lt;/em&gt; Is a branch always pointing to the last tag, no development here&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;For the future release, there always will tags pointing to the corresponding
+commits. You can also have access to previous releases on Github or via the
+release tags.&lt;/p&gt;
+&lt;p&gt;The documentation is still a bit sparse. There are a few examples and the Wiki,
+but there still is work to be done. If you have questions on how to use or
+configure the library, please don't hesitate.&lt;/p&gt;
+&lt;p&gt;Don't hesitate to comment this post if you have any comment on this library or
+any question. You can also open an Issue on Github if you have a problem using
+this library or propose a Pull Request if you have any contribution you'd like
+to make to the library.&lt;/p&gt;
+&lt;p&gt;Hope this may be useful to some of you :)&lt;/p&gt;
+&lt;/div&gt;&lt;/div&gt;</description><category>C++</category><category>C++14</category><category>C++17</category><category>Compilers</category><category>dll</category><category>etl</category><category>Performance</category><category>projects</category><guid>http://baptiste-wicht.com/posts/2017/10/expression-templates-library-etl-1-2-complete-gpu-support.html</guid><pubDate>Mon, 02 Oct 2017 08:49:02 GMT</pubDate></item><item><title>How I made my Deep Learning Library 38% faster to compile (Optimization and C++17 if constexpr)</title><link>http://baptiste-wicht.com/posts/2017/09/how-i-made-deep-learning-library-38-faster-to-compile-optimization-and-cpp17-if-constexpr.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;My Deep Learning Library (DLL) project is a C++ library for training and using
 artificial neural networks (you can take a look at
 &lt;a class="reference external" href="https://baptiste-wicht.com/posts/2017/07/update-on-deep-learning-library-dll-dropout-batch-normalization-adaptive-learning-rates.html"&gt;this post about DLL&lt;/a&gt;
 if you want more information).&lt;/p&gt;
@@ -1369,9 +1490,9 @@ and that it is well adapted to machine learning.&lt;/p&gt;
 &lt;p&gt;For those of you that don't follow my blog, ETL is a library providing
 Expression Templates for computations on matrix and vector. For instance, if you
 have three matrices A, B and C you could write C++ code like this:&lt;/p&gt;
-&lt;pre class="code cpp"&gt;&lt;a name="rest_code_400266acd04e4d91a5cb87e11ce88cfc-1"&gt;&lt;/a&gt;&lt;span class="n"&gt;C&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mf"&gt;2.0&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;A&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;B&lt;/span&gt;&lt;span class="p"&gt;))&lt;/span&gt; &lt;span class="o"&gt;/&lt;/span&gt; &lt;span class="n"&gt;sum&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;A&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;pre class="code cpp"&gt;&lt;a name="rest_code_981f24fa13c343b19932751c168941e8-1"&gt;&lt;/a&gt;&lt;span class="n"&gt;C&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mf"&gt;2.0&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;A&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;B&lt;/span&gt;&lt;span class="p"&gt;))&lt;/span&gt; &lt;span class="o"&gt;/&lt;/span&gt; &lt;span class="n"&gt;sum&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;A&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
 &lt;/pre&gt;&lt;p&gt;Or given vectors b, v, h and a matrix W, you could write code like this:&lt;/p&gt;
-&lt;pre class="code cpp"&gt;&lt;a name="rest_code_21fdc2f53d834faf9aa9ca5c031334ba-1"&gt;&lt;/a&gt;&lt;span class="n"&gt;h&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;sigmoid&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;b&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;v&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="n"&gt;W&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;pre class="code cpp"&gt;&lt;a name="rest_code_c919ee56fc6b485aa830fcfeffa932ac-1"&gt;&lt;/a&gt;&lt;span class="n"&gt;h&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;sigmoid&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;b&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;v&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="n"&gt;W&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
 &lt;/pre&gt;&lt;p&gt;The goal of such library is two-fold. First, this makes the expression more
 readable and as close to math as possible. And then, it allows the library to
 compute the expressions as fast as possible.  In the first case, the framework
@@ -1572,7 +1693,7 @@ any question. You can also open an Issue on Github if you have a problem using
 this library or propose a Pull Request if you have any contribution you'd like
 to make to the library.&lt;/p&gt;
 &lt;p&gt;Hope this may be useful to some of you :)&lt;/p&gt;
-&lt;/div&gt;&lt;/div&gt;</description><category>C++</category><category>C++14</category><category>C++17</category><category>Compilers</category><category>Performance</category><category>projects</category><guid>http://baptiste-wicht.com/posts/2017/08/expression-templates-library-etl-11.html</guid><pubDate>Fri, 04 Aug 2017 13:13:03 GMT</pubDate></item><item><title>Partial type erasing in Deep Learning Library (DLL) to improve compilation time</title><link>http://baptiste-wicht.com/posts/2017/03/partial-type-erasing-deep-learning-library-dll-improve-compilation-time.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;In a previous post, I compared the &lt;a class="reference external" href="https://baptiste-wicht.com/posts/2017/03/disappointing-zapcc-performance-on-deep-learning-library-dll.html"&gt;compilation time on my Deep Learning Library (DLL) project with different compilers&lt;/a&gt;. I realized that the compilation times were quickly going unreasonable for this library, especially for compiling the unit cases which clearly hurts the development of the library. Indeed, you want to be able to run the unit tests reasonably quickly after you integrated new changes.&lt;/p&gt;
+&lt;/div&gt;&lt;/div&gt;</description><category>C++</category><category>C++14</category><category>C++17</category><category>Compilers</category><category>dll</category><category>etl</category><category>Performance</category><category>projects</category><guid>http://baptiste-wicht.com/posts/2017/08/expression-templates-library-etl-11.html</guid><pubDate>Fri, 04 Aug 2017 13:13:03 GMT</pubDate></item><item><title>Partial type erasing in Deep Learning Library (DLL) to improve compilation time</title><link>http://baptiste-wicht.com/posts/2017/03/partial-type-erasing-deep-learning-library-dll-improve-compilation-time.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;In a previous post, I compared the &lt;a class="reference external" href="https://baptiste-wicht.com/posts/2017/03/disappointing-zapcc-performance-on-deep-learning-library-dll.html"&gt;compilation time on my Deep Learning Library (DLL) project with different compilers&lt;/a&gt;. I realized that the compilation times were quickly going unreasonable for this library, especially for compiling the unit cases which clearly hurts the development of the library. Indeed, you want to be able to run the unit tests reasonably quickly after you integrated new changes.&lt;/p&gt;
 &lt;div class="section" id="reduce-the-compilation-time"&gt;
 &lt;h2&gt;Reduce the compilation time&lt;/h2&gt;
 &lt;p&gt;The first thing I did was to split the compilation in three executables: one for
@@ -3646,55 +3767,4 @@ g++ options header.hpp
 &lt;h4&gt;Download&lt;/h4&gt;
 
 &lt;p&gt;You can find the EDDI Compiler sources on the Github repository: https://github.com/wichtounet/eddic&lt;/p&gt;
-&lt;p&gt;The exact version I refer to is the v1.1.2 available in the GitHub tags or directly as the release branch.&lt;/p&gt;&lt;/div&gt;</description><category>C++</category><category>Compilers</category><category>EDDI</category><guid>http://baptiste-wicht.com/posts/2012/08/eddi-compiler-1-1-2-read-command-line.html</guid><pubDate>Sat, 25 Aug 2012 04:47:06 GMT</pubDate></item><item><title>EDDI Compiler 1.1.1 – Dynamic Memory Allocation and Constructors/Destructors</title><link>http://baptiste-wicht.com/posts/2012/07/eddi-compiler-1-1-1-dynamic-memory-allocation-constructors-destructors.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;As I'm in holiday, the work is going pretty fast. The &lt;strong&gt;version 1.1.1&lt;/strong&gt; of the &lt;strong&gt;EDDI Compiler&lt;/strong&gt; (eddic) is available.&lt;/p&gt;
-&lt;p&gt;This version introduces two major changes. The first is the support of dynamic memory allocation. You can allocate a struct or a standard type in help using the new operator. The memory can be released using the delete operator. Another related improved is the addition of constructors and destructors to the language. The following sample shows what can be done with the new features:&lt;/p&gt;
-&lt;pre class="code literal-block"&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="n"&gt;A&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
-    &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
-
-    &lt;span class="k"&gt;this&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
-        &lt;span class="k"&gt;this&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
-
-        &lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Constructed"&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
-    &lt;span class="p"&gt;}&lt;/span&gt;
-
-    &lt;span class="o"&gt;~&lt;/span&gt;&lt;span class="k"&gt;this&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
-        &lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"Destructed"&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
-    &lt;span class="p"&gt;}&lt;/span&gt;
-&lt;span class="p"&gt;}&lt;/span&gt;
-
-&lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;main&lt;/span&gt;&lt;span class="p"&gt;(){&lt;/span&gt;
-    &lt;span class="n"&gt;A&lt;/span&gt;&lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="n"&gt;b&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;A&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;55&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
-    &lt;span class="k"&gt;delete&lt;/span&gt; &lt;span class="n"&gt;b&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
-&lt;span class="p"&gt;}&lt;/span&gt;
-&lt;/pre&gt;
-
-
-&lt;p&gt;The constructor is called once the memory is allocated. The delete operator calls the destructor and then free the memory. &lt;/p&gt;
-&lt;p&gt;When a structure is allocated on the stack, the constructor is called at the declaration point and the destructor is called when the variable gets out of scope. &lt;/p&gt;
-&lt;p&gt;The memory manager is quite simple for now. Memory is allocated in blocks. Each block has a header indicating the size of the block and its availability. The size of the header is 8 bytes in 32 bits and 16 bytes in 64 bits. The free operation can be done in constant time by just setting the availability flag to false. The disadvantage of this technique is that all the blocks needs to be tested to find a free block. This can be slow in some situations. I will try to make a better version in the future. &lt;/p&gt;
-&lt;p&gt;For that, the memory model has been improved. All the offsets are now increasing and the stack addresses are set at the end of the block. &lt;/p&gt;
-&lt;p&gt;Another interesting improvement of the language is the support of switch. For now, only switch on int is supported. Here is an example of a switch in EDDI:&lt;/p&gt;
-&lt;pre class="code literal-block"&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="k"&gt;switch&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
-    &lt;span class="k"&gt;case&lt;/span&gt; &lt;span class="mi"&gt;3&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt;
-        &lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"3"&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
-    &lt;span class="k"&gt;case&lt;/span&gt; &lt;span class="mi"&gt;4&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt;
-        &lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"4"&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
-    &lt;span class="k"&gt;case&lt;/span&gt; &lt;span class="mi"&gt;5&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt;
-        &lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"5"&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
-    &lt;span class="k"&gt;case&lt;/span&gt; &lt;span class="mi"&gt;6&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt;
-        &lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"6"&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
-    &lt;span class="k"&gt;default&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt;
-        &lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"default"&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
-&lt;span class="p"&gt;}&lt;/span&gt;
-&lt;/pre&gt;
-
-
-&lt;p&gt;The performances of the optimizer have been improved, by doing live-variable analysis less often. Pointers can now be passed in registers. Some of the variables used as temporary copies are removed &lt;/p&gt;
-&lt;p&gt;The peephole optimizer has been improved to use conditional move when possible. Moreover, the peephole optimizer is now able to perform some local copy propagation. &lt;/p&gt;
-&lt;p&gt;&lt;/p&gt;&lt;h4&gt;Future work&lt;/h4&gt;
-&lt;p&gt;The next version of the EDDI Compiler will be the version 1.1.2. This version will add features to read the command-line. Moreover, it will also add support for char type and string comparisons. With that, I think that the language will start to be usable for toy applications. &lt;/p&gt;
-&lt;p&gt;There  will be some improvements to the code that have been left aside for a too long time. &lt;/p&gt;
-&lt;h4&gt;Download&lt;/h4&gt;
-
-&lt;p&gt;You can find the EDDI Compiler sources on the Github repository: https://github.com/wichtounet/eddic&lt;/p&gt;
-&lt;p&gt;The exact version I refer to is the v1.1.1 available in the GitHub tags or directly as the release branch.&lt;/p&gt;&lt;/div&gt;</description><category>C++</category><category>Compilers</category><category>EDDI</category><category>Releases</category><guid>http://baptiste-wicht.com/posts/2012/07/eddi-compiler-1-1-1-dynamic-memory-allocation-constructors-destructors.html</guid><pubDate>Mon, 30 Jul 2012 10:18:01 GMT</pubDate></item></channel></rss>
+&lt;p&gt;The exact version I refer to is the v1.1.2 available in the GitHub tags or directly as the release branch.&lt;/p&gt;&lt;/div&gt;</description><category>C++</category><category>Compilers</category><category>EDDI</category><guid>http://baptiste-wicht.com/posts/2012/08/eddi-compiler-1-1-2-read-command-line.html</guid><pubDate>Sat, 25 Aug 2012 04:47:06 GMT</pubDate></item></channel></rss>
