@@ -4,8 +4,8 @@
 
 I'm happy to announce the version 1.2 of my Expression Templates Library (ETL):
 ETL 1.2, two months after `I released the version 1.1 <https://baptiste-wicht.com/posts/2017/08/expression-templates-library-etl-11.html>`_.
-This version does not have a lot of new features, but the GPU support is now
-complete and has a lot of changes in the internal code.
+This version features much better GPU Support, a few new features and a lot of
+changes in the internal code.
 
 GPU Support
 ===========
