@@ -43,5 +43,9 @@ Performance
 What's next ?
 #############
 
+Embedding
+
+RNN
+
 Download DLL
 ############
