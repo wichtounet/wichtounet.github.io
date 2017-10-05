@@ -40,12 +40,34 @@ Some notes about the performance triggers
 Performance
 ###########
 
+If you have been following my blog lately, you already may have seen part of
+this information, but I wanted to emphasize it here. I've been doing a lot of
+work on the performance of the library. TODO...
+
 What's next ?
 #############
 
-Embedding
+I do not know exactly what the next version of DLL will contain, but I know the
+direction in which I'm going to develop.
 
-RNN
+I would really like to be able to use DLL to classify text. In first time,
+I plan to add support for learning embeddings from text and be able to use CNN
+on top of the embeddings. Doing that, I also plan to add support to be able to
+merge several CNN layers together, so that I can use various filter sizes.
+Hopefully, this should not take too long. In a second time, I really want to
+integrate support for Recurrent Neural Networks (RNNs) into the framework. In
+a first time, only simple CNN cell, but then I want to add support for LSTM and
+GRU cells. This will definitely take some time, but I really want to do it
+completely in order to fully understand what's going on inside such networks.
+
+Documentation
+
+Examples
+
+Performance
+GPU
+
+Compilation time
 
 Download DLL
 ############
