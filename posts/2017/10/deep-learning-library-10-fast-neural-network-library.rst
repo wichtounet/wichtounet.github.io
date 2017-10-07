@@ -2,7 +2,7 @@
    :align: center
    :alt: DLL Logo
 
-I'm very proud to announce the release of the first version of Deep Learning
+I'm very happy to announce the release of the first version of Deep Learning
 Library (DLL) 1.0. DLL is a neural network library with a focus on speed and
 ease of use.
 
