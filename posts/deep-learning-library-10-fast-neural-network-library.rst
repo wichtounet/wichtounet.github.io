@@ -1,3 +1,7 @@
+.. image:: /images/dll_logo.png
+   :align: center
+   :alt: DLL Logo
+
 I'm very proud to announce the release of the first version of Deep Learning
 Library (DLL) 1.0. DLL is a neural network library with a focus on speed and
 ease of use.
@@ -215,7 +219,7 @@ you should enable all the options and therefore you'll have the best available
 performance since some algorithms are not yet totally computed on GPU.
 
 Let's do the same experiment again but with a Convolutional Neural Network with
-one convolutional layer and one pooling layer:
+two convolutional layers and two pooling layers:
 
 .. code:: cpp
 
@@ -225,6 +229,9 @@ one convolutional layer and one pooling layer:
     #include "dll/network.hpp"
     #include "dll/datasets.hpp"
 
+    #include "mnist/mnist_reader.hpp"
+    #include "mnist/mnist_utils.hpp"
+
     int main(int /*argc*/, char* /*argv*/ []) {
         // Load the dataset
         auto dataset = dll::make_mnist_dataset(dll::batch_size<100>{}, dll::scale_pre<255>{});
@@ -233,10 +240,12 @@ one convolutional layer and one pooling layer:
 
         using network_t = dll::dyn_network_desc<
             dll::network_layers<
-                dll::conv_layer<1, 28, 28, 8, 5, 5, dll::relu>,
+                dll::conv_layer<1, 28, 28, 8, 5, 5>,
                 dll::mp_2d_layer<8, 24, 24, 2, 2>,
-                dll::dense_layer<8 * 12 * 12, 500, dll::relu>,
-                dll::dense_layer<500, 10, dll::softmax>
+                dll::conv_layer<8, 12, 12, 8, 5, 5>,
+                dll::mp_2d_layer<8, 8, 8, 2, 2>,
+                dll::dense_layer<8 * 4 * 4, 150>,
+                dll::dense_layer<150, 10, dll::softmax>
             >
             , dll::updater<dll::updater_type::NADAM>     // Momentum
             , dll::batch_size<100>                       // The mini-batch size
@@ -260,21 +269,143 @@ one convolutional layer and one pooling layer:
 
 There is not a lot of things that change comparing to the previous example. The
 networks is now starting with a convolutional layer, followed by a pooling layer
-and then two fully-connected layers. Another difference is that we are scaling
-the inputs by 255 instead of normalizing them and the two first neural layers
-are using Rectified Linear Units (ReLUs) instead of sigmoid. Finally, we only
-train for 25 epochs.
+and then again a convolutional layer and a pooling layer and then finally two
+fully-connected layers. Another difference is that we are scaling the inputs by
+255 instead of normalizing them. Finally, we only train the network for 25
+epochs.
 
-TODO result
+Once compiled and run, the output should be something like this.
 
-MNIST CNN
+.. code::
+
+    Network with 6 layers
+        Conv(dyn): 1x28x28 -> (8x5x5) -> SIGMOID -> 8x24x24
+        MP(2d): 8x24x24 -> (2x2) -> 8x12x12
+        Conv(dyn): 8x12x12 -> (8x5x5) -> SIGMOID -> 8x8x8
+        MP(2d): 8x8x8 -> (2x2) -> 8x4x4
+        Dense(dyn): 128 -> SIGMOID -> 150
+        Dense(dyn): 150 -> SOFTMAX -> 10
+    Total parameters: 21100
+    Dataset
+    Training: In-Memory Data Generator
+                  Size: 60000
+               Batches: 600
+        Augmented Size: 60000
+    Testing: In-Memory Data Generator
+                  Size: 10000
+               Batches: 100
+        Augmented Size: 10000
+    Train the network with "Stochastic Gradient Descent"
+        Updater: NADAM
+           Loss: CATEGORICAL_CROSS_ENTROPY
+     Early Stop: Goal(error)
+
+    With parameters:
+              epochs=25
+          batch_size=100
+       learning_rate=0.002
+               beta1=0.9
+               beta2=0.999
+    Epoch   0/25 - Classification error: 0.09392 Loss: 0.31740 Time 7298ms
+    Epoch   1/25 - Classification error: 0.07005 Loss: 0.23473 Time 7298ms
+    Epoch   2/25 - Classification error: 0.06915 Loss: 0.22532 Time 7364ms
+    Epoch   3/25 - Classification error: 0.04750 Loss: 0.15286 Time 7787ms
+    Epoch   4/25 - Classification error: 0.04082 Loss: 0.13191 Time 7377ms
+    Epoch   5/25 - Classification error: 0.03258 Loss: 0.10283 Time 7334ms
+    Epoch   6/25 - Classification error: 0.03032 Loss: 0.09791 Time 7304ms
+    Epoch   7/25 - Classification error: 0.02727 Loss: 0.08453 Time 7345ms
+    Epoch   8/25 - Classification error: 0.02410 Loss: 0.07641 Time 7443ms
+    Epoch   9/25 - Classification error: 0.02448 Loss: 0.07612 Time 7747ms
+    Epoch  10/25 - Classification error: 0.02023 Loss: 0.06370 Time 7626ms
+    Epoch  11/25 - Classification error: 0.01920 Loss: 0.06194 Time 7364ms
+    Epoch  12/25 - Classification error: 0.01810 Loss: 0.05851 Time 7391ms
+    Epoch  13/25 - Classification error: 0.01575 Loss: 0.05074 Time 7316ms
+    Epoch  14/25 - Classification error: 0.01542 Loss: 0.04826 Time 7365ms
+    Epoch  15/25 - Classification error: 0.01392 Loss: 0.04574 Time 7634ms
+    Epoch  16/25 - Classification error: 0.01287 Loss: 0.04061 Time 7367ms
+    Epoch  17/25 - Classification error: 0.01167 Loss: 0.03779 Time 7381ms
+    Epoch  18/25 - Classification error: 0.01202 Loss: 0.03715 Time 7495ms
+    Epoch  19/25 - Classification error: 0.00967 Loss: 0.03268 Time 7359ms
+    Epoch  20/25 - Classification error: 0.00955 Loss: 0.03012 Time 7344ms
+    Epoch  21/25 - Classification error: 0.00853 Loss: 0.02809 Time 7314ms
+    Epoch  22/25 - Classification error: 0.00832 Loss: 0.02834 Time 7329ms
+    Epoch  23/25 - Classification error: 0.00807 Loss: 0.02603 Time 7336ms
+    Epoch  24/25 - Classification error: 0.00682 Loss: 0.02327 Time 7335ms
+    Training took 186s
+    error: 0.01520
+     loss: 0.05183
+
+This network is doing a bit better than the previous one, achieving a 1.52%
+error rate in about 3 minutes.
+
+If you are interested, you can find a few more examples on the Github
+repository.
 
 Performance
 ###########
 
 If you have been following my blog lately, you already may have seen part of
 this information, but I wanted to emphasize it here. I've been doing a lot of
-work on the performance of the library. TODO...
+work on the performance of the library. To see how i was faring against other
+popular frameworks, I decided to compare the performances of DLL against
+TensorFlow, Keras, Torch and Caffe. I also tried DeepLearning4J, but I had so
+many issues with it and its performance were quite disastrous so I dropped it.
+If someone is interested in the dropped results, I can put them somewhere. All
+the frameworks were installed with default options and all the frameworks that
+can use the MKL have been set to use it.
+
+The first experiment I did was the training of a small three-layers on the MNIST
+data set:
+
+.. image:: /images/dll_10_mnist_mlp.png
+   :align: center
+   :alt: DLL performance for training a MLP on MNIST
+
+On CPU, DLL is the fastest framework to train this network. It's about 35%
+faster than TensorFlow and Keras, 4 times faster than Torch and 5 times faster
+than Caffe. On GPU, Caffe is the fastest framework, followed by Keras and
+TensorFlow and DLL. In that case, Torch is the slowest framework.
+
+Let's see how the frameworks are faring with a small CNN on the same task:
+
+.. image:: /images/dll_10_mnist_cnn.png
+   :align: center
+   :alt: DLL performance for training a CNN on MNIST
+
+Again, on CPU, DLL is the fastest framework, by a very significant margin, it's
+four times faster than TensorFlow and Keras and five times faster than Torch and
+Caffe. On GPU, it's on par with Keras and TensorFlow and 3 times faster than
+Caffe. It's even more than 5 times faster than Torch.
+
+The next test is done with a larger CNN on CIFAR-10:
+
+.. image:: /images/dll_10_cifar_cnn.png
+   :align: center
+   :alt: DLL performance for training a CNN on CIFAR-10
+
+On this larger CNN, the differences are less impressive than before,
+nevertheless, DLL is still the fastest framework on CPU. It's still around twice
+faster than TensorFlow, Keras and Torch and around 3 times faster than Caffe. On
+GPU, DLL is slightly faster than Keras and TensorFlow. It's 2.7 times faster
+than Caffe and 5 times faster than Torch.
+
+The last test is done on Imagenet with a twelve layers CNN. This time, the
+performance is shown in the necessary time to train a mini-batch of 128 images.
+
+.. image:: /images/dll_10_imagenet_cnn.png
+   :align: center
+   :alt: DLL performance for training a CNN on Imagenet
+
+Again, DLL is faster than all the other frameworks on both CPU and GPU. The
+large difference between DLL and TensorFlow and Keras is mainly due to the poor
+performance of reading the Imagenet images from the Python code whereas the code
+was optimized in DLL.
+
+Overall, in all tested experiments, DLL is always the fastest framework on CPU.
+On GPU, except for a very small fully-connected network, it's also always in the
+fastest frameworks with TensorFlow and Keras.
+
+You can find `the code of these experiments <https://github.com/wichtounet/frameworks>`_ online if you are interested.
 
 What's next ?
 #############
