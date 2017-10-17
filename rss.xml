@@ -1,12 +1,84 @@
 <?xml version="1.0" encoding="utf-8"?>
-<?xml-stylesheet type="text/xsl" href="assets/xml/rss.xsl" media="all"?><rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Blog blog("Baptiste Wicht");</title><link>http://baptiste-wicht.com/</link><description>Tutorials and short posts about programming, C++, Java, Assembly, Operating Systems Development, Compilers, ...</description><atom:link rel="self" href="http://baptiste-wicht.com/rss.xml" type="application/rss+xml"></atom:link><language>en</language><lastBuildDate>Sun, 15 Oct 2017 15:25:16 GMT</lastBuildDate><generator>Nikola (getnikola.com)</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>I successfully defended my Ph.D.</title><link>http://baptiste-wicht.com/posts/2017/10/i-successfully-defended-my-phd.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;I'm happy to announce that I've successfully defended my thesis "Deep Learning
+<?xml-stylesheet type="text/xsl" href="assets/xml/rss.xsl" media="all"?><rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Blog blog("Baptiste Wicht");</title><link>http://baptiste-wicht.com/</link><description>Tutorials and short posts about programming, C++, Java, Assembly, Operating Systems Development, Compilers, ...</description><atom:link type="application/rss+xml" href="http://baptiste-wicht.com/rss.xml" rel="self"></atom:link><language>en</language><lastBuildDate>Tue, 17 Oct 2017 18:59:50 GMT</lastBuildDate><generator>Nikola (getnikola.com)</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>DLL New Features: Embeddings and Merge layers</title><link>http://baptiste-wicht.com/posts/2017/10/dll-new-features-embeddings-and-merge-layers.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;I've just finished integrating new features into DLL, my deep learning library.
+I've added support for an embeddings layer, a group layer and a merge layer.
+This is not yet released, but available in the master branch.&lt;/p&gt;
+&lt;p&gt;Embeddings are used more and more these days to learn dense representation of
+characters or word. An embedding layer in a neural network transform labels into
+a vector. It's generally used as the first layer of the network. The embedding
+are learned as part of the network.&lt;/p&gt;
+&lt;p&gt;The merge layer allows to create branches in the network. The input is passed to
+each sub layer and then the output of each layer is concatenated to form the
+output of the merged layers. This can be very useful to use different
+convolutional filter sizes.&lt;/p&gt;
+&lt;p&gt;The group layer is a simple utility to group layers together. This is mostly to
+use with merge layers to form several branches.&lt;/p&gt;
+&lt;p&gt;I've put together a new example to use these features on text classification.
+The dataset is totally synthetic for now, but this can easily be reproduced with
+a normal text classification dataset. This kind of model is called a Character
+Convolutional Neural Network.&lt;/p&gt;
+&lt;p&gt;Here is the code for example:&lt;/p&gt;
+&lt;pre class="code cpp"&gt;&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-1"&gt;&lt;/a&gt;&lt;span class="k"&gt;constexpr&lt;/span&gt; &lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;embedding&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;16&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;// The length of the embedding vector&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-2"&gt;&lt;/a&gt;&lt;span class="k"&gt;constexpr&lt;/span&gt; &lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;length&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;15&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;    &lt;span class="c1"&gt;// The word (or sequence) length&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-3"&gt;&lt;/a&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-4"&gt;&lt;/a&gt;&lt;span class="k"&gt;using&lt;/span&gt; &lt;span class="n"&gt;embedding_network_t&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;dyn_network_desc&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-5"&gt;&lt;/a&gt;    &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;network_layers&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-6"&gt;&lt;/a&gt;        &lt;span class="c1"&gt;// The embedding layer&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-7"&gt;&lt;/a&gt;        &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;embedding_layer&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="mi"&gt;26&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;length&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;embedding&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-8"&gt;&lt;/a&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-9"&gt;&lt;/a&gt;        &lt;span class="c1"&gt;// The convolutional layers&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-10"&gt;&lt;/a&gt;        &lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;merge_layer&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-11"&gt;&lt;/a&gt;            &lt;span class="mi"&gt;0&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-12"&gt;&lt;/a&gt;            &lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;group_layer&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-13"&gt;&lt;/a&gt;                  &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;conv_layer&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;length&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;embedding&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;16&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;3&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;embedding&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-14"&gt;&lt;/a&gt;                &lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;mp_2d_layer&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="mi"&gt;16&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;length&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="mi"&gt;3&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;length&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="mi"&gt;3&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-15"&gt;&lt;/a&gt;            &lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-16"&gt;&lt;/a&gt;            &lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;group_layer&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-17"&gt;&lt;/a&gt;                  &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;conv_layer&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;length&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;embedding&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;16&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;4&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;embedding&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-18"&gt;&lt;/a&gt;                &lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;mp_2d_layer&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="mi"&gt;16&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;length&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="mi"&gt;4&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;length&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="mi"&gt;4&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-19"&gt;&lt;/a&gt;            &lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-20"&gt;&lt;/a&gt;            &lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;group_layer&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-21"&gt;&lt;/a&gt;                  &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;conv_layer&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;length&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;embedding&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;16&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;5&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;embedding&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-22"&gt;&lt;/a&gt;                &lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;mp_2d_layer&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="mi"&gt;16&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;length&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="mi"&gt;5&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;length&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="mi"&gt;5&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-23"&gt;&lt;/a&gt;            &lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-24"&gt;&lt;/a&gt;        &lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-25"&gt;&lt;/a&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-26"&gt;&lt;/a&gt;        &lt;span class="c1"&gt;// The final softmax layer&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-27"&gt;&lt;/a&gt;        &lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;dense_layer&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="mi"&gt;48&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;10&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;softmax&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-28"&gt;&lt;/a&gt;    &lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-29"&gt;&lt;/a&gt;    &lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;updater&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;updater_type&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;NADAM&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;     &lt;span class="c1"&gt;// Nesterov Adam (NADAM)&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-30"&gt;&lt;/a&gt;    &lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;batch_size&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="mi"&gt;50&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;                        &lt;span class="c1"&gt;// The mini-batch size&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-31"&gt;&lt;/a&gt;    &lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;shuffle&lt;/span&gt;                               &lt;span class="c1"&gt;// Shuffle before each epoch&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-32"&gt;&lt;/a&gt;&lt;span class="o"&gt;&amp;gt;::&lt;/span&gt;&lt;span class="n"&gt;network_t&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-33"&gt;&lt;/a&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-34"&gt;&lt;/a&gt;&lt;span class="k"&gt;auto&lt;/span&gt; &lt;span class="n"&gt;net&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;make_unique&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;embedding_network_t&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-35"&gt;&lt;/a&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-36"&gt;&lt;/a&gt;&lt;span class="c1"&gt;// Display the network and dataset&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-37"&gt;&lt;/a&gt;&lt;span class="n"&gt;net&lt;/span&gt;&lt;span class="o"&gt;-&amp;gt;&lt;/span&gt;&lt;span class="n"&gt;display&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-38"&gt;&lt;/a&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-39"&gt;&lt;/a&gt;&lt;span class="c1"&gt;// Train the network for performance sake&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-40"&gt;&lt;/a&gt;&lt;span class="n"&gt;net&lt;/span&gt;&lt;span class="o"&gt;-&amp;gt;&lt;/span&gt;&lt;span class="n"&gt;fine_tune&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;samples&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;labels&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;50&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-41"&gt;&lt;/a&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-42"&gt;&lt;/a&gt;&lt;span class="c1"&gt;// Test the network on train set&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-43"&gt;&lt;/a&gt;&lt;span class="n"&gt;net&lt;/span&gt;&lt;span class="o"&gt;-&amp;gt;&lt;/span&gt;&lt;span class="n"&gt;evaluate&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;samples&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;labels&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/pre&gt;&lt;p&gt;The network starts with an embedding layer. The embedding is then passed to
+three convolutional layers with different filter sizes, each followed by
+a pooling layer. The outputs of the three layers are merged at the end of the
+merge layer. Finally, a softmax layer is used for classification.&lt;/p&gt;
+&lt;p&gt;This kind of model can be very powerful and is used regularly. These new
+features make for a much larger variety of models that can be build with the DLL
+library.&lt;/p&gt;
+&lt;p&gt;The full code with the dataset generation can be found online:
+&lt;a class="reference external" href="https://github.com/wichtounet/dll/blob/master/examples/src/char_cnn.cpp"&gt;char_cnn.cpp&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;The next feature I want to focus on is recurrent neural networks. I'll probably
+try a single RNN layer first and then upgrade to multi-layers and LSTM and maybe
+GRU.&lt;/p&gt;&lt;/div&gt;</description><category>C++</category><category>deep learning</category><category>dll</category><category>Machine Learning</category><category>projects</category><guid>http://baptiste-wicht.com/posts/2017/10/dll-new-features-embeddings-and-merge-layers.html</guid><pubDate>Tue, 17 Oct 2017 17:50:40 GMT</pubDate></item><item><title>I successfully defended my Ph.D.</title><link>http://baptiste-wicht.com/posts/2017/10/i-successfully-defended-my-phd.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;I'm happy to announce that I've successfully defended my thesis "Deep Learning
 Features for Image Processing". After four years, I've defended it officially in
 front of the thesis committed last Friday and then again two days ago I've
 successfully publicly defended in front of my friends, family and colleagues.&lt;/p&gt;
 &lt;p&gt;I'm now a "Doctor of Philosophy in Computer Science :)&lt;/p&gt;
 &lt;p&gt;I will update my thesis with the last comments in November and send the final
 version to the university. At which point, I'll publish it on this website as
-well.&lt;/p&gt;&lt;/div&gt;</description><category>Machine Learning</category><category>Personal</category><guid>http://baptiste-wicht.com/posts/2017/10/i-successfully-defended-my-phd.html</guid><pubDate>Sun, 15 Oct 2017 15:16:29 GMT</pubDate></item><item><title>Budgetwarrior: Track assets and portfolio, savings rates and auto-completion</title><link>http://baptiste-wicht.com/posts/2017/10/budgetwarrior-track-assets-portfolio-savings-rates-auto-completion.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;This last month, I've been reading quite a few blogs about personal finance and
+well.&lt;/p&gt;&lt;/div&gt;</description><category>Machine Learning</category><category>Personal</category><category>thesis</category><guid>http://baptiste-wicht.com/posts/2017/10/i-successfully-defended-my-phd.html</guid><pubDate>Sun, 15 Oct 2017 15:16:29 GMT</pubDate></item><item><title>Budgetwarrior: Track assets and portfolio, savings rates and auto-completion</title><link>http://baptiste-wicht.com/posts/2017/10/budgetwarrior-track-assets-portfolio-savings-rates-auto-completion.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;This last month, I've been reading quite a few blogs about personal finance and
 I've decided to integrate more features into budgetwarrior. This post is about
 three new features that I've integrated. It's not yet a new release, so if you
 want to test this version, you'll have to compile it from the &lt;em&gt;master&lt;/em&gt; branch on
@@ -3490,186 +3562,4 @@ of my cpp_utils library. Moreover, you can now integrate it Sonarqube by using
 the sonar-cxx plugin. Since it is a bit slow, I'll probably not integrate it in
 my bigger projects, but I'll integrate at least in the cpp_utils library when
 sonar-cxx 0.9.8 will be released.&lt;/p&gt;
-&lt;/div&gt;&lt;/div&gt;</description><category>C++</category><category>clang</category><category>projects</category><category>Sonar</category><guid>http://baptiste-wicht.com/posts/2017/03/clang-tidy-static-analysis-integration-in-sonarqube.html</guid><pubDate>Sat, 11 Mar 2017 08:54:00 GMT</pubDate></item><item><title>Disappointing zapcc performance on Deep Learning Library (DLL)</title><link>http://baptiste-wicht.com/posts/2017/03/disappointing-zapcc-performance-on-deep-learning-library-dll.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;One week ago, zapcc 1.0 was released and I've observed it to be much faster than the other
-compilers in terms of compile time. This can be seen when
-&lt;a class="reference external" href="http://baptiste-wicht.com/posts/2017/03/release-zapcc-10-fast-cpp-compiler.html"&gt;I tested it on my Expression Templates Library (ETL)&lt;/a&gt;. It was almost four
-times faster than clang 3.9 and about 2.5 times faster than GCC.&lt;/p&gt;
-&lt;p&gt;The ETL library is quite heavy to compile, but still reasonable. This is not the
-case for my Deep Learning Library (DLL) where compiling all the test cases takes
-a very long time. I have to admit that I have been going overboard with
-templates and such and I have now to pay the price. In practice, for the users
-of the library, this is not a big problem since only one or two neural networks
-will be compiled (and it will take hours to train), but in the test cases, there
-are hundreds of them and this is a huge pain. Anyway, enough with the ramble,
-I figured it would be very good to test zapcc on it and see what I can gain from
-using it.&lt;/p&gt;
-&lt;p&gt;In this article, when I speak of a compiler thread, I mean an instance of the
-processor, so it's really a process in the Linux world.&lt;/p&gt;
-&lt;div class="section" id="results"&gt;
-&lt;h2&gt;Results&lt;/h2&gt;
-&lt;p&gt;However, I soon realized that I would have more issues than I thought. The first
-problem is the memory consumed by zapcc. Indeed, it is based on clang and
-I always had problem with huge memory consumption from clang on this library and
-zapcc has even bigger memory consumption because some information is cached
-between runs. The amount of memory that zapcc is able to cache can be configured
-in the configuration file. By default, it can use 1.5Go of memory. When zapcc
-goes over the memory limit, it simply wipes out its caches. This means that all
-the gain for the next compilation will be lost, since the cache will have to be
-rebuilt from scratch. This is not a hard limit for the compilation itself.
-Indeed, if the compilation itself takes 3Go, it will still be able to complete
-it, but it is likely that the cache will be wiped after the compilation.&lt;/p&gt;
-&lt;p&gt;When I tried compiling using several threads, it soon used all my memory and
-crashed. The same occurs with clang but I can still compile with 3 or 4 threads
-without too much issues on this computer. The same also occurs with GCC but it
-can still handle 4 or 5 threads (depending on the order of the compilation
-units).&lt;/p&gt;
-&lt;p&gt;The tests are performed on my desktop computer at work, which is not really
-good... I have 12Go of RAM (I had to ask for extra...) and an old Sandy Bridge
-processor, but at least I have an SSD (also had to ask for extra).&lt;/p&gt;
-&lt;p&gt;I started with testing with only one compiler thread. For zapcc, I set the
-maximum memory limit to 8Go. Even with such a limit, the zapcc server restarted
-more than 10 times during the compilation of the 84 test cases. After this first
-experiment, I increased the number of threads to 2 for each compiler, using 4Go
-limit for zapcc. The limit is for each server and each parallel thread will
-spawn a new server, so the effective limit is the number of threads times the
-limit. Even with two threads, I was unable to finish a compilation with zapcc.
-This is quite disappoint for me since clang is able to run with 4 threads in
-parallel. Moreover, a big problem with that is that the servers are not always
-killed when there is no no more memory, they just hang and use all the memory of
-the computer, which is evidently really inconvenient for service processes. When
-this happens with clang or gcc, the compiler simply crashes and the memory is
-released and make is interrupted. Since zapcc is not able to work with more than
-one thread on this computer, the results are the ones with one thread. I was
-also surprised to be able to compile the library with clang and four threads,
-this was not possible before clang-3.9.&lt;/p&gt;
-&lt;table border="1" class="docutils"&gt;
-&lt;colgroup&gt;
-&lt;col width="36%"&gt;
-&lt;col width="17%"&gt;
-&lt;col width="17%"&gt;
-&lt;col width="15%"&gt;
-&lt;col width="15%"&gt;
-&lt;/colgroup&gt;
-&lt;thead valign="bottom"&gt;
-&lt;tr&gt;&lt;th class="head"&gt;Compiler&lt;/th&gt;
-&lt;th class="head"&gt;-j1&lt;/th&gt;
-&lt;th class="head"&gt;-j2&lt;/th&gt;
-&lt;th class="head"&gt;-j3&lt;/th&gt;
-&lt;th class="head"&gt;-j4&lt;/th&gt;
-&lt;/tr&gt;
-&lt;/thead&gt;
-&lt;tbody valign="top"&gt;
-&lt;tr&gt;&lt;td&gt;gcc-4.9.3&lt;/td&gt;
-&lt;td&gt;2250.95&lt;/td&gt;
-&lt;td&gt;1256.36&lt;/td&gt;
-&lt;td&gt;912.67&lt;/td&gt;
-&lt;td&gt;760.84&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;&lt;td&gt;gcc-5.3.0&lt;/td&gt;
-&lt;td&gt;2305.37&lt;/td&gt;
-&lt;td&gt;1279.49&lt;/td&gt;
-&lt;td&gt;918.08&lt;/td&gt;
-&lt;td&gt;741.38&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;&lt;td&gt;clang-3.9&lt;/td&gt;
-&lt;td&gt;2047.61&lt;/td&gt;
-&lt;td&gt;&lt;strong&gt;1102.93&lt;/strong&gt;&lt;/td&gt;
-&lt;td&gt;&lt;strong&gt;899.13&lt;/strong&gt;&lt;/td&gt;
-&lt;td&gt;&lt;strong&gt;730.42&lt;/strong&gt;&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;&lt;td&gt;zapcc-1.0&lt;/td&gt;
-&lt;td&gt;&lt;strong&gt;1483.73&lt;/strong&gt;&lt;/td&gt;
-&lt;td&gt;1483.73&lt;/td&gt;
-&lt;td&gt;1483.73&lt;/td&gt;
-&lt;td&gt;1483.73&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;&lt;td&gt;Difference against Clang&lt;/td&gt;
-&lt;td&gt;-27.55%&lt;/td&gt;
-&lt;td&gt;+25.69%&lt;/td&gt;
-&lt;td&gt;+39.37%&lt;/td&gt;
-&lt;td&gt;+50.77%&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;&lt;td&gt;Speedup VS GCC-5.3&lt;/td&gt;
-&lt;td&gt;-35.66%&lt;/td&gt;
-&lt;td&gt;+13.75%&lt;/td&gt;
-&lt;td&gt;+38.09%&lt;/td&gt;
-&lt;td&gt;+50.03%&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;&lt;td&gt;Speedup VS GCC-4.9&lt;/td&gt;
-&lt;td&gt;-34.08%&lt;/td&gt;
-&lt;td&gt;+15.30%&lt;/td&gt;
-&lt;td&gt;+38.50%&lt;/td&gt;
-&lt;td&gt;+48.75%&lt;/td&gt;
-&lt;/tr&gt;
-&lt;/tbody&gt;
-&lt;/table&gt;
-&lt;p&gt;If we look at the results with only one thread, we can see that there still are
-some significant improvements when using zapcc, but nowhere near as good as what
-was seen in the compilation of ETL. Here, the compilation time is reduced by 34%
-compared to gcc and by 27% compared to clang. This is not bad, since it is
-faster than the other compilers, but I would have expected better speedups. We
-can see that g++-4.9 is slightly faster than g++-5.3, but this is not really
-a significant difference. I'm actually very surprised to find that clang is
-faster than g++ on this experiment. On ETL, it is always very significantly
-slower and before, it was also significantly slower on DLL. I was so used to
-this, that I stopped using it on this project. I may have to reconsider my
-position when working on this project.&lt;/p&gt;
-&lt;p&gt;Let's look at the results with more than two threads. Even with two threads,
-every compiler is faster than zapcc. Indeed, zapcc is slower than Clang by 25%
-and slower than GCC by about 15%. If we use more threads, the other compilers
-are becoming even faster and the slowdowns of zapcc are more important. When
-using four threads, zapcc is about 48% slower than gcc and about 50% slower than
-clang. This is really showing one big downside of zapcc that has a very large
-memory consumption. When it is used to compile really heavy template code, it is
-failing very early to use more processes. And even when there is enough memory,
-the speedups are not as great as for relatively simpler code.&lt;/p&gt;
-&lt;p&gt;One may argue that this is not a fair comparison since zapcc does not have the
-same numbers of threads. However, considering that this is the best zapcc can do
-on this machine, I would argue that this is a fair comparison in this limited
-experimental setting. If we were to have a big machine for compilation, which
-I don't have at work, the zapcc results would likely be more interesting, but in
-this specific limited case, it shows that zapcc suffers from its high memory
-consumption. It should also be taken into account that this experiment was done
-with almost nothing else running on the machine (no browser for instance) to
-have as much memory as possible available for the compilers. This is not
-a common use case.  Most of the days, when I compile something, I have my
-browser open, which makes a large difference in memory available, and several
-other applications (but consoles and vim instances do not really consume memory
-:D).&lt;/p&gt;
-&lt;p&gt;This experiment made me realize that the compilation times for this library were
-quickly becoming crazy. Most of the time, the complete test suite is only
-compiled on my Continuous Integration machine at home which has a much faster
-processor and much more RAM. Therefore, it is relatively fast since it uses more
-threads to compile.  Nevertheless, this is not a good point that the unit tests
-takes so much time to compile. I plan to split the test cases in several sets.
-Because, currently the real unit tests are compiled with the performance tests
-and other various tests. I'll probably end up generating three executables. This
-will help greatly during development. Moreover, I also have a technique to
-decrease the compilation time by erasing some template parameters at compilation
-time. This is already ready, but has currently a runtime overhead that I will
-try to remove and then use this technique everywhere to get back to reasonable
-compilation times. I'll also try to see if I can find obvious compilation
-bottlenecks in the code.&lt;/p&gt;
-&lt;/div&gt;
-&lt;div class="section" id="conclusion"&gt;
-&lt;h2&gt;Conclusion&lt;/h2&gt;
-&lt;p&gt;To conclude, while zapcc brings some very interesting compilation speedups in
-some cases like in my ETL library, it also has some downsides, namely
-&lt;strong&gt;huge memory consumption&lt;/strong&gt;. This memory consumption may prevent the use of several
-compiler threads and render zapcc much less interesting than other compilers.&lt;/p&gt;
-&lt;p&gt;When trying to compile my DLL library on a machine with 12Go of RAM with two
-zapcc threads, it was impossible for me to make it complete. While zapcc was
-faster with one thread than the other compilers, they were able to use up to
-four threads and in the end &lt;strong&gt;zapcc was about twice slower than clang&lt;/strong&gt;.&lt;/p&gt;
-&lt;p&gt;I knew that zapcc memory consumption was very large, but I would have not have
-expected something so critical. Another feature that would be interesting in
-zapcc would be to set a max memory hard limit for the server instead of simply
-a limit on the cache they are able to keep in memory. This would prevent hanging
-the complete computer when something goes wrong.&lt;/p&gt;
-&lt;p&gt;I had a good surprise with clang that was actually faster than GCC and also able
-to work with four threads in parallel. This was not the case with previous
-version of clang. On ETL, it is still significantly slower than GCC though.&lt;/p&gt;
-&lt;p&gt;For now, I'll continue using clang on this DLL project and use zapcc only on my
-ETL project. I'll also focus on improving the compilation time on this project
-and make it reasonable again.&lt;/p&gt;
-&lt;/div&gt;&lt;/div&gt;</description><category>C++</category><category>clang</category><category>Compilers</category><category>dll</category><category>gcc</category><category>projects</category><category>zapcc</category><guid>http://baptiste-wicht.com/posts/2017/03/disappointing-zapcc-performance-on-deep-learning-library-dll.html</guid><pubDate>Thu, 09 Mar 2017 12:41:06 GMT</pubDate></item></channel></rss>
+&lt;/div&gt;&lt;/div&gt;</description><category>C++</category><category>clang</category><category>projects</category><category>Sonar</category><guid>http://baptiste-wicht.com/posts/2017/03/clang-tidy-static-analysis-integration-in-sonarqube.html</guid><pubDate>Sat, 11 Mar 2017 08:54:00 GMT</pubDate></item></channel></rss>

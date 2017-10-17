@@ -103,6 +103,131 @@
             <div id="content"></div>
             
         <article class="postbox h-entry post-text"><h1 class="p-name">
+<a href="posts/2017/08/simplify-your-type-traits-with-c%2B%2B14-variable-templates.html" class="u-url">Simplify your type traits with C++14 variable templates</a>
+        <br><small>  
+             Posted: <time class="published dt-published" datetime="2017-08-22T14:45:11+02:00">2017-08-22 14:45</time></small>
+</h1>
+        <hr>
+<div class="p-summary">
+        <div>
+<p>Often if you write templated code, you have to write and use a lot of different
+traits. In this article, I'll focus on the traits that are representing values,
+typically a boolean value. For instance, std::is_const, std::is_same or
+std::is_reference are type traits provided by the STL. They are giving you some
+information at compile time for a certain type. If you need to write a type
+traits, let's say is_float, here is how you would maybe do it in C++11:</p>
+<pre class="code c++"><a name="rest_code_45b11d66ae264c94b9aa702fd745c672-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<a name="rest_code_45b11d66ae264c94b9aa702fd745c672-2"></a><span class="k">struct</span> <span class="n">is_float</span> <span class="p">{</span>
+<a name="rest_code_45b11d66ae264c94b9aa702fd745c672-3"></a>    <span class="k">static</span> <span class="k">constexpr</span> <span class="kt">bool</span> <span class="n">value</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="kt">float</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">;</span>
+<a name="rest_code_45b11d66ae264c94b9aa702fd745c672-4"></a><span class="p">};</span>
+</pre>
+<p>or a bit nicer with a template type alias and std::integral constant:</p>
+<pre class="code c++"><a name="rest_code_5b7514df48de41949d3cb2865dffa98c-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<a name="rest_code_5b7514df48de41949d3cb2865dffa98c-2"></a><span class="k">using</span> <span class="n">is_float</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">integral_constant</span><span class="o">&lt;</span><span class="kt">bool</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="kt">float</span><span class="o">&gt;::</span><span class="n">value</span><span class="o">&gt;</span><span class="p">;</span>
+</pre>
+<p>or since is_same is itself a type traits, you can also directly alias it:</p>
+<pre class="code c++"><a name="rest_code_38f6a207f06249eaa4e2e427d8e07c1a-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<a name="rest_code_38f6a207f06249eaa4e2e427d8e07c1a-2"></a><span class="k">using</span> <span class="n">is_float</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="kt">float</span><span class="o">&gt;</span><span class="p">;</span>
+</pre>
+<p>This makes for some very nice syntax, but we still have a type rather than a value.</p>
+<p>Note that in some cases, you cannot use the using technique since it cannot be
+specialized and you often need specialization to write some more advanced
+traits.</p>
+<p>And then you would use your traits to do something specific based on that
+information. For instance with a very basic example:</p>
+<pre class="code C++"><a name="rest_code_06a0f8637289401b880e671fcd672628-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<a name="rest_code_06a0f8637289401b880e671fcd672628-2"></a><span class="kt">void</span> <span class="n">test</span><span class="p">(</span><span class="n">T</span> <span class="n">t</span><span class="p">){</span>
+<a name="rest_code_06a0f8637289401b880e671fcd672628-3"></a>    <span class="k">if</span> <span class="p">(</span><span class="n">is_float</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">){</span>
+<a name="rest_code_06a0f8637289401b880e671fcd672628-4"></a>        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"I'm a float"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<a name="rest_code_06a0f8637289401b880e671fcd672628-5"></a>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<a name="rest_code_06a0f8637289401b880e671fcd672628-6"></a>        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"I'm not a float"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<a name="rest_code_06a0f8637289401b880e671fcd672628-7"></a>    <span class="p">}</span>
+<a name="rest_code_06a0f8637289401b880e671fcd672628-8"></a><span class="p">}</span>
+</pre>
+<p>Really nothing fancy here, but that will be enough as examples.</p>
+<p>Even though all this works pretty, it can be made better on two points. First,
+every time you use a traits, you need to use the value member (via ::value).
+Secondly, every time you declare a new traits, you have to declare a new type or
+a type alias. But all you want is a boolean value.</p>
+<p>C++14 introduced a new feature, variable templates. As their name indicates,
+they are variables, parametrized with a type. This allows us to write type
+traits without using a type alias or struct, meaning we have a real value
+instead of a type. If we rewrite our is_float traits with variable templates, we
+have the following:</p>
+<pre class="code c++"><a name="rest_code_794ce898460249cf8128e8f03cdbabf0-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<a name="rest_code_794ce898460249cf8128e8f03cdbabf0-2"></a><span class="k">constexpr</span> <span class="kt">bool</span> <span class="n">is_float</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="kt">float</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">;</span>
+</pre>
+<p>I think it's much nicer, the intent is clearly stated and there is no
+unnecessary code. Moreover, it's also nicer to use:</p>
+<pre class="code C++"><a name="rest_code_4a69bf93945e4964a57a9536d106353a-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<a name="rest_code_4a69bf93945e4964a57a9536d106353a-2"></a><span class="kt">void</span> <span class="n">test</span><span class="p">(</span><span class="n">T</span> <span class="n">t</span><span class="p">){</span>
+<a name="rest_code_4a69bf93945e4964a57a9536d106353a-3"></a>    <span class="k">if</span> <span class="p">(</span><span class="n">is_float</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">){</span>
+<a name="rest_code_4a69bf93945e4964a57a9536d106353a-4"></a>        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"I'm a float"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<a name="rest_code_4a69bf93945e4964a57a9536d106353a-5"></a>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<a name="rest_code_4a69bf93945e4964a57a9536d106353a-6"></a>        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"I'm not a float"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<a name="rest_code_4a69bf93945e4964a57a9536d106353a-7"></a>    <span class="p">}</span>
+<a name="rest_code_4a69bf93945e4964a57a9536d106353a-8"></a><span class="p">}</span>
+</pre>
+<p>No more ::value everywhere :) I think it's really cool.</p>
+<p>Note that, unlike type alias template, they can be specialized, either fully or
+partially, so no more limitation on that side.</p>
+<p>Interestingly, variable templates are used in C++17 to provide helpers for each
+type traits with values. For instance, std::is_same will have a std::is_same_v
+helper that is a variable template. With that, we can simplify our traits a bit
+more:</p>
+<pre class="code c++"><a name="rest_code_32ed21ff43bc4b289e77ba2279eabc04-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<a name="rest_code_32ed21ff43bc4b289e77ba2279eabc04-2"></a><span class="k">constexpr</span> <span class="kt">bool</span> <span class="n">is_float</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">is_same_v</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="kt">float</span><span class="o">&gt;</span><span class="p">;</span>
+</pre>
+<p>Personally, I replaced all the type traits inside ETL using variable templates.
+If you don't want to do it, you can also introduce helpers like in the C++17 STL
+and start using the wrappers when you see fit so that you don't break any code.</p>
+<p>If you want to use this feature, you need a C++14 compiler, such as any version
+from GCC5 family or clang 3.6. Although I haven't tested, it should also work on
+Microsoft VS2015 Update 2.</p>
+<p>Unfortunately there is a bug in both clang (fixed in clang 3.7) and GCC (fixed
+in GCC 6 only) that you may encounter if you start using variable templates in
+template classes or variable templates used in another variable templates. If
+you plan to use variable templates inside a template, such as something like
+this:</p>
+<pre class="code c++"><a name="rest_code_cadac6599e3749ee8bbb1105d0bb7ef0-1"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<a name="rest_code_cadac6599e3749ee8bbb1105d0bb7ef0-2"></a><span class="k">struct</span> <span class="n">outer_traits</span> <span class="p">{</span>
+<a name="rest_code_cadac6599e3749ee8bbb1105d0bb7ef0-3"></a>    <span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">X</span><span class="o">&gt;</span>
+<a name="rest_code_cadac6599e3749ee8bbb1105d0bb7ef0-4"></a>    <span class="k">static</span> <span class="k">constexpr</span> <span class="kt">bool</span> <span class="n">sub_traits</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">X</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">;</span>
+<a name="rest_code_cadac6599e3749ee8bbb1105d0bb7ef0-5"></a><span class="p">};</span>
+<a name="rest_code_cadac6599e3749ee8bbb1105d0bb7ef0-6"></a>
+<a name="rest_code_cadac6599e3749ee8bbb1105d0bb7ef0-7"></a><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span> <span class="n">X</span><span class="o">&gt;</span>
+<a name="rest_code_cadac6599e3749ee8bbb1105d0bb7ef0-8"></a><span class="k">constexpr</span> <span class="kt">bool</span> <span class="n">outer_helper</span> <span class="o">=</span> <span class="n">outer_traits</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;::</span><span class="k">template</span> <span class="n">sub_traits</span><span class="o">&lt;</span><span class="n">X</span><span class="o">&gt;</span><span class="p">;</span>
+<a name="rest_code_cadac6599e3749ee8bbb1105d0bb7ef0-9"></a>
+<a name="rest_code_cadac6599e3749ee8bbb1105d0bb7ef0-10"></a><span class="kt">int</span> <span class="nf">main</span><span class="p">(){</span>
+<a name="rest_code_cadac6599e3749ee8bbb1105d0bb7ef0-11"></a>    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">outer_helper</span><span class="o">&lt;</span><span class="kt">float</span><span class="p">,</span> <span class="kt">float</span><span class="o">&gt;</span><span class="p">;</span>
+<a name="rest_code_cadac6599e3749ee8bbb1105d0bb7ef0-12"></a>
+<a name="rest_code_cadac6599e3749ee8bbb1105d0bb7ef0-13"></a>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<a name="rest_code_cadac6599e3749ee8bbb1105d0bb7ef0-14"></a><span class="p">}</span>
+</pre>
+<p>You will encounter a not-helpful at all error message with GCC5 family, such as:</p>
+<pre class="code text"><a name="rest_code_d50ed49e99294025a1490dc4f343eac5-1"></a>test.cpp: In instantiation of ‘constexpr const bool outer_helper&lt;float, float&gt;’:
+<a name="rest_code_d50ed49e99294025a1490dc4f343eac5-2"></a>test.cpp:14:22:   required from here
+<a name="rest_code_d50ed49e99294025a1490dc4f343eac5-3"></a>test.cpp:11:20: error: ‘template&lt;class X&gt; constexpr const bool outer_traits&lt;float&gt;::sub_traits&lt;X&gt;’ is not a function template
+<a name="rest_code_d50ed49e99294025a1490dc4f343eac5-4"></a>     constexpr bool outer_helper = outer_traits&lt;T&gt;::template sub_trait
+<a name="rest_code_d50ed49e99294025a1490dc4f343eac5-5"></a>                    ^
+<a name="rest_code_d50ed49e99294025a1490dc4f343eac5-6"></a>test.cpp:11:20: error: ‘sub_traits&lt;X&gt;’ is not a member of ‘outer_traits&lt;float&gt;’
+</pre>
+<p>It comes from a bug in the handling of variable templates as dependent names. If
+you don't come in this cases, you can use GCC5 family directly, otherwise,
+you'll have to use GCC6 family only.</p>
+<p>I hope this can help some of you to improve your type traits or at least to
+discover the power of the new variable templates. Personally, I've rewritten all
+the traits from the ETL library using this new feature and I'm pretty satisfied
+with the result. Of course, that means that the compiler support was reduced,
+but since I don't have many users, it's not a real issue.</p>
+</div>
+        </div>
+            
+        
+    <a href="posts/2017/08/simplify-your-type-traits-with-c%2B%2B14-variable-templates.html#disqus_thread" data-disqus-identifier="cache/posts/2017/08/simplify-your-type-traits-with-c++14-variable-templates.html">Comments</a>
+
+
+        </article><article class="postbox h-entry post-text"><h1 class="p-name">
 <a href="posts/2017/08/how-to-fix-mdadm-raid5-raid6-growing-stuck-at-0ks.html" class="u-url">How to fix mdadm RAID5 / RAID6 growing stuck at 0K/s ?</a>
         <br><small>  
              Posted: <time class="published dt-published" datetime="2017-08-12T12:28:43+02:00">2017-08-12 12:28</time></small>

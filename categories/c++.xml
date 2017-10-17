@@ -1,5 +1,77 @@
 <?xml version="1.0" encoding="utf-8"?>
-<?xml-stylesheet type="text/xsl" href="../assets/xml/rss.xsl" media="all"?><rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0"><channel><title>Blog blog("Baptiste Wicht"); (Posts about C++)</title><link>http://baptiste-wicht.com/</link><description></description><atom:link rel="self" type="application/rss+xml" href="http://baptiste-wicht.com/categories/c%2B%2B.xml"></atom:link><language>en</language><lastBuildDate>Thu, 12 Oct 2017 18:57:32 GMT</lastBuildDate><generator>Nikola (getnikola.com)</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>Budgetwarrior: Track assets and portfolio, savings rates and auto-completion</title><link>http://baptiste-wicht.com/posts/2017/10/budgetwarrior-track-assets-portfolio-savings-rates-auto-completion.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;This last month, I've been reading quite a few blogs about personal finance and
+<?xml-stylesheet type="text/xsl" href="../assets/xml/rss.xsl" media="all"?><rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Blog blog("Baptiste Wicht"); (Posts about C++)</title><link>http://baptiste-wicht.com/</link><description></description><atom:link type="application/rss+xml" href="http://baptiste-wicht.com/categories/c%2B%2B.xml" rel="self"></atom:link><language>en</language><lastBuildDate>Tue, 17 Oct 2017 18:59:50 GMT</lastBuildDate><generator>Nikola (getnikola.com)</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>DLL New Features: Embeddings and Merge layers</title><link>http://baptiste-wicht.com/posts/2017/10/dll-new-features-embeddings-and-merge-layers.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;I've just finished integrating new features into DLL, my deep learning library.
+I've added support for an embeddings layer, a group layer and a merge layer.
+This is not yet released, but available in the master branch.&lt;/p&gt;
+&lt;p&gt;Embeddings are used more and more these days to learn dense representation of
+characters or word. An embedding layer in a neural network transform labels into
+a vector. It's generally used as the first layer of the network. The embedding
+are learned as part of the network.&lt;/p&gt;
+&lt;p&gt;The merge layer allows to create branches in the network. The input is passed to
+each sub layer and then the output of each layer is concatenated to form the
+output of the merged layers. This can be very useful to use different
+convolutional filter sizes.&lt;/p&gt;
+&lt;p&gt;The group layer is a simple utility to group layers together. This is mostly to
+use with merge layers to form several branches.&lt;/p&gt;
+&lt;p&gt;I've put together a new example to use these features on text classification.
+The dataset is totally synthetic for now, but this can easily be reproduced with
+a normal text classification dataset. This kind of model is called a Character
+Convolutional Neural Network.&lt;/p&gt;
+&lt;p&gt;Here is the code for example:&lt;/p&gt;
+&lt;pre class="code cpp"&gt;&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-1"&gt;&lt;/a&gt;&lt;span class="k"&gt;constexpr&lt;/span&gt; &lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;embedding&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;16&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;// The length of the embedding vector&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-2"&gt;&lt;/a&gt;&lt;span class="k"&gt;constexpr&lt;/span&gt; &lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;length&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;15&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;    &lt;span class="c1"&gt;// The word (or sequence) length&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-3"&gt;&lt;/a&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-4"&gt;&lt;/a&gt;&lt;span class="k"&gt;using&lt;/span&gt; &lt;span class="n"&gt;embedding_network_t&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;dyn_network_desc&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-5"&gt;&lt;/a&gt;    &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;network_layers&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-6"&gt;&lt;/a&gt;        &lt;span class="c1"&gt;// The embedding layer&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-7"&gt;&lt;/a&gt;        &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;embedding_layer&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="mi"&gt;26&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;length&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;embedding&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-8"&gt;&lt;/a&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-9"&gt;&lt;/a&gt;        &lt;span class="c1"&gt;// The convolutional layers&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-10"&gt;&lt;/a&gt;        &lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;merge_layer&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-11"&gt;&lt;/a&gt;            &lt;span class="mi"&gt;0&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-12"&gt;&lt;/a&gt;            &lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;group_layer&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-13"&gt;&lt;/a&gt;                  &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;conv_layer&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;length&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;embedding&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;16&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;3&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;embedding&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-14"&gt;&lt;/a&gt;                &lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;mp_2d_layer&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="mi"&gt;16&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;length&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="mi"&gt;3&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;length&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="mi"&gt;3&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-15"&gt;&lt;/a&gt;            &lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-16"&gt;&lt;/a&gt;            &lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;group_layer&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-17"&gt;&lt;/a&gt;                  &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;conv_layer&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;length&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;embedding&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;16&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;4&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;embedding&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-18"&gt;&lt;/a&gt;                &lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;mp_2d_layer&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="mi"&gt;16&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;length&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="mi"&gt;4&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;length&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="mi"&gt;4&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-19"&gt;&lt;/a&gt;            &lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-20"&gt;&lt;/a&gt;            &lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;group_layer&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-21"&gt;&lt;/a&gt;                  &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;conv_layer&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;length&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;embedding&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;16&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;5&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;embedding&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-22"&gt;&lt;/a&gt;                &lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;mp_2d_layer&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="mi"&gt;16&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;length&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="mi"&gt;5&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;length&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="mi"&gt;5&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-23"&gt;&lt;/a&gt;            &lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-24"&gt;&lt;/a&gt;        &lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-25"&gt;&lt;/a&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-26"&gt;&lt;/a&gt;        &lt;span class="c1"&gt;// The final softmax layer&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-27"&gt;&lt;/a&gt;        &lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;dense_layer&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="mi"&gt;48&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;10&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;softmax&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-28"&gt;&lt;/a&gt;    &lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-29"&gt;&lt;/a&gt;    &lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;updater&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;updater_type&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;NADAM&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;     &lt;span class="c1"&gt;// Nesterov Adam (NADAM)&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-30"&gt;&lt;/a&gt;    &lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;batch_size&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="mi"&gt;50&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;                        &lt;span class="c1"&gt;// The mini-batch size&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-31"&gt;&lt;/a&gt;    &lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;shuffle&lt;/span&gt;                               &lt;span class="c1"&gt;// Shuffle before each epoch&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-32"&gt;&lt;/a&gt;&lt;span class="o"&gt;&amp;gt;::&lt;/span&gt;&lt;span class="n"&gt;network_t&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-33"&gt;&lt;/a&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-34"&gt;&lt;/a&gt;&lt;span class="k"&gt;auto&lt;/span&gt; &lt;span class="n"&gt;net&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;make_unique&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;embedding_network_t&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-35"&gt;&lt;/a&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-36"&gt;&lt;/a&gt;&lt;span class="c1"&gt;// Display the network and dataset&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-37"&gt;&lt;/a&gt;&lt;span class="n"&gt;net&lt;/span&gt;&lt;span class="o"&gt;-&amp;gt;&lt;/span&gt;&lt;span class="n"&gt;display&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-38"&gt;&lt;/a&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-39"&gt;&lt;/a&gt;&lt;span class="c1"&gt;// Train the network for performance sake&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-40"&gt;&lt;/a&gt;&lt;span class="n"&gt;net&lt;/span&gt;&lt;span class="o"&gt;-&amp;gt;&lt;/span&gt;&lt;span class="n"&gt;fine_tune&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;samples&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;labels&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;50&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-41"&gt;&lt;/a&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-42"&gt;&lt;/a&gt;&lt;span class="c1"&gt;// Test the network on train set&lt;/span&gt;
+&lt;a name="rest_code_6260278376ea46fa920f56df3fe99fae-43"&gt;&lt;/a&gt;&lt;span class="n"&gt;net&lt;/span&gt;&lt;span class="o"&gt;-&amp;gt;&lt;/span&gt;&lt;span class="n"&gt;evaluate&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;samples&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;labels&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/pre&gt;&lt;p&gt;The network starts with an embedding layer. The embedding is then passed to
+three convolutional layers with different filter sizes, each followed by
+a pooling layer. The outputs of the three layers are merged at the end of the
+merge layer. Finally, a softmax layer is used for classification.&lt;/p&gt;
+&lt;p&gt;This kind of model can be very powerful and is used regularly. These new
+features make for a much larger variety of models that can be build with the DLL
+library.&lt;/p&gt;
+&lt;p&gt;The full code with the dataset generation can be found online:
+&lt;a class="reference external" href="https://github.com/wichtounet/dll/blob/master/examples/src/char_cnn.cpp"&gt;char_cnn.cpp&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;The next feature I want to focus on is recurrent neural networks. I'll probably
+try a single RNN layer first and then upgrade to multi-layers and LSTM and maybe
+GRU.&lt;/p&gt;&lt;/div&gt;</description><category>C++</category><category>deep learning</category><category>dll</category><category>Machine Learning</category><category>projects</category><guid>http://baptiste-wicht.com/posts/2017/10/dll-new-features-embeddings-and-merge-layers.html</guid><pubDate>Tue, 17 Oct 2017 17:50:40 GMT</pubDate></item><item><title>Budgetwarrior: Track assets and portfolio, savings rates and auto-completion</title><link>http://baptiste-wicht.com/posts/2017/10/budgetwarrior-track-assets-portfolio-savings-rates-auto-completion.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;This last month, I've been reading quite a few blogs about personal finance and
 I've decided to integrate more features into budgetwarrior. This post is about
 three new features that I've integrated. It's not yet a new release, so if you
 want to test this version, you'll have to compile it from the &lt;em&gt;master&lt;/em&gt; branch on
@@ -3243,7 +3315,7 @@ the Matrix Multiplication and Convolutions&lt;/li&gt;
 &lt;li&gt;&lt;a class="reference external" href="https://github.com/wichtounet/dll"&gt;Deep Learning Library (DLL)&lt;/a&gt;: For the RBM
 and CRBM implementations&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;Don't hesitate to ask any questions if you want more information :)&lt;/p&gt;&lt;/div&gt;</description><category>C++</category><category>CPU</category><category>crbm</category><category>dbn</category><category>deep learning</category><category>dll</category><category>etl</category><category>Intel</category><category>Performances</category><category>publications</category><category>rbm</category><guid>http://baptiste-wicht.com/posts/2017/02/publication-cpu-performance-optimizations-rbm-crbm.html</guid><pubDate>Tue, 07 Feb 2017 16:33:33 GMT</pubDate></item><item><title>PVS-Studio on C++ Library Review</title><link>http://baptiste-wicht.com/posts/2016/12/pvs-studio-on-cpp-library-review.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;PVS-Studio is a commercial static analyzer for C, C++ and C#. It works in both
+&lt;p&gt;Don't hesitate to ask any questions if you want more information :)&lt;/p&gt;&lt;/div&gt;</description><category>C++</category><category>CPU</category><category>crbm</category><category>dbn</category><category>deep learning</category><category>dll</category><category>etl</category><category>Intel</category><category>Performances</category><category>publications</category><category>rbm</category><category>thesis</category><guid>http://baptiste-wicht.com/posts/2017/02/publication-cpu-performance-optimizations-rbm-crbm.html</guid><pubDate>Tue, 07 Feb 2017 16:33:33 GMT</pubDate></item><item><title>PVS-Studio on C++ Library Review</title><link>http://baptiste-wicht.com/posts/2016/12/pvs-studio-on-cpp-library-review.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;PVS-Studio is a commercial static analyzer for C, C++ and C#. It works in both
 Windows and Linux.&lt;/p&gt;
 &lt;p&gt;It has been a long time since I wanted to test it on my projects. I contacted
 The PVS-Studio team and they gave me a temporary license so that I can test the
@@ -4395,72 +4467,4 @@ for Sonarqube. Once this feature appears in doctest, I'll probably drop Catch
 from ETL and DLL&lt;/p&gt;
 &lt;p&gt;If you need blazing fast compilation times for your unit tests, doctest 1.1 is
 probably the way to go.&lt;/p&gt;
-&lt;/div&gt;&lt;/div&gt;</description><category>C++</category><category>Catch</category><category>Compilers</category><category>doctest</category><category>etl</category><category>gcc</category><category>Performances</category><category>Tests</category><category>time</category><guid>http://baptiste-wicht.com/posts/2016/09/blazing-fast-unit-test-compilation-with-doctest-11.html</guid><pubDate>Wed, 21 Sep 2016 19:45:13 GMT</pubDate></item><item><title>Short review of Bullseye Coverage</title><link>http://baptiste-wicht.com/posts/2016/09/short-review-of-bullseye-coverage.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;&lt;a class="reference external" href="http://www.bullseye.com/"&gt;Bullseye&lt;/a&gt; is a commercial Code Coverage analyzer.
-It is fully-featured with an export to HTML, to XML and even a specific GUI to
-see the application.It costs about 800$, with a renewal fee of about 200$ per
-year.&lt;/p&gt;
-&lt;p&gt;I'm currently using gcov and passing the results to Sonar. This works well, but
-there are several problems. First, I need to use gcovr to generate the XML file,
-that means two tools. Then, gcov has no way to merge coverage reports. In my
-tests of ETL, I have seven different profiles being tested and I need the
-overall coverage report. lcov has a merge feature but it is slow as hell (it
-takes longer to merge the coverage files than to compile and run the complete
-test suite seven times...). For now, I'm using a C++ program that I wrote to
-combine the XML files or a Python script that does that, but neither are perfect
-and it needs maintenance. Finally, it's impossible to exclude some code from the
-coverage report (there is code that isn't meant to be executed (exceptional
-code)). For now, I'm using yet another C++ program  that I wrote to do this from
-comments in code.&lt;/p&gt;
-&lt;p&gt;Bullseye does have all these feature, so I got an evaluation license online and
-tried this tool and wrote a short review of it.&lt;/p&gt;
-&lt;div class="section" id="usage"&gt;
-&lt;h2&gt;Usage&lt;/h2&gt;
-&lt;p&gt;The usage is pretty simple. You put the coverage executables in your PATH
-variable and activate coverage globally. Then, we you compile, the compiler
-calls will be intercepted and a coverage file will be generated. When the
-compilation is done, run the program and the coverage measurements will be
-filled.&lt;/p&gt;
-&lt;p&gt;The coverage results can then be exported to HTML (or XML) or visualized using
-the CoverageBrowser tool:&lt;/p&gt;
-&lt;div class="figure align-center"&gt;
-&lt;img alt="Screenshot of Bullseye main coverage view" src="http://baptiste-wicht.com/images/bullseye_view.png"&gt;
-&lt;p class="caption"&gt;The main view of the Bullseye tool code coverage results&lt;/p&gt;
-&lt;/div&gt;
-&lt;p&gt;It's a pretty good view of the coverage result. You have a breakdown by folders,
-by file, by function and finally by condition. You can view directly the source
-code:&lt;/p&gt;
-&lt;div class="figure align-center"&gt;
-&lt;img alt="Screenshot of Bullseye source code coverage view" src="http://baptiste-wicht.com/images/bullseye_source_view.png"&gt;
-&lt;p class="caption"&gt;The source view of the Bullseye tool code coverage results&lt;/p&gt;
-&lt;/div&gt;
-&lt;p&gt;If you want to exclude some code from your coverage reports, you can use
-a pragma:&lt;/p&gt;
-&lt;pre class="code cpp"&gt;&lt;a name="rest_code_42cdf56fb9bc426fb70271b3b9456de9-1"&gt;&lt;/a&gt;&lt;span class="k"&gt;switch&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;n&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
-&lt;a name="rest_code_42cdf56fb9bc426fb70271b3b9456de9-2"&gt;&lt;/a&gt;    &lt;span class="k"&gt;case&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;one&lt;/span&gt;&lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="k"&gt;break&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
-&lt;a name="rest_code_42cdf56fb9bc426fb70271b3b9456de9-3"&gt;&lt;/a&gt;    &lt;span class="k"&gt;case&lt;/span&gt; &lt;span class="mi"&gt;2&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;two&lt;/span&gt;&lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="k"&gt;break&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
-&lt;a name="rest_code_42cdf56fb9bc426fb70271b3b9456de9-4"&gt;&lt;/a&gt;    &lt;span class="k"&gt;case&lt;/span&gt; &lt;span class="mi"&gt;3&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;three&lt;/span&gt;&lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="k"&gt;break&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
-&lt;a name="rest_code_42cdf56fb9bc426fb70271b3b9456de9-5"&gt;&lt;/a&gt;    &lt;span class="cp"&gt;#pragma BullseyeCoverage off&lt;/span&gt;
-&lt;a name="rest_code_42cdf56fb9bc426fb70271b3b9456de9-6"&gt;&lt;/a&gt;    &lt;span class="k"&gt;default&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;abort&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
-&lt;a name="rest_code_42cdf56fb9bc426fb70271b3b9456de9-7"&gt;&lt;/a&gt;    &lt;span class="cp"&gt;#pragma BullseyeCoverage on&lt;/span&gt;
-&lt;a name="rest_code_42cdf56fb9bc426fb70271b3b9456de9-8"&gt;&lt;/a&gt;&lt;span class="p"&gt;}&lt;/span&gt;
-&lt;/pre&gt;&lt;p&gt;So that the condition won't be set as uncovered.&lt;/p&gt;
-&lt;p&gt;As for the coverage, it's pretty straightforward. For example:&lt;/p&gt;
-&lt;pre class="code bash"&gt;&lt;a name="rest_code_bcfb49983da74725b6451048ebf7933f-1"&gt;&lt;/a&gt;covmerge -c -ffinal.cov sse.cov avx.cov
-&lt;/pre&gt;&lt;p&gt;and it's really fast. Unfortunately, the merging is only done at the function
-level, not at the statement or at the condition level. This is a bit
-disappointing, especially from a commercial tool. Nevertheless, it works well.&lt;/p&gt;
-&lt;/div&gt;
-&lt;div class="section" id="conclusion"&gt;
-&lt;h2&gt;Conclusion&lt;/h2&gt;
-&lt;p&gt;To conclude, Bullseye seems to be a pretty good tool. It has more features than
-standard gcov coverage and all features are well integrated together. I have
-only covered the features I was interested in, there are plenty of other things
-you can look at on the &lt;a class="reference external" href="http://www.bullseye.com/"&gt;official website&lt;/a&gt;.&lt;/p&gt;
-&lt;p&gt;However, if you don't need the extra features such as the visualizer (or use
-something like Sonar for this), or the merge or code excluding, it's probably
-not worth paying the price for it. In my case, since the merge is not better
-than my C++ tool (both do almost the same and my tool does some basic line
-coverage merging as well) and I don't need the visualizer, I won't pay the price
-for it. Moreover, they don't have student or open source licensing, therefore,
-I'll continue with my complicated toolchain :)&lt;/p&gt;
-&lt;/div&gt;&lt;/div&gt;</description><category>C++</category><category>coverage</category><category>test</category><category>Tools</category><guid>http://baptiste-wicht.com/posts/2016/09/short-review-of-bullseye-coverage.html</guid><pubDate>Fri, 16 Sep 2016 11:25:44 GMT</pubDate></item></channel></rss>
+&lt;/div&gt;&lt;/div&gt;</description><category>C++</category><category>Catch</category><category>Compilers</category><category>doctest</category><category>etl</category><category>gcc</category><category>Performances</category><category>Tests</category><category>time</category><guid>http://baptiste-wicht.com/posts/2016/09/blazing-fast-unit-test-compilation-with-doctest-11.html</guid><pubDate>Wed, 21 Sep 2016 19:45:13 GMT</pubDate></item></channel></rss>
