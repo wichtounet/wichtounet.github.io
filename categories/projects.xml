@@ -1,5 +1,135 @@
 <?xml version="1.0" encoding="utf-8"?>
-<?xml-stylesheet type="text/xsl" href="../assets/xml/rss.xsl" media="all"?><rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Blog blog("Baptiste Wicht"); (Posts about projects)</title><link>http://baptiste-wicht.com/</link><description></description><atom:link type="application/rss+xml" href="http://baptiste-wicht.com/categories/projects.xml" rel="self"></atom:link><language>en</language><lastBuildDate>Tue, 17 Oct 2017 18:59:50 GMT</lastBuildDate><generator>Nikola (getnikola.com)</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>DLL New Features: Embeddings and Merge layers</title><link>http://baptiste-wicht.com/posts/2017/10/dll-new-features-embeddings-and-merge-layers.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;I've just finished integrating new features into DLL, my deep learning library.
+<?xml-stylesheet type="text/xsl" href="../assets/xml/rss.xsl" media="all"?><rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0"><channel><title>Blog blog("Baptiste Wicht"); (Posts about projects)</title><link>http://baptiste-wicht.com/</link><description></description><atom:link href="http://baptiste-wicht.com/categories/projects.xml" rel="self" type="application/rss+xml"></atom:link><language>en</language><lastBuildDate>Sun, 12 Nov 2017 14:55:26 GMT</lastBuildDate><generator>Nikola (getnikola.com)</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>Initial support for Recurrent Neural Network (RNN) in DLL</title><link>http://baptiste-wicht.com/posts/2017/11/initial-support-for-recurrent-neural-network-rnn-in-dll.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;I'm happy to announce that I just merged support for Recurrent Neural Networks
+(RNNs) into my Deep Learning Library (DLL) machine learning framework.&lt;/p&gt;
+&lt;p&gt;It's nothing fancy yet, but forward propagation of RNN and basic Backpropagation
+Through Time (BPTT) are now supported. For now, only existing classification
+loss is supported for RNN. I plan to add support for sequence-to-sequence loss
+in order to be able to train models able to generate characters, but I don't
+know when I'll be able to work on that. I also plan to add support for other
+types of cells such as LSTM and GRU (maybe NAS) in the future.&lt;/p&gt;
+&lt;p&gt;For example, here is a simple RNN used on MNIST:&lt;/p&gt;
+&lt;pre class="code cpp"&gt;&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-1"&gt;&lt;/a&gt;&lt;span class="cp"&gt;#include&lt;/span&gt; &lt;span class="cpf"&gt;"dll/neural/dense_layer.hpp"&lt;/span&gt;&lt;span class="cp"&gt;&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-2"&gt;&lt;/a&gt;&lt;span class="cp"&gt;#include&lt;/span&gt; &lt;span class="cpf"&gt;"dll/neural/recurrent_layer.hpp"&lt;/span&gt;&lt;span class="cp"&gt;&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-3"&gt;&lt;/a&gt;&lt;span class="cp"&gt;#include&lt;/span&gt; &lt;span class="cpf"&gt;"dll/neural/recurrent_last_layer.hpp"&lt;/span&gt;&lt;span class="cp"&gt;&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-4"&gt;&lt;/a&gt;&lt;span class="cp"&gt;#include&lt;/span&gt; &lt;span class="cpf"&gt;"dll/network.hpp"&lt;/span&gt;&lt;span class="cp"&gt;&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-5"&gt;&lt;/a&gt;&lt;span class="cp"&gt;#include&lt;/span&gt; &lt;span class="cpf"&gt;"dll/datasets.hpp"&lt;/span&gt;&lt;span class="cp"&gt;&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-6"&gt;&lt;/a&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-7"&gt;&lt;/a&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="nf"&gt;main&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="cm"&gt;/*argc*/&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="kt"&gt;char&lt;/span&gt;&lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="cm"&gt;/*argv*/&lt;/span&gt; &lt;span class="p"&gt;[])&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-8"&gt;&lt;/a&gt;    &lt;span class="c1"&gt;// Load the dataset&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-9"&gt;&lt;/a&gt;    &lt;span class="k"&gt;auto&lt;/span&gt; &lt;span class="n"&gt;dataset&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;make_mnist_dataset_nc&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;batch_size&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="mi"&gt;100&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="p"&gt;{},&lt;/span&gt; &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;scale_pre&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="mi"&gt;255&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="p"&gt;{});&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-10"&gt;&lt;/a&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-11"&gt;&lt;/a&gt;    &lt;span class="k"&gt;constexpr&lt;/span&gt; &lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;time_steps&lt;/span&gt;      &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;28&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-12"&gt;&lt;/a&gt;    &lt;span class="k"&gt;constexpr&lt;/span&gt; &lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;sequence_length&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;28&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-13"&gt;&lt;/a&gt;    &lt;span class="k"&gt;constexpr&lt;/span&gt; &lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;hidden_units&lt;/span&gt;    &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;100&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-14"&gt;&lt;/a&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-15"&gt;&lt;/a&gt;    &lt;span class="c1"&gt;// Build the network&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-16"&gt;&lt;/a&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-17"&gt;&lt;/a&gt;    &lt;span class="k"&gt;using&lt;/span&gt; &lt;span class="n"&gt;network_t&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;dyn_network_desc&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-18"&gt;&lt;/a&gt;        &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;network_layers&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-19"&gt;&lt;/a&gt;            &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;recurrent_layer&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;time_steps&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;sequence_length&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;hidden_units&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;last_only&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-20"&gt;&lt;/a&gt;            &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;recurrent_last_layer&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;time_steps&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;hidden_units&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-21"&gt;&lt;/a&gt;            &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;dense_layer&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;hidden_units&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;10&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;softmax&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-22"&gt;&lt;/a&gt;        &lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-23"&gt;&lt;/a&gt;        &lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;updater&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;updater_type&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;ADAM&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;      &lt;span class="c1"&gt;// Adam&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-24"&gt;&lt;/a&gt;        &lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;batch_size&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="mi"&gt;100&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;                       &lt;span class="c1"&gt;// The mini-batch size&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-25"&gt;&lt;/a&gt;    &lt;span class="o"&gt;&amp;gt;::&lt;/span&gt;&lt;span class="n"&gt;network_t&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-26"&gt;&lt;/a&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-27"&gt;&lt;/a&gt;    &lt;span class="k"&gt;auto&lt;/span&gt; &lt;span class="n"&gt;net&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;make_unique&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;network_t&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-28"&gt;&lt;/a&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-29"&gt;&lt;/a&gt;    &lt;span class="c1"&gt;// Display the network and dataset&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-30"&gt;&lt;/a&gt;    &lt;span class="n"&gt;net&lt;/span&gt;&lt;span class="o"&gt;-&amp;gt;&lt;/span&gt;&lt;span class="n"&gt;display&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-31"&gt;&lt;/a&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-32"&gt;&lt;/a&gt;    &lt;span class="c1"&gt;// Train the network for performance sake&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-33"&gt;&lt;/a&gt;    &lt;span class="n"&gt;net&lt;/span&gt;&lt;span class="o"&gt;-&amp;gt;&lt;/span&gt;&lt;span class="n"&gt;fine_tune&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;dataset&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;train&lt;/span&gt;&lt;span class="p"&gt;(),&lt;/span&gt; &lt;span class="mi"&gt;50&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-34"&gt;&lt;/a&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-35"&gt;&lt;/a&gt;    &lt;span class="c1"&gt;// Test the network on test set&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-36"&gt;&lt;/a&gt;    &lt;span class="n"&gt;net&lt;/span&gt;&lt;span class="o"&gt;-&amp;gt;&lt;/span&gt;&lt;span class="n"&gt;evaluate&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;dataset&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;test&lt;/span&gt;&lt;span class="p"&gt;());&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-37"&gt;&lt;/a&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-38"&gt;&lt;/a&gt;    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-39"&gt;&lt;/a&gt;&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;p&gt;The network starts with recurrent layer, followed by a layer that extracts only
+the last layer and finally a dense layer with a softmax function. The recurrent
+layer has support to change the activation function, change the initializer for
+the two weights matrices of the RNN and the number of steps for BPTT truncation.&lt;/p&gt;
+&lt;p&gt;Here is a possible result:&lt;/p&gt;
+&lt;pre class="code text"&gt;&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-1"&gt;&lt;/a&gt;Network with 3 layers
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-2"&gt;&lt;/a&gt;    RNN(dyn): 28x28 -&amp;gt; TANH -&amp;gt; 28x100
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-3"&gt;&lt;/a&gt;    RNN(last): 28x100 -&amp;gt; 100
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-4"&gt;&lt;/a&gt;    Dense(dyn): 100 -&amp;gt; SOFTMAX -&amp;gt; 10
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-5"&gt;&lt;/a&gt;Total parameters: 13800
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-6"&gt;&lt;/a&gt;Train the network with "Stochastic Gradient Descent"
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-7"&gt;&lt;/a&gt;    Updater: ADAM
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-8"&gt;&lt;/a&gt;       Loss: CATEGORICAL_CROSS_ENTROPY
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-9"&gt;&lt;/a&gt; Early Stop: Goal(error)
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-10"&gt;&lt;/a&gt;
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-11"&gt;&lt;/a&gt;With parameters:
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-12"&gt;&lt;/a&gt;          epochs=50
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-13"&gt;&lt;/a&gt;      batch_size=100
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-14"&gt;&lt;/a&gt;   learning_rate=0.001
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-15"&gt;&lt;/a&gt;           beta1=0.9
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-16"&gt;&lt;/a&gt;           beta2=0.999
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-17"&gt;&lt;/a&gt;
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-18"&gt;&lt;/a&gt;Epoch   0/50 - Classification error: 0.11635 Loss: 0.39999 Time 4717ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-19"&gt;&lt;/a&gt;Epoch   1/50 - Classification error: 0.11303 Loss: 0.36994 Time 4702ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-20"&gt;&lt;/a&gt;Epoch   2/50 - Classification error: 0.06732 Loss: 0.23469 Time 4702ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-21"&gt;&lt;/a&gt;Epoch   3/50 - Classification error: 0.04865 Loss: 0.17091 Time 4696ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-22"&gt;&lt;/a&gt;Epoch   4/50 - Classification error: 0.05957 Loss: 0.20437 Time 4706ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-23"&gt;&lt;/a&gt;Epoch   5/50 - Classification error: 0.05022 Loss: 0.16888 Time 4696ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-24"&gt;&lt;/a&gt;Epoch   6/50 - Classification error: 0.03912 Loss: 0.13743 Time 4698ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-25"&gt;&lt;/a&gt;Epoch   7/50 - Classification error: 0.04097 Loss: 0.14509 Time 4706ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-26"&gt;&lt;/a&gt;Epoch   8/50 - Classification error: 0.03938 Loss: 0.13397 Time 4694ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-27"&gt;&lt;/a&gt;Epoch   9/50 - Classification error: 0.03525 Loss: 0.12284 Time 4706ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-28"&gt;&lt;/a&gt;Epoch  10/50 - Classification error: 0.03927 Loss: 0.13770 Time 4694ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-29"&gt;&lt;/a&gt;Epoch  11/50 - Classification error: 0.03315 Loss: 0.11315 Time 4711ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-30"&gt;&lt;/a&gt;Epoch  12/50 - Classification error: 0.05037 Loss: 0.17123 Time 4711ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-31"&gt;&lt;/a&gt;Epoch  13/50 - Classification error: 0.02927 Loss: 0.10042 Time 4780ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-32"&gt;&lt;/a&gt;Epoch  14/50 - Classification error: 0.03322 Loss: 0.11027 Time 4746ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-33"&gt;&lt;/a&gt;Epoch  15/50 - Classification error: 0.03397 Loss: 0.11585 Time 4684ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-34"&gt;&lt;/a&gt;Epoch  16/50 - Classification error: 0.02938 Loss: 0.09984 Time 4708ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-35"&gt;&lt;/a&gt;Epoch  17/50 - Classification error: 0.03262 Loss: 0.11152 Time 4690ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-36"&gt;&lt;/a&gt;Epoch  18/50 - Classification error: 0.02872 Loss: 0.09753 Time 4672ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-37"&gt;&lt;/a&gt;Epoch  19/50 - Classification error: 0.02548 Loss: 0.08605 Time 4691ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-38"&gt;&lt;/a&gt;Epoch  20/50 - Classification error: 0.02245 Loss: 0.07797 Time 4693ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-39"&gt;&lt;/a&gt;Epoch  21/50 - Classification error: 0.02705 Loss: 0.08984 Time 4684ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-40"&gt;&lt;/a&gt;Epoch  22/50 - Classification error: 0.02422 Loss: 0.08164 Time 4688ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-41"&gt;&lt;/a&gt;Epoch  23/50 - Classification error: 0.02645 Loss: 0.08804 Time 4690ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-42"&gt;&lt;/a&gt;Epoch  24/50 - Classification error: 0.02927 Loss: 0.09739 Time 4715ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-43"&gt;&lt;/a&gt;Epoch  25/50 - Classification error: 0.02578 Loss: 0.08669 Time 4702ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-44"&gt;&lt;/a&gt;Epoch  26/50 - Classification error: 0.02785 Loss: 0.09368 Time 4700ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-45"&gt;&lt;/a&gt;Epoch  27/50 - Classification error: 0.02472 Loss: 0.08237 Time 4695ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-46"&gt;&lt;/a&gt;Epoch  28/50 - Classification error: 0.02125 Loss: 0.07324 Time 4690ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-47"&gt;&lt;/a&gt;Epoch  29/50 - Classification error: 0.01977 Loss: 0.06635 Time 4688ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-48"&gt;&lt;/a&gt;Epoch  30/50 - Classification error: 0.03635 Loss: 0.12140 Time 4689ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-49"&gt;&lt;/a&gt;Epoch  31/50 - Classification error: 0.02862 Loss: 0.09704 Time 4698ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-50"&gt;&lt;/a&gt;Epoch  32/50 - Classification error: 0.02463 Loss: 0.08158 Time 4686ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-51"&gt;&lt;/a&gt;Epoch  33/50 - Classification error: 0.02565 Loss: 0.08771 Time 4697ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-52"&gt;&lt;/a&gt;Epoch  34/50 - Classification error: 0.02278 Loss: 0.07634 Time 4718ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-53"&gt;&lt;/a&gt;Epoch  35/50 - Classification error: 0.02105 Loss: 0.07075 Time 4697ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-54"&gt;&lt;/a&gt;Epoch  36/50 - Classification error: 0.02770 Loss: 0.09358 Time 4711ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-55"&gt;&lt;/a&gt;Epoch  37/50 - Classification error: 0.02627 Loss: 0.08805 Time 4742ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-56"&gt;&lt;/a&gt;Epoch  38/50 - Classification error: 0.02282 Loss: 0.07712 Time 4708ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-57"&gt;&lt;/a&gt;Epoch  39/50 - Classification error: 0.02305 Loss: 0.07661 Time 4697ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-58"&gt;&lt;/a&gt;Epoch  40/50 - Classification error: 0.02243 Loss: 0.07773 Time 4700ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-59"&gt;&lt;/a&gt;Epoch  41/50 - Classification error: 0.02467 Loss: 0.08234 Time 4712ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-60"&gt;&lt;/a&gt;Epoch  42/50 - Classification error: 0.01808 Loss: 0.06186 Time 4691ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-61"&gt;&lt;/a&gt;Epoch  43/50 - Classification error: 0.02388 Loss: 0.07917 Time 4681ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-62"&gt;&lt;/a&gt;Epoch  44/50 - Classification error: 0.02162 Loss: 0.07508 Time 4699ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-63"&gt;&lt;/a&gt;Epoch  45/50 - Classification error: 0.01877 Loss: 0.06289 Time 4735ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-64"&gt;&lt;/a&gt;Epoch  46/50 - Classification error: 0.02263 Loss: 0.07969 Time 4764ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-65"&gt;&lt;/a&gt;Epoch  47/50 - Classification error: 0.02100 Loss: 0.07207 Time 4684ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-66"&gt;&lt;/a&gt;Epoch  48/50 - Classification error: 0.02425 Loss: 0.08076 Time 4752ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-67"&gt;&lt;/a&gt;Epoch  49/50 - Classification error: 0.02328 Loss: 0.07803 Time 4718ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-68"&gt;&lt;/a&gt;Restore the best (error) weights from epoch 42
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-69"&gt;&lt;/a&gt;Training took 235s
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-70"&gt;&lt;/a&gt;Evaluation Results
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-71"&gt;&lt;/a&gt;   error: 0.03000
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-72"&gt;&lt;/a&gt;    loss: 0.12260
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-73"&gt;&lt;/a&gt;evaluation took 245ms
+&lt;/pre&gt;&lt;p&gt;Nothing fancy, but this example is not necessarily optimized.&lt;/p&gt;
+&lt;p&gt;All this support is now in the &lt;strong&gt;master&lt;/strong&gt; branch of the DLL project if you want
+to check it out. You can also check out the example online:
+&lt;a class="reference external" href="https://github.com/wichtounet/dll/blob/master/examples/src/mnist_rnn.cpp"&gt;mnist_rnn.cpp&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;You can access the project &lt;a class="reference external" href="https://github.com/wichtounet/dll"&gt;on Github&lt;/a&gt;.&lt;/p&gt;&lt;/div&gt;</description><category>deep learning</category><category>dll</category><category>Machine Learning</category><category>projects</category><category>rnn</category><guid>http://baptiste-wicht.com/posts/2017/11/initial-support-for-recurrent-neural-network-rnn-in-dll.html</guid><pubDate>Sun, 12 Nov 2017 14:22:44 GMT</pubDate></item><item><title>DLL New Features: Embeddings and Merge layers</title><link>http://baptiste-wicht.com/posts/2017/10/dll-new-features-embeddings-and-merge-layers.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;I've just finished integrating new features into DLL, my deep learning library.
 I've added support for an embeddings layer, a group layer and a merge layer.
 This is not yet released, but available in the master branch.&lt;/p&gt;
 &lt;p&gt;Embeddings are used more and more these days to learn dense representation of
@@ -3381,13 +3511,4 @@ repository on Github: &lt;a class="reference external" href="https://github.com/
 &lt;li&gt;There is now Gentoo and Arch Linux installation packages available for ease of installation&lt;/li&gt;
 &lt;/ul&gt;
 &lt;p&gt;If you have a suggestion or you found a bug, please post an issue on the github project: &lt;a title="https://github.com/wichtounet/budgetwarrior" href="https://github.com/wichtounet/budgetwarrior"&gt;https://github.com/wichtounet/budgetwarrior&lt;/a&gt;.&lt;/p&gt;
-&lt;p&gt;If you have any comment, don't hesitate to contact me, either by letting a comment on this post or by email.&lt;/p&gt;&lt;/div&gt;</description><category>budgetwarrior</category><category>C++</category><category>Linux</category><category>projects</category><guid>http://baptiste-wicht.com/posts/2014/02/budgetwarrior-0-3-0-objective-wish-management.html</guid><pubDate>Mon, 03 Feb 2014 08:21:29 GMT</pubDate></item><item><title>budgetwarrior 0.2 - Visual reports, fortune status and expenses aggregates</title><link>http://baptiste-wicht.com/posts/2013/10/budgetwarrior-0-2-visual-reports-fortune-status-expenses-aggregates.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;I've released a new version of budgetwarrior the version 0.2.&lt;/p&gt;
-&lt;p&gt;I've several new features to the tool. First, I've added a graph of the expenses/earnings/balances of each month for a given year in the form of a bar plot. You can see an example in practice here:&lt;/p&gt;
-&lt;p&gt;&lt;a href="http://baptiste-wicht.com/wp-content/uploads/2013/10/Screenshot-from-2013-10-25-215839.png"&gt;&lt;img class="size-medium wp-image-2617" alt="budgetwarrior monthly report" src="http://baptiste-wicht.com/wp-content/uploads/2013/10/Screenshot-from-2013-10-25-215839-300x266.png" width="300" height="266"&gt;&lt;/a&gt;&lt;/p&gt;
-&lt;p&gt;Nothing fancy, but it gives a good overview of the current state of your budget.&lt;/p&gt;
-&lt;p&gt;I've added a new module, called fortune, that lets you enter your total fortune and then computes the difference between the entered fortune statuses. For now, it doesn't do anything else with this data. But in the future, I want to correlate this data with the balances to check the difference between the filled expenses and earnings and the fortune evolution.&lt;/p&gt;
-&lt;p&gt;I've also added a more convenient way of creating expenses and earnings. Just type "budget expense add" and you'll be able to fill all the fields one by one. Of course, the command line commands are still available.&lt;/p&gt;
-&lt;p&gt;The last new feature I've added is an aggregate report (budget overview aggregate). This view simply groups all the expenses with the same name of a year together. If you always use the same expense title for your groceries, you'll see the total you spent in groceries for a year. You can also name your expenses with the format "Category/Expenses" and all the expenses with the same category will be grouped together in the aggregate view. That allows you to still have enough details in the monthly overview but to logically groups your expenses together in the aggregate view.&lt;/p&gt;
-&lt;p&gt;The other changes are minor. I've improved the monthly overview to sort the expenses and earnings by date. To facilitate the storage of the files in a service like Dropbox, the data and configuration files are now only written if they have been modified. The mean in the current overview has been changed to reflect only the months up to the current month and not the future (which was just ruining the means).&lt;/p&gt;
-&lt;p&gt;If you are interested by the tool, you can download it on Github: &lt;a title="budgetwarrior repository" href="https://github.com/wichtounet/budgetwarrior"&gt;budgetwarrior&lt;/a&gt;&lt;/p&gt;
-&lt;p&gt;I hope this tool will be useful to some people. If you've any question, just let a comment on this post or contact me directly by email. I'll be glad to help.&lt;/p&gt;&lt;/div&gt;</description><category>budgetwarrior</category><category>C++</category><category>Others</category><category>projects</category><guid>http://baptiste-wicht.com/posts/2013/10/budgetwarrior-0-2-visual-reports-fortune-status-expenses-aggregates.html</guid><pubDate>Fri, 25 Oct 2013 14:10:50 GMT</pubDate></item></channel></rss>
+&lt;p&gt;If you have any comment, don't hesitate to contact me, either by letting a comment on this post or by email.&lt;/p&gt;&lt;/div&gt;</description><category>budgetwarrior</category><category>C++</category><category>Linux</category><category>projects</category><guid>http://baptiste-wicht.com/posts/2014/02/budgetwarrior-0-3-0-objective-wish-management.html</guid><pubDate>Mon, 03 Feb 2014 08:21:29 GMT</pubDate></item></channel></rss>

@@ -1,5 +1,135 @@
 <?xml version="1.0" encoding="utf-8"?>
-<?xml-stylesheet type="text/xsl" href="assets/xml/rss.xsl" media="all"?><rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Blog blog("Baptiste Wicht");</title><link>http://baptiste-wicht.com/</link><description>Tutorials and short posts about programming, C++, Java, Assembly, Operating Systems Development, Compilers, ...</description><atom:link type="application/rss+xml" href="http://baptiste-wicht.com/rss.xml" rel="self"></atom:link><language>en</language><lastBuildDate>Tue, 17 Oct 2017 18:59:50 GMT</lastBuildDate><generator>Nikola (getnikola.com)</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>DLL New Features: Embeddings and Merge layers</title><link>http://baptiste-wicht.com/posts/2017/10/dll-new-features-embeddings-and-merge-layers.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;I've just finished integrating new features into DLL, my deep learning library.
+<?xml-stylesheet type="text/xsl" href="assets/xml/rss.xsl" media="all"?><rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0"><channel><title>Blog blog("Baptiste Wicht");</title><link>http://baptiste-wicht.com/</link><description>Tutorials and short posts about programming, C++, Java, Assembly, Operating Systems Development, Compilers, ...</description><atom:link href="http://baptiste-wicht.com/rss.xml" rel="self" type="application/rss+xml"></atom:link><language>en</language><lastBuildDate>Sun, 12 Nov 2017 14:55:26 GMT</lastBuildDate><generator>Nikola (getnikola.com)</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>Initial support for Recurrent Neural Network (RNN) in DLL</title><link>http://baptiste-wicht.com/posts/2017/11/initial-support-for-recurrent-neural-network-rnn-in-dll.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;I'm happy to announce that I just merged support for Recurrent Neural Networks
+(RNNs) into my Deep Learning Library (DLL) machine learning framework.&lt;/p&gt;
+&lt;p&gt;It's nothing fancy yet, but forward propagation of RNN and basic Backpropagation
+Through Time (BPTT) are now supported. For now, only existing classification
+loss is supported for RNN. I plan to add support for sequence-to-sequence loss
+in order to be able to train models able to generate characters, but I don't
+know when I'll be able to work on that. I also plan to add support for other
+types of cells such as LSTM and GRU (maybe NAS) in the future.&lt;/p&gt;
+&lt;p&gt;For example, here is a simple RNN used on MNIST:&lt;/p&gt;
+&lt;pre class="code cpp"&gt;&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-1"&gt;&lt;/a&gt;&lt;span class="cp"&gt;#include&lt;/span&gt; &lt;span class="cpf"&gt;"dll/neural/dense_layer.hpp"&lt;/span&gt;&lt;span class="cp"&gt;&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-2"&gt;&lt;/a&gt;&lt;span class="cp"&gt;#include&lt;/span&gt; &lt;span class="cpf"&gt;"dll/neural/recurrent_layer.hpp"&lt;/span&gt;&lt;span class="cp"&gt;&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-3"&gt;&lt;/a&gt;&lt;span class="cp"&gt;#include&lt;/span&gt; &lt;span class="cpf"&gt;"dll/neural/recurrent_last_layer.hpp"&lt;/span&gt;&lt;span class="cp"&gt;&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-4"&gt;&lt;/a&gt;&lt;span class="cp"&gt;#include&lt;/span&gt; &lt;span class="cpf"&gt;"dll/network.hpp"&lt;/span&gt;&lt;span class="cp"&gt;&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-5"&gt;&lt;/a&gt;&lt;span class="cp"&gt;#include&lt;/span&gt; &lt;span class="cpf"&gt;"dll/datasets.hpp"&lt;/span&gt;&lt;span class="cp"&gt;&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-6"&gt;&lt;/a&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-7"&gt;&lt;/a&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="nf"&gt;main&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="cm"&gt;/*argc*/&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="kt"&gt;char&lt;/span&gt;&lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="cm"&gt;/*argv*/&lt;/span&gt; &lt;span class="p"&gt;[])&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-8"&gt;&lt;/a&gt;    &lt;span class="c1"&gt;// Load the dataset&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-9"&gt;&lt;/a&gt;    &lt;span class="k"&gt;auto&lt;/span&gt; &lt;span class="n"&gt;dataset&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;make_mnist_dataset_nc&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;batch_size&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="mi"&gt;100&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="p"&gt;{},&lt;/span&gt; &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;scale_pre&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="mi"&gt;255&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="p"&gt;{});&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-10"&gt;&lt;/a&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-11"&gt;&lt;/a&gt;    &lt;span class="k"&gt;constexpr&lt;/span&gt; &lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;time_steps&lt;/span&gt;      &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;28&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-12"&gt;&lt;/a&gt;    &lt;span class="k"&gt;constexpr&lt;/span&gt; &lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;sequence_length&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;28&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-13"&gt;&lt;/a&gt;    &lt;span class="k"&gt;constexpr&lt;/span&gt; &lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;hidden_units&lt;/span&gt;    &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;100&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-14"&gt;&lt;/a&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-15"&gt;&lt;/a&gt;    &lt;span class="c1"&gt;// Build the network&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-16"&gt;&lt;/a&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-17"&gt;&lt;/a&gt;    &lt;span class="k"&gt;using&lt;/span&gt; &lt;span class="n"&gt;network_t&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;dyn_network_desc&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-18"&gt;&lt;/a&gt;        &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;network_layers&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-19"&gt;&lt;/a&gt;            &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;recurrent_layer&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;time_steps&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;sequence_length&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;hidden_units&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;last_only&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-20"&gt;&lt;/a&gt;            &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;recurrent_last_layer&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;time_steps&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;hidden_units&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-21"&gt;&lt;/a&gt;            &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;dense_layer&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;hidden_units&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;10&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;softmax&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-22"&gt;&lt;/a&gt;        &lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-23"&gt;&lt;/a&gt;        &lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;updater&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;updater_type&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;ADAM&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;      &lt;span class="c1"&gt;// Adam&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-24"&gt;&lt;/a&gt;        &lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;dll&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;batch_size&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="mi"&gt;100&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;                       &lt;span class="c1"&gt;// The mini-batch size&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-25"&gt;&lt;/a&gt;    &lt;span class="o"&gt;&amp;gt;::&lt;/span&gt;&lt;span class="n"&gt;network_t&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-26"&gt;&lt;/a&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-27"&gt;&lt;/a&gt;    &lt;span class="k"&gt;auto&lt;/span&gt; &lt;span class="n"&gt;net&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;make_unique&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;network_t&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-28"&gt;&lt;/a&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-29"&gt;&lt;/a&gt;    &lt;span class="c1"&gt;// Display the network and dataset&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-30"&gt;&lt;/a&gt;    &lt;span class="n"&gt;net&lt;/span&gt;&lt;span class="o"&gt;-&amp;gt;&lt;/span&gt;&lt;span class="n"&gt;display&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-31"&gt;&lt;/a&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-32"&gt;&lt;/a&gt;    &lt;span class="c1"&gt;// Train the network for performance sake&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-33"&gt;&lt;/a&gt;    &lt;span class="n"&gt;net&lt;/span&gt;&lt;span class="o"&gt;-&amp;gt;&lt;/span&gt;&lt;span class="n"&gt;fine_tune&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;dataset&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;train&lt;/span&gt;&lt;span class="p"&gt;(),&lt;/span&gt; &lt;span class="mi"&gt;50&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-34"&gt;&lt;/a&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-35"&gt;&lt;/a&gt;    &lt;span class="c1"&gt;// Test the network on test set&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-36"&gt;&lt;/a&gt;    &lt;span class="n"&gt;net&lt;/span&gt;&lt;span class="o"&gt;-&amp;gt;&lt;/span&gt;&lt;span class="n"&gt;evaluate&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;dataset&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;test&lt;/span&gt;&lt;span class="p"&gt;());&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-37"&gt;&lt;/a&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-38"&gt;&lt;/a&gt;    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;a name="rest_code_97472889c54d4148b28b7da1b4d9bbb5-39"&gt;&lt;/a&gt;&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;p&gt;The network starts with recurrent layer, followed by a layer that extracts only
+the last layer and finally a dense layer with a softmax function. The recurrent
+layer has support to change the activation function, change the initializer for
+the two weights matrices of the RNN and the number of steps for BPTT truncation.&lt;/p&gt;
+&lt;p&gt;Here is a possible result:&lt;/p&gt;
+&lt;pre class="code text"&gt;&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-1"&gt;&lt;/a&gt;Network with 3 layers
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-2"&gt;&lt;/a&gt;    RNN(dyn): 28x28 -&amp;gt; TANH -&amp;gt; 28x100
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-3"&gt;&lt;/a&gt;    RNN(last): 28x100 -&amp;gt; 100
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-4"&gt;&lt;/a&gt;    Dense(dyn): 100 -&amp;gt; SOFTMAX -&amp;gt; 10
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-5"&gt;&lt;/a&gt;Total parameters: 13800
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-6"&gt;&lt;/a&gt;Train the network with "Stochastic Gradient Descent"
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-7"&gt;&lt;/a&gt;    Updater: ADAM
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-8"&gt;&lt;/a&gt;       Loss: CATEGORICAL_CROSS_ENTROPY
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-9"&gt;&lt;/a&gt; Early Stop: Goal(error)
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-10"&gt;&lt;/a&gt;
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-11"&gt;&lt;/a&gt;With parameters:
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-12"&gt;&lt;/a&gt;          epochs=50
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-13"&gt;&lt;/a&gt;      batch_size=100
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-14"&gt;&lt;/a&gt;   learning_rate=0.001
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-15"&gt;&lt;/a&gt;           beta1=0.9
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-16"&gt;&lt;/a&gt;           beta2=0.999
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-17"&gt;&lt;/a&gt;
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-18"&gt;&lt;/a&gt;Epoch   0/50 - Classification error: 0.11635 Loss: 0.39999 Time 4717ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-19"&gt;&lt;/a&gt;Epoch   1/50 - Classification error: 0.11303 Loss: 0.36994 Time 4702ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-20"&gt;&lt;/a&gt;Epoch   2/50 - Classification error: 0.06732 Loss: 0.23469 Time 4702ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-21"&gt;&lt;/a&gt;Epoch   3/50 - Classification error: 0.04865 Loss: 0.17091 Time 4696ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-22"&gt;&lt;/a&gt;Epoch   4/50 - Classification error: 0.05957 Loss: 0.20437 Time 4706ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-23"&gt;&lt;/a&gt;Epoch   5/50 - Classification error: 0.05022 Loss: 0.16888 Time 4696ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-24"&gt;&lt;/a&gt;Epoch   6/50 - Classification error: 0.03912 Loss: 0.13743 Time 4698ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-25"&gt;&lt;/a&gt;Epoch   7/50 - Classification error: 0.04097 Loss: 0.14509 Time 4706ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-26"&gt;&lt;/a&gt;Epoch   8/50 - Classification error: 0.03938 Loss: 0.13397 Time 4694ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-27"&gt;&lt;/a&gt;Epoch   9/50 - Classification error: 0.03525 Loss: 0.12284 Time 4706ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-28"&gt;&lt;/a&gt;Epoch  10/50 - Classification error: 0.03927 Loss: 0.13770 Time 4694ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-29"&gt;&lt;/a&gt;Epoch  11/50 - Classification error: 0.03315 Loss: 0.11315 Time 4711ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-30"&gt;&lt;/a&gt;Epoch  12/50 - Classification error: 0.05037 Loss: 0.17123 Time 4711ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-31"&gt;&lt;/a&gt;Epoch  13/50 - Classification error: 0.02927 Loss: 0.10042 Time 4780ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-32"&gt;&lt;/a&gt;Epoch  14/50 - Classification error: 0.03322 Loss: 0.11027 Time 4746ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-33"&gt;&lt;/a&gt;Epoch  15/50 - Classification error: 0.03397 Loss: 0.11585 Time 4684ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-34"&gt;&lt;/a&gt;Epoch  16/50 - Classification error: 0.02938 Loss: 0.09984 Time 4708ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-35"&gt;&lt;/a&gt;Epoch  17/50 - Classification error: 0.03262 Loss: 0.11152 Time 4690ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-36"&gt;&lt;/a&gt;Epoch  18/50 - Classification error: 0.02872 Loss: 0.09753 Time 4672ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-37"&gt;&lt;/a&gt;Epoch  19/50 - Classification error: 0.02548 Loss: 0.08605 Time 4691ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-38"&gt;&lt;/a&gt;Epoch  20/50 - Classification error: 0.02245 Loss: 0.07797 Time 4693ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-39"&gt;&lt;/a&gt;Epoch  21/50 - Classification error: 0.02705 Loss: 0.08984 Time 4684ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-40"&gt;&lt;/a&gt;Epoch  22/50 - Classification error: 0.02422 Loss: 0.08164 Time 4688ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-41"&gt;&lt;/a&gt;Epoch  23/50 - Classification error: 0.02645 Loss: 0.08804 Time 4690ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-42"&gt;&lt;/a&gt;Epoch  24/50 - Classification error: 0.02927 Loss: 0.09739 Time 4715ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-43"&gt;&lt;/a&gt;Epoch  25/50 - Classification error: 0.02578 Loss: 0.08669 Time 4702ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-44"&gt;&lt;/a&gt;Epoch  26/50 - Classification error: 0.02785 Loss: 0.09368 Time 4700ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-45"&gt;&lt;/a&gt;Epoch  27/50 - Classification error: 0.02472 Loss: 0.08237 Time 4695ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-46"&gt;&lt;/a&gt;Epoch  28/50 - Classification error: 0.02125 Loss: 0.07324 Time 4690ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-47"&gt;&lt;/a&gt;Epoch  29/50 - Classification error: 0.01977 Loss: 0.06635 Time 4688ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-48"&gt;&lt;/a&gt;Epoch  30/50 - Classification error: 0.03635 Loss: 0.12140 Time 4689ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-49"&gt;&lt;/a&gt;Epoch  31/50 - Classification error: 0.02862 Loss: 0.09704 Time 4698ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-50"&gt;&lt;/a&gt;Epoch  32/50 - Classification error: 0.02463 Loss: 0.08158 Time 4686ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-51"&gt;&lt;/a&gt;Epoch  33/50 - Classification error: 0.02565 Loss: 0.08771 Time 4697ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-52"&gt;&lt;/a&gt;Epoch  34/50 - Classification error: 0.02278 Loss: 0.07634 Time 4718ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-53"&gt;&lt;/a&gt;Epoch  35/50 - Classification error: 0.02105 Loss: 0.07075 Time 4697ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-54"&gt;&lt;/a&gt;Epoch  36/50 - Classification error: 0.02770 Loss: 0.09358 Time 4711ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-55"&gt;&lt;/a&gt;Epoch  37/50 - Classification error: 0.02627 Loss: 0.08805 Time 4742ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-56"&gt;&lt;/a&gt;Epoch  38/50 - Classification error: 0.02282 Loss: 0.07712 Time 4708ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-57"&gt;&lt;/a&gt;Epoch  39/50 - Classification error: 0.02305 Loss: 0.07661 Time 4697ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-58"&gt;&lt;/a&gt;Epoch  40/50 - Classification error: 0.02243 Loss: 0.07773 Time 4700ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-59"&gt;&lt;/a&gt;Epoch  41/50 - Classification error: 0.02467 Loss: 0.08234 Time 4712ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-60"&gt;&lt;/a&gt;Epoch  42/50 - Classification error: 0.01808 Loss: 0.06186 Time 4691ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-61"&gt;&lt;/a&gt;Epoch  43/50 - Classification error: 0.02388 Loss: 0.07917 Time 4681ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-62"&gt;&lt;/a&gt;Epoch  44/50 - Classification error: 0.02162 Loss: 0.07508 Time 4699ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-63"&gt;&lt;/a&gt;Epoch  45/50 - Classification error: 0.01877 Loss: 0.06289 Time 4735ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-64"&gt;&lt;/a&gt;Epoch  46/50 - Classification error: 0.02263 Loss: 0.07969 Time 4764ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-65"&gt;&lt;/a&gt;Epoch  47/50 - Classification error: 0.02100 Loss: 0.07207 Time 4684ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-66"&gt;&lt;/a&gt;Epoch  48/50 - Classification error: 0.02425 Loss: 0.08076 Time 4752ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-67"&gt;&lt;/a&gt;Epoch  49/50 - Classification error: 0.02328 Loss: 0.07803 Time 4718ms
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-68"&gt;&lt;/a&gt;Restore the best (error) weights from epoch 42
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-69"&gt;&lt;/a&gt;Training took 235s
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-70"&gt;&lt;/a&gt;Evaluation Results
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-71"&gt;&lt;/a&gt;   error: 0.03000
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-72"&gt;&lt;/a&gt;    loss: 0.12260
+&lt;a name="rest_code_2b78966997bc43da8e34300e10a60d29-73"&gt;&lt;/a&gt;evaluation took 245ms
+&lt;/pre&gt;&lt;p&gt;Nothing fancy, but this example is not necessarily optimized.&lt;/p&gt;
+&lt;p&gt;All this support is now in the &lt;strong&gt;master&lt;/strong&gt; branch of the DLL project if you want
+to check it out. You can also check out the example online:
+&lt;a class="reference external" href="https://github.com/wichtounet/dll/blob/master/examples/src/mnist_rnn.cpp"&gt;mnist_rnn.cpp&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;You can access the project &lt;a class="reference external" href="https://github.com/wichtounet/dll"&gt;on Github&lt;/a&gt;.&lt;/p&gt;&lt;/div&gt;</description><category>deep learning</category><category>dll</category><category>Machine Learning</category><category>projects</category><category>rnn</category><guid>http://baptiste-wicht.com/posts/2017/11/initial-support-for-recurrent-neural-network-rnn-in-dll.html</guid><pubDate>Sun, 12 Nov 2017 14:22:44 GMT</pubDate></item><item><title>DLL New Features: Embeddings and Merge layers</title><link>http://baptiste-wicht.com/posts/2017/10/dll-new-features-embeddings-and-merge-layers.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;I've just finished integrating new features into DLL, my deep learning library.
 I've added support for an embeddings layer, a group layer and a merge layer.
 This is not yet released, but available in the master branch.&lt;/p&gt;
 &lt;p&gt;Embeddings are used more and more these days to learn dense representation of
@@ -3431,135 +3561,4 @@ wait a while. In the coming days, I plan to work on the performance of DLL,
 especially for stochastic gradient descent.&lt;/p&gt;
 &lt;p&gt;If you want more information on DLL, you can check out the
 &lt;a class="reference external" href="https://github.com/wichtounet/dll"&gt;dll Github repository&lt;/a&gt;.&lt;/p&gt;
-&lt;/div&gt;&lt;/div&gt;</description><category>C++</category><category>C++11</category><category>clang</category><category>Compilers</category><category>dll</category><category>etl</category><category>gcc</category><category>zapcc</category><guid>http://baptiste-wicht.com/posts/2017/03/partial-type-erasing-deep-learning-library-dll-improve-compilation-time.html</guid><pubDate>Wed, 15 Mar 2017 06:43:44 GMT</pubDate></item><item><title>Use clang-tidy for static analysis and integration in Sonarqube</title><link>http://baptiste-wicht.com/posts/2017/03/clang-tidy-static-analysis-integration-in-sonarqube.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;clang-tidy is an extensive linter C++. It provides a complete framework for
-analysis of C++ code. Some of the checks are very simple but some of them are
-very complete and most of the checks from the clang-static-analyzer are
-integrated into clang-tidy.&lt;/p&gt;
-&lt;div class="section" id="usage"&gt;
-&lt;h2&gt;Usage&lt;/h2&gt;
-&lt;p&gt;If you want to see the list of checks available on clang-tidy, you can use the
-list-checks options:&lt;/p&gt;
-&lt;pre class="code text"&gt;&lt;a name="rest_code_097a78d40f4046e993cb65035e8f026b-1"&gt;&lt;/a&gt;clang-tidy -list-checks
-&lt;/pre&gt;&lt;p&gt;You can then choose the tests you are interested in and perform an analysis of
-your code. For, it is highly recommended to use a Clang compilation database,
-you can have a look at Bear to generate this compilation database if you don't
-have it yet. The usage of clang-tidy, is pretty simple, you set the list of
-checks you want, the header on which you want to have warnings reported and the
-list of source files to analyse:&lt;/p&gt;
-&lt;pre class="code text"&gt;&lt;a name="rest_code_5c3d2b46a40542d1a886b67a6cf0ce0f-1"&gt;&lt;/a&gt;clang-tidy -checks='*' -header-filter="^include" -p . src/*.cpp
-&lt;/pre&gt;&lt;p&gt;You'll very likely see a lot of warnings. And you will very likely see a lot of
-false positives and a lot of warnings you don't agree too. For insance, there
-are a lot of warnings from the CPP Core Guidelines and the Google Guidelines
-that I don't follow in my coding. You should not take the complete list of tests
-as rule, you should devise your own list of what you really want to fix in your
-code. If you want to disable one check X, you can use the - operation:&lt;/p&gt;
-&lt;pre class="code text"&gt;&lt;a name="rest_code_cbbaba3d60ea4314a400a9f7c0c8fa08-1"&gt;&lt;/a&gt;clang-tidy -checks='*,-X' -header-filter="^include" -p . src/*.cpp
-&lt;/pre&gt;&lt;p&gt;You can also enable the checks one by one or parts of them with *:&lt;/p&gt;
-&lt;pre class="code text"&gt;&lt;a name="rest_code_91ce81be43cc4b0ab4d00b1f298e655a-1"&gt;&lt;/a&gt;clang-tidy -checks='google-*' -header-filter="^include" -p . src/*.cpp
-&lt;/pre&gt;&lt;p&gt;One problem with the clang-tidy tool is that it is utterly slow, especially if
-you enable the clang-static-analyzer checks. Moreover, if you use it like it is
-set before, it will only use one thread for the complete set of files. This may
-not be an issue on small projects, but this will definitely be a big issue for
-large projects and template-heavy code (like my ETL project). You could create
-an implicit target into your Makefile to use it on each file independently and
-then use the -j option of make to make them in parallel, but it not really
-practical.&lt;/p&gt;
-&lt;p&gt;For this, I just discovered that clang propose a Python script,
-run-clang-tidy.py that does it all for us! On Gentoo, it is installed at
-/usr/share/run-clang-tidy.py.&lt;/p&gt;
-&lt;pre class="code text"&gt;&lt;a name="rest_code_42a80053a2734bd5bf4fa14d7825c424-1"&gt;&lt;/a&gt;run-clang-tidy.py -checks='*' -header-filter="^include" -p . -j9
-&lt;/pre&gt;&lt;p&gt;This will automatically run clang-tidy on each file from the compilation
-database and use 9 threads to perform the checks. This is definitely much
-faster. For me, this is the best way to run clang-tidy.&lt;/p&gt;
-&lt;p&gt;One small point I don't like is that the script always print the list of enabled
-checks. For, this I changed this line in the script:&lt;/p&gt;
-&lt;pre class="code python"&gt;&lt;a name="rest_code_fde3c156e5484523a31f93d4698c577b-1"&gt;&lt;/a&gt;&lt;span class="n"&gt;invocation&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;args&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;clang_tidy_binary&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s1"&gt;'-list-checks'&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt;
-&lt;/pre&gt;&lt;p&gt;with:&lt;/p&gt;
-&lt;pre class="code python"&gt;&lt;a name="rest_code_10fb77fb275a4f698765be87bf2e4395-1"&gt;&lt;/a&gt;&lt;span class="n"&gt;invocation&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;args&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;clang_tidy_binary&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt;
-&lt;/pre&gt;&lt;p&gt;This makes it more quiet.&lt;/p&gt;
-&lt;p&gt;One thing I didn't mention is that clang-tidy is able to fix some of the errors
-directly if you use the -fix option. Personally, I don't like this, but for
-a large code base and a carefully selected set of checks, this could be really
-useful. Note that not all the checks are automatically fixable by clang-tidy.&lt;/p&gt;
-&lt;/div&gt;
-&lt;div class="section" id="results"&gt;
-&lt;h2&gt;Results&lt;/h2&gt;
-&lt;p&gt;I have run clang-tidy on my cpp-utils library and here some interesting results.
-I have not run all the checks, here is the command I used:&lt;/p&gt;
-&lt;pre class="code text"&gt;&lt;a name="rest_code_607905eaa8774e0aa00e4715eec695d6-1"&gt;&lt;/a&gt;/usr/share/clang/run-clang-tidy.py -p . -header-filter '^include/cpp_utils' -checks='cert-*,cppcoreguidelines-*,google-*,llvm-*,misc-*,modernize-*,performance-*,readility-*,-cppcoreguidelines-pro-type-reinterpret-cast,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-google-readability-namespace-comments,-llvm-namespace-comment,-llvm-include-order,-google-runtime-references' -j9 2&amp;gt;/dev/null  | /usr/bin/zgrep -v "^clang-tidy"
-&lt;/pre&gt;&lt;p&gt;Let's go over some warnings I got:&lt;/p&gt;
-&lt;pre class="code text"&gt;&lt;a name="rest_code_4341cfb8f71949b4bf99d22fcd3d8ffa-1"&gt;&lt;/a&gt;include/cpp_utils/assert.hpp:91:103: warning: consider replacing 'long' with 'int64' [google-runtime-int]
-&lt;a name="rest_code_4341cfb8f71949b4bf99d22fcd3d8ffa-2"&gt;&lt;/a&gt;void assertion_failed_msg(const CharT* expr, const char* msg, const char* function, const char* file, long line) {
-&lt;a name="rest_code_4341cfb8f71949b4bf99d22fcd3d8ffa-3"&gt;&lt;/a&gt;                                                                                                      ^
-&lt;/pre&gt;&lt;p&gt;I got this one several times. It is indeed more portable to use &lt;code&gt;int64&lt;/code&gt; rather than &lt;code&gt;long&lt;/code&gt;.&lt;/p&gt;
-&lt;pre class="code text"&gt;&lt;a name="rest_code_12d0bca3b5ed43f0a550dcef7b18a988-1"&gt;&lt;/a&gt;include/cpp_utils/aligned_allocator.hpp:53:9: warning: use 'using' instead of 'typedef' [modernize-use-using]
-&lt;a name="rest_code_12d0bca3b5ed43f0a550dcef7b18a988-2"&gt;&lt;/a&gt;        typedef aligned_allocator&amp;lt;U, A&amp;gt; other;
-&lt;a name="rest_code_12d0bca3b5ed43f0a550dcef7b18a988-3"&gt;&lt;/a&gt;        ^
-&lt;/pre&gt;&lt;p&gt;This one is part of the modernize checks, indicating that one should use
-&lt;code&gt;using&lt;/code&gt; rather than a &lt;code&gt;typedef&lt;/code&gt; and I completely agree.&lt;/p&gt;
-&lt;pre class="code cpp"&gt;&lt;a name="rest_code_d0d13f55c06f47cd9c2992f049f1e972-1"&gt;&lt;/a&gt;&lt;span class="n"&gt;include&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;cpp_utils&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;aligned_allocator&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nl"&gt;hpp&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mi"&gt;79&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt;&lt;span class="mi"&gt;5&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="nl"&gt;warning&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="n"&gt;use&lt;/span&gt; &lt;span class="err"&gt;'&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="k"&gt;default&lt;/span&gt;&lt;span class="err"&gt;'&lt;/span&gt; &lt;span class="n"&gt;to&lt;/span&gt; &lt;span class="n"&gt;define&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="n"&gt;trivial&lt;/span&gt; &lt;span class="k"&gt;default&lt;/span&gt; &lt;span class="n"&gt;constructor&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;modernize&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;use&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="k"&gt;default&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt;
-&lt;a name="rest_code_d0d13f55c06f47cd9c2992f049f1e972-2"&gt;&lt;/a&gt;    &lt;span class="n"&gt;aligned_allocator&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="p"&gt;{}&lt;/span&gt;
-&lt;a name="rest_code_d0d13f55c06f47cd9c2992f049f1e972-3"&gt;&lt;/a&gt;    &lt;span class="o"&gt;^&lt;/span&gt;
-&lt;a name="rest_code_d0d13f55c06f47cd9c2992f049f1e972-4"&gt;&lt;/a&gt;                        &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="k"&gt;default&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
-&lt;/pre&gt;&lt;p&gt;Another one from the modernize checks that I really like. This is completely
-true.&lt;/p&gt;
-&lt;!-- code.:
-
-include/cpp_utils/maybe_parallel.hpp:33:5: warning: constructors that are callable with a single argument must be marked explicit to avoid unintentional implicit conversions [google-explicit-constructor]
-    thread_pool(Args... /*args*/){
-    ^
-    explicit --&gt;
-&lt;p&gt;I don't agree that every constructor with one argument should be explicit,
-sometimes you want implicit conversion. Nevertheless, this particular case is
-very interesting since it is variadic, it can have one template argument and as
-thus it can be implicitly converted from anything, which is pretty bad I think.&lt;/p&gt;
-&lt;pre class="code cpp"&gt;&lt;a name="rest_code_41f1325a0f0a4bb3b426dfc8dec16a61-1"&gt;&lt;/a&gt;&lt;span class="n"&gt;test&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;array_wrapper&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nl"&gt;cpp&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mi"&gt;15&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt;&lt;span class="mi"&gt;18&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="nl"&gt;warning&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="n"&gt;C&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;style&lt;/span&gt; &lt;span class="n"&gt;casts&lt;/span&gt; &lt;span class="n"&gt;are&lt;/span&gt; &lt;span class="n"&gt;discouraged&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;use&lt;/span&gt; &lt;span class="k"&gt;reinterpret_cast&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;google&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;readability&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;casting&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt;
-&lt;a name="rest_code_41f1325a0f0a4bb3b426dfc8dec16a61-2"&gt;&lt;/a&gt;    &lt;span class="kt"&gt;float&lt;/span&gt;&lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="n"&gt;mem&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;float&lt;/span&gt;&lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="n"&gt;malloc&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="k"&gt;sizeof&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;float&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="mi"&gt;8&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
-&lt;a name="rest_code_41f1325a0f0a4bb3b426dfc8dec16a61-3"&gt;&lt;/a&gt;                 &lt;span class="o"&gt;^&lt;/span&gt;
-&lt;a name="rest_code_41f1325a0f0a4bb3b426dfc8dec16a61-4"&gt;&lt;/a&gt;                 &lt;span class="k"&gt;reinterpret_cast&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="kt"&gt;float&lt;/span&gt;&lt;span class="o"&gt;*&amp;gt;&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;         &lt;span class="p"&gt;)&lt;/span&gt;
-&lt;/pre&gt;&lt;p&gt;On this one, I completely agree, C-style casts should be avoided and much
-clearer C++ style casts should be preferred.&lt;/p&gt;
-&lt;pre class="code cpp"&gt;&lt;a name="rest_code_2363916daf3248c1a3c905bfdeb1ee5f-1"&gt;&lt;/a&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;home&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;wichtounet&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;dev&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;cpp_utils_test&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;include&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;cpp_utils&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;aligned_allocator&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nl"&gt;hpp&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mi"&gt;126&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt;&lt;span class="mi"&gt;19&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="nl"&gt;warning&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="n"&gt;thrown&lt;/span&gt; &lt;span class="n"&gt;exception&lt;/span&gt; &lt;span class="n"&gt;type&lt;/span&gt; &lt;span class="n"&gt;is&lt;/span&gt; &lt;span class="n"&gt;not&lt;/span&gt; &lt;span class="n"&gt;nothrow&lt;/span&gt; &lt;span class="n"&gt;copy&lt;/span&gt; &lt;span class="n"&gt;constructible&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;cert&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;err60&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;cpp&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt;
-&lt;a name="rest_code_2363916daf3248c1a3c905bfdeb1ee5f-2"&gt;&lt;/a&gt;            &lt;span class="k"&gt;throw&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;length_error&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"aligned_allocator&amp;lt;T&amp;gt;::allocate() - Integer overflow."&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
-&lt;a name="rest_code_2363916daf3248c1a3c905bfdeb1ee5f-3"&gt;&lt;/a&gt;                  &lt;span class="o"&gt;^&lt;/span&gt;
-&lt;/pre&gt;&lt;p&gt;This is one of the checks I don't agree with. Even though it makes sense to
-prefer exception that are nothrow copy constructible, they should be caught by
-const reference anyway. Moreover, this is here an exception from the standard
-library.&lt;/p&gt;
-&lt;pre class="code text"&gt;&lt;a name="rest_code_a9b73a5c8cf8408093759d5ec4b4d46c-1"&gt;&lt;/a&gt;/home/wichtounet/dev/cpp_utils_test/include/cpp_utils/aligned_allocator.hpp:141:40: warning: do not use const_cast [cppcoreguidelines-pro-type-const-cast]
-&lt;a name="rest_code_a9b73a5c8cf8408093759d5ec4b4d46c-2"&gt;&lt;/a&gt;        free((reinterpret_cast&amp;lt;void**&amp;gt;(const_cast&amp;lt;std::remove_const_t&amp;lt;T&amp;gt;*&amp;gt;(ptr)))[-1]);
-&lt;a name="rest_code_a9b73a5c8cf8408093759d5ec4b4d46c-3"&gt;&lt;/a&gt;                                       ^
-&lt;/pre&gt;&lt;p&gt;In general, I agree that using const_cast should be avoided as much as possible.
-But there are some cases where they make sense. In this particular case, I don't
-modify the object itself but some memory before the object that is unrelated and
-I initialize myself.&lt;/p&gt;
-&lt;p&gt;I also had a few false positives, but overall nothing too bad. I'm quite
-satisfied with the quality of the results. I'll fix these warnings in the coming
-week.&lt;/p&gt;
-&lt;p&gt;Integration in Sonarqube&lt;/p&gt;
-&lt;p&gt;The sonar-cxx plugin just integrated support for clang-tidy in main. You need
-to build the version yourself, the 0.9.8-SNAPSHOT version. You then can use
-something like this in your sonar-project.properties file:&lt;/p&gt;
-&lt;pre class="code text"&gt;&lt;a name="rest_code_3b2c06213ac94d8bac9a28d7e67c5be0-1"&gt;&lt;/a&gt;sonar.cxx.clangtidy.reportPath=clang-tidy-report
-&lt;/pre&gt;&lt;p&gt;and sonar-cxx will parse the results and integrate the issues in your sonar
-report.&lt;/p&gt;
-&lt;p&gt;Here is an example:&lt;/p&gt;
-&lt;img alt="/images/sonar-cxx-clang-tidy.png" src="http://baptiste-wicht.com/images/sonar-cxx-clang-tidy.png"&gt;
-&lt;p&gt;You can see two of the warnings from clang-tidy :)&lt;/p&gt;
-&lt;p&gt;For now, I haven't integrate this in my Continuous Integration system because
-I'm still having issues with clang-tidy and the compilation database. Because
-the compilation contains absolute paths to the file and to the current
-directory, it cannot be shared directly between servers. I have to find a way to
-fix that so that clang-tidy can use on the other computer. I'll probably wait
-till the sonar-cxx 0.9.8 version is released before integrating all this in
-Sonarqube, but this is a great news for this plugin :)&lt;/p&gt;
-&lt;/div&gt;
-&lt;div class="section" id="conclusion"&gt;
-&lt;h2&gt;Conclusion&lt;/h2&gt;
-&lt;p&gt;clang-tidy is C++ linter that can analyze your code and checks for hundreds of
-problems in it. With it, I have found some very interesting problems in the code
-of my cpp_utils library. Moreover, you can now integrate it Sonarqube by using
-the sonar-cxx plugin. Since it is a bit slow, I'll probably not integrate it in
-my bigger projects, but I'll integrate at least in the cpp_utils library when
-sonar-cxx 0.9.8 will be released.&lt;/p&gt;
-&lt;/div&gt;&lt;/div&gt;</description><category>C++</category><category>clang</category><category>projects</category><category>Sonar</category><guid>http://baptiste-wicht.com/posts/2017/03/clang-tidy-static-analysis-integration-in-sonarqube.html</guid><pubDate>Sat, 11 Mar 2017 08:54:00 GMT</pubDate></item></channel></rss>
+&lt;/div&gt;&lt;/div&gt;</description><category>C++</category><category>C++11</category><category>clang</category><category>Compilers</category><category>dll</category><category>etl</category><category>gcc</category><category>zapcc</category><guid>http://baptiste-wicht.com/posts/2017/03/partial-type-erasing-deep-learning-library-dll-improve-compilation-time.html</guid><pubDate>Wed, 15 Mar 2017 06:43:44 GMT</pubDate></item></channel></rss>

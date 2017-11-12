@@ -103,6 +103,199 @@
             <div id="content"></div>
             
         <article class="postbox h-entry post-text"><h1 class="p-name">
+<a href="posts/2017/09/cpp11-concurrency-tutorial-futures.html" class="u-url">C++11 Concurrency Tutorial - Part 5: Futures</a>
+        <br><small>  
+             Posted: <time class="published dt-published" datetime="2017-09-12T15:05:08+02:00">2017-09-12 15:05</time></small>
+</h1>
+        <hr>
+<div class="p-summary">
+        <div>
+<p>I've been recently reminded that a long time ago I was doing a series of
+tutorial on C++11 Concurrency. For some reason, I haven't continued these
+tutorials.  The next post in the series was supposed to be about Futures, so I'm
+finally going to do it :)</p>
+<p>Here are the links to the current posts of the C++11 Concurrency Tutorial:</p>
+<ul class="simple">
+<li><a class="reference external" href="https://baptiste-wicht.com/posts/2012/03/cpp11-concurrency-part1-start-threads.html">Part 1: Start Threads</a></li>
+<li><a class="reference external" href="https://baptiste-wicht.com/posts/2012/03/cp11-concurrency-tutorial-part-2-protect-shared-data.html">Part 2: Protect Shared Data</a></li>
+<li><a class="reference external" href="https://baptiste-wicht.com/posts/2012/04/c11-concurrency-tutorial-advanced-locking-and-condition-variables.html">Part 3: Advanced Locking and condition variables</a></li>
+<li><a class="reference external" href="https://baptiste-wicht.com/posts/2012/07/c11-concurrency-tutorial-part-4-atomic-type.html">Part 4: Atomic Types</a></li>
+</ul>
+<p>In this post, we are going to talk about futures, more precisely
+<code>std::future&lt;T&gt;</code>. What is a future ? It's a very nice and simple mechanism
+to work with asynchronous tasks. It also has the advantage of decoupling you
+from the threads themselves, you can do multithreading without using
+<code>std::thread</code>. The future itself is a structure pointing to a result that
+will be computed in the future. How to create a future ? The simplest way is to
+use <code>std::async</code> that will create an asynchronous task and return
+a <code>std::future</code>.</p>
+<p>Let's start with the simplest of the examples:</p>
+<pre class="code c++"><a name="rest_code_a0b782c0e9794ea7a06f3cd7b84dc744-1"></a><span class="cp">#include</span> <span class="cpf">&lt;thread&gt;</span><span class="cp"></span>
+<a name="rest_code_a0b782c0e9794ea7a06f3cd7b84dc744-2"></a><span class="cp">#include</span> <span class="cpf">&lt;future&gt;</span><span class="cp"></span>
+<a name="rest_code_a0b782c0e9794ea7a06f3cd7b84dc744-3"></a><span class="cp">#include</span> <span class="cpf">&lt;iostream&gt;</span><span class="cp"></span>
+<a name="rest_code_a0b782c0e9794ea7a06f3cd7b84dc744-4"></a>
+<a name="rest_code_a0b782c0e9794ea7a06f3cd7b84dc744-5"></a><span class="kt">int</span> <span class="nf">main</span><span class="p">(){</span>
+<a name="rest_code_a0b782c0e9794ea7a06f3cd7b84dc744-6"></a>    <span class="k">auto</span> <span class="n">future</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">async</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">launch</span><span class="o">::</span><span class="n">async</span><span class="p">,</span> <span class="p">[](){</span>
+<a name="rest_code_a0b782c0e9794ea7a06f3cd7b84dc744-7"></a>        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"I'm a thread"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<a name="rest_code_a0b782c0e9794ea7a06f3cd7b84dc744-8"></a>    <span class="p">});</span>
+<a name="rest_code_a0b782c0e9794ea7a06f3cd7b84dc744-9"></a>
+<a name="rest_code_a0b782c0e9794ea7a06f3cd7b84dc744-10"></a>    <span class="n">future</span><span class="p">.</span><span class="n">get</span><span class="p">();</span>
+<a name="rest_code_a0b782c0e9794ea7a06f3cd7b84dc744-11"></a>
+<a name="rest_code_a0b782c0e9794ea7a06f3cd7b84dc744-12"></a>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<a name="rest_code_a0b782c0e9794ea7a06f3cd7b84dc744-13"></a><span class="p">}</span>
+</pre>
+<p>Nothing really special here. <code>std::async</code> will execute the task that we
+give it (here a lambda) and return a <code>std::future</code>. Once you use the
+<code>get()</code> function on a future, it will wait until the result is available
+and return this result to you once it is. The <code>get()</code> function is then
+blocking. Since the lambda, is a void lambda, the returned future is of type
+<code>std::future&lt;void&gt;</code> and <code>get()</code> returns <code>void</code> as well. It is
+very important to know that you cannot call <code>get</code> several times on the
+same future. Once the result is consumed, you cannot consume it again! If you
+want to use the result several times, you need to store it yourself after you
+called <code>get()</code>.</p>
+<p>Let's see with something that returns a value and actually takes some time
+before returning it:</p>
+<pre class="code c++"><a name="rest_code_cda8edd43d0a4b09aaeb6f3081573610-1"></a><span class="cp">#include</span> <span class="cpf">&lt;thread&gt;</span><span class="cp"></span>
+<a name="rest_code_cda8edd43d0a4b09aaeb6f3081573610-2"></a><span class="cp">#include</span> <span class="cpf">&lt;future&gt;</span><span class="cp"></span>
+<a name="rest_code_cda8edd43d0a4b09aaeb6f3081573610-3"></a><span class="cp">#include</span> <span class="cpf">&lt;iostream&gt;</span><span class="cp"></span>
+<a name="rest_code_cda8edd43d0a4b09aaeb6f3081573610-4"></a><span class="cp">#include</span> <span class="cpf">&lt;chrono&gt;</span><span class="cp"></span>
+<a name="rest_code_cda8edd43d0a4b09aaeb6f3081573610-5"></a>
+<a name="rest_code_cda8edd43d0a4b09aaeb6f3081573610-6"></a><span class="kt">int</span> <span class="nf">main</span><span class="p">(){</span>
+<a name="rest_code_cda8edd43d0a4b09aaeb6f3081573610-7"></a>    <span class="k">auto</span> <span class="n">future</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">async</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">launch</span><span class="o">::</span><span class="n">async</span><span class="p">,</span> <span class="p">[](){</span>
+<a name="rest_code_cda8edd43d0a4b09aaeb6f3081573610-8"></a>        <span class="n">std</span><span class="o">::</span><span class="n">this_thread</span><span class="o">::</span><span class="n">sleep_for</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">seconds</span><span class="p">(</span><span class="mi">5</span><span class="p">));</span>
+<a name="rest_code_cda8edd43d0a4b09aaeb6f3081573610-9"></a>        <span class="k">return</span> <span class="mi">42</span><span class="p">;</span>
+<a name="rest_code_cda8edd43d0a4b09aaeb6f3081573610-10"></a>    <span class="p">});</span>
+<a name="rest_code_cda8edd43d0a4b09aaeb6f3081573610-11"></a>
+<a name="rest_code_cda8edd43d0a4b09aaeb6f3081573610-12"></a>    <span class="c1">// Do something else ?</span>
+<a name="rest_code_cda8edd43d0a4b09aaeb6f3081573610-13"></a>
+<a name="rest_code_cda8edd43d0a4b09aaeb6f3081573610-14"></a>    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">future</span><span class="p">.</span><span class="n">get</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<a name="rest_code_cda8edd43d0a4b09aaeb6f3081573610-15"></a>
+<a name="rest_code_cda8edd43d0a4b09aaeb6f3081573610-16"></a>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<a name="rest_code_cda8edd43d0a4b09aaeb6f3081573610-17"></a><span class="p">}</span>
+</pre>
+<p>This time, the future will be of the time <code>std::future&lt;int&gt;</code> and thus
+<code>get()</code> will also return an <code>int</code>. <code>std::async</code> will again
+launch a task in an asynchronous way and <code>future.get()</code> will wait for the
+answer. What is interesting, is that you can do something else before the call
+to future.</p>
+<p>But <code>get()</code> is not the only interesting function in <code>std::future</code>.
+You also have <code>wait()</code> which is almost the same as <code>get()</code> but does
+not consume the result. For instance, you can wait for several futures and then
+consume their result together. But, more interesting are the
+<code>wait_for(duration)</code> and <code>wait_until(timepoint)</code> functions. The
+first one wait for the result at most the given time and then returns and the
+second one wait for the result at most until the given time point. I think that
+<code>wait_for</code> is more useful in practices, so let's discuss it further.
+Finally, an interesting function is <code>bool valid()</code>. When you use
+<code>get()</code> on the future, it will consume the result, making <code>valid()
+returns :code:`false</code>. So, if you intend to check multiple times for a future,
+you should use <code>valid()</code> first.</p>
+<p>One possible scenario would be if you have several asynchronous tasks, which is
+a common scenario. You can imagine that you want to process the results as fast
+as possible, so you want to ask the futures for their result several times. If
+no result is available, maybe you want to do something else. Here is a possible
+implementation:</p>
+<pre class="code c++"><a name="rest_code_58242deea52649409e8e4766a5be6a65-1"></a><span class="cp">#include</span> <span class="cpf">&lt;thread&gt;</span><span class="cp"></span>
+<a name="rest_code_58242deea52649409e8e4766a5be6a65-2"></a><span class="cp">#include</span> <span class="cpf">&lt;future&gt;</span><span class="cp"></span>
+<a name="rest_code_58242deea52649409e8e4766a5be6a65-3"></a><span class="cp">#include</span> <span class="cpf">&lt;iostream&gt;</span><span class="cp"></span>
+<a name="rest_code_58242deea52649409e8e4766a5be6a65-4"></a><span class="cp">#include</span> <span class="cpf">&lt;chrono&gt;</span><span class="cp"></span>
+<a name="rest_code_58242deea52649409e8e4766a5be6a65-5"></a>
+<a name="rest_code_58242deea52649409e8e4766a5be6a65-6"></a><span class="kt">int</span> <span class="nf">main</span><span class="p">(){</span>
+<a name="rest_code_58242deea52649409e8e4766a5be6a65-7"></a>    <span class="k">auto</span> <span class="n">f1</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">async</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">launch</span><span class="o">::</span><span class="n">async</span><span class="p">,</span> <span class="p">[](){</span>
+<a name="rest_code_58242deea52649409e8e4766a5be6a65-8"></a>        <span class="n">std</span><span class="o">::</span><span class="n">this_thread</span><span class="o">::</span><span class="n">sleep_for</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">seconds</span><span class="p">(</span><span class="mi">9</span><span class="p">));</span>
+<a name="rest_code_58242deea52649409e8e4766a5be6a65-9"></a>        <span class="k">return</span> <span class="mi">42</span><span class="p">;</span>
+<a name="rest_code_58242deea52649409e8e4766a5be6a65-10"></a>    <span class="p">});</span>
+<a name="rest_code_58242deea52649409e8e4766a5be6a65-11"></a>
+<a name="rest_code_58242deea52649409e8e4766a5be6a65-12"></a>    <span class="k">auto</span> <span class="n">f2</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">async</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">launch</span><span class="o">::</span><span class="n">async</span><span class="p">,</span> <span class="p">[](){</span>
+<a name="rest_code_58242deea52649409e8e4766a5be6a65-13"></a>        <span class="n">std</span><span class="o">::</span><span class="n">this_thread</span><span class="o">::</span><span class="n">sleep_for</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">seconds</span><span class="p">(</span><span class="mi">3</span><span class="p">));</span>
+<a name="rest_code_58242deea52649409e8e4766a5be6a65-14"></a>        <span class="k">return</span> <span class="mi">13</span><span class="p">;</span>
+<a name="rest_code_58242deea52649409e8e4766a5be6a65-15"></a>    <span class="p">});</span>
+<a name="rest_code_58242deea52649409e8e4766a5be6a65-16"></a>
+<a name="rest_code_58242deea52649409e8e4766a5be6a65-17"></a>    <span class="k">auto</span> <span class="n">f3</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">async</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">launch</span><span class="o">::</span><span class="n">async</span><span class="p">,</span> <span class="p">[](){</span>
+<a name="rest_code_58242deea52649409e8e4766a5be6a65-18"></a>        <span class="n">std</span><span class="o">::</span><span class="n">this_thread</span><span class="o">::</span><span class="n">sleep_for</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">seconds</span><span class="p">(</span><span class="mi">6</span><span class="p">));</span>
+<a name="rest_code_58242deea52649409e8e4766a5be6a65-19"></a>        <span class="k">return</span> <span class="mi">666</span><span class="p">;</span>
+<a name="rest_code_58242deea52649409e8e4766a5be6a65-20"></a>    <span class="p">});</span>
+<a name="rest_code_58242deea52649409e8e4766a5be6a65-21"></a>
+<a name="rest_code_58242deea52649409e8e4766a5be6a65-22"></a>    <span class="k">auto</span> <span class="n">timeout</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">milliseconds</span><span class="p">(</span><span class="mi">10</span><span class="p">);</span>
+<a name="rest_code_58242deea52649409e8e4766a5be6a65-23"></a>
+<a name="rest_code_58242deea52649409e8e4766a5be6a65-24"></a>    <span class="k">while</span><span class="p">(</span><span class="n">f1</span><span class="p">.</span><span class="n">valid</span><span class="p">()</span> <span class="o">||</span> <span class="n">f2</span><span class="p">.</span><span class="n">valid</span><span class="p">()</span> <span class="o">||</span> <span class="n">f3</span><span class="p">.</span><span class="n">valid</span><span class="p">()){</span>
+<a name="rest_code_58242deea52649409e8e4766a5be6a65-25"></a>        <span class="k">if</span><span class="p">(</span><span class="n">f1</span><span class="p">.</span><span class="n">valid</span><span class="p">()</span> <span class="o">&amp;&amp;</span> <span class="n">f1</span><span class="p">.</span><span class="n">wait_for</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span> <span class="o">==</span> <span class="n">std</span><span class="o">::</span><span class="n">future_status</span><span class="o">::</span><span class="n">ready</span><span class="p">){</span>
+<a name="rest_code_58242deea52649409e8e4766a5be6a65-26"></a>            <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"Task1 is done! "</span> <span class="o">&lt;&lt;</span> <span class="n">f1</span><span class="p">.</span><span class="n">get</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<a name="rest_code_58242deea52649409e8e4766a5be6a65-27"></a>        <span class="p">}</span>
+<a name="rest_code_58242deea52649409e8e4766a5be6a65-28"></a>
+<a name="rest_code_58242deea52649409e8e4766a5be6a65-29"></a>        <span class="k">if</span><span class="p">(</span><span class="n">f2</span><span class="p">.</span><span class="n">valid</span><span class="p">()</span> <span class="o">&amp;&amp;</span> <span class="n">f2</span><span class="p">.</span><span class="n">wait_for</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span> <span class="o">==</span> <span class="n">std</span><span class="o">::</span><span class="n">future_status</span><span class="o">::</span><span class="n">ready</span><span class="p">){</span>
+<a name="rest_code_58242deea52649409e8e4766a5be6a65-30"></a>            <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"Task2 is done! "</span> <span class="o">&lt;&lt;</span> <span class="n">f2</span><span class="p">.</span><span class="n">get</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<a name="rest_code_58242deea52649409e8e4766a5be6a65-31"></a>        <span class="p">}</span>
+<a name="rest_code_58242deea52649409e8e4766a5be6a65-32"></a>
+<a name="rest_code_58242deea52649409e8e4766a5be6a65-33"></a>        <span class="k">if</span><span class="p">(</span><span class="n">f3</span><span class="p">.</span><span class="n">valid</span><span class="p">()</span> <span class="o">&amp;&amp;</span> <span class="n">f3</span><span class="p">.</span><span class="n">wait_for</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span> <span class="o">==</span> <span class="n">std</span><span class="o">::</span><span class="n">future_status</span><span class="o">::</span><span class="n">ready</span><span class="p">){</span>
+<a name="rest_code_58242deea52649409e8e4766a5be6a65-34"></a>            <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"Task3 is done! "</span> <span class="o">&lt;&lt;</span> <span class="n">f3</span><span class="p">.</span><span class="n">get</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<a name="rest_code_58242deea52649409e8e4766a5be6a65-35"></a>        <span class="p">}</span>
+<a name="rest_code_58242deea52649409e8e4766a5be6a65-36"></a>
+<a name="rest_code_58242deea52649409e8e4766a5be6a65-37"></a>        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"I'm doing my own work!"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<a name="rest_code_58242deea52649409e8e4766a5be6a65-38"></a>        <span class="n">std</span><span class="o">::</span><span class="n">this_thread</span><span class="o">::</span><span class="n">sleep_for</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">seconds</span><span class="p">(</span><span class="mi">1</span><span class="p">));</span>
+<a name="rest_code_58242deea52649409e8e4766a5be6a65-39"></a>        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"I'm done with my own work!"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<a name="rest_code_58242deea52649409e8e4766a5be6a65-40"></a>    <span class="p">}</span>
+<a name="rest_code_58242deea52649409e8e4766a5be6a65-41"></a>
+<a name="rest_code_58242deea52649409e8e4766a5be6a65-42"></a>    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"Everything is done, let's go back to the tutorial"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<a name="rest_code_58242deea52649409e8e4766a5be6a65-43"></a>
+<a name="rest_code_58242deea52649409e8e4766a5be6a65-44"></a>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<a name="rest_code_58242deea52649409e8e4766a5be6a65-45"></a><span class="p">}</span>
+</pre>
+<p>The three tasks are started asynchronously with <code>std::async</code> and the
+resulting <code>std::future</code> are stored. Then, as long as one of the tasks is
+not complete, we query each three task and try to process its result. If no
+result is available, we simply do something else. This example is important to
+understand, it covers pretty much every concept of the futures.</p>
+<p>One interesting thing that remains is that you can pass parameters to your task
+via <code>std::async</code>. Indeed, all the extra parameters that you pass to
+<code>std::async</code> will be passed to the task itself. Here is an example of
+spawning tasks in a loop with different parameters:</p>
+<pre class="code c++"><a name="rest_code_3b2147c682c04d7fa38a4eb06490bff7-1"></a><span class="cp">#include</span> <span class="cpf">&lt;thread&gt;</span><span class="cp"></span>
+<a name="rest_code_3b2147c682c04d7fa38a4eb06490bff7-2"></a><span class="cp">#include</span> <span class="cpf">&lt;future&gt;</span><span class="cp"></span>
+<a name="rest_code_3b2147c682c04d7fa38a4eb06490bff7-3"></a><span class="cp">#include</span> <span class="cpf">&lt;iostream&gt;</span><span class="cp"></span>
+<a name="rest_code_3b2147c682c04d7fa38a4eb06490bff7-4"></a><span class="cp">#include</span> <span class="cpf">&lt;chrono&gt;</span><span class="cp"></span>
+<a name="rest_code_3b2147c682c04d7fa38a4eb06490bff7-5"></a><span class="cp">#include</span> <span class="cpf">&lt;vector&gt;</span><span class="cp"></span>
+<a name="rest_code_3b2147c682c04d7fa38a4eb06490bff7-6"></a>
+<a name="rest_code_3b2147c682c04d7fa38a4eb06490bff7-7"></a><span class="kt">int</span> <span class="nf">main</span><span class="p">(){</span>
+<a name="rest_code_3b2147c682c04d7fa38a4eb06490bff7-8"></a>    <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">future</span><span class="o">&lt;</span><span class="kt">size_t</span><span class="o">&gt;&gt;</span> <span class="n">futures</span><span class="p">;</span>
+<a name="rest_code_3b2147c682c04d7fa38a4eb06490bff7-9"></a>
+<a name="rest_code_3b2147c682c04d7fa38a4eb06490bff7-10"></a>    <span class="k">for</span> <span class="p">(</span><span class="kt">size_t</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+<a name="rest_code_3b2147c682c04d7fa38a4eb06490bff7-11"></a>        <span class="n">futures</span><span class="p">.</span><span class="n">emplace_back</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">async</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">launch</span><span class="o">::</span><span class="n">async</span><span class="p">,</span> <span class="p">[](</span><span class="kt">size_t</span> <span class="n">param</span><span class="p">){</span>
+<a name="rest_code_3b2147c682c04d7fa38a4eb06490bff7-12"></a>            <span class="n">std</span><span class="o">::</span><span class="n">this_thread</span><span class="o">::</span><span class="n">sleep_for</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">seconds</span><span class="p">(</span><span class="n">param</span><span class="p">));</span>
+<a name="rest_code_3b2147c682c04d7fa38a4eb06490bff7-13"></a>            <span class="k">return</span> <span class="n">param</span><span class="p">;</span>
+<a name="rest_code_3b2147c682c04d7fa38a4eb06490bff7-14"></a>        <span class="p">},</span> <span class="n">i</span><span class="p">));</span>
+<a name="rest_code_3b2147c682c04d7fa38a4eb06490bff7-15"></a>    <span class="p">}</span>
+<a name="rest_code_3b2147c682c04d7fa38a4eb06490bff7-16"></a>
+<a name="rest_code_3b2147c682c04d7fa38a4eb06490bff7-17"></a>    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"Start querying"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<a name="rest_code_3b2147c682c04d7fa38a4eb06490bff7-18"></a>
+<a name="rest_code_3b2147c682c04d7fa38a4eb06490bff7-19"></a>    <span class="k">for</span> <span class="p">(</span><span class="k">auto</span> <span class="o">&amp;</span><span class="nl">future</span> <span class="p">:</span> <span class="n">futures</span><span class="p">)</span> <span class="p">{</span>
+<a name="rest_code_3b2147c682c04d7fa38a4eb06490bff7-20"></a>      <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">future</span><span class="p">.</span><span class="n">get</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<a name="rest_code_3b2147c682c04d7fa38a4eb06490bff7-21"></a>    <span class="p">}</span>
+<a name="rest_code_3b2147c682c04d7fa38a4eb06490bff7-22"></a>
+<a name="rest_code_3b2147c682c04d7fa38a4eb06490bff7-23"></a>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<a name="rest_code_3b2147c682c04d7fa38a4eb06490bff7-24"></a><span class="p">}</span>
+</pre>
+<p>Pretty practical :) All The created <code>std::future&lt;size_t&gt;</code> are stored in
+a <code>std::vector</code> and then are all queried for their result.</p>
+<p>Overall, I think <code>std::future</code> and <code>std::async</code> are great tool that
+can simplify your asynchronous code a lot. They allow you to make pretty
+advanced stuff while keeping the complexity of the code to a minimum.</p>
+<p>I hope this long-due post is going to be interesting to some of you :)
+The code for this post is available <a class="reference external" href="https://github.com/wichtounet/articles/tree/master/src/threads/part5">on Github</a></p>
+<p>I do not yet know if there will be a next installment in the series. I've
+covered pretty much everything that is available in C++11 for concurrency. I may
+cover the parallel algorithms of C++17 in a following post. If you have any
+suggestion for the next post, don't hesitate to post a comment or contact me
+directly by email.</p>
+</div>
+        </div>
+            
+        
+    <a href="posts/2017/09/cpp11-concurrency-tutorial-futures.html#disqus_thread" data-disqus-identifier="cache/posts/2017/09/cpp11-concurrency-tutorial-futures.html">Comments</a>
+
+
+        </article><article class="postbox h-entry post-text"><h1 class="p-name">
 <a href="posts/2017/08/simplify-your-type-traits-with-c%2B%2B14-variable-templates.html" class="u-url">Simplify your type traits with C++14 variable templates</a>
         <br><small>  
              Posted: <time class="published dt-published" datetime="2017-08-22T14:45:11+02:00">2017-08-22 14:45</time></small>
