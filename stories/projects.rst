@@ -22,6 +22,26 @@ Belief Network. But it also has support for standard Artificial Neural Network
 * `Posts about dll <http://baptiste-wicht.com/categories/dll.html>`_
 * `dll on Github <https://github.com/wichtounet/dll>`_
 
+budgetwarrior - command line budget application
++++++++++++++++++++++++++++++++++++++++++++++++
+
+budgetwarrior is a simple command line accounting tool for personal usage. It is
+written in C++. The principle is simple, you declare accounts which are your
+spending categories and assign a monthly amount for each of these accounts. Then
+you add expenses during the month and the tool will show how much is remaining
+in each of these accounts for the current month and also gives you some stats on
+the year. There are also some smaller features like a wish list that tries to
+predict when you should buy some things and objectives tracking.
+
+I'm using this tool as my main budget utility.
+
+.. image:: https://raw.githubusercontent.com/wichtounet/budgetwarrior/develop/screenshots/budget_report.png
+   :align: center
+   :alt: budgetwarrior report view
+
+* `Posts about budgetwarrior <http://baptiste-wicht.com/categories/budgetwarrior.html>`_
+* `budgetwarrior on Github <https://github.com/wichtounet/budgetwarrior>`_
+
 Thor Operating System
 +++++++++++++++++++++
 
@@ -61,23 +81,3 @@ I'm not currently working on this project anymore, but I may get back to it.
 
 * `Posts about eddic <http://baptiste-wicht.com/categories/eddi.html>`_
 * `eddic on Github <https://github.com/wichtounet/eddic>`_
-
-budgetwarrior - command line budget application
-+++++++++++++++++++++++++++++++++++++++++++++++
-
-budgetwarrior is a simple command line accounting tool for personal usage. It is
-written in C++. The principle is simple, you declare accounts which are your
-spending categories and assign a monthly amount for each of these accounts. Then
-you add expenses during the month and the tool will show how much is remaining
-in each of these accounts for the current month and also gives you some stats on
-the year. There are also some smaller features like a wish list that tries to
-predict when you should buy some things and objectives tracking.
-
-I'm using this tool as my main budget utility.
-
-.. image:: https://raw.githubusercontent.com/wichtounet/budgetwarrior/develop/screenshots/budget_report.png
-   :align: center
-   :alt: budgetwarrior report view
-
-* `Posts about budgetwarrior <http://baptiste-wicht.com/categories/budgetwarrior.html>`_
-* `budgetwarrior on Github <https://github.com/wichtounet/budgetwarrior>`_
