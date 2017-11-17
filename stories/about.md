@@ -1,7 +1,7 @@
-I'm Baptiste Wicht, from Switzerland, now 28 years old. I’m currently a Ph.D
-student in Computer Science at the University of applied sciences in Fribourg,
-principally in Machine Learning. Currently, I'm mainly developing high
-performance applications in C++.
+I'm Baptiste Wicht, from Switzerland, now 29 years old. I just finished my Ph.D
+in Computer Science from the University of Fribourg and the University of
+applied sciences in Fribourg (Switzerland), principally in Machine Learning.
+Currently, I'm mainly developing high performance applications in C++.
 
 I've started programming in 2004, when doing my computer science apprentice
 ship. For a few years, I programmed a lot in Java and become involved in the
@@ -12,9 +12,10 @@ Developpez.com.
 Later, in 2011, I find the holy Grail of the programming languages when
 I started to work with C++ for my Bachelor's Thesis project and since this time
 I've only been writing in C++. I've even written my own compiler and my own
-operating system. For more information on my projects, you can have a look at
-the [Projects page](/projects/). I'm also teaching an advanced C++ course for
-Bachelor students.
+operating system. I've also written my own budget accounting app that I still
+use and developed a full machine learning framework in C++. For more information
+on my projects, you can have a look at the [Projects page](/projects/). I'm also
+teaching an advanced C++ course for Bachelor students.
 
 For my Ph.D., I've been working on Machine Learning experiments. For
 this, I've developed an entire machine learning framework with
@@ -35,6 +36,8 @@ website, there are several ways to contact me:
 2. On Twitter: [@wichtounet](https://twitter.com/wichtounet)
 
 For professional information, [my LinkedIn profile](http://www.linkedin.com/in/baptistewicht) is available.
+
+If you want to see my Github projects, take a look at this my profile: [wichtounet](https://github.com/wichtounet)
 
 You can also take a look at my Google Profile: [Baptiste Wicht](https://plus.google.com/103113673902796202116)
 
