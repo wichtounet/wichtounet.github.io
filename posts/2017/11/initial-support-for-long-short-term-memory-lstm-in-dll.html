@@ -142,8 +142,10 @@
 
     </header><div class="e-content entry-content" itemprop="articleBody text">
     <div>
-<p>I'm really happy to announce that I just merged support for Long Short Term Memory
-(LSTM) cells into my Deep Learning Library (DLL) machine learning framework.</p>
+<p>I'm really happy to announce that I just merged support for</p>
+<p>Long Short Term Memory
+(LSTM) cells into my Deep Learning Library (DLL) machine learning framework. Two
+weeks ago, <a href="initial-support-for-long-short-term-memory-lstm-in-dll.html#id1"><span class="problematic" id="id2">`I already merged suport for Recurrent Neural network (RNN) https://baptiste-wicht.com/posts/2017/11/initial-support-for-recurrent-neural-network-rnn-in-dll.html&gt;`_</span></a>.</p>
 <p>It's nothing fancy yet, but forward propagation of LSTM and basic
 Backpropagation Through Time (BPTT) are now supported. It was not really
 complicated to implemenet the forward pass but the backward pass is much
@@ -155,46 +157,46 @@ in order to be able to train models able to generate characters. However, I don'
 know when I'll be able to work on that. Now that I've got the code for LSTM,
 I should be able to implement a GRU cell and NAS cell quite easily I believe.</p>
 <p>For example, here is a simple LSTM used on MNIST for classification:</p>
-<pre class="code cpp"><a name="rest_code_ad5cee80aee54985b206d039e84aac3d-1"></a><span class="cp">#include</span> <span class="cpf">"dll/neural/dense_layer.hpp"</span><span class="cp"></span>
-<a name="rest_code_ad5cee80aee54985b206d039e84aac3d-2"></a><span class="cp">#include</span> <span class="cpf">"dll/neural/lstm_layer.hpp"</span><span class="cp"></span>
-<a name="rest_code_ad5cee80aee54985b206d039e84aac3d-3"></a><span class="cp">#include</span> <span class="cpf">"dll/neural/recurrent_last_layer.hpp"</span><span class="cp"></span>
-<a name="rest_code_ad5cee80aee54985b206d039e84aac3d-4"></a><span class="cp">#include</span> <span class="cpf">"dll/network.hpp"</span><span class="cp"></span>
-<a name="rest_code_ad5cee80aee54985b206d039e84aac3d-5"></a><span class="cp">#include</span> <span class="cpf">"dll/datasets.hpp"</span><span class="cp"></span>
-<a name="rest_code_ad5cee80aee54985b206d039e84aac3d-6"></a>
-<a name="rest_code_ad5cee80aee54985b206d039e84aac3d-7"></a><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="cm">/*argc*/</span><span class="p">,</span> <span class="kt">char</span><span class="o">*</span> <span class="cm">/*argv*/</span> <span class="p">[])</span> <span class="p">{</span>
-<a name="rest_code_ad5cee80aee54985b206d039e84aac3d-8"></a>    <span class="c1">// Load the dataset</span>
-<a name="rest_code_ad5cee80aee54985b206d039e84aac3d-9"></a>    <span class="k">auto</span> <span class="n">dataset</span> <span class="o">=</span> <span class="n">dll</span><span class="o">::</span><span class="n">make_mnist_dataset_nc</span><span class="p">(</span><span class="n">dll</span><span class="o">::</span><span class="n">batch_size</span><span class="o">&lt;</span><span class="mi">100</span><span class="o">&gt;</span><span class="p">{},</span> <span class="n">dll</span><span class="o">::</span><span class="n">scale_pre</span><span class="o">&lt;</span><span class="mi">255</span><span class="o">&gt;</span><span class="p">{});</span>
-<a name="rest_code_ad5cee80aee54985b206d039e84aac3d-10"></a>
-<a name="rest_code_ad5cee80aee54985b206d039e84aac3d-11"></a>    <span class="k">constexpr</span> <span class="kt">size_t</span> <span class="n">time_steps</span>      <span class="o">=</span> <span class="mi">28</span><span class="p">;</span>
-<a name="rest_code_ad5cee80aee54985b206d039e84aac3d-12"></a>    <span class="k">constexpr</span> <span class="kt">size_t</span> <span class="n">sequence_length</span> <span class="o">=</span> <span class="mi">28</span><span class="p">;</span>
-<a name="rest_code_ad5cee80aee54985b206d039e84aac3d-13"></a>    <span class="k">constexpr</span> <span class="kt">size_t</span> <span class="n">hidden_units</span>    <span class="o">=</span> <span class="mi">100</span><span class="p">;</span>
-<a name="rest_code_ad5cee80aee54985b206d039e84aac3d-14"></a>
-<a name="rest_code_ad5cee80aee54985b206d039e84aac3d-15"></a>    <span class="c1">// Build the network</span>
-<a name="rest_code_ad5cee80aee54985b206d039e84aac3d-16"></a>
-<a name="rest_code_ad5cee80aee54985b206d039e84aac3d-17"></a>    <span class="k">using</span> <span class="n">network_t</span> <span class="o">=</span> <span class="n">dll</span><span class="o">::</span><span class="n">dyn_network_desc</span><span class="o">&lt;</span>
-<a name="rest_code_ad5cee80aee54985b206d039e84aac3d-18"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">network_layers</span><span class="o">&lt;</span>
-<a name="rest_code_ad5cee80aee54985b206d039e84aac3d-19"></a>            <span class="n">dll</span><span class="o">::</span><span class="n">lstm_layer</span><span class="o">&lt;</span><span class="n">time_steps</span><span class="p">,</span> <span class="n">sequence_length</span><span class="p">,</span> <span class="n">hidden_units</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">last_only</span><span class="o">&gt;</span><span class="p">,</span>
-<a name="rest_code_ad5cee80aee54985b206d039e84aac3d-20"></a>            <span class="n">dll</span><span class="o">::</span><span class="n">recurrent_last_layer</span><span class="o">&lt;</span><span class="n">time_steps</span><span class="p">,</span> <span class="n">hidden_units</span><span class="o">&gt;</span><span class="p">,</span>
-<a name="rest_code_ad5cee80aee54985b206d039e84aac3d-21"></a>            <span class="n">dll</span><span class="o">::</span><span class="n">dense_layer</span><span class="o">&lt;</span><span class="n">hidden_units</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">softmax</span><span class="o">&gt;</span>
-<a name="rest_code_ad5cee80aee54985b206d039e84aac3d-22"></a>        <span class="o">&gt;</span>
-<a name="rest_code_ad5cee80aee54985b206d039e84aac3d-23"></a>        <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">updater</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">updater_type</span><span class="o">::</span><span class="n">ADAM</span><span class="o">&gt;</span>      <span class="c1">// Adam</span>
-<a name="rest_code_ad5cee80aee54985b206d039e84aac3d-24"></a>        <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">batch_size</span><span class="o">&lt;</span><span class="mi">100</span><span class="o">&gt;</span>                       <span class="c1">// The mini-batch size</span>
-<a name="rest_code_ad5cee80aee54985b206d039e84aac3d-25"></a>    <span class="o">&gt;::</span><span class="n">network_t</span><span class="p">;</span>
-<a name="rest_code_ad5cee80aee54985b206d039e84aac3d-26"></a>
-<a name="rest_code_ad5cee80aee54985b206d039e84aac3d-27"></a>    <span class="k">auto</span> <span class="n">net</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_unique</span><span class="o">&lt;</span><span class="n">network_t</span><span class="o">&gt;</span><span class="p">();</span>
-<a name="rest_code_ad5cee80aee54985b206d039e84aac3d-28"></a>
-<a name="rest_code_ad5cee80aee54985b206d039e84aac3d-29"></a>    <span class="c1">// Display the network and dataset</span>
-<a name="rest_code_ad5cee80aee54985b206d039e84aac3d-30"></a>    <span class="n">net</span><span class="o">-&gt;</span><span class="n">display</span><span class="p">();</span>
-<a name="rest_code_ad5cee80aee54985b206d039e84aac3d-31"></a>    <span class="n">dataset</span><span class="p">.</span><span class="n">display</span><span class="p">();</span>
-<a name="rest_code_ad5cee80aee54985b206d039e84aac3d-32"></a>
-<a name="rest_code_ad5cee80aee54985b206d039e84aac3d-33"></a>    <span class="c1">// Train the network for performance sake</span>
-<a name="rest_code_ad5cee80aee54985b206d039e84aac3d-34"></a>    <span class="n">net</span><span class="o">-&gt;</span><span class="n">fine_tune</span><span class="p">(</span><span class="n">dataset</span><span class="p">.</span><span class="n">train</span><span class="p">(),</span> <span class="mi">50</span><span class="p">);</span>
-<a name="rest_code_ad5cee80aee54985b206d039e84aac3d-35"></a>
-<a name="rest_code_ad5cee80aee54985b206d039e84aac3d-36"></a>    <span class="c1">// Test the network on test set</span>
-<a name="rest_code_ad5cee80aee54985b206d039e84aac3d-37"></a>    <span class="n">net</span><span class="o">-&gt;</span><span class="n">evaluate</span><span class="p">(</span><span class="n">dataset</span><span class="p">.</span><span class="n">test</span><span class="p">());</span>
-<a name="rest_code_ad5cee80aee54985b206d039e84aac3d-38"></a>
-<a name="rest_code_ad5cee80aee54985b206d039e84aac3d-39"></a>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<a name="rest_code_ad5cee80aee54985b206d039e84aac3d-40"></a><span class="p">}</span>
+<pre class="code cpp"><a name="rest_code_99454dd495d64524ae6a5adc383bc5dc-1"></a><span class="cp">#include</span> <span class="cpf">"dll/neural/dense_layer.hpp"</span><span class="cp"></span>
+<a name="rest_code_99454dd495d64524ae6a5adc383bc5dc-2"></a><span class="cp">#include</span> <span class="cpf">"dll/neural/lstm_layer.hpp"</span><span class="cp"></span>
+<a name="rest_code_99454dd495d64524ae6a5adc383bc5dc-3"></a><span class="cp">#include</span> <span class="cpf">"dll/neural/recurrent_last_layer.hpp"</span><span class="cp"></span>
+<a name="rest_code_99454dd495d64524ae6a5adc383bc5dc-4"></a><span class="cp">#include</span> <span class="cpf">"dll/network.hpp"</span><span class="cp"></span>
+<a name="rest_code_99454dd495d64524ae6a5adc383bc5dc-5"></a><span class="cp">#include</span> <span class="cpf">"dll/datasets.hpp"</span><span class="cp"></span>
+<a name="rest_code_99454dd495d64524ae6a5adc383bc5dc-6"></a>
+<a name="rest_code_99454dd495d64524ae6a5adc383bc5dc-7"></a><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="cm">/*argc*/</span><span class="p">,</span> <span class="kt">char</span><span class="o">*</span> <span class="cm">/*argv*/</span> <span class="p">[])</span> <span class="p">{</span>
+<a name="rest_code_99454dd495d64524ae6a5adc383bc5dc-8"></a>    <span class="c1">// Load the dataset</span>
+<a name="rest_code_99454dd495d64524ae6a5adc383bc5dc-9"></a>    <span class="k">auto</span> <span class="n">dataset</span> <span class="o">=</span> <span class="n">dll</span><span class="o">::</span><span class="n">make_mnist_dataset_nc</span><span class="p">(</span><span class="n">dll</span><span class="o">::</span><span class="n">batch_size</span><span class="o">&lt;</span><span class="mi">100</span><span class="o">&gt;</span><span class="p">{},</span> <span class="n">dll</span><span class="o">::</span><span class="n">scale_pre</span><span class="o">&lt;</span><span class="mi">255</span><span class="o">&gt;</span><span class="p">{});</span>
+<a name="rest_code_99454dd495d64524ae6a5adc383bc5dc-10"></a>
+<a name="rest_code_99454dd495d64524ae6a5adc383bc5dc-11"></a>    <span class="k">constexpr</span> <span class="kt">size_t</span> <span class="n">time_steps</span>      <span class="o">=</span> <span class="mi">28</span><span class="p">;</span>
+<a name="rest_code_99454dd495d64524ae6a5adc383bc5dc-12"></a>    <span class="k">constexpr</span> <span class="kt">size_t</span> <span class="n">sequence_length</span> <span class="o">=</span> <span class="mi">28</span><span class="p">;</span>
+<a name="rest_code_99454dd495d64524ae6a5adc383bc5dc-13"></a>    <span class="k">constexpr</span> <span class="kt">size_t</span> <span class="n">hidden_units</span>    <span class="o">=</span> <span class="mi">100</span><span class="p">;</span>
+<a name="rest_code_99454dd495d64524ae6a5adc383bc5dc-14"></a>
+<a name="rest_code_99454dd495d64524ae6a5adc383bc5dc-15"></a>    <span class="c1">// Build the network</span>
+<a name="rest_code_99454dd495d64524ae6a5adc383bc5dc-16"></a>
+<a name="rest_code_99454dd495d64524ae6a5adc383bc5dc-17"></a>    <span class="k">using</span> <span class="n">network_t</span> <span class="o">=</span> <span class="n">dll</span><span class="o">::</span><span class="n">dyn_network_desc</span><span class="o">&lt;</span>
+<a name="rest_code_99454dd495d64524ae6a5adc383bc5dc-18"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">network_layers</span><span class="o">&lt;</span>
+<a name="rest_code_99454dd495d64524ae6a5adc383bc5dc-19"></a>            <span class="n">dll</span><span class="o">::</span><span class="n">lstm_layer</span><span class="o">&lt;</span><span class="n">time_steps</span><span class="p">,</span> <span class="n">sequence_length</span><span class="p">,</span> <span class="n">hidden_units</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">last_only</span><span class="o">&gt;</span><span class="p">,</span>
+<a name="rest_code_99454dd495d64524ae6a5adc383bc5dc-20"></a>            <span class="n">dll</span><span class="o">::</span><span class="n">recurrent_last_layer</span><span class="o">&lt;</span><span class="n">time_steps</span><span class="p">,</span> <span class="n">hidden_units</span><span class="o">&gt;</span><span class="p">,</span>
+<a name="rest_code_99454dd495d64524ae6a5adc383bc5dc-21"></a>            <span class="n">dll</span><span class="o">::</span><span class="n">dense_layer</span><span class="o">&lt;</span><span class="n">hidden_units</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">softmax</span><span class="o">&gt;</span>
+<a name="rest_code_99454dd495d64524ae6a5adc383bc5dc-22"></a>        <span class="o">&gt;</span>
+<a name="rest_code_99454dd495d64524ae6a5adc383bc5dc-23"></a>        <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">updater</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">updater_type</span><span class="o">::</span><span class="n">ADAM</span><span class="o">&gt;</span>      <span class="c1">// Adam</span>
+<a name="rest_code_99454dd495d64524ae6a5adc383bc5dc-24"></a>        <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">batch_size</span><span class="o">&lt;</span><span class="mi">100</span><span class="o">&gt;</span>                       <span class="c1">// The mini-batch size</span>
+<a name="rest_code_99454dd495d64524ae6a5adc383bc5dc-25"></a>    <span class="o">&gt;::</span><span class="n">network_t</span><span class="p">;</span>
+<a name="rest_code_99454dd495d64524ae6a5adc383bc5dc-26"></a>
+<a name="rest_code_99454dd495d64524ae6a5adc383bc5dc-27"></a>    <span class="k">auto</span> <span class="n">net</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_unique</span><span class="o">&lt;</span><span class="n">network_t</span><span class="o">&gt;</span><span class="p">();</span>
+<a name="rest_code_99454dd495d64524ae6a5adc383bc5dc-28"></a>
+<a name="rest_code_99454dd495d64524ae6a5adc383bc5dc-29"></a>    <span class="c1">// Display the network and dataset</span>
+<a name="rest_code_99454dd495d64524ae6a5adc383bc5dc-30"></a>    <span class="n">net</span><span class="o">-&gt;</span><span class="n">display</span><span class="p">();</span>
+<a name="rest_code_99454dd495d64524ae6a5adc383bc5dc-31"></a>    <span class="n">dataset</span><span class="p">.</span><span class="n">display</span><span class="p">();</span>
+<a name="rest_code_99454dd495d64524ae6a5adc383bc5dc-32"></a>
+<a name="rest_code_99454dd495d64524ae6a5adc383bc5dc-33"></a>    <span class="c1">// Train the network for performance sake</span>
+<a name="rest_code_99454dd495d64524ae6a5adc383bc5dc-34"></a>    <span class="n">net</span><span class="o">-&gt;</span><span class="n">fine_tune</span><span class="p">(</span><span class="n">dataset</span><span class="p">.</span><span class="n">train</span><span class="p">(),</span> <span class="mi">50</span><span class="p">);</span>
+<a name="rest_code_99454dd495d64524ae6a5adc383bc5dc-35"></a>
+<a name="rest_code_99454dd495d64524ae6a5adc383bc5dc-36"></a>    <span class="c1">// Test the network on test set</span>
+<a name="rest_code_99454dd495d64524ae6a5adc383bc5dc-37"></a>    <span class="n">net</span><span class="o">-&gt;</span><span class="n">evaluate</span><span class="p">(</span><span class="n">dataset</span><span class="p">.</span><span class="n">test</span><span class="p">());</span>
+<a name="rest_code_99454dd495d64524ae6a5adc383bc5dc-38"></a>
+<a name="rest_code_99454dd495d64524ae6a5adc383bc5dc-39"></a>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<a name="rest_code_99454dd495d64524ae6a5adc383bc5dc-40"></a><span class="p">}</span>
 </pre>
 <p>The network is quite similar to the one used previously with an RNN, just
 replace rnn with lstm and that's it. It starts with LSTM layer, followed by
@@ -203,104 +205,104 @@ function. The network is trained with Adam for 50 epochs. You can change the
 activation function , the initializer for the weights and the biases and number
 of steps for BPTT truncation.</p>
 <p>Here is the result I got on my last run:</p>
-<pre class="code text"><a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-1"></a>------------------------------------------------------------
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-2"></a>| Index | Layer                | Parameters | Output Shape |
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-3"></a>------------------------------------------------------------
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-4"></a>| 0     | LSTM (TANH) (dyn)    |      51200 | [Bx28x100]   |
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-5"></a>| 1     | RNN(last)            |          0 | [Bx100]      |
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-6"></a>| 2     | Dense(SOFTMAX) (dyn) |       1000 | [Bx10]       |
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-7"></a>------------------------------------------------------------
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-8"></a>              Total Parameters:      52200
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-9"></a>
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-10"></a>--------------------------------------------
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-11"></a>| mnist | Size  | Batches | Augmented Size |
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-12"></a>--------------------------------------------
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-13"></a>| train | 60000 | 600     | 60000          |
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-14"></a>| test  | 10000 | 100     | 10000          |
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-15"></a>--------------------------------------------
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-16"></a>
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-17"></a>Network with 3 layers
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-18"></a>    LSTM(dyn): 28x28 -&gt; TANH -&gt; 28x100
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-19"></a>    RNN(last): 28x100 -&gt; 100
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-20"></a>    Dense(dyn): 100 -&gt; SOFTMAX -&gt; 10
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-21"></a>Total parameters: 52200
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-22"></a>Dataset
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-23"></a>Training: In-Memory Data Generator
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-24"></a>              Size: 60000
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-25"></a>           Batches: 600
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-26"></a>Testing: In-Memory Data Generator
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-27"></a>              Size: 10000
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-28"></a>           Batches: 100
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-29"></a>
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-30"></a>Train the network with "Stochastic Gradient Descent"
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-31"></a>    Updater: ADAM
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-32"></a>       Loss: CATEGORICAL_CROSS_ENTROPY
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-33"></a> Early Stop: Goal(error)
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-34"></a>
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-35"></a>With parameters:
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-36"></a>          epochs=50
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-37"></a>      batch_size=100
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-38"></a>   learning_rate=0.001
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-39"></a>           beta1=0.9
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-40"></a>           beta2=0.999
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-41"></a>
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-42"></a>epoch   0/50 batch  600/ 600 - error: 0.07943 loss: 0.28504 time 20910ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-43"></a>epoch   1/50 batch  600/ 600 - error: 0.06683 loss: 0.24021 time 20889ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-44"></a>epoch   2/50 batch  600/ 600 - error: 0.04828 loss: 0.18233 time 21061ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-45"></a>epoch   3/50 batch  600/ 600 - error: 0.04407 loss: 0.16665 time 20839ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-46"></a>epoch   4/50 batch  600/ 600 - error: 0.03515 loss: 0.13290 time 22108ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-47"></a>epoch   5/50 batch  600/ 600 - error: 0.03207 loss: 0.12019 time 21393ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-48"></a>epoch   6/50 batch  600/ 600 - error: 0.02973 loss: 0.11239 time 28199ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-49"></a>epoch   7/50 batch  600/ 600 - error: 0.02653 loss: 0.10455 time 37039ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-50"></a>epoch   8/50 batch  600/ 600 - error: 0.02482 loss: 0.09657 time 23127ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-51"></a>epoch   9/50 batch  600/ 600 - error: 0.02177 loss: 0.08422 time 41766ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-52"></a>epoch  10/50 batch  600/ 600 - error: 0.02453 loss: 0.09382 time 29765ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-53"></a>epoch  11/50 batch  600/ 600 - error: 0.02575 loss: 0.09796 time 21449ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-54"></a>epoch  12/50 batch  600/ 600 - error: 0.02107 loss: 0.07833 time 42056ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-55"></a>epoch  13/50 batch  600/ 600 - error: 0.01877 loss: 0.07171 time 24673ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-56"></a>epoch  14/50 batch  600/ 600 - error: 0.02095 loss: 0.08481 time 20878ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-57"></a>epoch  15/50 batch  600/ 600 - error: 0.02040 loss: 0.07578 time 41515ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-58"></a>epoch  16/50 batch  600/ 600 - error: 0.01580 loss: 0.06083 time 25705ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-59"></a>epoch  17/50 batch  600/ 600 - error: 0.01945 loss: 0.07046 time 20903ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-60"></a>epoch  18/50 batch  600/ 600 - error: 0.01728 loss: 0.06683 time 41828ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-61"></a>epoch  19/50 batch  600/ 600 - error: 0.01577 loss: 0.05947 time 27810ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-62"></a>epoch  20/50 batch  600/ 600 - error: 0.01528 loss: 0.05883 time 21477ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-63"></a>epoch  21/50 batch  600/ 600 - error: 0.01345 loss: 0.05127 time 44718ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-64"></a>epoch  22/50 batch  600/ 600 - error: 0.01410 loss: 0.05357 time 25174ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-65"></a>epoch  23/50 batch  600/ 600 - error: 0.01268 loss: 0.04765 time 23827ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-66"></a>epoch  24/50 batch  600/ 600 - error: 0.01342 loss: 0.05004 time 47232ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-67"></a>epoch  25/50 batch  600/ 600 - error: 0.01730 loss: 0.06872 time 22532ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-68"></a>epoch  26/50 batch  600/ 600 - error: 0.01337 loss: 0.05016 time 30114ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-69"></a>epoch  27/50 batch  600/ 600 - error: 0.01842 loss: 0.07049 time 40136ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-70"></a>epoch  28/50 batch  600/ 600 - error: 0.01262 loss: 0.04639 time 21793ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-71"></a>epoch  29/50 batch  600/ 600 - error: 0.01403 loss: 0.05292 time 34096ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-72"></a>epoch  30/50 batch  600/ 600 - error: 0.01185 loss: 0.04456 time 35420ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-73"></a>epoch  31/50 batch  600/ 600 - error: 0.01098 loss: 0.04180 time 20909ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-74"></a>epoch  32/50 batch  600/ 600 - error: 0.01337 loss: 0.04687 time 30113ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-75"></a>epoch  33/50 batch  600/ 600 - error: 0.01415 loss: 0.05292 time 37393ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-76"></a>epoch  34/50 batch  600/ 600 - error: 0.00982 loss: 0.03615 time 20962ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-77"></a>epoch  35/50 batch  600/ 600 - error: 0.01178 loss: 0.04830 time 29305ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-78"></a>epoch  36/50 batch  600/ 600 - error: 0.00882 loss: 0.03408 time 38293ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-79"></a>epoch  37/50 batch  600/ 600 - error: 0.01148 loss: 0.04341 time 20841ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-80"></a>epoch  38/50 batch  600/ 600 - error: 0.00960 loss: 0.03701 time 29204ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-81"></a>epoch  39/50 batch  600/ 600 - error: 0.00850 loss: 0.03094 time 39802ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-82"></a>epoch  40/50 batch  600/ 600 - error: 0.01473 loss: 0.05136 time 20831ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-83"></a>epoch  41/50 batch  600/ 600 - error: 0.01007 loss: 0.03579 time 29856ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-84"></a>epoch  42/50 batch  600/ 600 - error: 0.00943 loss: 0.03370 time 38200ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-85"></a>epoch  43/50 batch  600/ 600 - error: 0.01205 loss: 0.04409 time 21162ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-86"></a>epoch  44/50 batch  600/ 600 - error: 0.00980 loss: 0.03674 time 32279ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-87"></a>epoch  45/50 batch  600/ 600 - error: 0.01068 loss: 0.04133 time 38448ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-88"></a>epoch  46/50 batch  600/ 600 - error: 0.00913 loss: 0.03478 time 20797ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-89"></a>epoch  47/50 batch  600/ 600 - error: 0.00985 loss: 0.03759 time 28885ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-90"></a>epoch  48/50 batch  600/ 600 - error: 0.00912 loss: 0.03295 time 41120ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-91"></a>epoch  49/50 batch  600/ 600 - error: 0.00930 loss: 0.03438 time 21282ms
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-92"></a>Restore the best (error) weights from epoch 39
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-93"></a>Training took 1460s
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-94"></a>
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-95"></a>Evaluation Results
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-96"></a>   error: 0.02440
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-97"></a>    loss: 0.11315
-<a name="rest_code_0a7a6584a403457e90aa0c7cb5bbc5e2-98"></a>evaluation took 1000ms
+<pre class="code text"><a name="rest_code_cac13a9e51474881adc905e6630b17ab-1"></a>------------------------------------------------------------
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-2"></a>| Index | Layer                | Parameters | Output Shape |
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-3"></a>------------------------------------------------------------
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-4"></a>| 0     | LSTM (TANH) (dyn)    |      51200 | [Bx28x100]   |
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-5"></a>| 1     | RNN(last)            |          0 | [Bx100]      |
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-6"></a>| 2     | Dense(SOFTMAX) (dyn) |       1000 | [Bx10]       |
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-7"></a>------------------------------------------------------------
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-8"></a>              Total Parameters:      52200
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-9"></a>
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-10"></a>--------------------------------------------
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-11"></a>| mnist | Size  | Batches | Augmented Size |
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-12"></a>--------------------------------------------
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-13"></a>| train | 60000 | 600     | 60000          |
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-14"></a>| test  | 10000 | 100     | 10000          |
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-15"></a>--------------------------------------------
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-16"></a>
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-17"></a>Network with 3 layers
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-18"></a>    LSTM(dyn): 28x28 -&gt; TANH -&gt; 28x100
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-19"></a>    RNN(last): 28x100 -&gt; 100
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-20"></a>    Dense(dyn): 100 -&gt; SOFTMAX -&gt; 10
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-21"></a>Total parameters: 52200
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-22"></a>Dataset
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-23"></a>Training: In-Memory Data Generator
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-24"></a>              Size: 60000
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-25"></a>           Batches: 600
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-26"></a>Testing: In-Memory Data Generator
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-27"></a>              Size: 10000
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-28"></a>           Batches: 100
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-29"></a>
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-30"></a>Train the network with "Stochastic Gradient Descent"
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-31"></a>    Updater: ADAM
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-32"></a>       Loss: CATEGORICAL_CROSS_ENTROPY
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-33"></a> Early Stop: Goal(error)
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-34"></a>
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-35"></a>With parameters:
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-36"></a>          epochs=50
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-37"></a>      batch_size=100
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-38"></a>   learning_rate=0.001
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-39"></a>           beta1=0.9
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-40"></a>           beta2=0.999
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-41"></a>
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-42"></a>epoch   0/50 batch  600/ 600 - error: 0.07943 loss: 0.28504 time 20910ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-43"></a>epoch   1/50 batch  600/ 600 - error: 0.06683 loss: 0.24021 time 20889ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-44"></a>epoch   2/50 batch  600/ 600 - error: 0.04828 loss: 0.18233 time 21061ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-45"></a>epoch   3/50 batch  600/ 600 - error: 0.04407 loss: 0.16665 time 20839ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-46"></a>epoch   4/50 batch  600/ 600 - error: 0.03515 loss: 0.13290 time 22108ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-47"></a>epoch   5/50 batch  600/ 600 - error: 0.03207 loss: 0.12019 time 21393ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-48"></a>epoch   6/50 batch  600/ 600 - error: 0.02973 loss: 0.11239 time 28199ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-49"></a>epoch   7/50 batch  600/ 600 - error: 0.02653 loss: 0.10455 time 37039ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-50"></a>epoch   8/50 batch  600/ 600 - error: 0.02482 loss: 0.09657 time 23127ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-51"></a>epoch   9/50 batch  600/ 600 - error: 0.02177 loss: 0.08422 time 41766ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-52"></a>epoch  10/50 batch  600/ 600 - error: 0.02453 loss: 0.09382 time 29765ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-53"></a>epoch  11/50 batch  600/ 600 - error: 0.02575 loss: 0.09796 time 21449ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-54"></a>epoch  12/50 batch  600/ 600 - error: 0.02107 loss: 0.07833 time 42056ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-55"></a>epoch  13/50 batch  600/ 600 - error: 0.01877 loss: 0.07171 time 24673ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-56"></a>epoch  14/50 batch  600/ 600 - error: 0.02095 loss: 0.08481 time 20878ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-57"></a>epoch  15/50 batch  600/ 600 - error: 0.02040 loss: 0.07578 time 41515ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-58"></a>epoch  16/50 batch  600/ 600 - error: 0.01580 loss: 0.06083 time 25705ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-59"></a>epoch  17/50 batch  600/ 600 - error: 0.01945 loss: 0.07046 time 20903ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-60"></a>epoch  18/50 batch  600/ 600 - error: 0.01728 loss: 0.06683 time 41828ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-61"></a>epoch  19/50 batch  600/ 600 - error: 0.01577 loss: 0.05947 time 27810ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-62"></a>epoch  20/50 batch  600/ 600 - error: 0.01528 loss: 0.05883 time 21477ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-63"></a>epoch  21/50 batch  600/ 600 - error: 0.01345 loss: 0.05127 time 44718ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-64"></a>epoch  22/50 batch  600/ 600 - error: 0.01410 loss: 0.05357 time 25174ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-65"></a>epoch  23/50 batch  600/ 600 - error: 0.01268 loss: 0.04765 time 23827ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-66"></a>epoch  24/50 batch  600/ 600 - error: 0.01342 loss: 0.05004 time 47232ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-67"></a>epoch  25/50 batch  600/ 600 - error: 0.01730 loss: 0.06872 time 22532ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-68"></a>epoch  26/50 batch  600/ 600 - error: 0.01337 loss: 0.05016 time 30114ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-69"></a>epoch  27/50 batch  600/ 600 - error: 0.01842 loss: 0.07049 time 40136ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-70"></a>epoch  28/50 batch  600/ 600 - error: 0.01262 loss: 0.04639 time 21793ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-71"></a>epoch  29/50 batch  600/ 600 - error: 0.01403 loss: 0.05292 time 34096ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-72"></a>epoch  30/50 batch  600/ 600 - error: 0.01185 loss: 0.04456 time 35420ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-73"></a>epoch  31/50 batch  600/ 600 - error: 0.01098 loss: 0.04180 time 20909ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-74"></a>epoch  32/50 batch  600/ 600 - error: 0.01337 loss: 0.04687 time 30113ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-75"></a>epoch  33/50 batch  600/ 600 - error: 0.01415 loss: 0.05292 time 37393ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-76"></a>epoch  34/50 batch  600/ 600 - error: 0.00982 loss: 0.03615 time 20962ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-77"></a>epoch  35/50 batch  600/ 600 - error: 0.01178 loss: 0.04830 time 29305ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-78"></a>epoch  36/50 batch  600/ 600 - error: 0.00882 loss: 0.03408 time 38293ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-79"></a>epoch  37/50 batch  600/ 600 - error: 0.01148 loss: 0.04341 time 20841ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-80"></a>epoch  38/50 batch  600/ 600 - error: 0.00960 loss: 0.03701 time 29204ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-81"></a>epoch  39/50 batch  600/ 600 - error: 0.00850 loss: 0.03094 time 39802ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-82"></a>epoch  40/50 batch  600/ 600 - error: 0.01473 loss: 0.05136 time 20831ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-83"></a>epoch  41/50 batch  600/ 600 - error: 0.01007 loss: 0.03579 time 29856ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-84"></a>epoch  42/50 batch  600/ 600 - error: 0.00943 loss: 0.03370 time 38200ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-85"></a>epoch  43/50 batch  600/ 600 - error: 0.01205 loss: 0.04409 time 21162ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-86"></a>epoch  44/50 batch  600/ 600 - error: 0.00980 loss: 0.03674 time 32279ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-87"></a>epoch  45/50 batch  600/ 600 - error: 0.01068 loss: 0.04133 time 38448ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-88"></a>epoch  46/50 batch  600/ 600 - error: 0.00913 loss: 0.03478 time 20797ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-89"></a>epoch  47/50 batch  600/ 600 - error: 0.00985 loss: 0.03759 time 28885ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-90"></a>epoch  48/50 batch  600/ 600 - error: 0.00912 loss: 0.03295 time 41120ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-91"></a>epoch  49/50 batch  600/ 600 - error: 0.00930 loss: 0.03438 time 21282ms
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-92"></a>Restore the best (error) weights from epoch 39
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-93"></a>Training took 1460s
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-94"></a>
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-95"></a>Evaluation Results
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-96"></a>   error: 0.02440
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-97"></a>    loss: 0.11315
+<a name="rest_code_cac13a9e51474881adc905e6630b17ab-98"></a>evaluation took 1000ms
 </pre>
 <p>Again, nothing fancy yet, but this example has not been optimized for
 performance nor for accuracy.</p>
@@ -315,6 +317,12 @@ still not as good as I want it to be, especially complex operation like used in
 Adam and Nadam. Currently, there are many calls to GPU BLAS libraries and
 I want to try to extract some more optimized patterns. Once it's done, I'll post
 more on that later on the blog.</p>
+<div class="system-messages section">
+<h2>Docutils System Messages</h2>
+<div class="system-message" id="id1">
+<p class="system-message-title">System Message: ERROR/3 (<tt class="docutils">&lt;string&gt;</tt>, line 3); <em><a href="initial-support-for-long-short-term-memory-lstm-in-dll.html#id2">backlink</a></em></p>
+Unknown target name: "i already merged suport for recurrent neural network (rnn) https://baptiste-wicht.com/posts/2017/11/initial-support-for-recurrent-neural-network-rnn-in-dll.html&gt;".</div>
+</div>
 </div>
     </div>
     <aside class="postpromonav"><nav><ul itemprop="keywords" class="tags">
