@@ -1,5 +1,8 @@
-I'm really happy to announce that I just merged support for Long Short Term Memory
-(LSTM) cells into my Deep Learning Library (DLL) machine learning framework.
+I'm really happy to announce that I just merged support for
+
+Long Short Term Memory
+(LSTM) cells into my Deep Learning Library (DLL) machine learning framework. Two
+weeks ago, `I already merged suport for Recurrent Neural network (RNN) https://baptiste-wicht.com/posts/2017/11/initial-support-for-recurrent-neural-network-rnn-in-dll.html>`_.
 
 It's nothing fancy yet, but forward propagation of LSTM and basic
 Backpropagation Through Time (BPTT) are now supported. It was not really
