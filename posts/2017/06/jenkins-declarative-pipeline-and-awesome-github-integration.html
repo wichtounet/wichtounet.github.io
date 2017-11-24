@@ -191,87 +191,87 @@ views of it:</p>
 <img alt="Jenkins Blue Ocean view of a build tests for DLL project" class="align-center" src="../../../images/jenkins_blue_ocean_dll_build_tests.png"><p>It's likely that it won't appeal to everyone, but I think it's pretty nice.</p>
 <p>If we get back to the declarative Pipeline, here is the declarative pipeline for
 my Expression Templates Library (ETL) project:</p>
-<pre class="code groovy"><a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-1"></a><span class="n">pipeline</span> <span class="o">{</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-2"></a>    <span class="n">agent</span> <span class="n">any</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-3"></a>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-4"></a>    <span class="n">environment</span> <span class="o">{</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-5"></a>       <span class="n">CXX</span> <span class="o">=</span> <span class="s2">"g++-4.9.4"</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-6"></a>       <span class="n">LD</span> <span class="o">=</span> <span class="s2">"g++-4.9.4"</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-7"></a>       <span class="n">ETL_MKL</span> <span class="o">=</span> <span class="s1">'true'</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-8"></a>    <span class="o">}</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-9"></a>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-10"></a>    <span class="n">stages</span> <span class="o">{</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-11"></a>        <span class="n">stage</span> <span class="o">(</span><span class="s1">'git'</span><span class="o">){</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-12"></a>            <span class="n">steps</span> <span class="o">{</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-13"></a>                <span class="n">checkout</span><span class="o">([</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-14"></a>                    <span class="n">$class</span><span class="o">:</span> <span class="s1">'GitSCM'</span><span class="o">,</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-15"></a>                    <span class="nl">branches:</span> <span class="n">scm</span><span class="o">.</span><span class="na">branches</span><span class="o">,</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-16"></a>                    <span class="nl">doGenerateSubmoduleConfigurations:</span> <span class="kc">false</span><span class="o">,</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-17"></a>                    <span class="nl">extensions:</span> <span class="n">scm</span><span class="o">.</span><span class="na">extensions</span> <span class="o">+</span> <span class="o">[[</span><span class="n">$class</span><span class="o">:</span> <span class="s1">'SubmoduleOption'</span><span class="o">,</span> <span class="nl">disableSubmodules:</span> <span class="kc">false</span><span class="o">,</span> <span class="nl">recursiveSubmodules:</span> <span class="kc">true</span><span class="o">,</span> <span class="nl">reference:</span> <span class="s1">''</span><span class="o">,</span> <span class="nl">trackingSubmodules:</span> <span class="kc">false</span><span class="o">]],</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-18"></a>                    <span class="nl">submoduleCfg:</span> <span class="o">[],</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-19"></a>                    <span class="nl">userRemoteConfigs:</span> <span class="n">scm</span><span class="o">.</span><span class="na">userRemoteConfigs</span><span class="o">])</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-20"></a>            <span class="o">}</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-21"></a>        <span class="o">}</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-22"></a>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-23"></a>        <span class="n">stage</span> <span class="o">(</span><span class="s1">'pre-analysis'</span><span class="o">)</span> <span class="o">{</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-24"></a>            <span class="n">steps</span> <span class="o">{</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-25"></a>                <span class="n">sh</span> <span class="s1">'cppcheck --xml-version=2 -j3 --enable=all --std=c++11 `git ls-files "*.hpp" "*.cpp"` 2&gt; cppcheck_report.xml'</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-26"></a>                <span class="n">sh</span> <span class="s1">'sloccount --duplicates --wide --details include/etl test workbench &gt; sloccount.sc'</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-27"></a>                <span class="n">sh</span> <span class="s1">'cccc include/etl/*.hpp test/*.cpp workbench/*.cpp || true'</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-28"></a>            <span class="o">}</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-29"></a>        <span class="o">}</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-30"></a>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-31"></a>        <span class="n">stage</span> <span class="o">(</span><span class="s1">'build'</span><span class="o">){</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-32"></a>            <span class="n">steps</span> <span class="o">{</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-33"></a>                <span class="n">sh</span> <span class="s1">'make clean'</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-34"></a>                <span class="n">sh</span> <span class="s1">'make -j6 release'</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-35"></a>            <span class="o">}</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-36"></a>        <span class="o">}</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-37"></a>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-38"></a>        <span class="n">stage</span> <span class="o">(</span><span class="s1">'test'</span><span class="o">){</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-39"></a>            <span class="n">steps</span> <span class="o">{</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-40"></a>                <span class="n">sh</span> <span class="s1">'ETL_THREADS=-j6 ETL_GPP=g++-4.9.4 LD_LIBRARY_PATH=\"${LD_LIBRARY_PATH}:/opt/intel/mkl/lib/intel64:/opt/intel/lib/intel64\" ./scripts/test_runner.sh'</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-41"></a>                <span class="n">archive</span> <span class="s1">'catch_report.xml'</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-42"></a>                <span class="n">junit</span> <span class="s1">'catch_report.xml'</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-43"></a>            <span class="o">}</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-44"></a>        <span class="o">}</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-45"></a>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-46"></a>        <span class="n">stage</span> <span class="o">(</span><span class="s1">'sonar-master'</span><span class="o">){</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-47"></a>            <span class="n">when</span> <span class="o">{</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-48"></a>                <span class="n">branch</span> <span class="s1">'master'</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-49"></a>            <span class="o">}</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-50"></a>            <span class="n">steps</span> <span class="o">{</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-51"></a>                <span class="n">sh</span> <span class="s2">"/opt/sonar-runner/bin/sonar-runner"</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-52"></a>            <span class="o">}</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-53"></a>        <span class="o">}</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-54"></a>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-55"></a>        <span class="n">stage</span> <span class="o">(</span><span class="s1">'sonar-branch'</span><span class="o">){</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-56"></a>            <span class="n">when</span> <span class="o">{</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-57"></a>                <span class="n">not</span> <span class="o">{</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-58"></a>                    <span class="n">branch</span> <span class="s1">'master'</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-59"></a>                <span class="o">}</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-60"></a>            <span class="o">}</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-61"></a>            <span class="n">steps</span> <span class="o">{</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-62"></a>                <span class="n">sh</span> <span class="s2">"/opt/sonar-runner/bin/sonar-runner -Dsonar.branch=${env.BRANCH_NAME}"</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-63"></a>            <span class="o">}</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-64"></a>        <span class="o">}</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-65"></a>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-66"></a>        <span class="n">stage</span> <span class="o">(</span><span class="s1">'bench'</span><span class="o">){</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-67"></a>            <span class="n">steps</span> <span class="o">{</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-68"></a>                <span class="n">build</span> <span class="nl">job:</span> <span class="s1">'etl - benchmark'</span><span class="o">,</span> <span class="nl">wait:</span> <span class="kc">false</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-69"></a>            <span class="o">}</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-70"></a>        <span class="o">}</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-71"></a>    <span class="o">}</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-72"></a>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-73"></a>    <span class="n">post</span> <span class="o">{</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-74"></a>        <span class="n">always</span> <span class="o">{</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-75"></a>            <span class="n">step</span><span class="o">([</span><span class="n">$class</span><span class="o">:</span> <span class="s1">'Mailer'</span><span class="o">,</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-76"></a>                <span class="nl">notifyEveryUnstableBuild:</span> <span class="kc">true</span><span class="o">,</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-77"></a>                <span class="nl">recipients:</span> <span class="s2">"baptiste.wicht@gmail.com"</span><span class="o">,</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-78"></a>                <span class="nl">sendToIndividuals:</span> <span class="kc">true</span><span class="o">])</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-79"></a>        <span class="o">}</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-80"></a>    <span class="o">}</span>
-<a name="rest_code_b5cc2ab00ac34619bb4ecd4021c3c749-81"></a><span class="o">}</span>
+<pre class="code groovy"><a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-1"></a><span class="n">pipeline</span> <span class="o">{</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-2"></a>    <span class="n">agent</span> <span class="n">any</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-3"></a>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-4"></a>    <span class="n">environment</span> <span class="o">{</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-5"></a>       <span class="n">CXX</span> <span class="o">=</span> <span class="s2">"g++-4.9.4"</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-6"></a>       <span class="n">LD</span> <span class="o">=</span> <span class="s2">"g++-4.9.4"</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-7"></a>       <span class="n">ETL_MKL</span> <span class="o">=</span> <span class="s1">'true'</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-8"></a>    <span class="o">}</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-9"></a>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-10"></a>    <span class="n">stages</span> <span class="o">{</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-11"></a>        <span class="n">stage</span> <span class="o">(</span><span class="s1">'git'</span><span class="o">){</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-12"></a>            <span class="n">steps</span> <span class="o">{</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-13"></a>                <span class="n">checkout</span><span class="o">([</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-14"></a>                    <span class="n">$class</span><span class="o">:</span> <span class="s1">'GitSCM'</span><span class="o">,</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-15"></a>                    <span class="nl">branches:</span> <span class="n">scm</span><span class="o">.</span><span class="na">branches</span><span class="o">,</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-16"></a>                    <span class="nl">doGenerateSubmoduleConfigurations:</span> <span class="kc">false</span><span class="o">,</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-17"></a>                    <span class="nl">extensions:</span> <span class="n">scm</span><span class="o">.</span><span class="na">extensions</span> <span class="o">+</span> <span class="o">[[</span><span class="n">$class</span><span class="o">:</span> <span class="s1">'SubmoduleOption'</span><span class="o">,</span> <span class="nl">disableSubmodules:</span> <span class="kc">false</span><span class="o">,</span> <span class="nl">recursiveSubmodules:</span> <span class="kc">true</span><span class="o">,</span> <span class="nl">reference:</span> <span class="s1">''</span><span class="o">,</span> <span class="nl">trackingSubmodules:</span> <span class="kc">false</span><span class="o">]],</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-18"></a>                    <span class="nl">submoduleCfg:</span> <span class="o">[],</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-19"></a>                    <span class="nl">userRemoteConfigs:</span> <span class="n">scm</span><span class="o">.</span><span class="na">userRemoteConfigs</span><span class="o">])</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-20"></a>            <span class="o">}</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-21"></a>        <span class="o">}</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-22"></a>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-23"></a>        <span class="n">stage</span> <span class="o">(</span><span class="s1">'pre-analysis'</span><span class="o">)</span> <span class="o">{</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-24"></a>            <span class="n">steps</span> <span class="o">{</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-25"></a>                <span class="n">sh</span> <span class="s1">'cppcheck --xml-version=2 -j3 --enable=all --std=c++11 `git ls-files "*.hpp" "*.cpp"` 2&gt; cppcheck_report.xml'</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-26"></a>                <span class="n">sh</span> <span class="s1">'sloccount --duplicates --wide --details include/etl test workbench &gt; sloccount.sc'</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-27"></a>                <span class="n">sh</span> <span class="s1">'cccc include/etl/*.hpp test/*.cpp workbench/*.cpp || true'</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-28"></a>            <span class="o">}</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-29"></a>        <span class="o">}</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-30"></a>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-31"></a>        <span class="n">stage</span> <span class="o">(</span><span class="s1">'build'</span><span class="o">){</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-32"></a>            <span class="n">steps</span> <span class="o">{</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-33"></a>                <span class="n">sh</span> <span class="s1">'make clean'</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-34"></a>                <span class="n">sh</span> <span class="s1">'make -j6 release'</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-35"></a>            <span class="o">}</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-36"></a>        <span class="o">}</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-37"></a>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-38"></a>        <span class="n">stage</span> <span class="o">(</span><span class="s1">'test'</span><span class="o">){</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-39"></a>            <span class="n">steps</span> <span class="o">{</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-40"></a>                <span class="n">sh</span> <span class="s1">'ETL_THREADS=-j6 ETL_GPP=g++-4.9.4 LD_LIBRARY_PATH=\"${LD_LIBRARY_PATH}:/opt/intel/mkl/lib/intel64:/opt/intel/lib/intel64\" ./scripts/test_runner.sh'</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-41"></a>                <span class="n">archive</span> <span class="s1">'catch_report.xml'</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-42"></a>                <span class="n">junit</span> <span class="s1">'catch_report.xml'</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-43"></a>            <span class="o">}</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-44"></a>        <span class="o">}</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-45"></a>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-46"></a>        <span class="n">stage</span> <span class="o">(</span><span class="s1">'sonar-master'</span><span class="o">){</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-47"></a>            <span class="n">when</span> <span class="o">{</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-48"></a>                <span class="n">branch</span> <span class="s1">'master'</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-49"></a>            <span class="o">}</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-50"></a>            <span class="n">steps</span> <span class="o">{</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-51"></a>                <span class="n">sh</span> <span class="s2">"/opt/sonar-runner/bin/sonar-runner"</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-52"></a>            <span class="o">}</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-53"></a>        <span class="o">}</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-54"></a>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-55"></a>        <span class="n">stage</span> <span class="o">(</span><span class="s1">'sonar-branch'</span><span class="o">){</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-56"></a>            <span class="n">when</span> <span class="o">{</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-57"></a>                <span class="n">not</span> <span class="o">{</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-58"></a>                    <span class="n">branch</span> <span class="s1">'master'</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-59"></a>                <span class="o">}</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-60"></a>            <span class="o">}</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-61"></a>            <span class="n">steps</span> <span class="o">{</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-62"></a>                <span class="n">sh</span> <span class="s2">"/opt/sonar-runner/bin/sonar-runner -Dsonar.branch=${env.BRANCH_NAME}"</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-63"></a>            <span class="o">}</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-64"></a>        <span class="o">}</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-65"></a>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-66"></a>        <span class="n">stage</span> <span class="o">(</span><span class="s1">'bench'</span><span class="o">){</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-67"></a>            <span class="n">steps</span> <span class="o">{</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-68"></a>                <span class="n">build</span> <span class="nl">job:</span> <span class="s1">'etl - benchmark'</span><span class="o">,</span> <span class="nl">wait:</span> <span class="kc">false</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-69"></a>            <span class="o">}</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-70"></a>        <span class="o">}</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-71"></a>    <span class="o">}</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-72"></a>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-73"></a>    <span class="n">post</span> <span class="o">{</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-74"></a>        <span class="n">always</span> <span class="o">{</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-75"></a>            <span class="n">step</span><span class="o">([</span><span class="n">$class</span><span class="o">:</span> <span class="s1">'Mailer'</span><span class="o">,</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-76"></a>                <span class="nl">notifyEveryUnstableBuild:</span> <span class="kc">true</span><span class="o">,</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-77"></a>                <span class="nl">recipients:</span> <span class="s2">"baptiste.wicht@gmail.com"</span><span class="o">,</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-78"></a>                <span class="nl">sendToIndividuals:</span> <span class="kc">true</span><span class="o">])</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-79"></a>        <span class="o">}</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-80"></a>    <span class="o">}</span>
+<a name="rest_code_09b9f6e643e34060ab6b94ea3ba5438f-81"></a><span class="o">}</span>
 </pre>
 <p>There is nothing really fancy about, it's probably average. Moreover, since I'm
 not an expert on pipelines and I've just discovered declarative pipelines, it
