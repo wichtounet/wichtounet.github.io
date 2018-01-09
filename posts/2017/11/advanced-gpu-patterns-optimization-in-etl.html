@@ -12,6 +12,7 @@
 <link rel="canonical" href="http://baptiste-wicht.com/posts/2017/11/advanced-gpu-patterns-optimization-in-etl.html">
 <!--[if lt IE 9]><script src="../../../assets/js/html5.js"></script><![endif]--><meta name="author" content="Baptiste Wicht">
 <link rel="prev" href="initial-support-for-long-short-term-memory-lstm-in-dll.html" title="Initial support for Long Short Term Memory (LSTM) in DLL" type="text/html">
+<link rel="next" href="../../2018/01/expression-templates-library-121-faster-gpu-and-new-features.html" title="Expression Templates Library 1.2.1: Faster GPU and new features" type="text/html">
 <meta property="og:site_name" content='Blog blog("Baptiste Wicht");'>
 <meta property="og:title" content="Advanced GPU Patterns Optimization in ETL">
 <meta property="og:url" content="http://baptiste-wicht.com/posts/2017/11/advanced-gpu-patterns-optimization-in-etl.html">
@@ -94,12 +95,12 @@
                             </li>
                             
 
-                            <li><a href="../10/expression-templates-library-etl-1-2-complete-gpu-support.html">Expression Templates Library (ETL) 1.2 - Complete GPU support</a></li>
+                            <li><a href="../../2018/01/expression-templates-library-121-faster-gpu-and-new-features.html">Expression Templates Library 1.2.1: Faster GPU and new features</a></li>
+<li><a href="../10/expression-templates-library-etl-1-2-complete-gpu-support.html">Expression Templates Library (ETL) 1.2 - Complete GPU support</a></li>
 <li><a href="../05/update-on-expression-templates-library-etl.html">Update on Expression Templates Library (ETL)</a></li>
 <li><a href="../../2016/09/expression-templates-library-etl-10.html">Expression Templates Library (ETL) 1.0</a></li>
 <li><a href="../08/expression-templates-library-etl-11.html">Expression Templates Library (ETL) 1.1</a></li>
 <li><a href="../../2012/02/local-optimization-on-three-address-code.html">Local optimization of Three-Address-Code</a></li>
-<li><a href="../08/dll-blazing-fast-neural-network-library.html">DLL: Blazing Fast Neural Network Library</a></li>
 
 
                             <li class="navbar-block">
@@ -151,12 +152,12 @@ linear kernels, performance is not great because this will invoke a lot of CUDA
 kernels. Indeed, the way it is done is that each sub expressions compute its
 result in a temporary GPU vector (or matrix) and these temporaries are passed
 through the expressions. For instance, this expression:</p>
-<pre class="code C++"><a name="rest_code_d2732fe4024b4f33a3f1d402a642594e-1"></a><span class="n">yy</span> <span class="o">=</span> <span class="mf">1.1</span> <span class="o">*</span> <span class="n">x</span> <span class="o">+</span> <span class="mf">1.2</span> <span class="o">*</span> <span class="n">y</span>
+<pre class="code C++"><a name="rest_code_a2747264d2b2417b883f0f64009eba7c-1"></a><span class="n">yy</span> <span class="o">=</span> <span class="mf">1.1</span> <span class="o">*</span> <span class="n">x</span> <span class="o">+</span> <span class="mf">1.2</span> <span class="o">*</span> <span class="n">y</span>
 </pre>
 <p>will be executed on the GPU as something like this:</p>
-<pre class="code C++"><a name="rest_code_500b0ba296c749719ec12c9fa1689c6e-1"></a><span class="n">t1</span> <span class="o">=</span> <span class="mf">1.1</span> <span class="o">*</span> <span class="n">x</span>
-<a name="rest_code_500b0ba296c749719ec12c9fa1689c6e-2"></a><span class="n">t2</span> <span class="o">=</span> <span class="mf">1.2</span> <span class="o">*</span> <span class="n">y</span>
-<a name="rest_code_500b0ba296c749719ec12c9fa1689c6e-3"></a><span class="n">yy</span> <span class="o">=</span> <span class="n">t1</span> <span class="o">+</span> <span class="n">t2</span>
+<pre class="code C++"><a name="rest_code_f6446eb885e14249ad4091025a303657-1"></a><span class="n">t1</span> <span class="o">=</span> <span class="mf">1.1</span> <span class="o">*</span> <span class="n">x</span>
+<a name="rest_code_f6446eb885e14249ad4091025a303657-2"></a><span class="n">t2</span> <span class="o">=</span> <span class="mf">1.2</span> <span class="o">*</span> <span class="n">y</span>
+<a name="rest_code_f6446eb885e14249ad4091025a303657-3"></a><span class="n">yy</span> <span class="o">=</span> <span class="n">t1</span> <span class="o">+</span> <span class="n">t2</span>
 </pre>
 <p>that will results in three GPU kernels being invoked. In the CPU case, the
 complete expression will be executed as one CPU kernel, that is constructed with
@@ -169,11 +170,11 @@ are some patterns that are repeated a lot and that easily be implemented in CUDA
 kernels. I've started detecting a few of these patterns and for each of them
 a single CUDA kernel is executed. For instance, each of the following
 expressions can be executed with a single kernel:</p>
-<pre class="code C++"><a name="rest_code_87f42462ec924239a51283663ded3b00-1"></a><span class="n">yy</span> <span class="o">=</span> <span class="mf">1.1</span> <span class="o">*</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span>
-<a name="rest_code_87f42462ec924239a51283663ded3b00-2"></a><span class="n">yy</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="mf">1.1</span> <span class="o">*</span> <span class="n">y</span>
-<a name="rest_code_87f42462ec924239a51283663ded3b00-3"></a><span class="n">yy</span> <span class="o">=</span> <span class="mf">1.1</span> <span class="o">*</span> <span class="n">y</span> <span class="o">+</span> <span class="mf">1.2</span> <span class="o">*</span> <span class="n">y</span>
-<a name="rest_code_87f42462ec924239a51283663ded3b00-4"></a><span class="n">yy</span> <span class="o">=</span> <span class="mf">1.1</span> <span class="o">*</span> <span class="n">x</span> <span class="o">*</span> <span class="n">y</span>
-<a name="rest_code_87f42462ec924239a51283663ded3b00-5"></a><span class="n">yy</span> <span class="o">=</span> <span class="n">x</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.1</span> <span class="o">*</span> <span class="n">y</span><span class="p">)</span>
+<pre class="code C++"><a name="rest_code_1f2795fda8824248a7444b5c6a533969-1"></a><span class="n">yy</span> <span class="o">=</span> <span class="mf">1.1</span> <span class="o">*</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span>
+<a name="rest_code_1f2795fda8824248a7444b5c6a533969-2"></a><span class="n">yy</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="mf">1.1</span> <span class="o">*</span> <span class="n">y</span>
+<a name="rest_code_1f2795fda8824248a7444b5c6a533969-3"></a><span class="n">yy</span> <span class="o">=</span> <span class="mf">1.1</span> <span class="o">*</span> <span class="n">y</span> <span class="o">+</span> <span class="mf">1.2</span> <span class="o">*</span> <span class="n">y</span>
+<a name="rest_code_1f2795fda8824248a7444b5c6a533969-4"></a><span class="n">yy</span> <span class="o">=</span> <span class="mf">1.1</span> <span class="o">*</span> <span class="n">x</span> <span class="o">*</span> <span class="n">y</span>
+<a name="rest_code_1f2795fda8824248a7444b5c6a533969-5"></a><span class="n">yy</span> <span class="o">=</span> <span class="n">x</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.1</span> <span class="o">*</span> <span class="n">y</span><span class="p">)</span>
 </pre>
 <p>This results in significantly performance improvement for these expressions!</p>
 <p>I have tested these new improvements in my Deep Learning Library (DLL) project
@@ -203,6 +204,9 @@ project if you want to check it out. You can access the project
 <ul class="pager hidden-print">
 <li class="previous">
                 <a href="initial-support-for-long-short-term-memory-lstm-in-dll.html" rel="prev" title="Initial support for Long Short Term Memory (LSTM) in DLL">Previous post</a>
+            </li>
+            <li class="next">
+                <a href="../../2018/01/expression-templates-library-121-faster-gpu-and-new-features.html" rel="next" title="Expression Templates Library 1.2.1: Faster GPU and new features">Next post</a>
             </li>
         </ul></nav></aside><section class="comments hidden-print"><h2>Comments</h2>
         
@@ -238,7 +242,7 @@ project if you want to check it out. You can access the project
 <!-- Footer -->
 
 <footer>
-    Contents © 2017         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         - License: 
+    Contents © 2018         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         - License: 
 <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="padding-left:5px;border-width:0" src="../../../assets/img/cc.png"></a>
         <ul class="footer_inline_ul">
 <li>
