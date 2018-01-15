@@ -1,13 +1,14 @@
 2017
 ####
 
-Deep Learning Feature Extraction for Image Processing
+Deep Learning Feature Extraction for Image Processing (Ph.D. Thesis)
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Ph.D. Thesis
+Baptiste Wicht
 
 `Read on ResearchGate <https://www.researchgate.net/publication/322505397_Deep_Learning_feature_Extraction_for_Image_Processing>`__
 
-`Direct Download (PDF) <https://baptiste-wicht.com/files/publication_store/phd_thesis.pdf>`__
+`Direct Download (PDF) <https://baptiste-wicht.com/publication_store/phd_thesis.pdf>`__
 
 2016
 ####
