@@ -7,7 +7,7 @@ Ph.D. Thesis
 
 `Read on ResearchGate <https://www.researchgate.net/publication/322505397_Deep_Learning_feature_Extraction_for_Image_Processing>`__
 
-`Direct Download (PDF) <https://baptiste-wicht.com/files/publication_store/phd_thesis.pdf>`__
+`Direct Download (PDF) <https://baptiste-wicht.com/publication_store/phd_thesis.pdf>`__
 
 2016
 ####
