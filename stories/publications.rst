@@ -1,3 +1,14 @@
+2017
+####
+
+Deep Learning Feature Extraction for Image Processing
+
+Ph.D. Thesis
+
+`Read on ResearchGate <https://www.researchgate.net/publication/322505397_Deep_Learning_feature_Extraction_for_Image_Processing>`__
+
+`Direct Download (PDF) <https://baptiste-wicht.com/files/publication_store/phd_thesis.pdf>`__
+
 2016
 ####
 
@@ -8,7 +19,7 @@ Baptiste Wicht, Andreas Fischer and Jean Hennebert
 
 In proceedings of the International Conference on Pattern Recognition (ICPR)
 
-(Link is coming)
+`Read on ResearchGate <https://www.researchgate.net/publication/316448243_Deep_learning_features_for_handwritten_keyword_spotting>`__
 
 Inkball Models as Features for Handwriting Recognition
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
