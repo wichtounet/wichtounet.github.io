@@ -104,6 +104,95 @@
             <div id="content"></div>
             
         <article class="postbox h-entry post-text"><h1 class="p-name">
+<a href="posts/2017/10/dll-new-features-embeddings-and-merge-layers.html" class="u-url">DLL New Features: Embeddings and Merge layers</a>
+        <br><small>  
+             Posted: <time class="published dt-published" datetime="2017-10-17T19:50:40+02:00">2017-10-17 19:50</time></small>
+</h1>
+        <hr>
+<div class="p-summary">
+        <div>
+<p>I've just finished integrating new features into DLL, my deep learning library.
+I've added support for an embeddings layer, a group layer and a merge layer.
+This is not yet released, but available in the master branch.</p>
+<p>Embeddings are used more and more these days to learn dense representation of
+characters or word. An embedding layer in a neural network transform labels into
+a vector. It's generally used as the first layer of the network. The embedding
+are learned as part of the network.</p>
+<p>The merge layer allows to create branches in the network. The input is passed to
+each sub layer and then the output of each layer is concatenated to form the
+output of the merged layers. This can be very useful to use different
+convolutional filter sizes.</p>
+<p>The group layer is a simple utility to group layers together. This is mostly to
+use with merge layers to form several branches.</p>
+<p>I've put together a new example to use these features on text classification.
+The dataset is totally synthetic for now, but this can easily be reproduced with
+a normal text classification dataset. This kind of model is called a Character
+Convolutional Neural Network.</p>
+<p>Here is the code for example:</p>
+<pre class="code cpp"><a name="rest_code_1e9b403327ae41bf965ca5eeecda3b39-1"></a><span class="k">constexpr</span> <span class="kt">size_t</span> <span class="n">embedding</span> <span class="o">=</span> <span class="mi">16</span><span class="p">;</span> <span class="c1">// The length of the embedding vector</span>
+<a name="rest_code_1e9b403327ae41bf965ca5eeecda3b39-2"></a><span class="k">constexpr</span> <span class="kt">size_t</span> <span class="n">length</span> <span class="o">=</span> <span class="mi">15</span><span class="p">;</span>    <span class="c1">// The word (or sequence) length</span>
+<a name="rest_code_1e9b403327ae41bf965ca5eeecda3b39-3"></a>
+<a name="rest_code_1e9b403327ae41bf965ca5eeecda3b39-4"></a><span class="k">using</span> <span class="n">embedding_network_t</span> <span class="o">=</span> <span class="n">dll</span><span class="o">::</span><span class="n">dyn_network_desc</span><span class="o">&lt;</span>
+<a name="rest_code_1e9b403327ae41bf965ca5eeecda3b39-5"></a>    <span class="n">dll</span><span class="o">::</span><span class="n">network_layers</span><span class="o">&lt;</span>
+<a name="rest_code_1e9b403327ae41bf965ca5eeecda3b39-6"></a>        <span class="c1">// The embedding layer</span>
+<a name="rest_code_1e9b403327ae41bf965ca5eeecda3b39-7"></a>        <span class="n">dll</span><span class="o">::</span><span class="n">embedding_layer</span><span class="o">&lt;</span><span class="mi">26</span><span class="p">,</span> <span class="n">length</span><span class="p">,</span> <span class="n">embedding</span><span class="o">&gt;</span>
+<a name="rest_code_1e9b403327ae41bf965ca5eeecda3b39-8"></a>
+<a name="rest_code_1e9b403327ae41bf965ca5eeecda3b39-9"></a>        <span class="c1">// The convolutional layers</span>
+<a name="rest_code_1e9b403327ae41bf965ca5eeecda3b39-10"></a>        <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">merge_layer</span><span class="o">&lt;</span>
+<a name="rest_code_1e9b403327ae41bf965ca5eeecda3b39-11"></a>            <span class="mi">0</span>
+<a name="rest_code_1e9b403327ae41bf965ca5eeecda3b39-12"></a>            <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">group_layer</span><span class="o">&lt;</span>
+<a name="rest_code_1e9b403327ae41bf965ca5eeecda3b39-13"></a>                  <span class="n">dll</span><span class="o">::</span><span class="n">conv_layer</span><span class="o">&lt;</span><span class="mi">1</span><span class="p">,</span> <span class="n">length</span><span class="p">,</span> <span class="n">embedding</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">embedding</span><span class="o">&gt;</span>
+<a name="rest_code_1e9b403327ae41bf965ca5eeecda3b39-14"></a>                <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">mp_2d_layer</span><span class="o">&lt;</span><span class="mi">16</span><span class="p">,</span> <span class="n">length</span> <span class="o">-</span> <span class="mi">3</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">length</span> <span class="o">-</span> <span class="mi">3</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="o">&gt;</span>
+<a name="rest_code_1e9b403327ae41bf965ca5eeecda3b39-15"></a>            <span class="o">&gt;</span>
+<a name="rest_code_1e9b403327ae41bf965ca5eeecda3b39-16"></a>            <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">group_layer</span><span class="o">&lt;</span>
+<a name="rest_code_1e9b403327ae41bf965ca5eeecda3b39-17"></a>                  <span class="n">dll</span><span class="o">::</span><span class="n">conv_layer</span><span class="o">&lt;</span><span class="mi">1</span><span class="p">,</span> <span class="n">length</span><span class="p">,</span> <span class="n">embedding</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">embedding</span><span class="o">&gt;</span>
+<a name="rest_code_1e9b403327ae41bf965ca5eeecda3b39-18"></a>                <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">mp_2d_layer</span><span class="o">&lt;</span><span class="mi">16</span><span class="p">,</span> <span class="n">length</span> <span class="o">-</span> <span class="mi">4</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">length</span> <span class="o">-</span> <span class="mi">4</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="o">&gt;</span>
+<a name="rest_code_1e9b403327ae41bf965ca5eeecda3b39-19"></a>            <span class="o">&gt;</span>
+<a name="rest_code_1e9b403327ae41bf965ca5eeecda3b39-20"></a>            <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">group_layer</span><span class="o">&lt;</span>
+<a name="rest_code_1e9b403327ae41bf965ca5eeecda3b39-21"></a>                  <span class="n">dll</span><span class="o">::</span><span class="n">conv_layer</span><span class="o">&lt;</span><span class="mi">1</span><span class="p">,</span> <span class="n">length</span><span class="p">,</span> <span class="n">embedding</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="n">embedding</span><span class="o">&gt;</span>
+<a name="rest_code_1e9b403327ae41bf965ca5eeecda3b39-22"></a>                <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">mp_2d_layer</span><span class="o">&lt;</span><span class="mi">16</span><span class="p">,</span> <span class="n">length</span> <span class="o">-</span> <span class="mi">5</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">length</span> <span class="o">-</span> <span class="mi">5</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="o">&gt;</span>
+<a name="rest_code_1e9b403327ae41bf965ca5eeecda3b39-23"></a>            <span class="o">&gt;</span>
+<a name="rest_code_1e9b403327ae41bf965ca5eeecda3b39-24"></a>        <span class="o">&gt;</span>
+<a name="rest_code_1e9b403327ae41bf965ca5eeecda3b39-25"></a>
+<a name="rest_code_1e9b403327ae41bf965ca5eeecda3b39-26"></a>        <span class="c1">// The final softmax layer</span>
+<a name="rest_code_1e9b403327ae41bf965ca5eeecda3b39-27"></a>        <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">dense_layer</span><span class="o">&lt;</span><span class="mi">48</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">softmax</span><span class="o">&gt;</span>
+<a name="rest_code_1e9b403327ae41bf965ca5eeecda3b39-28"></a>    <span class="o">&gt;</span>
+<a name="rest_code_1e9b403327ae41bf965ca5eeecda3b39-29"></a>    <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">updater</span><span class="o">&lt;</span><span class="n">dll</span><span class="o">::</span><span class="n">updater_type</span><span class="o">::</span><span class="n">NADAM</span><span class="o">&gt;</span>     <span class="c1">// Nesterov Adam (NADAM)</span>
+<a name="rest_code_1e9b403327ae41bf965ca5eeecda3b39-30"></a>    <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">batch_size</span><span class="o">&lt;</span><span class="mi">50</span><span class="o">&gt;</span>                        <span class="c1">// The mini-batch size</span>
+<a name="rest_code_1e9b403327ae41bf965ca5eeecda3b39-31"></a>    <span class="p">,</span> <span class="n">dll</span><span class="o">::</span><span class="n">shuffle</span>                               <span class="c1">// Shuffle before each epoch</span>
+<a name="rest_code_1e9b403327ae41bf965ca5eeecda3b39-32"></a><span class="o">&gt;::</span><span class="n">network_t</span><span class="p">;</span>
+<a name="rest_code_1e9b403327ae41bf965ca5eeecda3b39-33"></a>
+<a name="rest_code_1e9b403327ae41bf965ca5eeecda3b39-34"></a><span class="k">auto</span> <span class="n">net</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_unique</span><span class="o">&lt;</span><span class="n">embedding_network_t</span><span class="o">&gt;</span><span class="p">();</span>
+<a name="rest_code_1e9b403327ae41bf965ca5eeecda3b39-35"></a>
+<a name="rest_code_1e9b403327ae41bf965ca5eeecda3b39-36"></a><span class="c1">// Display the network and dataset</span>
+<a name="rest_code_1e9b403327ae41bf965ca5eeecda3b39-37"></a><span class="n">net</span><span class="o">-&gt;</span><span class="n">display</span><span class="p">();</span>
+<a name="rest_code_1e9b403327ae41bf965ca5eeecda3b39-38"></a>
+<a name="rest_code_1e9b403327ae41bf965ca5eeecda3b39-39"></a><span class="c1">// Train the network for performance sake</span>
+<a name="rest_code_1e9b403327ae41bf965ca5eeecda3b39-40"></a><span class="n">net</span><span class="o">-&gt;</span><span class="n">fine_tune</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="mi">50</span><span class="p">);</span>
+<a name="rest_code_1e9b403327ae41bf965ca5eeecda3b39-41"></a>
+<a name="rest_code_1e9b403327ae41bf965ca5eeecda3b39-42"></a><span class="c1">// Test the network on train set</span>
+<a name="rest_code_1e9b403327ae41bf965ca5eeecda3b39-43"></a><span class="n">net</span><span class="o">-&gt;</span><span class="n">evaluate</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">labels</span><span class="p">);</span>
+</pre>
+<p>The network starts with an embedding layer. The embedding is then passed to
+three convolutional layers with different filter sizes, each followed by
+a pooling layer. The outputs of the three layers are merged at the end of the
+merge layer. Finally, a softmax layer is used for classification.</p>
+<p>This kind of model can be very powerful and is used regularly. These new
+features make for a much larger variety of models that can be build with the DLL
+library.</p>
+<p>The full code with the dataset generation can be found online:
+<a class="reference external" href="https://github.com/wichtounet/dll/blob/master/examples/src/char_cnn.cpp">char_cnn.cpp</a></p>
+<p>The next feature I want to focus on is recurrent neural networks. I'll probably
+try a single RNN layer first and then upgrade to multi-layers and LSTM and maybe
+GRU.</p>
+</div>
+        </div>
+            
+        
+    <a href="posts/2017/10/dll-new-features-embeddings-and-merge-layers.html#disqus_thread" data-disqus-identifier="cache/posts/2017/10/dll-new-features-embeddings-and-merge-layers.html">Comments</a>
+
+
+        </article><article class="postbox h-entry post-text"><h1 class="p-name">
 <a href="posts/2017/10/i-successfully-defended-my-phd.html" class="u-url">I successfully defended my Ph.D.</a>
         <br><small>  
              Posted: <time class="published dt-published" datetime="2017-10-15T17:16:29+02:00">2017-10-15 17:16</time></small>

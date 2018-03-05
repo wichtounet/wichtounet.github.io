@@ -1,5 +1,298 @@
 <?xml version="1.0" encoding="utf-8"?>
-<?xml-stylesheet type="text/xsl" href="../assets/xml/rss.xsl" media="all"?><rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Blog blog("Baptiste Wicht"); (Posts about clang)</title><link>https://baptiste-wicht.com/</link><description></description><atom:link href="https://baptiste-wicht.com/categories/clang.xml" type="application/rss+xml" rel="self"></atom:link><language>en</language><lastBuildDate>Thu, 01 Feb 2018 08:08:41 GMT</lastBuildDate><generator>Nikola (getnikola.com)</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>How I made my Deep Learning Library 38% faster to compile (Optimization and C++17 if constexpr)</title><link>https://baptiste-wicht.com/posts/2017/09/how-i-made-deep-learning-library-38-faster-to-compile-optimization-and-cpp17-if-constexpr.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;My Deep Learning Library (DLL) project is a C++ library for training and using
+<?xml-stylesheet type="text/xsl" href="../assets/xml/rss.xsl" media="all"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Blog blog("Baptiste Wicht"); (Posts about clang)</title><link>https://baptiste-wicht.com/</link><description></description><atom:link rel="self" href="https://baptiste-wicht.com/categories/clang.xml" type="application/rss+xml"></atom:link><language>en</language><lastBuildDate>Wed, 07 Feb 2018 15:02:47 GMT</lastBuildDate><generator>Nikola (getnikola.com)</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>Decrease DLL neural network compilation time with C++17</title><link>https://baptiste-wicht.com/posts/2018/02/decrease-dll-neural-network-compilation-time-with-c%2B%2B17.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;Just last week, &lt;a class="reference external" href="https://baptiste-wicht.com/posts/2018/02/c%2B%2B17-migration-of-expression-templates-library-etl.html"&gt;I've migrated my Expression Templates Library (ETL) library to C++17&lt;/a&gt;,
+it is now also done in my Deep Learning Library (DLL) library. In ETL, this
+resulted in a &lt;em&gt;much nicer code overall&lt;/em&gt;, but no real improvement in compilation
+time.&lt;/p&gt;
+&lt;p&gt;The objective of the migration of DLL was two-fold. First, I also wanted to
+simplify some code, especially with &lt;code&gt;if constexpr&lt;/code&gt;. But I also especially
+wanted to try to reduce the compilation time. In the past,
+&lt;a class="reference external" href="https://baptiste-wicht.com/posts/2017/09/how-i-made-deep-learning-library-38-faster-to-compile-optimization-and-cpp17-if-constexpr.html"&gt;I've already tried a few changes with C++17&lt;/a&gt;, with good results on the compilation of the entire test suite.
+While this is very good, this is not very representative of users of the library.
+Indeed, normally you'll have only one network in your source file not several.
+The new changes will especially help in the case of many networks, but less in
+the case of a single network per source file.&lt;/p&gt;
+&lt;p&gt;This time, I decided to test the compilation on the examples. I've tested the
+eight official examples from the DLL library:&lt;/p&gt;
+&lt;ol class="arabic simple" start="0"&gt;
+&lt;li&gt;mnist_dbn: A fully-connected Deep Belief Network (DBN) on the MNIST data set
+with three layers&lt;/li&gt;
+&lt;li&gt;char_cnn: A special CNN with embeddings and merge and group layers for text
+recognition&lt;/li&gt;
+&lt;li&gt;imagenet_cnn: A 12 layers Convolutional Neural Network (CNN) for Imagenet&lt;/li&gt;
+&lt;li&gt;mnist_ae: A simple two-layers auto-encoder for MNIST&lt;/li&gt;
+&lt;li&gt;mnist_cnn: A simple 6 layers CNN for MNIST&lt;/li&gt;
+&lt;li&gt;mnist_deep_ae: A deep auto-encoder for MNIST, only fully-connected&lt;/li&gt;
+&lt;li&gt;mnist_lstm: A Recurrent Neural Network (RNN) with Long Short Term Memory
+(LSTM) cells&lt;/li&gt;
+&lt;li&gt;mnist_mlp: A simple fully-connected network for MNIST, with dropout&lt;/li&gt;
+&lt;li&gt;mnist_rnn: A simple RNN with simple cells for MNIST&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;This is really representative of what users can do with the library and I think
+it's a much better for compilation time.&lt;/p&gt;
+&lt;p&gt;For reference, you can find &lt;a class="reference external" href="https://github.com/wichtounet/dll/tree/master/examples/src"&gt;the source code of all the examples online&lt;/a&gt;.&lt;/p&gt;
+&lt;div class="section" id="results"&gt;
+&lt;h2&gt;Results&lt;/h2&gt;
+&lt;p&gt;Let's start with the results. I've tested this at different stages of the
+migration with clang 5 and GCC 7.2. I tested the following steps:&lt;/p&gt;
+&lt;ol class="arabic simple"&gt;
+&lt;li&gt;The original C++14 version&lt;/li&gt;
+&lt;li&gt;Simply compiling in c++17 mode (-std=c++17)&lt;/li&gt;
+&lt;li&gt;Using the C++17 version of the ETL library&lt;/li&gt;
+&lt;li&gt;Upgrading DLL to C++17 (without ETL)&lt;/li&gt;
+&lt;li&gt;ETL and DLL in C++17 versions&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;I've compiled each example independently in release_debug mode. Here are the
+results for G++ 7.2:&lt;/p&gt;
+&lt;table border="1" class="docutils align-center"&gt;
+&lt;colgroup&gt;
+&lt;col width="21%"&gt;
+&lt;col width="9%"&gt;
+&lt;col width="9%"&gt;
+&lt;col width="9%"&gt;
+&lt;col width="9%"&gt;
+&lt;col width="9%"&gt;
+&lt;col width="9%"&gt;
+&lt;col width="9%"&gt;
+&lt;col width="9%"&gt;
+&lt;col width="9%"&gt;
+&lt;/colgroup&gt;
+&lt;thead valign="bottom"&gt;
+&lt;tr&gt;&lt;th class="head"&gt;Example&lt;/th&gt;
+&lt;th class="head"&gt;0&lt;/th&gt;
+&lt;th class="head"&gt;1&lt;/th&gt;
+&lt;th class="head"&gt;2&lt;/th&gt;
+&lt;th class="head"&gt;3&lt;/th&gt;
+&lt;th class="head"&gt;4&lt;/th&gt;
+&lt;th class="head"&gt;5&lt;/th&gt;
+&lt;th class="head"&gt;6&lt;/th&gt;
+&lt;th class="head"&gt;7&lt;/th&gt;
+&lt;th class="head"&gt;8&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td&gt;C++14&lt;/td&gt;
+&lt;td&gt;37.818&lt;/td&gt;
+&lt;td&gt;32.944&lt;/td&gt;
+&lt;td&gt;33.511&lt;/td&gt;
+&lt;td&gt;15.403&lt;/td&gt;
+&lt;td&gt;29.998&lt;/td&gt;
+&lt;td&gt;16.911&lt;/td&gt;
+&lt;td&gt;24.745&lt;/td&gt;
+&lt;td&gt;18.974&lt;/td&gt;
+&lt;td&gt;19.006&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;-std=c++17&lt;/td&gt;
+&lt;td&gt;38.358&lt;/td&gt;
+&lt;td&gt;32.409&lt;/td&gt;
+&lt;td&gt;32.707&lt;/td&gt;
+&lt;td&gt;15.810&lt;/td&gt;
+&lt;td&gt;30.042&lt;/td&gt;
+&lt;td&gt;16.896&lt;/td&gt;
+&lt;td&gt;24.635&lt;/td&gt;
+&lt;td&gt;19.134&lt;/td&gt;
+&lt;td&gt;19.027&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;ETL C++17&lt;/td&gt;
+&lt;td&gt;36.045&lt;/td&gt;
+&lt;td&gt;31.000&lt;/td&gt;
+&lt;td&gt;30.942&lt;/td&gt;
+&lt;td&gt;15.322&lt;/td&gt;
+&lt;td&gt;28.840&lt;/td&gt;
+&lt;td&gt;16.747&lt;/td&gt;
+&lt;td&gt;24.151&lt;/td&gt;
+&lt;td&gt;18.208&lt;/td&gt;
+&lt;td&gt;18.939&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;DLL C++17&lt;/td&gt;
+&lt;td&gt;35.251&lt;/td&gt;
+&lt;td&gt;32.577&lt;/td&gt;
+&lt;td&gt;32.854&lt;/td&gt;
+&lt;td&gt;15.653&lt;/td&gt;
+&lt;td&gt;29.758&lt;/td&gt;
+&lt;td&gt;16.851&lt;/td&gt;
+&lt;td&gt;24.606&lt;/td&gt;
+&lt;td&gt;19.098&lt;/td&gt;
+&lt;td&gt;19.146&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;Final C++17&lt;/td&gt;
+&lt;td&gt;32.289&lt;/td&gt;
+&lt;td&gt;31.133&lt;/td&gt;
+&lt;td&gt;30.939&lt;/td&gt;
+&lt;td&gt;15.232&lt;/td&gt;
+&lt;td&gt;28.753&lt;/td&gt;
+&lt;td&gt;16.526&lt;/td&gt;
+&lt;td&gt;24.326&lt;/td&gt;
+&lt;td&gt;18.116&lt;/td&gt;
+&lt;td&gt;17.819&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;Final Improvement&lt;/td&gt;
+&lt;td&gt;14.62%&lt;/td&gt;
+&lt;td&gt;5.49%&lt;/td&gt;
+&lt;td&gt;7.67%&lt;/td&gt;
+&lt;td&gt;1.11%&lt;/td&gt;
+&lt;td&gt;4.15%&lt;/td&gt;
+&lt;td&gt;2.27%&lt;/td&gt;
+&lt;td&gt;1.69%&lt;/td&gt;
+&lt;td&gt;4.52%&lt;/td&gt;
+&lt;td&gt;6.24%&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;The difference by just enabling c++17 is not significant. On the other hand,
+some significant gain can be obtained by using the C++17 version of ETL,
+especially for the DBN version and for the CNN versions. Except for the DBN
+case, the migration of DLL to C++17 did not bring any significant advantage.
+When everything is combined, the gains are more important :) In the best case,
+the example is 14.6% faster to compile.&lt;/p&gt;
+&lt;p&gt;Let's see if it's the same with clang++ 5.0:&lt;/p&gt;
+&lt;table border="1" class="docutils align-center"&gt;
+&lt;colgroup&gt;
+&lt;col width="21%"&gt;
+&lt;col width="9%"&gt;
+&lt;col width="9%"&gt;
+&lt;col width="9%"&gt;
+&lt;col width="9%"&gt;
+&lt;col width="9%"&gt;
+&lt;col width="9%"&gt;
+&lt;col width="9%"&gt;
+&lt;col width="9%"&gt;
+&lt;col width="9%"&gt;
+&lt;/colgroup&gt;
+&lt;thead valign="bottom"&gt;
+&lt;tr&gt;&lt;th class="head"&gt;Example&lt;/th&gt;
+&lt;th class="head"&gt;0&lt;/th&gt;
+&lt;th class="head"&gt;1&lt;/th&gt;
+&lt;th class="head"&gt;2&lt;/th&gt;
+&lt;th class="head"&gt;3&lt;/th&gt;
+&lt;th class="head"&gt;4&lt;/th&gt;
+&lt;th class="head"&gt;5&lt;/th&gt;
+&lt;th class="head"&gt;6&lt;/th&gt;
+&lt;th class="head"&gt;7&lt;/th&gt;
+&lt;th class="head"&gt;8&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td&gt;C++14&lt;/td&gt;
+&lt;td&gt;40.690&lt;/td&gt;
+&lt;td&gt;34.753&lt;/td&gt;
+&lt;td&gt;35.488&lt;/td&gt;
+&lt;td&gt;16.146&lt;/td&gt;
+&lt;td&gt;31.926&lt;/td&gt;
+&lt;td&gt;17.708&lt;/td&gt;
+&lt;td&gt;29.806&lt;/td&gt;
+&lt;td&gt;19.207&lt;/td&gt;
+&lt;td&gt;20.858&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;-std=c++17&lt;/td&gt;
+&lt;td&gt;40.502&lt;/td&gt;
+&lt;td&gt;34.664&lt;/td&gt;
+&lt;td&gt;34.990&lt;/td&gt;
+&lt;td&gt;16.027&lt;/td&gt;
+&lt;td&gt;31.510&lt;/td&gt;
+&lt;td&gt;17.630&lt;/td&gt;
+&lt;td&gt;29.465&lt;/td&gt;
+&lt;td&gt;19.161&lt;/td&gt;
+&lt;td&gt;20.860&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;ETL C++17&lt;/td&gt;
+&lt;td&gt;37.386&lt;/td&gt;
+&lt;td&gt;33.008&lt;/td&gt;
+&lt;td&gt;33.896&lt;/td&gt;
+&lt;td&gt;15.519&lt;/td&gt;
+&lt;td&gt;30.269&lt;/td&gt;
+&lt;td&gt;16.995&lt;/td&gt;
+&lt;td&gt;28.897&lt;/td&gt;
+&lt;td&gt;18.383&lt;/td&gt;
+&lt;td&gt;19.809&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;DLL C++17&lt;/td&gt;
+&lt;td&gt;37.252&lt;/td&gt;
+&lt;td&gt;34.592&lt;/td&gt;
+&lt;td&gt;35.250&lt;/td&gt;
+&lt;td&gt;16.131&lt;/td&gt;
+&lt;td&gt;31.782&lt;/td&gt;
+&lt;td&gt;17.606&lt;/td&gt;
+&lt;td&gt;29.595&lt;/td&gt;
+&lt;td&gt;19.126&lt;/td&gt;
+&lt;td&gt;20.782&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;Final C++17&lt;/td&gt;
+&lt;td&gt;34.470&lt;/td&gt;
+&lt;td&gt;33.154&lt;/td&gt;
+&lt;td&gt;33.881&lt;/td&gt;
+&lt;td&gt;15.415&lt;/td&gt;
+&lt;td&gt;30.279&lt;/td&gt;
+&lt;td&gt;17.078&lt;/td&gt;
+&lt;td&gt;28.808&lt;/td&gt;
+&lt;td&gt;18.497&lt;/td&gt;
+&lt;td&gt;19.761&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;Final Improvement&lt;/td&gt;
+&lt;td&gt;15.28%&lt;/td&gt;
+&lt;td&gt;4.60%&lt;/td&gt;
+&lt;td&gt;4.52%&lt;/td&gt;
+&lt;td&gt;4.52%&lt;/td&gt;
+&lt;td&gt;5.15%&lt;/td&gt;
+&lt;td&gt;3.55%&lt;/td&gt;
+&lt;td&gt;3.34%&lt;/td&gt;
+&lt;td&gt;3.69%&lt;/td&gt;
+&lt;td&gt;5.25%&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;First of all, as I have seen time after time, clang is still slower than GCC.
+It's a not a big difference, but still significant. Overall, the gains are a bit
+higher on clang than on GCC, but not by much. Interestingly, the migration of
+DLL to C++17 is less interesting in terms of compilation time for clang. It
+seems even to slow down compilation on some examples. On the other hand, the
+migration of ETL is more important than on GCC.&lt;/p&gt;
+&lt;p&gt;Overall, every example is faster to compile using both libraries in C++17, but
+we don't have spectacular speed-ups. With clang, we have speedups from 3.3% to
+15.3%. With GCC, we have speedup  from 1.1% to 14.6%. It's not very high, but
+I'm already satisfied with these results.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="c-17-in-dll"&gt;
+&lt;h2&gt;C++17 in DLL&lt;/h2&gt;
+&lt;p&gt;Overall, the migration of DLL to C++17 was quite similar to that of ETL. You can
+take a look at my &lt;a class="reference external" href="https://baptiste-wicht.com/posts/2018/02/c%2B%2B17-migration-of-expression-templates-library-etl.html"&gt;previous article&lt;/a&gt;
+if you want more details on C++17 features I've used.&lt;/p&gt;
+&lt;p&gt;I've &lt;em&gt;replaced a lot of SFINAE functions&lt;/em&gt; with &lt;code&gt;if constexpr&lt;/code&gt;. I've also
+replaced a lot of &lt;code&gt;statif_if&lt;/code&gt; with &lt;code&gt;if constexpr&lt;/code&gt;. There was a large
+number of these in DLL's code. I also enabled all the &lt;code&gt;constexpr&lt;/code&gt; that
+were commented for this exact time :)&lt;/p&gt;
+&lt;p&gt;I was also thinking that I could replace a lot of meta-programming stuff with
+&lt;em&gt;fold expressions&lt;/em&gt;. While I was able to replace a few of them, most of them were
+harder to replace with fold expressions. Indeed, the variadic pack is often
+hidden behind another class and therefore the pack is not directly usable from
+the network class or the group and merge layers classes. I didn't want to start
+a big refactoring just to use a C++17 feature, the current state of this code is
+fine.&lt;/p&gt;
+&lt;p&gt;I made some use of structured bindings as well, but again not as much as I was
+thinking. In fact, a lot of time, I'm assigning the elements of a pair or tuple
+to existing variables not declaring new variables and unfortunately, you can
+only use structured bindings with &lt;code&gt;auto&lt;/code&gt; declaration.&lt;/p&gt;
+&lt;p&gt;Overall, the &lt;em&gt;code is significantly better now&lt;/em&gt;, but there was less impact than
+there was on ETL. It's also a smaller code base, so maybe this is normal and my
+expectations were too high ;)&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="conclusion"&gt;
+&lt;h2&gt;Conclusion&lt;/h2&gt;
+&lt;p&gt;The trunk of DLL is now a C++17 library :) I think this improve the quality of
+the code by a nice margin! Even though, there is still some work to be done to
+improve the code, especially for the DBN pretraining code, the quality is quite
+good now. Moreover, the switch to C++17 made the compilation of neural networks
+using the DLL library &lt;em&gt;faster to compile&lt;/em&gt;, from 1.1% in the worst case to 15.3% in
+the best case! I don't know when I will release the next version of DLL, but it
+will take some time. I'll especially have to polish the RNN support and add
+a sequence to sequence loss before I will release the 1.1 version of DLL.&lt;/p&gt;
+&lt;p&gt;I'm quite satisfied with C++17 even if I would have liked a bit more features to
+play with! I'm already a big fan of &lt;code&gt;if constexpr&lt;/code&gt;, this can make the code
+much nicer and fold expressions are much more intuitive than their previous
+recursive template counterpart.&lt;/p&gt;
+&lt;p&gt;I may also consider migrating some parts of the cpp-utils library, but if I do,
+it will only be through the use of conditionals in order not to break the other
+projects that are based on the library.&lt;/p&gt;
+&lt;/div&gt;&lt;/div&gt;</description><category>C++</category><category>C++17</category><category>clang</category><category>Compilers</category><category>Deep Learning</category><category>dll</category><category>etl</category><category>gcc</category><category>Machine Learning</category><category>Performance</category><category>projects</category><guid>https://baptiste-wicht.com/posts/2018/02/decrease-dll-neural-network-compilation-time-with-c%2B%2B17.html</guid><pubDate>Wed, 07 Feb 2018 10:39:02 GMT</pubDate></item><item><title>How I made my Deep Learning Library 38% faster to compile (Optimization and C++17 if constexpr)</title><link>https://baptiste-wicht.com/posts/2017/09/how-i-made-deep-learning-library-38-faster-to-compile-optimization-and-cpp17-if-constexpr.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;My Deep Learning Library (DLL) project is a C++ library for training and using
 artificial neural networks (you can take a look at
 &lt;a class="reference external" href="https://baptiste-wicht.com/posts/2017/07/update-on-deep-learning-library-dll-dropout-batch-normalization-adaptive-learning-rates.html"&gt;this post about DLL&lt;/a&gt;
 if you want more information).&lt;/p&gt;

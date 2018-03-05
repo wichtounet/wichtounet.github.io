@@ -1,5 +1,298 @@
 <?xml version="1.0" encoding="utf-8"?>
-<?xml-stylesheet type="text/xsl" href="../assets/xml/rss.xsl" media="all"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Blog blog("Baptiste Wicht"); (Posts about C++)</title><link>https://baptiste-wicht.com/</link><description></description><atom:link type="application/rss+xml" href="https://baptiste-wicht.com/categories/c%2B%2B.xml" rel="self"></atom:link><language>en</language><lastBuildDate>Mon, 05 Feb 2018 08:23:30 GMT</lastBuildDate><generator>Nikola (getnikola.com)</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>C++17 Migration of Expression Templates Library (ETL)</title><link>https://baptiste-wicht.com/posts/2018/02/c%2B%2B17-migration-of-expression-templates-library-etl.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;I've finally decided to migrate my Expression Templates Library (ETL) project to
+<?xml-stylesheet type="text/xsl" href="../assets/xml/rss.xsl" media="all"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Blog blog("Baptiste Wicht"); (Posts about C++)</title><link>https://baptiste-wicht.com/</link><description></description><atom:link rel="self" href="https://baptiste-wicht.com/categories/c%2B%2B.xml" type="application/rss+xml"></atom:link><language>en</language><lastBuildDate>Wed, 07 Feb 2018 15:02:48 GMT</lastBuildDate><generator>Nikola (getnikola.com)</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>Decrease DLL neural network compilation time with C++17</title><link>https://baptiste-wicht.com/posts/2018/02/decrease-dll-neural-network-compilation-time-with-c%2B%2B17.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;Just last week, &lt;a class="reference external" href="https://baptiste-wicht.com/posts/2018/02/c%2B%2B17-migration-of-expression-templates-library-etl.html"&gt;I've migrated my Expression Templates Library (ETL) library to C++17&lt;/a&gt;,
+it is now also done in my Deep Learning Library (DLL) library. In ETL, this
+resulted in a &lt;em&gt;much nicer code overall&lt;/em&gt;, but no real improvement in compilation
+time.&lt;/p&gt;
+&lt;p&gt;The objective of the migration of DLL was two-fold. First, I also wanted to
+simplify some code, especially with &lt;code&gt;if constexpr&lt;/code&gt;. But I also especially
+wanted to try to reduce the compilation time. In the past,
+&lt;a class="reference external" href="https://baptiste-wicht.com/posts/2017/09/how-i-made-deep-learning-library-38-faster-to-compile-optimization-and-cpp17-if-constexpr.html"&gt;I've already tried a few changes with C++17&lt;/a&gt;, with good results on the compilation of the entire test suite.
+While this is very good, this is not very representative of users of the library.
+Indeed, normally you'll have only one network in your source file not several.
+The new changes will especially help in the case of many networks, but less in
+the case of a single network per source file.&lt;/p&gt;
+&lt;p&gt;This time, I decided to test the compilation on the examples. I've tested the
+eight official examples from the DLL library:&lt;/p&gt;
+&lt;ol class="arabic simple" start="0"&gt;
+&lt;li&gt;mnist_dbn: A fully-connected Deep Belief Network (DBN) on the MNIST data set
+with three layers&lt;/li&gt;
+&lt;li&gt;char_cnn: A special CNN with embeddings and merge and group layers for text
+recognition&lt;/li&gt;
+&lt;li&gt;imagenet_cnn: A 12 layers Convolutional Neural Network (CNN) for Imagenet&lt;/li&gt;
+&lt;li&gt;mnist_ae: A simple two-layers auto-encoder for MNIST&lt;/li&gt;
+&lt;li&gt;mnist_cnn: A simple 6 layers CNN for MNIST&lt;/li&gt;
+&lt;li&gt;mnist_deep_ae: A deep auto-encoder for MNIST, only fully-connected&lt;/li&gt;
+&lt;li&gt;mnist_lstm: A Recurrent Neural Network (RNN) with Long Short Term Memory
+(LSTM) cells&lt;/li&gt;
+&lt;li&gt;mnist_mlp: A simple fully-connected network for MNIST, with dropout&lt;/li&gt;
+&lt;li&gt;mnist_rnn: A simple RNN with simple cells for MNIST&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;This is really representative of what users can do with the library and I think
+it's a much better for compilation time.&lt;/p&gt;
+&lt;p&gt;For reference, you can find &lt;a class="reference external" href="https://github.com/wichtounet/dll/tree/master/examples/src"&gt;the source code of all the examples online&lt;/a&gt;.&lt;/p&gt;
+&lt;div class="section" id="results"&gt;
+&lt;h2&gt;Results&lt;/h2&gt;
+&lt;p&gt;Let's start with the results. I've tested this at different stages of the
+migration with clang 5 and GCC 7.2. I tested the following steps:&lt;/p&gt;
+&lt;ol class="arabic simple"&gt;
+&lt;li&gt;The original C++14 version&lt;/li&gt;
+&lt;li&gt;Simply compiling in c++17 mode (-std=c++17)&lt;/li&gt;
+&lt;li&gt;Using the C++17 version of the ETL library&lt;/li&gt;
+&lt;li&gt;Upgrading DLL to C++17 (without ETL)&lt;/li&gt;
+&lt;li&gt;ETL and DLL in C++17 versions&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;I've compiled each example independently in release_debug mode. Here are the
+results for G++ 7.2:&lt;/p&gt;
+&lt;table border="1" class="docutils align-center"&gt;
+&lt;colgroup&gt;
+&lt;col width="21%"&gt;
+&lt;col width="9%"&gt;
+&lt;col width="9%"&gt;
+&lt;col width="9%"&gt;
+&lt;col width="9%"&gt;
+&lt;col width="9%"&gt;
+&lt;col width="9%"&gt;
+&lt;col width="9%"&gt;
+&lt;col width="9%"&gt;
+&lt;col width="9%"&gt;
+&lt;/colgroup&gt;
+&lt;thead valign="bottom"&gt;
+&lt;tr&gt;&lt;th class="head"&gt;Example&lt;/th&gt;
+&lt;th class="head"&gt;0&lt;/th&gt;
+&lt;th class="head"&gt;1&lt;/th&gt;
+&lt;th class="head"&gt;2&lt;/th&gt;
+&lt;th class="head"&gt;3&lt;/th&gt;
+&lt;th class="head"&gt;4&lt;/th&gt;
+&lt;th class="head"&gt;5&lt;/th&gt;
+&lt;th class="head"&gt;6&lt;/th&gt;
+&lt;th class="head"&gt;7&lt;/th&gt;
+&lt;th class="head"&gt;8&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td&gt;C++14&lt;/td&gt;
+&lt;td&gt;37.818&lt;/td&gt;
+&lt;td&gt;32.944&lt;/td&gt;
+&lt;td&gt;33.511&lt;/td&gt;
+&lt;td&gt;15.403&lt;/td&gt;
+&lt;td&gt;29.998&lt;/td&gt;
+&lt;td&gt;16.911&lt;/td&gt;
+&lt;td&gt;24.745&lt;/td&gt;
+&lt;td&gt;18.974&lt;/td&gt;
+&lt;td&gt;19.006&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;-std=c++17&lt;/td&gt;
+&lt;td&gt;38.358&lt;/td&gt;
+&lt;td&gt;32.409&lt;/td&gt;
+&lt;td&gt;32.707&lt;/td&gt;
+&lt;td&gt;15.810&lt;/td&gt;
+&lt;td&gt;30.042&lt;/td&gt;
+&lt;td&gt;16.896&lt;/td&gt;
+&lt;td&gt;24.635&lt;/td&gt;
+&lt;td&gt;19.134&lt;/td&gt;
+&lt;td&gt;19.027&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;ETL C++17&lt;/td&gt;
+&lt;td&gt;36.045&lt;/td&gt;
+&lt;td&gt;31.000&lt;/td&gt;
+&lt;td&gt;30.942&lt;/td&gt;
+&lt;td&gt;15.322&lt;/td&gt;
+&lt;td&gt;28.840&lt;/td&gt;
+&lt;td&gt;16.747&lt;/td&gt;
+&lt;td&gt;24.151&lt;/td&gt;
+&lt;td&gt;18.208&lt;/td&gt;
+&lt;td&gt;18.939&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;DLL C++17&lt;/td&gt;
+&lt;td&gt;35.251&lt;/td&gt;
+&lt;td&gt;32.577&lt;/td&gt;
+&lt;td&gt;32.854&lt;/td&gt;
+&lt;td&gt;15.653&lt;/td&gt;
+&lt;td&gt;29.758&lt;/td&gt;
+&lt;td&gt;16.851&lt;/td&gt;
+&lt;td&gt;24.606&lt;/td&gt;
+&lt;td&gt;19.098&lt;/td&gt;
+&lt;td&gt;19.146&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;Final C++17&lt;/td&gt;
+&lt;td&gt;32.289&lt;/td&gt;
+&lt;td&gt;31.133&lt;/td&gt;
+&lt;td&gt;30.939&lt;/td&gt;
+&lt;td&gt;15.232&lt;/td&gt;
+&lt;td&gt;28.753&lt;/td&gt;
+&lt;td&gt;16.526&lt;/td&gt;
+&lt;td&gt;24.326&lt;/td&gt;
+&lt;td&gt;18.116&lt;/td&gt;
+&lt;td&gt;17.819&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;Final Improvement&lt;/td&gt;
+&lt;td&gt;14.62%&lt;/td&gt;
+&lt;td&gt;5.49%&lt;/td&gt;
+&lt;td&gt;7.67%&lt;/td&gt;
+&lt;td&gt;1.11%&lt;/td&gt;
+&lt;td&gt;4.15%&lt;/td&gt;
+&lt;td&gt;2.27%&lt;/td&gt;
+&lt;td&gt;1.69%&lt;/td&gt;
+&lt;td&gt;4.52%&lt;/td&gt;
+&lt;td&gt;6.24%&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;The difference by just enabling c++17 is not significant. On the other hand,
+some significant gain can be obtained by using the C++17 version of ETL,
+especially for the DBN version and for the CNN versions. Except for the DBN
+case, the migration of DLL to C++17 did not bring any significant advantage.
+When everything is combined, the gains are more important :) In the best case,
+the example is 14.6% faster to compile.&lt;/p&gt;
+&lt;p&gt;Let's see if it's the same with clang++ 5.0:&lt;/p&gt;
+&lt;table border="1" class="docutils align-center"&gt;
+&lt;colgroup&gt;
+&lt;col width="21%"&gt;
+&lt;col width="9%"&gt;
+&lt;col width="9%"&gt;
+&lt;col width="9%"&gt;
+&lt;col width="9%"&gt;
+&lt;col width="9%"&gt;
+&lt;col width="9%"&gt;
+&lt;col width="9%"&gt;
+&lt;col width="9%"&gt;
+&lt;col width="9%"&gt;
+&lt;/colgroup&gt;
+&lt;thead valign="bottom"&gt;
+&lt;tr&gt;&lt;th class="head"&gt;Example&lt;/th&gt;
+&lt;th class="head"&gt;0&lt;/th&gt;
+&lt;th class="head"&gt;1&lt;/th&gt;
+&lt;th class="head"&gt;2&lt;/th&gt;
+&lt;th class="head"&gt;3&lt;/th&gt;
+&lt;th class="head"&gt;4&lt;/th&gt;
+&lt;th class="head"&gt;5&lt;/th&gt;
+&lt;th class="head"&gt;6&lt;/th&gt;
+&lt;th class="head"&gt;7&lt;/th&gt;
+&lt;th class="head"&gt;8&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td&gt;C++14&lt;/td&gt;
+&lt;td&gt;40.690&lt;/td&gt;
+&lt;td&gt;34.753&lt;/td&gt;
+&lt;td&gt;35.488&lt;/td&gt;
+&lt;td&gt;16.146&lt;/td&gt;
+&lt;td&gt;31.926&lt;/td&gt;
+&lt;td&gt;17.708&lt;/td&gt;
+&lt;td&gt;29.806&lt;/td&gt;
+&lt;td&gt;19.207&lt;/td&gt;
+&lt;td&gt;20.858&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;-std=c++17&lt;/td&gt;
+&lt;td&gt;40.502&lt;/td&gt;
+&lt;td&gt;34.664&lt;/td&gt;
+&lt;td&gt;34.990&lt;/td&gt;
+&lt;td&gt;16.027&lt;/td&gt;
+&lt;td&gt;31.510&lt;/td&gt;
+&lt;td&gt;17.630&lt;/td&gt;
+&lt;td&gt;29.465&lt;/td&gt;
+&lt;td&gt;19.161&lt;/td&gt;
+&lt;td&gt;20.860&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;ETL C++17&lt;/td&gt;
+&lt;td&gt;37.386&lt;/td&gt;
+&lt;td&gt;33.008&lt;/td&gt;
+&lt;td&gt;33.896&lt;/td&gt;
+&lt;td&gt;15.519&lt;/td&gt;
+&lt;td&gt;30.269&lt;/td&gt;
+&lt;td&gt;16.995&lt;/td&gt;
+&lt;td&gt;28.897&lt;/td&gt;
+&lt;td&gt;18.383&lt;/td&gt;
+&lt;td&gt;19.809&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;DLL C++17&lt;/td&gt;
+&lt;td&gt;37.252&lt;/td&gt;
+&lt;td&gt;34.592&lt;/td&gt;
+&lt;td&gt;35.250&lt;/td&gt;
+&lt;td&gt;16.131&lt;/td&gt;
+&lt;td&gt;31.782&lt;/td&gt;
+&lt;td&gt;17.606&lt;/td&gt;
+&lt;td&gt;29.595&lt;/td&gt;
+&lt;td&gt;19.126&lt;/td&gt;
+&lt;td&gt;20.782&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;Final C++17&lt;/td&gt;
+&lt;td&gt;34.470&lt;/td&gt;
+&lt;td&gt;33.154&lt;/td&gt;
+&lt;td&gt;33.881&lt;/td&gt;
+&lt;td&gt;15.415&lt;/td&gt;
+&lt;td&gt;30.279&lt;/td&gt;
+&lt;td&gt;17.078&lt;/td&gt;
+&lt;td&gt;28.808&lt;/td&gt;
+&lt;td&gt;18.497&lt;/td&gt;
+&lt;td&gt;19.761&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;Final Improvement&lt;/td&gt;
+&lt;td&gt;15.28%&lt;/td&gt;
+&lt;td&gt;4.60%&lt;/td&gt;
+&lt;td&gt;4.52%&lt;/td&gt;
+&lt;td&gt;4.52%&lt;/td&gt;
+&lt;td&gt;5.15%&lt;/td&gt;
+&lt;td&gt;3.55%&lt;/td&gt;
+&lt;td&gt;3.34%&lt;/td&gt;
+&lt;td&gt;3.69%&lt;/td&gt;
+&lt;td&gt;5.25%&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;First of all, as I have seen time after time, clang is still slower than GCC.
+It's a not a big difference, but still significant. Overall, the gains are a bit
+higher on clang than on GCC, but not by much. Interestingly, the migration of
+DLL to C++17 is less interesting in terms of compilation time for clang. It
+seems even to slow down compilation on some examples. On the other hand, the
+migration of ETL is more important than on GCC.&lt;/p&gt;
+&lt;p&gt;Overall, every example is faster to compile using both libraries in C++17, but
+we don't have spectacular speed-ups. With clang, we have speedups from 3.3% to
+15.3%. With GCC, we have speedup  from 1.1% to 14.6%. It's not very high, but
+I'm already satisfied with these results.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="c-17-in-dll"&gt;
+&lt;h2&gt;C++17 in DLL&lt;/h2&gt;
+&lt;p&gt;Overall, the migration of DLL to C++17 was quite similar to that of ETL. You can
+take a look at my &lt;a class="reference external" href="https://baptiste-wicht.com/posts/2018/02/c%2B%2B17-migration-of-expression-templates-library-etl.html"&gt;previous article&lt;/a&gt;
+if you want more details on C++17 features I've used.&lt;/p&gt;
+&lt;p&gt;I've &lt;em&gt;replaced a lot of SFINAE functions&lt;/em&gt; with &lt;code&gt;if constexpr&lt;/code&gt;. I've also
+replaced a lot of &lt;code&gt;statif_if&lt;/code&gt; with &lt;code&gt;if constexpr&lt;/code&gt;. There was a large
+number of these in DLL's code. I also enabled all the &lt;code&gt;constexpr&lt;/code&gt; that
+were commented for this exact time :)&lt;/p&gt;
+&lt;p&gt;I was also thinking that I could replace a lot of meta-programming stuff with
+&lt;em&gt;fold expressions&lt;/em&gt;. While I was able to replace a few of them, most of them were
+harder to replace with fold expressions. Indeed, the variadic pack is often
+hidden behind another class and therefore the pack is not directly usable from
+the network class or the group and merge layers classes. I didn't want to start
+a big refactoring just to use a C++17 feature, the current state of this code is
+fine.&lt;/p&gt;
+&lt;p&gt;I made some use of structured bindings as well, but again not as much as I was
+thinking. In fact, a lot of time, I'm assigning the elements of a pair or tuple
+to existing variables not declaring new variables and unfortunately, you can
+only use structured bindings with &lt;code&gt;auto&lt;/code&gt; declaration.&lt;/p&gt;
+&lt;p&gt;Overall, the &lt;em&gt;code is significantly better now&lt;/em&gt;, but there was less impact than
+there was on ETL. It's also a smaller code base, so maybe this is normal and my
+expectations were too high ;)&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="conclusion"&gt;
+&lt;h2&gt;Conclusion&lt;/h2&gt;
+&lt;p&gt;The trunk of DLL is now a C++17 library :) I think this improve the quality of
+the code by a nice margin! Even though, there is still some work to be done to
+improve the code, especially for the DBN pretraining code, the quality is quite
+good now. Moreover, the switch to C++17 made the compilation of neural networks
+using the DLL library &lt;em&gt;faster to compile&lt;/em&gt;, from 1.1% in the worst case to 15.3% in
+the best case! I don't know when I will release the next version of DLL, but it
+will take some time. I'll especially have to polish the RNN support and add
+a sequence to sequence loss before I will release the 1.1 version of DLL.&lt;/p&gt;
+&lt;p&gt;I'm quite satisfied with C++17 even if I would have liked a bit more features to
+play with! I'm already a big fan of &lt;code&gt;if constexpr&lt;/code&gt;, this can make the code
+much nicer and fold expressions are much more intuitive than their previous
+recursive template counterpart.&lt;/p&gt;
+&lt;p&gt;I may also consider migrating some parts of the cpp-utils library, but if I do,
+it will only be through the use of conditionals in order not to break the other
+projects that are based on the library.&lt;/p&gt;
+&lt;/div&gt;&lt;/div&gt;</description><category>C++</category><category>C++17</category><category>clang</category><category>Compilers</category><category>Deep Learning</category><category>dll</category><category>etl</category><category>gcc</category><category>Machine Learning</category><category>Performance</category><category>projects</category><guid>https://baptiste-wicht.com/posts/2018/02/decrease-dll-neural-network-compilation-time-with-c%2B%2B17.html</guid><pubDate>Wed, 07 Feb 2018 10:39:02 GMT</pubDate></item><item><title>C++17 Migration of Expression Templates Library (ETL)</title><link>https://baptiste-wicht.com/posts/2018/02/c%2B%2B17-migration-of-expression-templates-library-etl.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;I've finally decided to migrate my Expression Templates Library (ETL) project to
 C++17. I've talking about doing that for a long time and I've released several
 releases without doing the change, but the next version will be a C++17 library.
 The reason why I didn't want to rush the change was that this means the library
@@ -3920,209 +4213,4 @@ the Matrix Multiplication and Convolutions&lt;/li&gt;
 &lt;li&gt;&lt;a class="reference external" href="https://github.com/wichtounet/dll"&gt;Deep Learning Library (DLL)&lt;/a&gt;: For the RBM
 and CRBM implementations&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;Don't hesitate to ask any questions if you want more information :)&lt;/p&gt;&lt;/div&gt;</description><category>C++</category><category>CPU</category><category>crbm</category><category>dbn</category><category>Deep Learning</category><category>dll</category><category>etl</category><category>Intel</category><category>Performances</category><category>publications</category><category>rbm</category><category>thesis</category><guid>https://baptiste-wicht.com/posts/2017/02/publication-cpu-performance-optimizations-rbm-crbm.html</guid><pubDate>Tue, 07 Feb 2017 16:33:33 GMT</pubDate></item><item><title>PVS-Studio on C++ Library Review</title><link>https://baptiste-wicht.com/posts/2016/12/pvs-studio-on-cpp-library-review.html</link><dc:creator>Baptiste Wicht</dc:creator><description>&lt;div&gt;&lt;p&gt;PVS-Studio is a commercial static analyzer for C, C++ and C#. It works in both
-Windows and Linux.&lt;/p&gt;
-&lt;p&gt;It has been a long time since I wanted to test it on my projects. I contacted
-The PVS-Studio team and they gave me a temporary license so that I can test the
-tool and make a review.&lt;/p&gt;
-&lt;p&gt;I tried the static analyzer on my Expression Templates Library (ETL) project.
-This is a heavily-templated C++ library. I tried it on Linux of course.&lt;/p&gt;
-&lt;div class="section" id="usage"&gt;
-&lt;h2&gt;Usage&lt;/h2&gt;
-&lt;p&gt;The installation is very simple, simply untar an archive and put the executables
-in your PATH (or use absolute paths). There are also some deb and rpm packages
-for some distributions. You need strace to make the analyzer work, it should be
-available on any Linux platform.&lt;/p&gt;
-&lt;p&gt;The usage of PVS-Studio on Linux should be straightforward. First, you can use the
-analyzer directly with make and it will detect the invocations of the compiler.
-For instance, here is the command I used for ETL:&lt;/p&gt;
-&lt;pre class="code text"&gt;&lt;a name="rest_code_36c6b09deb424f56be740333eb9b44b3-1"&gt;&lt;/a&gt;pvs-studio-analyzer trace -- make -j5 debug/bin/etl_test
-&lt;/pre&gt;&lt;p&gt;Note that you can use several threads without issues, which is really great.
-There does not seem to be any slowdown at this stage, probably only collecting
-compiler arguments.&lt;/p&gt;
-&lt;p&gt;This first step creates a strace_out file that will be used by the next stage.&lt;/p&gt;
-&lt;p&gt;Once, the compilation has been analyzed, you can generate the results with the
-analyze function, for which you'll need a license. Here is what I did:&lt;/p&gt;
-&lt;pre class="code text"&gt;&lt;a name="rest_code_4a8bd2855f79487cadc9e3367dff0ef3-1"&gt;&lt;/a&gt;pvs-studio-analyzer analyze -l ~/pvs_studio/PVS-Studio.lic -j5
-&lt;/pre&gt;&lt;p&gt;Unfortunately, this didn't work for me:&lt;/p&gt;
-&lt;pre class="code text"&gt;&lt;a name="rest_code_256bcb9fd15c4cd9a81fa72e6336fd30-1"&gt;&lt;/a&gt;No compilation units found
-&lt;a name="rest_code_256bcb9fd15c4cd9a81fa72e6336fd30-2"&gt;&lt;/a&gt;Analysis finished in 0:00:00.00
-&lt;/pre&gt;&lt;p&gt;Apparently, it's not able to use the strace_out it generated itself...&lt;/p&gt;
-&lt;p&gt;Another possibility is to use the compilation database from clang to use
-PVS-Studio. So I generated my compile_commands.json file again (it was not up to
-date...) with &lt;a class="reference external" href="https://github.com/rizsotto/Bear"&gt;Bear&lt;/a&gt;. And then, you only
-need to run the analyze step:&lt;/p&gt;
-&lt;pre class="code text"&gt;&lt;a name="rest_code_0a6e4f55a8ea4ccab7193eaa40c5e6be-1"&gt;&lt;/a&gt;pvs-studio-analyzer analyze -l ~/pvs_studio/PVS-Studio.lic -j5
-&lt;/pre&gt;&lt;p&gt;Make sure you have the same compiler configured than the one used to generate
-the compilation database to avoid errors with compiler arguments.&lt;/p&gt;
-&lt;p&gt;Unfortunately, this just printed a load of crap on my console:&lt;/p&gt;
-&lt;pre class="code text"&gt;&lt;a name="rest_code_79dff8dcffc74bbdb3e68b43b1e731a0-1"&gt;&lt;/a&gt;(L8Pu(]-'Lo8h&amp;gt;uo(_uv(uo2(-&amp;gt;'2h_u(uo2(uvU2K h&amp;gt;'o8a=}Lkk;x[G^%cuaa8acr[VS%
-&lt;a name="rest_code_79dff8dcffc74bbdb3e68b43b1e731a0-2"&gt;&lt;/a&gt;$ckUaoc8 c'8&amp;gt;_-o-8&amp;gt;U2cu/kau==-8&amp;gt;c-=cU2]Uf=c U2=u%c&amp;amp;kU__-&amp;gt;j}c@uvu2%cJ
-&lt;a name="rest_code_79dff8dcffc74bbdb3e68b43b1e731a0-3"&gt;&lt;/a&gt;(L8Pu(]-'Lo8h&amp;gt;uo(_uv(uo2(-&amp;gt;'2h_u(uo2(uvU2K h&amp;gt;'o8a=}Lkk;JVJ^%cuaa8acr[VS%
-&lt;a name="rest_code_79dff8dcffc74bbdb3e68b43b1e731a0-4"&gt;&lt;/a&gt;$ckUaoc8 c'8&amp;gt;_-o-8&amp;gt;U2cu/kau==-8&amp;gt;c-=cU2]Uf=c U2=u%c&amp;amp;kU__-&amp;gt;j}c@uvu2%cJ
-&lt;a name="rest_code_79dff8dcffc74bbdb3e68b43b1e731a0-5"&gt;&lt;/a&gt;(L8Pu(]-'Lo8h&amp;gt;uo(_uv(uo2(-&amp;gt;'2h_u(uo2(uvU2K h&amp;gt;'o8a=}Lkk;*[G^%cuaa8acr[VS%
-&lt;a name="rest_code_79dff8dcffc74bbdb3e68b43b1e731a0-6"&gt;&lt;/a&gt;$ckUaoc8 c'8&amp;gt;_-o-8&amp;gt;U2cu/kau==-8&amp;gt;c-=cU2]Uf=c U2=u%c&amp;amp;kU__-&amp;gt;j}c@uvu2%cJ
-&lt;a name="rest_code_79dff8dcffc74bbdb3e68b43b1e731a0-7"&gt;&lt;/a&gt;(L8Pu(]-'Lo8h&amp;gt;uo(_uv(uo2(-&amp;gt;'2h_u(uo2(uvU2K h&amp;gt;'o8a=}Lkk;b[b^%cuaa8acr[VS%
-&lt;a name="rest_code_79dff8dcffc74bbdb3e68b43b1e731a0-8"&gt;&lt;/a&gt;$ckUaoc8 c'8&amp;gt;_-o-8&amp;gt;U2cu/kau==-8&amp;gt;c-=cU2]Uf=c U2=u%c&amp;amp;kU__-&amp;gt;j}c@uvu2%cJ
-&lt;a name="rest_code_79dff8dcffc74bbdb3e68b43b1e731a0-9"&gt;&lt;/a&gt;(L8Pu(]-'Lo8h&amp;gt;uo(_uv(uo2(-&amp;gt;'2h_u(uo2(uvU2K h&amp;gt;'o8a=}Lkk;[[x^%cuaa8acr[VS%
-&lt;a name="rest_code_79dff8dcffc74bbdb3e68b43b1e731a0-10"&gt;&lt;/a&gt;$ckUaoc8 c'8&amp;gt;_-o-8&amp;gt;U2cu/kau==-8&amp;gt;c-=cU2]Uf=c U2=u%c&amp;amp;kU__-&amp;gt;j}c@uvu2%cJ
-&lt;/pre&gt;&lt;p&gt;Pretty nice, isn't it ?&lt;/p&gt;
-&lt;p&gt;Let's try again in a file:&lt;/p&gt;
-&lt;pre class="code text"&gt;&lt;a name="rest_code_db8c81be12f64f8b92727b5be5485bd3-1"&gt;&lt;/a&gt;pvs-studio-analyzer analyze -o results.log -l ~/pvs_studio/PVS-Studio.lic -j5
-&lt;/pre&gt;&lt;p&gt;The time is quite reasonable for the analysis, it took much less time than the
-compilation time. In total, it took 88 seconds to analyze all the files. It's
-much faster than the clang static analyzer.&lt;/p&gt;
-&lt;p&gt;This time it worked, but the log file is not readable, you need to convert it
-again:&lt;/p&gt;
-&lt;pre class="code text"&gt;&lt;a name="rest_code_858be7de52834a509c4555fb5748ae04-1"&gt;&lt;/a&gt;plog-converter -t errorfile -o errors results.log
-&lt;/pre&gt;&lt;p&gt;And finally, you can read the results of the analysis in the errors file.&lt;/p&gt;
-&lt;/div&gt;
-&lt;div class="section" id="results"&gt;
-&lt;h2&gt;Results&lt;/h2&gt;
-&lt;p&gt;Overall, PVS-Studio found 236 messages in the ETL library, I was expecting more.
-I also wish there was an HTML report that include the source code as well as the
-error message. I had to lookup at the code for each message (you could integrate
-it in vim and then use the quickfix window to do that). There are some
-visualization but in things like QtCreator or LibreOffice which I don't have nor
-want on my computer.&lt;/p&gt;
-&lt;p&gt;Let's look at the results. For each message, I'll include the message from
-PVS-Studio and the code if it's relevant.&lt;/p&gt;
-&lt;p&gt;The first is about using the comma:&lt;/p&gt;
-&lt;pre class="code text"&gt;&lt;a name="rest_code_d9d26fcc3f564b729122a27c002452ad-1"&gt;&lt;/a&gt;include/etl/traits.hpp:674:1: error: V521 Such expressions using the ',' operator are dangerous. Make sure the expression is correct.
-&lt;a name="rest_code_d9d26fcc3f564b729122a27c002452ad-2"&gt;&lt;/a&gt;include/etl/traits.hpp:674:1: error: V685 Consider inspecting the return statement. The expression contains a comma.
-&lt;/pre&gt;&lt;pre class="code cpp"&gt;&lt;a name="rest_code_328866c558914f99af6d2f7a21d43a93-1"&gt;&lt;/a&gt;&lt;span class="k"&gt;template&lt;/span&gt; &lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="k"&gt;typename&lt;/span&gt; &lt;span class="n"&gt;E&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
-&lt;a name="rest_code_328866c558914f99af6d2f7a21d43a93-2"&gt;&lt;/a&gt;&lt;span class="k"&gt;constexpr&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;dimensions&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="k"&gt;const&lt;/span&gt; &lt;span class="n"&gt;E&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt; &lt;span class="n"&gt;expr&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="k"&gt;noexcept&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
-&lt;a name="rest_code_328866c558914f99af6d2f7a21d43a93-3"&gt;&lt;/a&gt;    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;void&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="n"&gt;expr&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;etl_traits&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;E&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;::&lt;/span&gt;&lt;span class="n"&gt;dimensions&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
-&lt;a name="rest_code_328866c558914f99af6d2f7a21d43a93-4"&gt;&lt;/a&gt;&lt;span class="p"&gt;}&lt;/span&gt;
-&lt;/pre&gt;&lt;p&gt;Here I'm simply using the comma operand to ignore expr to avoid a warning. To
-make this compile in C++11, you need to do it in one line otherwise it's not
-a constexpr function. It's probably not perfect to use this construct, but there
-is no problem here.&lt;/p&gt;
-&lt;p&gt;There is a bunch of these, let's filter them, it remains 207 warnings. Let's
-jump to the next one:&lt;/p&gt;
-&lt;pre class="code text"&gt;&lt;a name="rest_code_f2a61f555fac4a1dba50b2b9dc0c8408-1"&gt;&lt;/a&gt;include/etl/impl/blas/fft.hpp:29:1: error: V501 There are identical sub-expressions to the left and to the right of the '==' operator: (DFTI_SINGLE) == DFTI_SINGLE
-&lt;/pre&gt;&lt;pre class="code cpp"&gt;&lt;a name="rest_code_e9d5f38c213440f0bddcce29388d5fa0-1"&gt;&lt;/a&gt;&lt;span class="kr"&gt;inline&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;fft_kernel&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="k"&gt;const&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;complex&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="kt"&gt;float&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;*&lt;/span&gt; &lt;span class="n"&gt;in&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;s&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;complex&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="kt"&gt;float&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;*&lt;/span&gt; &lt;span class="n"&gt;out&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
-&lt;a name="rest_code_e9d5f38c213440f0bddcce29388d5fa0-2"&gt;&lt;/a&gt;    &lt;span class="n"&gt;DFTI_DESCRIPTOR_HANDLE&lt;/span&gt; &lt;span class="n"&gt;descriptor&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
-&lt;a name="rest_code_e9d5f38c213440f0bddcce29388d5fa0-3"&gt;&lt;/a&gt;
-&lt;a name="rest_code_e9d5f38c213440f0bddcce29388d5fa0-4"&gt;&lt;/a&gt;    &lt;span class="kt"&gt;void&lt;/span&gt;&lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="n"&gt;in_ptr&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="k"&gt;const_cast&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="kt"&gt;void&lt;/span&gt;&lt;span class="o"&gt;*&amp;gt;&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="k"&gt;static_cast&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="k"&gt;const&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt;&lt;span class="o"&gt;*&amp;gt;&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;in&lt;/span&gt;&lt;span class="p"&gt;));&lt;/span&gt;
-&lt;a name="rest_code_e9d5f38c213440f0bddcce29388d5fa0-5"&gt;&lt;/a&gt;
-&lt;a name="rest_code_e9d5f38c213440f0bddcce29388d5fa0-6"&gt;&lt;/a&gt;    &lt;span class="n"&gt;DftiCreateDescriptor&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;descriptor&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;DFTI_SINGLE&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;DFTI_COMPLEX&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;s&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt; &lt;span class="c1"&gt;//Specify size and precision&lt;/span&gt;
-&lt;a name="rest_code_e9d5f38c213440f0bddcce29388d5fa0-7"&gt;&lt;/a&gt;    &lt;span class="n"&gt;DftiSetValue&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;descriptor&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;DFTI_PLACEMENT&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;DFTI_NOT_INPLACE&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;         &lt;span class="c1"&gt;//Out of place FFT&lt;/span&gt;
-&lt;a name="rest_code_e9d5f38c213440f0bddcce29388d5fa0-8"&gt;&lt;/a&gt;    &lt;span class="n"&gt;DftiCommitDescriptor&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;descriptor&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;                                   &lt;span class="c1"&gt;//Finalize the descriptor&lt;/span&gt;
-&lt;a name="rest_code_e9d5f38c213440f0bddcce29388d5fa0-9"&gt;&lt;/a&gt;    &lt;span class="n"&gt;DftiComputeForward&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;descriptor&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;in_ptr&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;out&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;                        &lt;span class="c1"&gt;//Compute the Forward FFT&lt;/span&gt;
-&lt;a name="rest_code_e9d5f38c213440f0bddcce29388d5fa0-10"&gt;&lt;/a&gt;    &lt;span class="n"&gt;DftiFreeDescriptor&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;descriptor&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;                                    &lt;span class="c1"&gt;//Free the descriptor&lt;/span&gt;
-&lt;a name="rest_code_e9d5f38c213440f0bddcce29388d5fa0-11"&gt;&lt;/a&gt;&lt;span class="p"&gt;}&lt;/span&gt;
-&lt;/pre&gt;&lt;p&gt;Unfortunately, the error is inside the MKL library. Here, I really don't think
-it's an issue. There is pack of them. I forgot to exclude non-ETL code from the
-results. Once filter from all dependencies, 137 messages remain.&lt;/p&gt;
-&lt;pre class="code text"&gt;&lt;a name="rest_code_09f8c883626f4967939aef850eb53dab-1"&gt;&lt;/a&gt;include/etl/eval_functors.hpp:157:1: warning: V560 A part of conditional expression is always false: !padding.
-&lt;/pre&gt;&lt;p&gt;This is true, but not an issue since padding is a configuration constant that
-enables the use of padding in vector and matrices. There was 27 of these at
-different locations and with different configuration variables.&lt;/p&gt;
-&lt;pre class="code text"&gt;&lt;a name="rest_code_82fc831e40d745a1b0b6594d992876be-1"&gt;&lt;/a&gt;include/etl/op/sub_view.hpp:161:1: note: V688 The 'i' function argument possesses the same name as one of the class members, which can result in a confusion.
-&lt;/pre&gt;&lt;p&gt;This is again true, but not a bug in this particular case. It is still helpful and
-I ended up changing these to avoid confusion. Again, there was a few of these.&lt;/p&gt;
-&lt;pre class="code text"&gt;&lt;a name="rest_code_916c1f35485d4a68b805a7826f0766a6-1"&gt;&lt;/a&gt;etl/test/src/conv_multi_multi.cpp:23:1: error: V573 Uninitialized variable 'k' was used. The variable was used to initialize itself.
-&lt;/pre&gt;&lt;p&gt;This one is in the test code:&lt;/p&gt;
-&lt;pre class="code cpp"&gt;&lt;a name="rest_code_4c5b4537133b4fc0921b423546b5a453-1"&gt;&lt;/a&gt;&lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;k&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;k&lt;/span&gt; &lt;span class="o"&gt;&amp;lt;&lt;/span&gt; &lt;span class="n"&gt;etl&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;dim&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;K&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;k&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
-&lt;a name="rest_code_4c5b4537133b4fc0921b423546b5a453-2"&gt;&lt;/a&gt;    &lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;&amp;lt;&lt;/span&gt; &lt;span class="n"&gt;etl&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;dim&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;I&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
-&lt;a name="rest_code_4c5b4537133b4fc0921b423546b5a453-3"&gt;&lt;/a&gt;        &lt;span class="n"&gt;C_ref&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;k&lt;/span&gt;&lt;span class="p"&gt;)(&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;conv_2d_valid&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;I&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt; &lt;span class="n"&gt;K&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;k&lt;/span&gt;&lt;span class="p"&gt;));&lt;/span&gt; &lt;span class="c1"&gt;// HERE&lt;/span&gt;
-&lt;a name="rest_code_4c5b4537133b4fc0921b423546b5a453-4"&gt;&lt;/a&gt;    &lt;span class="p"&gt;}&lt;/span&gt;
-&lt;a name="rest_code_4c5b4537133b4fc0921b423546b5a453-5"&gt;&lt;/a&gt;&lt;span class="p"&gt;}&lt;/span&gt;
-&lt;/pre&gt;&lt;p&gt;I don't see any error, k is initialized correctly to zero in the first loop.
-This is a &lt;strong&gt;false positive&lt;/strong&gt; for me. There were several of these in different
-places. It seems to that the use of the operator() is confusing for PVS-Studio.&lt;/p&gt;
-&lt;pre class="code text"&gt;&lt;a name="rest_code_0cdc7ad0eb514274986e4ed3f804a47a-1"&gt;&lt;/a&gt;include/etl/traits.hpp:703:1: note: V659 Declarations of functions with 'rows' name differ in the 'const' keyword only, but the bodies of these functions have different composition. This is suspicious and can possibly be an error. Check lines: 693, 703.
-&lt;/pre&gt;&lt;pre class="code cpp"&gt;&lt;a name="rest_code_26d014cc82cc4478a2f5f75a504eb8bf-1"&gt;&lt;/a&gt;&lt;span class="k"&gt;template&lt;/span&gt; &lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="k"&gt;typename&lt;/span&gt; &lt;span class="n"&gt;E&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;cpp_disable_if&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;decay_traits&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;E&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;::&lt;/span&gt;&lt;span class="n"&gt;is_fast&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
-&lt;a name="rest_code_26d014cc82cc4478a2f5f75a504eb8bf-2"&gt;&lt;/a&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;rows&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="k"&gt;const&lt;/span&gt; &lt;span class="n"&gt;E&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt; &lt;span class="n"&gt;expr&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt; &lt;span class="c1"&gt;//693&lt;/span&gt;
-&lt;a name="rest_code_26d014cc82cc4478a2f5f75a504eb8bf-3"&gt;&lt;/a&gt;    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;etl_traits&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;E&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;::&lt;/span&gt;&lt;span class="n"&gt;dim&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;expr&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
-&lt;a name="rest_code_26d014cc82cc4478a2f5f75a504eb8bf-4"&gt;&lt;/a&gt;&lt;span class="p"&gt;}&lt;/span&gt;
-&lt;a name="rest_code_26d014cc82cc4478a2f5f75a504eb8bf-5"&gt;&lt;/a&gt;
-&lt;a name="rest_code_26d014cc82cc4478a2f5f75a504eb8bf-6"&gt;&lt;/a&gt;&lt;span class="k"&gt;template&lt;/span&gt; &lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="k"&gt;typename&lt;/span&gt; &lt;span class="n"&gt;E&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;cpp_enable_if&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;decay_traits&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;E&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;::&lt;/span&gt;&lt;span class="n"&gt;is_fast&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
-&lt;a name="rest_code_26d014cc82cc4478a2f5f75a504eb8bf-7"&gt;&lt;/a&gt;&lt;span class="k"&gt;constexpr&lt;/span&gt; &lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;rows&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="k"&gt;const&lt;/span&gt; &lt;span class="n"&gt;E&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt; &lt;span class="n"&gt;expr&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="k"&gt;noexcept&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt; &lt;span class="c1"&gt;//703&lt;/span&gt;
-&lt;a name="rest_code_26d014cc82cc4478a2f5f75a504eb8bf-8"&gt;&lt;/a&gt;    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;void&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="n"&gt;expr&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;etl_traits&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;E&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;::&lt;/span&gt;&lt;span class="k"&gt;template&lt;/span&gt; &lt;span class="n"&gt;dim&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
-&lt;a name="rest_code_26d014cc82cc4478a2f5f75a504eb8bf-9"&gt;&lt;/a&gt;&lt;span class="p"&gt;}&lt;/span&gt;
-&lt;/pre&gt;&lt;p&gt;Unfortunately, this is again a &lt;strong&gt;false positive&lt;/strong&gt; because PVS-Studio failed to
-recognized SFINAE and therefore the warning is wrong.&lt;/p&gt;
-&lt;pre class="code text"&gt;&lt;a name="rest_code_f66957be7f8b487e86385eea2df27494-1"&gt;&lt;/a&gt;include/etl/builder/expression_builder.hpp:345:1: note: V524 It is odd that the body of '&amp;gt;&amp;gt;=' function is fully equivalent to the body of '*=' function.
-&lt;/pre&gt;&lt;p&gt;This one is interesting indeed. It is true that they are exactly because in ETL
-&amp;gt;&amp;gt; is used for scalar element-wise multiplication. This is quite interesting that
-PVS-Studio points that out. There was a few of these oddities but all were
-normal in the library.&lt;/p&gt;
-&lt;pre class="code text"&gt;&lt;a name="rest_code_23fda66b5d4a4acbb5fe3e9541154b45-1"&gt;&lt;/a&gt;etl/test/src/compare.cpp:23:1: error: V501 There are identical sub-expressions to the left and to the right of the '!=' operator: a != a
-&lt;/pre&gt;&lt;p&gt;Again, it is nice that PVS-Studio finds that, but this is done on purpose on the
-tests to compare an object to itself. If I remove all the oddities in the test
-cases, there are only 17 left in the headers. None of the warnings on the test
-case was serious, but there was no more false positives either, so that's great.&lt;/p&gt;
-&lt;pre class="code text"&gt;&lt;a name="rest_code_c8ddb56902d74285820ace1abcc4aec9-1"&gt;&lt;/a&gt;include/etl/impl/vec/sum.hpp:92:1: error: V591 Non-void function should return a value.
-&lt;/pre&gt;&lt;pre class="code cpp"&gt;&lt;a name="rest_code_8769c238c51845c09bd7589c29558a13-1"&gt;&lt;/a&gt;&lt;span class="k"&gt;template&lt;/span&gt; &lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="k"&gt;typename&lt;/span&gt; &lt;span class="n"&gt;L&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;cpp_disable_if&lt;/span&gt;&lt;span class="p"&gt;((&lt;/span&gt;&lt;span class="n"&gt;vec_enabled&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class="n"&gt;all_vectorizable&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;vector_mode&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;L&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;::&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;))&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
-&lt;a name="rest_code_8769c238c51845c09bd7589c29558a13-2"&gt;&lt;/a&gt;&lt;span class="n"&gt;value_t&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;L&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;sum&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="k"&gt;const&lt;/span&gt; &lt;span class="n"&gt;L&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt; &lt;span class="n"&gt;lhs&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;first&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;last&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
-&lt;a name="rest_code_8769c238c51845c09bd7589c29558a13-3"&gt;&lt;/a&gt;    &lt;span class="n"&gt;cpp_unused&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;lhs&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
-&lt;a name="rest_code_8769c238c51845c09bd7589c29558a13-4"&gt;&lt;/a&gt;    &lt;span class="n"&gt;cpp_unused&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;first&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
-&lt;a name="rest_code_8769c238c51845c09bd7589c29558a13-5"&gt;&lt;/a&gt;    &lt;span class="n"&gt;cpp_unused&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;last&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
-&lt;a name="rest_code_8769c238c51845c09bd7589c29558a13-6"&gt;&lt;/a&gt;    &lt;span class="n"&gt;cpp_unreachable&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"vec::sum called with invalid parameters"&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
-&lt;a name="rest_code_8769c238c51845c09bd7589c29558a13-7"&gt;&lt;/a&gt;&lt;span class="p"&gt;}&lt;/span&gt;
-&lt;/pre&gt;&lt;p&gt;This one is interesting. It's not a false positive since indeed the function
-does not return a value, but there is a __builtin_unreachable() inside the
-function and it cannot be called. In my opinion, the static analyzer should be
-able to handle that, but this is really a corner case.&lt;/p&gt;
-&lt;pre class="code text"&gt;&lt;a name="rest_code_03844749181949f893eaf2abc820234d-1"&gt;&lt;/a&gt;include/etl/sparse.hpp:148:1: note: V550 An odd precise comparison: a == 0.0. It's probably better to use a comparison with defined precision: fabs(A - B) &amp;lt; Epsilon.
-&lt;/pre&gt;&lt;pre class="code cpp"&gt;&lt;a name="rest_code_e596b82c0c27414997efcb7bc058d63a-1"&gt;&lt;/a&gt;&lt;span class="kr"&gt;inline&lt;/span&gt; &lt;span class="kt"&gt;bool&lt;/span&gt; &lt;span class="nf"&gt;is_zero&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;double&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
-&lt;a name="rest_code_e596b82c0c27414997efcb7bc058d63a-2"&gt;&lt;/a&gt;    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="mf"&gt;0.0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
-&lt;a name="rest_code_e596b82c0c27414997efcb7bc058d63a-3"&gt;&lt;/a&gt;&lt;span class="p"&gt;}&lt;/span&gt;
-&lt;/pre&gt;&lt;p&gt;This is not false, but again this is intended because of the comparison to zero
-for a sparse matrix. There were 10 of these in the same class.&lt;/p&gt;
-&lt;pre class="code text"&gt;&lt;a name="rest_code_c2b1ea7901b145c2a5f7c737879c3016-1"&gt;&lt;/a&gt;include/etl/impl/blas/fft.hpp:562:1: note: V656 Variables 'a_padded', 'b_padded' are initialized through the call to the same function. It's probably an error or un-optimized code. Consider inspecting the 'etl::size(c)' expression. Check lines: 561, 562.
-&lt;/pre&gt;&lt;pre class="code cpp"&gt;&lt;a name="rest_code_3e36a6bdbdf542e985106c9cad3304ef-1"&gt;&lt;/a&gt;&lt;span class="n"&gt;dyn_vector&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;etl&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;complex&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;type&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;a_padded&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;etl&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;size&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;c&lt;/span&gt;&lt;span class="p"&gt;));&lt;/span&gt;
-&lt;a name="rest_code_3e36a6bdbdf542e985106c9cad3304ef-2"&gt;&lt;/a&gt;&lt;span class="n"&gt;dyn_vector&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;etl&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;complex&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;type&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;b_padded&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;etl&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;size&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;c&lt;/span&gt;&lt;span class="p"&gt;));&lt;/span&gt;
-&lt;/pre&gt;&lt;p&gt;It's indeed constructed with the same size, but for me I don't think it's an
-odd pattern. I would not consider that as a warning, especially since it's
-a constructor and not a assignment.&lt;/p&gt;
-&lt;pre class="code text"&gt;&lt;a name="rest_code_c5154b794cd947ba8afe018e61dd33bb-1"&gt;&lt;/a&gt;include/etl/dyn_base.hpp:312:1: warning: V690 The 'dense_dyn_base' class implements a copy constructor, but lacks the '=' operator. It is dangerous to use such a class.
-&lt;/pre&gt;&lt;p&gt;This is again a kind of corner case in the library because it's a base class
-and the assignment is different between the sub classes and not a real
-assignment in the C++ sense.&lt;/p&gt;
-&lt;pre class="code text"&gt;&lt;a name="rest_code_c29d8c3a9863482dae6972c37db9165c-1"&gt;&lt;/a&gt;include/etl/impl/reduc/conv_multi.hpp:657:1: warning: V711 It is dangerous to create a local variable within a loop with a same name as a variable controlling this loop.
-&lt;/pre&gt;&lt;pre class="code cpp"&gt;&lt;a name="rest_code_2b0e6512eb684241bfb025dac3afa90a-1"&gt;&lt;/a&gt;&lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;c&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;c&lt;/span&gt; &lt;span class="o"&gt;&amp;lt;&lt;/span&gt; &lt;span class="n"&gt;C&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;c&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
-&lt;a name="rest_code_2b0e6512eb684241bfb025dac3afa90a-2"&gt;&lt;/a&gt;    &lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;std&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;k&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;k&lt;/span&gt; &lt;span class="o"&gt;&amp;lt;&lt;/span&gt; &lt;span class="n"&gt;K&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;k&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
-&lt;a name="rest_code_2b0e6512eb684241bfb025dac3afa90a-3"&gt;&lt;/a&gt;        &lt;span class="n"&gt;conv&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;k&lt;/span&gt;&lt;span class="p"&gt;)(&lt;/span&gt;&lt;span class="n"&gt;c&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;conv_temp&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;c&lt;/span&gt;&lt;span class="p"&gt;)(&lt;/span&gt;&lt;span class="n"&gt;k&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
-&lt;a name="rest_code_2b0e6512eb684241bfb025dac3afa90a-4"&gt;&lt;/a&gt;    &lt;span class="p"&gt;}&lt;/span&gt;
-&lt;a name="rest_code_2b0e6512eb684241bfb025dac3afa90a-5"&gt;&lt;/a&gt;&lt;span class="p"&gt;}&lt;/span&gt;
-&lt;/pre&gt;&lt;p&gt;This is again a false positive... It really seems that PVS-Studio is not able to
-handle the operator().&lt;/p&gt;
-&lt;pre class="code text"&gt;&lt;a name="rest_code_64df16c6561f4f60920f1fe62509f6e6-1"&gt;&lt;/a&gt;include/etl/impl/pooling.hpp:396:1: error: V501 There are identical sub-expressions to the left and to the right of the '||' operator: P1 || P2 || P1
-&lt;/pre&gt;&lt;pre class="code cpp"&gt;&lt;a name="rest_code_61bcc940f7ec4206b94e5ebd10ece6d7-1"&gt;&lt;/a&gt;&lt;span class="k"&gt;template&lt;/span&gt; &lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;C1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;C2&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;C3&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;S1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;S2&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;S3&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;P1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;P2&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;P3&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="k"&gt;typename&lt;/span&gt; &lt;span class="n"&gt;A&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="k"&gt;typename&lt;/span&gt; &lt;span class="n"&gt;M&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
-&lt;a name="rest_code_61bcc940f7ec4206b94e5ebd10ece6d7-2"&gt;&lt;/a&gt;&lt;span class="k"&gt;static&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;apply&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="k"&gt;const&lt;/span&gt; &lt;span class="n"&gt;A&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt; &lt;span class="n"&gt;sub&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;M&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class="n"&gt;m&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
-&lt;a name="rest_code_61bcc940f7ec4206b94e5ebd10ece6d7-3"&gt;&lt;/a&gt;    &lt;span class="k"&gt;const&lt;/span&gt; &lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;o1&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;etl&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;dim&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;sub&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="n"&gt;C1&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="mi"&gt;2&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="n"&gt;P1&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;/&lt;/span&gt; &lt;span class="n"&gt;S1&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
-&lt;a name="rest_code_61bcc940f7ec4206b94e5ebd10ece6d7-4"&gt;&lt;/a&gt;    &lt;span class="k"&gt;const&lt;/span&gt; &lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;o2&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;etl&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;dim&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;sub&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="n"&gt;C2&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="mi"&gt;2&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="n"&gt;P2&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;/&lt;/span&gt; &lt;span class="n"&gt;S2&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
-&lt;a name="rest_code_61bcc940f7ec4206b94e5ebd10ece6d7-5"&gt;&lt;/a&gt;    &lt;span class="k"&gt;const&lt;/span&gt; &lt;span class="kt"&gt;size_t&lt;/span&gt; &lt;span class="n"&gt;o3&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;etl&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;dim&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="mi"&gt;2&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;sub&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="n"&gt;C3&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="mi"&gt;2&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="n"&gt;P3&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;/&lt;/span&gt; &lt;span class="n"&gt;S3&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
-&lt;a name="rest_code_61bcc940f7ec4206b94e5ebd10ece6d7-6"&gt;&lt;/a&gt;
-&lt;a name="rest_code_61bcc940f7ec4206b94e5ebd10ece6d7-7"&gt;&lt;/a&gt;    &lt;span class="k"&gt;if&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;P1&lt;/span&gt; &lt;span class="o"&gt;||&lt;/span&gt; &lt;span class="n"&gt;P2&lt;/span&gt; &lt;span class="o"&gt;||&lt;/span&gt; &lt;span class="n"&gt;P1&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
-&lt;/pre&gt;&lt;p&gt;Last but not least, this time, it's entirely true and it's in fact a bug in my
-code! The condition should be written like this:&lt;/p&gt;
-&lt;pre class="code cpp"&gt;&lt;a name="rest_code_e3d4822d8ba54f31b4e74f4996cab0b7-1"&gt;&lt;/a&gt;&lt;span class="k"&gt;if&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;P1&lt;/span&gt; &lt;span class="o"&gt;||&lt;/span&gt; &lt;span class="n"&gt;P2&lt;/span&gt; &lt;span class="o"&gt;||&lt;/span&gt; &lt;span class="n"&gt;P3&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
-&lt;/pre&gt;&lt;p&gt;This is now fixed in the master of ETL.&lt;/p&gt;
-&lt;/div&gt;
-&lt;div class="section" id="conclusion"&gt;
-&lt;h2&gt;Conclusion&lt;/h2&gt;
-&lt;p&gt;The installation was pretty easy, but the usage was not as easy as it could
-because the first method by analyzing the build system did not work.
-Fortunately, the system supports using the Clang compilation database directly
-and therefore it was possible to use.&lt;/p&gt;
-&lt;p&gt;Overall, it found 236 warnings on my code base (heavily templated library).
-Around 50 of them were in some of the extend libraries, but I forgot to filter
-them out. The quality of the results is pretty good in my opinion. It was able
-to &lt;strong&gt;find a bug&lt;/strong&gt; in my implementation of pooling with padding. Unfortunately,
-there was quite a few false positives, due to SFINAE, bad handling of the
-operator() and no handling of __builtin_unreachable. The remaining were all
-correct, but were not bug considering their usages.&lt;/p&gt;
-&lt;p&gt;To conclude, I think it's a great static analyzer that is really fast compared
-to other one in the market. There are a few false positives, but it's really not
-bad compared to other tools and some of the messages are really great. An HTML
-report including the source code would be great as well.&lt;/p&gt;
-&lt;p&gt;If you want more information, you can consult
-&lt;a class="reference external" href="http://www.viva64.com/en/pvs-studio/"&gt;the official site&lt;/a&gt;. There is even a way
-to use it on open-source code for free, but you have to add comments on top of
-each of your files.&lt;/p&gt;
-&lt;p&gt;I hope it was helpful ;)&lt;/p&gt;
-&lt;/div&gt;&lt;/div&gt;</description><category>C++</category><category>C++11</category><category>C++14</category><category>Review</category><category>Tools</category><guid>https://baptiste-wicht.com/posts/2016/12/pvs-studio-on-cpp-library-review.html</guid><pubDate>Tue, 20 Dec 2016 08:40:12 GMT</pubDate></item></channel></rss>
+&lt;p&gt;Don't hesitate to ask any questions if you want more information :)&lt;/p&gt;&lt;/div&gt;</description><category>C++</category><category>CPU</category><category>crbm</category><category>dbn</category><category>Deep Learning</category><category>dll</category><category>etl</category><category>Intel</category><category>Performances</category><category>publications</category><category>rbm</category><category>thesis</category><guid>https://baptiste-wicht.com/posts/2017/02/publication-cpu-performance-optimizations-rbm-crbm.html</guid><pubDate>Tue, 07 Feb 2017 16:33:33 GMT</pubDate></item></channel></rss>
