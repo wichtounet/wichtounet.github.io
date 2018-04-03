@@ -139,8 +139,8 @@ updated)_
 For other systems, you'll have to install from sources::
 
     git clone --recursive git://github.com/wichtounet/budgetwarrior.git
-    git checkout 1.0
     cd budgetwarrior
+    git checkout 1.0
     make
     sudo make install
 
