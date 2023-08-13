@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html prefix="og: http://ogp.me/ns# article: http://ogp.me/ns/article# " lang="en">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,7 +7,7 @@
 <link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
 <meta name="theme-color" content="#5670d4">
 <meta name="generator" content="Nikola (getnikola.com)">
-<link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
+<link rel="alternate" type="application/rss+xml" title="RSS" hreflang="en" href="../../../rss.xml">
 <link rel="canonical" href="https://baptiste-wicht.com/posts/2010/09/java-synchronization-mutual-exclusion-benchmark.html">
 <!--[if lt IE 9]><script src="../../../assets/js/html5.js"></script><![endif]--><meta name="author" content="Baptiste Wicht">
 <link rel="prev" href="../08/java-concurrency-part-4-semaphores.html" title="Java Concurrency - Part 4 : Semaphores" type="text/html">
@@ -124,12 +124,15 @@ The code to protect will be very simple. It's a simpl">
 <article class="post-text h-entry hentry postpage" itemscope="itemscope" itemtype="http://schema.org/Article"><header><h1 class="p-name entry-title" itemprop="headline name"><a href="#" class="u-url">Java Synchronization (Mutual Exclusion) Benchmark</a></h1>
 
         <div class="metadata">
-            <p class="byline author vcard"><span class="byline-name fn" itemprop="author">
+            <p class="byline author vcard p-author h-card"><span class="byline-name fn p-name" itemprop="author">
                     Baptiste Wicht
             </span></p>
-            <p class="dateline"><a href="#" rel="bookmark"><time class="published dt-published" datetime="2010-09-01T07:13:18+02:00" itemprop="datePublished" title="2010-09-01 07:13">2010-09-01 07:13</time></a></p>
+            <p class="dateline">
+            <a href="#" rel="bookmark">
+            <time class="published dt-published" datetime="2010-09-01T07:13:18+02:00" itemprop="datePublished" title="2010-09-01 07:13">2010-09-01 07:13</time></a>
+            </p>
                 <p class="commentline">
-        
+    
     <a href="java-synchronization-mutual-exclusion-benchmark.html#disqus_thread" data-disqus-identifier="cache/posts/2010/09/java-synchronization-mutual-exclusion-benchmark.html">Comments</a>
 
 
@@ -141,15 +144,13 @@ The code to protect will be very simple. It's a simpl">
         
 
     </header><div class="e-content entry-content" itemprop="articleBody text">
-    <div>
-<p>I've created another benchmark. This time, I've benchmarked the different ways of synchronizing a little code using <strong>mutual exclusion</strong> on this code.</p>
+    <p>I've created another benchmark. This time, I've benchmarked the different ways of synchronizing a little code using <strong>mutual exclusion</strong> on this code.</p>
 <p>The code to protect will be very simple. It's a simple counter :</p>
-<pre class="code literal-block"><span></span><span class="c1">//Init</span>
-<span class="kt">int</span> <span class="n">counter</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> 
+<div class="code"><pre class="code literal-block"><span class="c1">//Init</span>
+<span class="kt">int</span><span class="w"> </span><span class="n">counter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span>
 <span class="c1">//Critical section</span>
-<span class="n">counter</span><span class="o">++;</span>
-</pre>
-
+<span class="n">counter</span><span class="o">++</span><span class="p">;</span>
+</pre></div>
 
 <p>The critical section, if not protected with synchronization system, will not function properly due to possible <strong>interleavings</strong> (read <a href="http://www.baptiste-wicht.com/2010/08/java-concurrrency-synchronization-locks/" target="_blank">the article on synchronization</a> if you don't know what is <strong>interleaving</strong>).</p>
 <!-- TEASER_END -->
@@ -162,75 +163,74 @@ The code to protect will be very simple. It's a simpl">
 </ol>
 <p>I've also used a third way to solve the problem with AtomicInteger. This is not the same as the other ways because it does not provide mutual exclusion but this is a good way to synchronize simple values, like integers or boolean, but also references. The atomicity of the operations of the AtomicInteger is made using the compare-and-swap operation of the operating system. So there is no waiting operations. So there is less context switches and result in more performing code normally.</p>
 <p>Here is the code of these 4 ways to solve the problems :</p>
-<pre class="code literal-block"><span></span><span class="kd">private</span> <span class="kd">class</span> <span class="nc">SynchronizedRunnable</span> <span class="kd">implements</span> <span class="n">Runnable</span> <span class="o">{</span>
-    <span class="kd">private</span> <span class="kt">int</span> <span class="n">counter</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+<div class="code"><pre class="code literal-block"><span class="kd">private</span><span class="w"> </span><span class="kd">class</span> <span class="nc">SynchronizedRunnable</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">Runnable</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">counter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
 
-    <span class="nd">@Override</span>
-    <span class="kd">public</span> <span class="kd">synchronized</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
-        <span class="n">counter</span><span class="o">++;</span>
-    <span class="o">}</span>
-<span class="o">}</span>
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kd">synchronized</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">run</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">counter</span><span class="o">++</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
 
-<span class="kd">private</span> <span class="kd">class</span> <span class="nc">ReentrantLockRunnable</span> <span class="kd">implements</span> <span class="n">Runnable</span> <span class="o">{</span>
-    <span class="kd">private</span> <span class="kt">int</span> <span class="n">counter</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+<span class="kd">private</span><span class="w"> </span><span class="kd">class</span> <span class="nc">ReentrantLockRunnable</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">Runnable</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">counter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
 
-    <span class="kd">private</span> <span class="n">Lock</span> <span class="n">lock</span><span class="o">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">Lock</span><span class="w"> </span><span class="n">lock</span><span class="p">;</span>
 
-    <span class="kd">private</span> <span class="nf">ReentrantLockRunnable</span><span class="o">(</span><span class="kt">boolean</span> <span class="n">fair</span><span class="o">)</span> <span class="o">{</span>
-        <span class="kd">super</span><span class="o">();</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="nf">ReentrantLockRunnable</span><span class="p">(</span><span class="kt">boolean</span><span class="w"> </span><span class="n">fair</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kd">super</span><span class="p">();</span>
 
-        <span class="n">lock</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ReentrantLock</span><span class="o">(</span><span class="n">fair</span><span class="o">);</span>
-    <span class="o">}</span>
+<span class="w">        </span><span class="n">lock</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">ReentrantLock</span><span class="p">(</span><span class="n">fair</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
 
-    <span class="nd">@Override</span>
-    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
-        <span class="n">lock</span><span class="o">.</span><span class="na">lock</span><span class="o">();</span>
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">run</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">lock</span><span class="p">.</span><span class="na">lock</span><span class="p">();</span>
 
-        <span class="k">try</span> <span class="o">{</span>
-            <span class="n">counter</span><span class="o">++;</span>
-        <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
-            <span class="n">lock</span><span class="o">.</span><span class="na">unlock</span><span class="o">();</span>
-        <span class="o">}</span>
-    <span class="o">}</span>
-<span class="o">}</span>
+<span class="w">        </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">counter</span><span class="o">++</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">finally</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">lock</span><span class="p">.</span><span class="na">unlock</span><span class="p">();</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
 
-<span class="kd">private</span> <span class="kd">class</span> <span class="nc">SemaphoreRunnable</span> <span class="kd">implements</span> <span class="n">Runnable</span> <span class="o">{</span>
-    <span class="kd">private</span> <span class="kt">int</span> <span class="n">counter</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+<span class="kd">private</span><span class="w"> </span><span class="kd">class</span> <span class="nc">SemaphoreRunnable</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">Runnable</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">counter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
 
-    <span class="kd">private</span> <span class="kd">final</span> <span class="n">Semaphore</span> <span class="n">semaphore</span><span class="o">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">Semaphore</span><span class="w"> </span><span class="n">semaphore</span><span class="p">;</span>
 
-    <span class="kd">private</span> <span class="nf">SemaphoreRunnable</span><span class="o">(</span><span class="kt">boolean</span> <span class="n">fair</span><span class="o">)</span> <span class="o">{</span>
-        <span class="kd">super</span><span class="o">();</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="nf">SemaphoreRunnable</span><span class="p">(</span><span class="kt">boolean</span><span class="w"> </span><span class="n">fair</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kd">super</span><span class="p">();</span>
 
-        <span class="n">semaphore</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Semaphore</span><span class="o">(</span><span class="mi">1</span><span class="o">,</span> <span class="n">fair</span><span class="o">);</span>
-    <span class="o">}</span>
+<span class="w">        </span><span class="n">semaphore</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Semaphore</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">fair</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
 
-    <span class="nd">@Override</span>
-    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
-        <span class="k">try</span> <span class="o">{</span>
-            <span class="n">semaphore</span><span class="o">.</span><span class="na">acquire</span><span class="o">();</span>
-        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">InterruptedException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
-            <span class="k">throw</span> <span class="k">new</span> <span class="n">RuntimeException</span><span class="o">(</span><span class="n">e</span><span class="o">);</span>
-        <span class="o">}</span>
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">run</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">semaphore</span><span class="p">.</span><span class="na">acquire</span><span class="p">();</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">InterruptedException</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">throw</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">RuntimeException</span><span class="p">(</span><span class="n">e</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
 
-        <span class="k">try</span> <span class="o">{</span>
-            <span class="n">counter</span><span class="o">++;</span>
-        <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
-            <span class="n">semaphore</span><span class="o">.</span><span class="na">release</span><span class="o">();</span>
-        <span class="o">}</span>
-    <span class="o">}</span>
-<span class="o">}</span>
+<span class="w">        </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">counter</span><span class="o">++</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">finally</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">semaphore</span><span class="p">.</span><span class="na">release</span><span class="p">();</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
 
-<span class="kd">private</span> <span class="kd">class</span> <span class="nc">AtomicIntegerRunnable</span> <span class="kd">implements</span> <span class="n">Runnable</span> <span class="o">{</span>
-    <span class="kd">private</span> <span class="n">AtomicInteger</span> <span class="n">counter</span> <span class="o">=</span> <span class="k">new</span> <span class="n">AtomicInteger</span><span class="o">(</span><span class="mi">0</span><span class="o">);</span>
+<span class="kd">private</span><span class="w"> </span><span class="kd">class</span> <span class="nc">AtomicIntegerRunnable</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">Runnable</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">AtomicInteger</span><span class="w"> </span><span class="n">counter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">AtomicInteger</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
 
-    <span class="nd">@Override</span>
-    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
-        <span class="n">counter</span><span class="o">.</span><span class="na">incrementAndGet</span><span class="o">();</span>
-    <span class="o">}</span>
-<span class="o">}</span>
-</pre>
-
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">run</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">counter</span><span class="p">.</span><span class="na">incrementAndGet</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
 
 <p>I used Runnable to facilitate the testing and timing of the different mechanisms.</p>
 <p>The test is made in two phases :</p>
@@ -266,7 +266,6 @@ The code to protect will be very simple. It's a simpl">
 </ol>
 <p>So that's all for this benchmark. I hope you found it interesting.</p>
 <p>The sources of the benchmark : <a href="../../../wp-content/uploads/2010/08/SynchronizationBenchmark.java">Synchronization Benchmark Sources</a></p>
-</div>
     </div>
     <aside class="postpromonav"><nav><ul itemprop="keywords" class="tags">
 <li><a class="tag p-category" href="../../../categories/benchmarks.html" rel="tag">Benchmarks</a></li>
@@ -283,7 +282,7 @@ The code to protect will be very simple. It's a simpl">
             </li>
         </ul></nav></aside><section class="comments hidden-print"><h2>Comments</h2>
         
-        
+    
         <div id="disqus_thread"></div>
         <script>
         var disqus_shortname ="blogwichtounet",
@@ -315,7 +314,7 @@ The code to protect will be very simple. It's a simpl">
 <!-- Footer -->
 
 <footer>
-    Contents © 2018         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         - License: 
+    Contents © 2023         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         - License: 
 <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="padding-left:5px;border-width:0" src="../../../assets/img/cc.png"></a>
         <ul class="footer_inline_ul">
 <li>

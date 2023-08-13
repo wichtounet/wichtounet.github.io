@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html prefix="og: http://ogp.me/ns# article: http://ogp.me/ns/article# " lang="en">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="description" content="Test the performance of std::pow in comparison to simple multiplications.">
@@ -8,7 +8,7 @@
 <link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
 <meta name="theme-color" content="#5670d4">
 <meta name="generator" content="Nikola (getnikola.com)">
-<link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
+<link rel="alternate" type="application/rss+xml" title="RSS" hreflang="en" href="../../../rss.xml">
 <link rel="canonical" href="https://baptiste-wicht.com/posts/2017/09/cpp11-performance-tip-when-to-use-std-pow.html">
 <!--[if lt IE 9]><script src="../../../assets/js/html5.js"></script><![endif]--><meta name="author" content="Baptiste Wicht">
 <link rel="prev" href="budgetwarrior-042-budget-summary-improved-fortune-reports.html" title="budgetwarrior 0.4.2 - Budget summary and improved fortune reports" type="text/html">
@@ -125,12 +125,15 @@
 <article class="post-text h-entry hentry postpage" itemscope="itemscope" itemtype="http://schema.org/Article"><header><h1 class="p-name entry-title" itemprop="headline name"><a href="#" class="u-url">C++11 Performance tip: When to use std::pow ?</a></h1>
 
         <div class="metadata">
-            <p class="byline author vcard"><span class="byline-name fn" itemprop="author">
+            <p class="byline author vcard p-author h-card"><span class="byline-name fn p-name" itemprop="author">
                     Baptiste Wicht
             </span></p>
-            <p class="dateline"><a href="#" rel="bookmark"><time class="published dt-published" datetime="2017-09-18T07:50:44+02:00" itemprop="datePublished" title="2017-09-18 07:50">2017-09-18 07:50</time></a></p>
+            <p class="dateline">
+            <a href="#" rel="bookmark">
+            <time class="published dt-published" datetime="2017-09-18T07:50:44+02:00" itemprop="datePublished" title="2017-09-18 07:50">2017-09-18 07:50</time></a>
+            </p>
                 <p class="commentline">
-        
+    
     <a href="cpp11-performance-tip-when-to-use-std-pow.html#disqus_thread" data-disqus-identifier="cache/posts/2017/09/cpp11-performance-tip-when-to-use-std-pow.html">Comments</a>
 
 
@@ -142,8 +145,7 @@
         
 
     </header><div class="e-content entry-content" itemprop="articleBody text">
-    <div>
-<p>Update: I've added a new section for larger values of <code>n</code>.</p>
+    <p>Update: I've added a new section for larger values of <code>n</code>.</p>
 <p>Recently, I've been wondering about the performance of <code>std::pow(x, n)</code>.
 I'm talking here about the case when <code>n</code> is an integer. In the case when
 <code>n</code> is not an integer, I believe, you should always use <code>std::pow</code>
@@ -158,8 +160,7 @@ the overall performance.</p>
 <p>Since I'm mostly interested in single precision performance (neural networks are
 only about single precision), the first benchmarks will be using <code>float</code>.</p>
 <!-- TEASER_END -->
-<div class="section" id="std-pow-performances">
-<h2>std::pow performances</h2>
+<section id="std-pow-performances"><h2>std::pow performances</h2>
 <p>So let's see what are the differences between <code>std::pow(x, 2)</code> and
 <code>x * x</code>. All the code will be compiled in C++11. For the sake of it,
 I'll also check the performance of the C <code>pow</code> function.
@@ -180,9 +181,7 @@ is not optimized for integer values of exponent values.</p>
 <div id="graph_std_pow_4" style="width: 700px; height: 400px;"></div>
 <input id="graph_button_std_pow_4" type="button" value="Logarithmic scale"><p>The numbers are almost the same. It seems the algorithm used for approximation
 of the power does not depend on the exponent itself (at least between 3 and 4).</p>
-</div>
-<div class="section" id="fast-math">
-<h2>fast math</h2>
+</section><section id="fast-math"><h2>fast math</h2>
 <p>One compiler option is very important to consider here: -ffast-math. This
 compiler option will make some math operations much faster, but will also
 violate a lot of IEEE compliance. In most cases, it does not matter since this
@@ -196,9 +195,7 @@ Any way, let's see if that changes anything:</p>
 <input id="graph_button_std_pow_fast_3" type="button" value="Logarithmic scale"><p>For the third power, for <code>std::pow(x, 3)</code>, it is now much faster than
 before. Even though it's still faster to use <code>x * x * x</code> than
 <code>std::pow(x, 3)</code>, the difference is <em>only</em> around 2.5 times slower.</p>
-</div>
-<div class="section" id="clang">
-<h2>Clang</h2>
+</section><section id="clang"><h2>Clang</h2>
 <p>I've tested several version of G++ (4.9.4, 5.4.0 and 6.4.0) and I've not seen
 any significant difference in performance. Let's see if there are differences
 between clang-3.9 and GCC 6.4.0. Since we are using a function from the library,
@@ -212,9 +209,7 @@ between the two libraries. Let's see if this makes a difference for third power:
 is about 50% slower than GCC on this. Again, there is no significant difference
 between the two C++ libraries. I was expecting more of a difference between the
 two, but it seems they are using a similar implementations, if not the same.</p>
-</div>
-<div class="section" id="double-precision">
-<h2>double precision</h2>
+</section><section id="double-precision"><h2>double precision</h2>
 <p>As said earlier, all the tests were run in single precision (<code>float</code>).
 Let's see now if it's any different with double precision (<code>double</code>).
 Again, I'll use G++ 5.4.0 to start with.</p>
@@ -234,26 +229,24 @@ happens with -ffast-math:</p>
 <input id="graph_button_std_pow_double_4" type="button" value="Logarithmic scale"><p>With -ffast-math, there is absolutely no overhead anymore for <code>std::pow(x, n)</code>
 even for third power. The results are the same for clang. I've checked for
 higher values of the exponent and the result is also the same.</p>
-</div>
-<div class="section" id="bigger-exponents">
-<h2>Bigger exponents</h2>
+</section><section id="bigger-exponents"><h2>Bigger exponents</h2>
 <p>Now, let's try to test for which <code>n</code> is <code>code:std::pow(x, n)</code>
 becoming faster than multiplying in a loop. Since std::pow is using a special
 algorithm to perform the computation rather than be simply loop-based
 multiplications, there may be a point after which it's more interesting to use
 the algorithm rather than a loop.</p>
 <p>First, our pow function:</p>
-<pre class="code c++"><a name="rest_code_dd6d7bcf9a1747d481bcb3e926b02e0c-1"></a><span class="kt">double</span> <span class="nf">my_pow</span><span class="p">(</span><span class="kt">double</span> <span class="n">x</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">n</span><span class="p">){</span>
-<a name="rest_code_dd6d7bcf9a1747d481bcb3e926b02e0c-2"></a>    <span class="kt">double</span> <span class="n">r</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">;</span>
-<a name="rest_code_dd6d7bcf9a1747d481bcb3e926b02e0c-3"></a>
-<a name="rest_code_dd6d7bcf9a1747d481bcb3e926b02e0c-4"></a>    <span class="k">while</span><span class="p">(</span><span class="n">n</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">){</span>
-<a name="rest_code_dd6d7bcf9a1747d481bcb3e926b02e0c-5"></a>        <span class="n">r</span> <span class="o">*=</span> <span class="n">x</span><span class="p">;</span>
-<a name="rest_code_dd6d7bcf9a1747d481bcb3e926b02e0c-6"></a>        <span class="o">--</span><span class="n">n</span><span class="p">;</span>
-<a name="rest_code_dd6d7bcf9a1747d481bcb3e926b02e0c-7"></a>    <span class="p">}</span>
-<a name="rest_code_dd6d7bcf9a1747d481bcb3e926b02e0c-8"></a>
-<a name="rest_code_dd6d7bcf9a1747d481bcb3e926b02e0c-9"></a>    <span class="k">return</span> <span class="n">r</span><span class="p">;</span>
-<a name="rest_code_dd6d7bcf9a1747d481bcb3e926b02e0c-10"></a><span class="p">}</span>
-</pre>
+<div class="code"><pre class="code c++"><a id="rest_code_a713b3dfba60425d8e306439909eb7c4-1" name="rest_code_a713b3dfba60425d8e306439909eb7c4-1" href="cpp11-performance-tip-when-to-use-std-pow.html#rest_code_a713b3dfba60425d8e306439909eb7c4-1"></a><span class="kt">double</span><span class="w"> </span><span class="nf">my_pow</span><span class="p">(</span><span class="kt">double</span><span class="w"> </span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="kt">size_t</span><span class="w"> </span><span class="n">n</span><span class="p">){</span>
+<a id="rest_code_a713b3dfba60425d8e306439909eb7c4-2" name="rest_code_a713b3dfba60425d8e306439909eb7c4-2" href="cpp11-performance-tip-when-to-use-std-pow.html#rest_code_a713b3dfba60425d8e306439909eb7c4-2"></a><span class="w">    </span><span class="kt">double</span><span class="w"> </span><span class="n">r</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0</span><span class="p">;</span>
+<a id="rest_code_a713b3dfba60425d8e306439909eb7c4-3" name="rest_code_a713b3dfba60425d8e306439909eb7c4-3" href="cpp11-performance-tip-when-to-use-std-pow.html#rest_code_a713b3dfba60425d8e306439909eb7c4-3"></a>
+<a id="rest_code_a713b3dfba60425d8e306439909eb7c4-4" name="rest_code_a713b3dfba60425d8e306439909eb7c4-4" href="cpp11-performance-tip-when-to-use-std-pow.html#rest_code_a713b3dfba60425d8e306439909eb7c4-4"></a><span class="w">    </span><span class="k">while</span><span class="p">(</span><span class="n">n</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="p">){</span>
+<a id="rest_code_a713b3dfba60425d8e306439909eb7c4-5" name="rest_code_a713b3dfba60425d8e306439909eb7c4-5" href="cpp11-performance-tip-when-to-use-std-pow.html#rest_code_a713b3dfba60425d8e306439909eb7c4-5"></a><span class="w">        </span><span class="n">r</span><span class="w"> </span><span class="o">*=</span><span class="w"> </span><span class="n">x</span><span class="p">;</span>
+<a id="rest_code_a713b3dfba60425d8e306439909eb7c4-6" name="rest_code_a713b3dfba60425d8e306439909eb7c4-6" href="cpp11-performance-tip-when-to-use-std-pow.html#rest_code_a713b3dfba60425d8e306439909eb7c4-6"></a><span class="w">        </span><span class="o">--</span><span class="n">n</span><span class="p">;</span>
+<a id="rest_code_a713b3dfba60425d8e306439909eb7c4-7" name="rest_code_a713b3dfba60425d8e306439909eb7c4-7" href="cpp11-performance-tip-when-to-use-std-pow.html#rest_code_a713b3dfba60425d8e306439909eb7c4-7"></a><span class="w">    </span><span class="p">}</span>
+<a id="rest_code_a713b3dfba60425d8e306439909eb7c4-8" name="rest_code_a713b3dfba60425d8e306439909eb7c4-8" href="cpp11-performance-tip-when-to-use-std-pow.html#rest_code_a713b3dfba60425d8e306439909eb7c4-8"></a>
+<a id="rest_code_a713b3dfba60425d8e306439909eb7c4-9" name="rest_code_a713b3dfba60425d8e306439909eb7c4-9" href="cpp11-performance-tip-when-to-use-std-pow.html#rest_code_a713b3dfba60425d8e306439909eb7c4-9"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">r</span><span class="p">;</span>
+<a id="rest_code_a713b3dfba60425d8e306439909eb7c4-10" name="rest_code_a713b3dfba60425d8e306439909eb7c4-10" href="cpp11-performance-tip-when-to-use-std-pow.html#rest_code_a713b3dfba60425d8e306439909eb7c4-10"></a><span class="p">}</span>
+</pre></div>
 <p>And now, let's see the performance. I've compiled my benchmark with GCC 4.9.3
 and running on my old Sandy Bridge processor. Here are the results for 1000
 calls to each functions:</p>
@@ -270,9 +263,7 @@ one order of magnitude faster than <code>my_pow</code>.</p>
 <p>Overall, if you do not care much about extreme accuracy, you may consider using
 you own pow function for small-ish (integer) <code>n</code> values. After
 <code>n=100</code>, it becomes more interesting to use <code>std::pow</code>.</p>
-</div>
-<div class="section" id="conclusion">
-<h2>Conclusion</h2>
+</section><section id="conclusion"><h2>Conclusion</h2>
 <p>If you are using double precision (<code>double</code>), <code>std::pow(x, n)</code> will
 be slower than the handcrafted equivalent unless you use -ffast-math, in which
 case, there is absolutely no overhead. The overhead without using the compiler
@@ -593,10 +584,8 @@ draw_graph_pow_my_pow_1();
 draw_graph_pow_my_pow_2();
 }
 google.setOnLoadCallback(draw_all);
-</script>
+</script></section>
 </div>
-</div>
-    </div>
     <aside class="postpromonav"><nav><ul itemprop="keywords" class="tags">
 <li><a class="tag p-category" href="../../../categories/benchmark.html" rel="tag">Benchmark</a></li>
             <li><a class="tag p-category" href="../../../categories/c%2B%2B.html" rel="tag">C++</a></li>
@@ -613,7 +602,7 @@ google.setOnLoadCallback(draw_all);
             </li>
         </ul></nav></aside><section class="comments hidden-print"><h2>Comments</h2>
         
-        
+    
         <div id="disqus_thread"></div>
         <script>
         var disqus_shortname ="blogwichtounet",
@@ -645,7 +634,7 @@ google.setOnLoadCallback(draw_all);
 <!-- Footer -->
 
 <footer>
-    Contents © 2018         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         - License: 
+    Contents © 2023         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         - License: 
 <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="padding-left:5px;border-width:0" src="../../../assets/img/cc.png"></a>
         <ul class="footer_inline_ul">
 <li>

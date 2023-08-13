@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html prefix="og: http://ogp.me/ns# article: http://ogp.me/ns/article# " lang="en">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,7 +7,7 @@
 <link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
 <meta name="theme-color" content="#5670d4">
 <meta name="generator" content="Nikola (getnikola.com)">
-<link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
+<link rel="alternate" type="application/rss+xml" title="RSS" hreflang="en" href="../../../rss.xml">
 <link rel="canonical" href="https://baptiste-wicht.com/posts/2010/04/write-corrects-benchmarks.html">
 <!--[if lt IE 9]><script src="../../../assets/js/html5.js"></script><![endif]--><meta name="author" content="Baptiste Wicht">
 <link rel="prev" href="maven-3-0-beta-1-is-here.html" title="Maven 3.0 Beta 1 is here !" type="text/html">
@@ -128,12 +128,15 @@ public class TestShortInt {
 <article class="post-text h-entry hentry postpage" itemscope="itemscope" itemtype="http://schema.org/Article"><header><h1 class="p-name entry-title" itemprop="headline name"><a href="#" class="u-url">How to write correct benchmarks</a></h1>
 
         <div class="metadata">
-            <p class="byline author vcard"><span class="byline-name fn" itemprop="author">
+            <p class="byline author vcard p-author h-card"><span class="byline-name fn p-name" itemprop="author">
                     Baptiste Wicht
             </span></p>
-            <p class="dateline"><a href="#" rel="bookmark"><time class="published dt-published" datetime="2010-04-26T06:49:45+02:00" itemprop="datePublished" title="2010-04-26 06:49">2010-04-26 06:49</time></a></p>
+            <p class="dateline">
+            <a href="#" rel="bookmark">
+            <time class="published dt-published" datetime="2010-04-26T06:49:45+02:00" itemprop="datePublished" title="2010-04-26 06:49">2010-04-26 06:49</time></a>
+            </p>
                 <p class="commentline">
-        
+    
     <a href="write-corrects-benchmarks.html#disqus_thread" data-disqus-identifier="cache/posts/2010/04/write-corrects-benchmarks.html">Comments</a>
 
 
@@ -145,42 +148,40 @@ public class TestShortInt {
         
 
     </header><div class="e-content entry-content" itemprop="articleBody text">
-    <div>
-<p>Several months ago, I wrote an article to <a href="http://www.baptiste-wicht.com/2010/01/dont-use-shorts-in-loop/">compare the performances of short indexes for loops</a>. I wrote that code to achieve my goal :</p>
-<pre class="code literal-block"><span></span><span class="kn">package</span> <span class="nn">com.wicht.old</span><span class="o">;</span>
+    <p>Several months ago, I wrote an article to <a href="http://www.baptiste-wicht.com/2010/01/dont-use-shorts-in-loop/">compare the performances of short indexes for loops</a>. I wrote that code to achieve my goal :</p>
+<div class="code"><pre class="code literal-block"><span class="kn">package</span><span class="w"> </span><span class="nn">com.wicht.old</span><span class="p">;</span>
 
-<span class="kd">public</span> <span class="kd">class</span> <span class="nc">TestShortInt</span> <span class="o">{</span>
-    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">){</span>
-        <span class="kt">long</span> <span class="n">startTime</span> <span class="o">=</span> <span class="n">System</span><span class="o">.</span><span class="na">nanoTime</span><span class="o">();</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">TestShortInt</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="n">args</span><span class="p">){</span>
+<span class="w">        </span><span class="kt">long</span><span class="w"> </span><span class="n">startTime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">nanoTime</span><span class="p">();</span>
 
-        <span class="kt">int</span> <span class="n">resultInt</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+<span class="w">        </span><span class="kt">int</span><span class="w"> </span><span class="n">resultInt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
 
-        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&amp;</span><span class="n">amp</span><span class="o">;</span><span class="n">lt</span><span class="o">;</span> <span class="mi">100000</span><span class="o">;</span> <span class="n">i</span><span class="o">++){</span>
-            <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">j</span> <span class="o">&amp;</span><span class="n">amp</span><span class="o">;</span><span class="n">lt</span><span class="o">;</span> <span class="mi">32760</span><span class="o">;</span> <span class="n">j</span><span class="o">++){</span>
-                <span class="n">resultInt</span> <span class="o">+=</span> <span class="n">i</span> <span class="o">*</span> <span class="n">j</span><span class="o">;</span>
-            <span class="o">}</span>
-        <span class="o">}</span>
+<span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">lt</span><span class="p">;</span><span class="w"> </span><span class="mi">100000</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">){</span>
+<span class="w">            </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">lt</span><span class="p">;</span><span class="w"> </span><span class="mi">32760</span><span class="p">;</span><span class="w"> </span><span class="n">j</span><span class="o">++</span><span class="p">){</span>
+<span class="w">                </span><span class="n">resultInt</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">j</span><span class="p">;</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">        </span><span class="p">}</span>
 
-        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Temp pour int : "</span> <span class="o">+</span> <span class="o">(</span><span class="n">System</span><span class="o">.</span><span class="na">nanoTime</span><span class="o">()</span> <span class="o">-</span> <span class="n">startTime</span><span class="o">)</span> <span class="o">/</span> <span class="mi">1000000</span> <span class="o">+</span> <span class="s">" ms"</span><span class="o">);</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"Temp pour int : "</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="p">(</span><span class="n">System</span><span class="p">.</span><span class="na">nanoTime</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">startTime</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1000000</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s">" ms"</span><span class="p">);</span>
 
-        <span class="n">startTime</span> <span class="o">=</span> <span class="n">System</span><span class="o">.</span><span class="na">nanoTime</span><span class="o">();</span>
+<span class="w">        </span><span class="n">startTime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">nanoTime</span><span class="p">();</span>
 
-        <span class="kt">int</span> <span class="n">resultShort</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+<span class="w">        </span><span class="kt">int</span><span class="w"> </span><span class="n">resultShort</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
 
-        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">k</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">k</span> <span class="o">&amp;</span><span class="n">amp</span><span class="o">;</span><span class="n">lt</span><span class="o">;</span> <span class="mi">100000</span><span class="o">;</span> <span class="n">k</span><span class="o">++){</span>
-            <span class="k">for</span> <span class="o">(</span><span class="kt">short</span> <span class="n">f</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">f</span> <span class="o">&amp;</span><span class="n">amp</span><span class="o">;</span><span class="n">lt</span><span class="o">;</span> <span class="mi">32760</span><span class="o">;</span> <span class="n">f</span><span class="o">++){</span>
-                <span class="n">resultShort</span> <span class="o">+=</span> <span class="n">k</span> <span class="o">*</span> <span class="n">f</span><span class="o">;</span>
-            <span class="o">}</span>
-        <span class="o">}</span>
+<span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">lt</span><span class="p">;</span><span class="w"> </span><span class="mi">100000</span><span class="p">;</span><span class="w"> </span><span class="n">k</span><span class="o">++</span><span class="p">){</span>
+<span class="w">            </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">short</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">lt</span><span class="p">;</span><span class="w"> </span><span class="mi">32760</span><span class="p">;</span><span class="w"> </span><span class="n">f</span><span class="o">++</span><span class="p">){</span>
+<span class="w">                </span><span class="n">resultShort</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">f</span><span class="p">;</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">        </span><span class="p">}</span>
 
-        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Temp pour short : "</span> <span class="o">+</span> <span class="o">(</span><span class="n">System</span><span class="o">.</span><span class="na">nanoTime</span><span class="o">()</span> <span class="o">-</span> <span class="n">startTime</span><span class="o">)</span> <span class="o">/</span> <span class="mi">1000000</span> <span class="o">+</span> <span class="s">" ms"</span><span class="o">);</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"Temp pour short : "</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="p">(</span><span class="n">System</span><span class="p">.</span><span class="na">nanoTime</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">startTime</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1000000</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s">" ms"</span><span class="p">);</span>
 
-        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">resultInt</span><span class="o">);</span>
-        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">resultShort</span><span class="o">);</span>
-    <span class="o">}</span>
-<span class="o">}</span>
-</pre>
-
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">resultInt</span><span class="p">);</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">resultShort</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
 
 <p>And i found as a result that short was two times slower than int and I was convinced of these results until a week ago.</p>
 <p>At this time, a reader (Jean) criticized the results of my tests and gave me links to several articles about <strong>micro-benchmarking</strong>. I've read these articles and understand why my results were incorrect.</p>
@@ -199,49 +200,48 @@ public class TestShortInt {
 <p>So, how can we do to have good benchmarks results ?</p>
 <p>It's really difficult, but we can have help using a benchmark framework introduced by Brent Boyer, a software developer from Elliptic Group. This framework take care of all the previously introduced factors and made good benchmarks.</p>
 <p>The use of this framework is really simple, you just have to create a new instance of the Benchmark class passing to it a Callable or a Runnable and the test is directly launched. Here is the example with the test of short and int in loop indexes :</p>
-<pre class="code literal-block"><span></span><span class="kd">public</span> <span class="kd">class</span> <span class="nc">ShortIndexesLoop</span> <span class="o">{</span>
-    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
-        <span class="n">Callable</span> <span class="n">callableInt</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Callable</span><span class="o">(){</span>
-            <span class="kd">public</span> <span class="n">Long</span> <span class="nf">call</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
-                <span class="kt">long</span> <span class="n">result</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+<div class="code"><pre class="code literal-block"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">ShortIndexesLoop</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="n">args</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">Callable</span><span class="w"> </span><span class="n">callableInt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Callable</span><span class="p">(){</span>
+<span class="w">            </span><span class="kd">public</span><span class="w"> </span><span class="n">Long</span><span class="w"> </span><span class="nf">call</span><span class="p">()</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Exception</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="kt">long</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
 
-                <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">f</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">f</span> <span class="o">&amp;</span><span class="n">amp</span><span class="o">;</span><span class="n">lt</span><span class="o">;</span> <span class="mi">32760</span><span class="o">;</span> <span class="n">f</span><span class="o">++){</span>
-                      <span class="n">result</span> <span class="o">+=</span> <span class="mi">444</span><span class="o">;</span>
-                  <span class="o">}</span>
+<span class="w">                </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">lt</span><span class="p">;</span><span class="w"> </span><span class="mi">32760</span><span class="p">;</span><span class="w"> </span><span class="n">f</span><span class="o">++</span><span class="p">){</span>
+<span class="w">                      </span><span class="n">result</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="mi">444</span><span class="p">;</span>
+<span class="w">                  </span><span class="p">}</span>
 
-                <span class="k">return</span> <span class="n">result</span><span class="o">;</span>
-            <span class="o">}</span>
-        <span class="o">};</span>
+<span class="w">                </span><span class="k">return</span><span class="w"> </span><span class="n">result</span><span class="p">;</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">        </span><span class="p">};</span>
 
-        <span class="n">Callable</span> <span class="n">callableShort</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Callable</span><span class="o">(){</span>
-            <span class="kd">public</span> <span class="n">Long</span> <span class="nf">call</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
-                <span class="kt">long</span> <span class="n">result</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+<span class="w">        </span><span class="n">Callable</span><span class="w"> </span><span class="n">callableShort</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Callable</span><span class="p">(){</span>
+<span class="w">            </span><span class="kd">public</span><span class="w"> </span><span class="n">Long</span><span class="w"> </span><span class="nf">call</span><span class="p">()</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Exception</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="kt">long</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
 
-                <span class="k">for</span> <span class="o">(</span><span class="kt">short</span> <span class="n">f</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">f</span> <span class="o">&amp;</span><span class="n">amp</span><span class="o">;</span><span class="n">lt</span><span class="o">;</span> <span class="mi">32760</span><span class="o">;</span> <span class="n">f</span><span class="o">++){</span>
-                      <span class="n">result</span> <span class="o">+=</span> <span class="mi">444</span><span class="o">;</span>
-                  <span class="o">}</span>
+<span class="w">                </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">short</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">lt</span><span class="p">;</span><span class="w"> </span><span class="mi">32760</span><span class="p">;</span><span class="w"> </span><span class="n">f</span><span class="o">++</span><span class="p">){</span>
+<span class="w">                      </span><span class="n">result</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="mi">444</span><span class="p">;</span>
+<span class="w">                  </span><span class="p">}</span>
 
-                <span class="k">return</span> <span class="n">result</span><span class="o">;</span>
-            <span class="o">}</span>
-        <span class="o">};</span>
+<span class="w">                </span><span class="k">return</span><span class="w"> </span><span class="n">result</span><span class="p">;</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">        </span><span class="p">};</span>
 
-        <span class="k">try</span> <span class="o">{</span>
-            <span class="n">Benchmark</span> <span class="n">intBenchmark</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Benchmark</span><span class="o">(</span><span class="n">callableInt</span><span class="o">);</span>
+<span class="w">        </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">Benchmark</span><span class="w"> </span><span class="n">intBenchmark</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Benchmark</span><span class="p">(</span><span class="n">callableInt</span><span class="p">);</span>
 
-            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Result with int "</span><span class="o">);</span>
-            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">intBenchmark</span><span class="o">.</span><span class="na">toString</span><span class="o">());</span>
+<span class="w">            </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"Result with int "</span><span class="p">);</span>
+<span class="w">            </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">intBenchmark</span><span class="p">.</span><span class="na">toString</span><span class="p">());</span>
 
-            <span class="n">Benchmark</span> <span class="n">shortBenchmark</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Benchmark</span><span class="o">(</span><span class="n">callableShort</span><span class="o">);</span>
+<span class="w">            </span><span class="n">Benchmark</span><span class="w"> </span><span class="n">shortBenchmark</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Benchmark</span><span class="p">(</span><span class="n">callableShort</span><span class="p">);</span>
 
-            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Result short "</span><span class="o">);</span>
-            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">shortBenchmark</span><span class="o">.</span><span class="na">toString</span><span class="o">());</span>
-        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
-            <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
-        <span class="o">}</span>
-    <span class="o">}</span>
-<span class="o">}</span>
-</pre>
-
+<span class="w">            </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"Result short "</span><span class="p">);</span>
+<span class="w">            </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">shortBenchmark</span><span class="p">.</span><span class="na">toString</span><span class="p">());</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">Exception</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">e</span><span class="p">.</span><span class="na">printStackTrace</span><span class="p">();</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
 
 <p>To get the results, you can use Benchmark.toString() or Benchmark.toStringFull() for more statistics. You can also directly access some stats like standard deviation using Benchmark.getSd() or directly with Benchmark.getStats() to get all the stats.</p>
 <p>Here is the result with the preceding code :</p>
@@ -284,7 +284,6 @@ first = 721.912 us, mean = 48.234 us (CI deltas: -198.625 ns, +254.774 ns), sd =
     <li><a href="http://www.ibm.com/developerworks/java/library/j-benchmark2/index.html" target="_blank">Robust Java benchmarking, Part 2: Statistics and solutions</a></li>
 </ul>
 </div>
-    </div>
     <aside class="postpromonav"><nav><ul itemprop="keywords" class="tags">
 <li><a class="tag p-category" href="../../../categories/benchmarks.html" rel="tag">Benchmarks</a></li>
             <li><a class="tag p-category" href="../../../categories/java.html" rel="tag">Java</a></li>
@@ -301,7 +300,7 @@ first = 721.912 us, mean = 48.234 us (CI deltas: -198.625 ns, +254.774 ns), sd =
             </li>
         </ul></nav></aside><section class="comments hidden-print"><h2>Comments</h2>
         
-        
+    
         <div id="disqus_thread"></div>
         <script>
         var disqus_shortname ="blogwichtounet",
@@ -333,7 +332,7 @@ first = 721.912 us, mean = 48.234 us (CI deltas: -198.625 ns, +254.774 ns), sd =
 <!-- Footer -->
 
 <footer>
-    Contents © 2018         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         - License: 
+    Contents © 2023         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         - License: 
 <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="padding-left:5px;border-width:0" src="../../../assets/img/cc.png"></a>
         <ul class="footer_inline_ul">
 <li>

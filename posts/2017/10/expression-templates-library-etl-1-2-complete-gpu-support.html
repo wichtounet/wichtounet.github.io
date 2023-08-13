@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html prefix="og: http://ogp.me/ns# article: http://ogp.me/ns/article# " lang="en">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,7 +7,7 @@
 <link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
 <meta name="theme-color" content="#5670d4">
 <meta name="generator" content="Nikola (getnikola.com)">
-<link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
+<link rel="alternate" type="application/rss+xml" title="RSS" hreflang="en" href="../../../rss.xml">
 <link rel="canonical" href="https://baptiste-wicht.com/posts/2017/10/expression-templates-library-etl-1-2-complete-gpu-support.html">
 <!--[if lt IE 9]><script src="../../../assets/js/html5.js"></script><![endif]--><meta name="author" content="Baptiste Wicht">
 <link rel="prev" href="../09/cpp11-performance-tip-update-when-to-use-std-pow.html" title="C++11 Performance tip: Update on when to use std::pow ?" type="text/html">
@@ -131,12 +131,15 @@ This version features much better GPU Support, a few new features ">
 <article class="post-text h-entry hentry postpage" itemscope="itemscope" itemtype="http://schema.org/Article"><header><h1 class="p-name entry-title" itemprop="headline name"><a href="#" class="u-url">Expression Templates Library (ETL) 1.2 - Complete GPU support</a></h1>
 
         <div class="metadata">
-            <p class="byline author vcard"><span class="byline-name fn" itemprop="author">
+            <p class="byline author vcard p-author h-card"><span class="byline-name fn p-name" itemprop="author">
                     Baptiste Wicht
             </span></p>
-            <p class="dateline"><a href="#" rel="bookmark"><time class="published dt-published" datetime="2017-10-02T10:49:02+02:00" itemprop="datePublished" title="2017-10-02 10:49">2017-10-02 10:49</time></a></p>
+            <p class="dateline">
+            <a href="#" rel="bookmark">
+            <time class="published dt-published" datetime="2017-10-02T10:49:02+02:00" itemprop="datePublished" title="2017-10-02 10:49">2017-10-02 10:49</time></a>
+            </p>
                 <p class="commentline">
-        
+    
     <a href="expression-templates-library-etl-1-2-complete-gpu-support.html#disqus_thread" data-disqus-identifier="cache/posts/2017/10/expression-templates-library-etl-1-2-complete-gpu-support.html">Comments</a>
 
 
@@ -148,19 +151,17 @@ This version features much better GPU Support, a few new features ">
         
 
     </header><div class="e-content entry-content" itemprop="articleBody text">
-    <div>
-<img alt="ETL Logo" class="align-center" src="../../../images/logo.png"><p>I'm happy to announce the version 1.2 of my Expression Templates Library (ETL):
+    <img alt="ETL Logo" class="align-center" src="../../../images/logo.png"><p>I'm happy to announce the version 1.2 of my Expression Templates Library (ETL):
 ETL 1.2, two months after <a class="reference external" href="https://baptiste-wicht.com/posts/2017/08/expression-templates-library-etl-11.html">I released the version 1.1</a>.
 This version features much better GPU Support, a few new features and a lot of
 changes in the internal code.</p>
-<div class="section" id="gpu-support">
-<h2>GPU Support</h2>
+<section id="gpu-support"><h2>GPU Support</h2>
 <p>Before, only algorithms such as 4D convolution or matrix-matrix multiplication
 were computed in the GPU and lots of operations were causing copies between CPU
 and GPU version. Now, the support for basic operations has also been completed
 and therefore, expressions like this:</p>
-<pre class="code cpp"><a name="rest_code_f71a14fb7c31414496f71272597528c3-1"></a><span class="n">C</span> <span class="o">=</span> <span class="n">sigmoid</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">A</span> <span class="o">+</span> <span class="n">B</span><span class="p">))</span> <span class="o">/</span> <span class="n">sum</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
-</pre>
+<div class="code"><pre class="code cpp"><a id="rest_code_261c06c0a9d14e7aa5a8c81e7736365c-1" name="rest_code_261c06c0a9d14e7aa5a8c81e7736365c-1" href="expression-templates-library-etl-1-2-complete-gpu-support.html#rest_code_261c06c0a9d14e7aa5a8c81e7736365c-1"></a><span class="n">C</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sigmoid</span><span class="p">(</span><span class="mf">2.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="n">A</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">B</span><span class="p">))</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">sum</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
+</pre></div>
 <p>Can be computed entirely on GPU.</p>
 <p>Each matrix and vector containers have a secondary GPU memory space.  During the
 execution, the status of both memory spaces is being managed and when necessary,
@@ -170,9 +171,9 @@ also considered using Unified Memory in place of this system, but this is
 a problem for fast matrix and I'd rather not have two different systems.</p>
 <p>If you have an expression such as <code>c = a + b * 2</code>, it can be entirely computed
 on GPU, however, it will be computed in two GPU operations such as:</p>
-<pre class="code cpp"><a name="rest_code_f76b465a22934a84b0b35bd05a95168c-1"></a><span class="n">t1</span> <span class="o">=</span> <span class="n">b</span> <span class="o">*</span> <span class="mi">2</span>
-<a name="rest_code_f76b465a22934a84b0b35bd05a95168c-2"></a><span class="n">c</span> <span class="o">=</span> <span class="n">a</span> <span class="o">+</span> <span class="n">t1</span>
-</pre>
+<div class="code"><pre class="code cpp"><a id="rest_code_85d45ed7928f4d81a8db7e4e2bc6fa0d-1" name="rest_code_85d45ed7928f4d81a8db7e4e2bc6fa0d-1" href="expression-templates-library-etl-1-2-complete-gpu-support.html#rest_code_85d45ed7928f4d81a8db7e4e2bc6fa0d-1"></a><span class="n">t1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">2</span>
+<a id="rest_code_85d45ed7928f4d81a8db7e4e2bc6fa0d-2" name="rest_code_85d45ed7928f4d81a8db7e4e2bc6fa0d-2" href="expression-templates-library-etl-1-2-complete-gpu-support.html#rest_code_85d45ed7928f4d81a8db7e4e2bc6fa0d-2"></a><span class="n">c</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">t1</span>
+</pre></div>
 <p>This is not perfect in terms of performance but this will be done without any
 copies between CPU and GPU memory. I plan to improve this system with a bit more
 complex operations to avoid too many GPU operations, but there will always be
@@ -201,9 +202,7 @@ The framework is again on par with TensorFlow and Keras and faster than all the
 other frameworks. The large difference between DLL and Tensorflow and Keras is
 due to the inefficiency of reading the dataset in the two frameworks, so the
 performance of the three framework themselves are about the same.</p>
-</div>
-<div class="section" id="other-changes">
-<h2>Other Changes</h2>
+</section><section id="other-changes"><h2>Other Changes</h2>
 <p>The library also has a few other new features. Logarithms of base 2 and base 10
 are now supported in complement to the base e that was already available before.
 Categorical Cross Entropy (CCE) computation is also available now, the CCE loss
@@ -232,9 +231,7 @@ BLAS. There was a slight bug in the Column-Major matrix-matrix multiplication
 kernel. Binary operations with different types in the left and right hand sides
 was also problematic with vectorization. The last bug was about GPU status in
 case ETL containers were moved.</p>
-</div>
-<div class="section" id="what-s-next">
-<h2>What's next ?</h2>
+</section><section id="what-s-next"><h2>What's next ?</h2>
 <p>I don't yet know exactly on which features I'm going to focus for the next
 version of ETL. I plan to focus a bit more in the near future on Deep Learning
 Library (DLL) for which I should release the version 1.0 soon. I also plan to
@@ -247,18 +244,14 @@ is the standard operators. I also plan to improve the support for complex
 numbers, especially in terms of performance and tests. Hopefully, I will have also time (and motivation)
 to start working on  the sparse capabilities of ETL. It really needs much more
 unit tests and the performance should be improved as well.</p>
-</div>
-<div class="section" id="download-etl">
-<h2>Download ETL</h2>
+</section><section id="download-etl"><h2>Download ETL</h2>
 <p>You can download ETL <a class="reference external" href="https://github.com/wichtounet/etl">on Github</a>. If you
 only interested in the 1.2 version, you can look at the
 <a class="reference external" href="https://github.com/wichtounet/etl/releases">Releases pages</a> or clone the tag
 1.2. There are several branches:</p>
 <ul class="simple">
-<li>
-<em>master</em> Is the eternal development branch, may not always be stable</li>
-<li>
-<em>stable</em> Is a branch always pointing to the last tag, no development here</li>
+<li><p><em>master</em> Is the eternal development branch, may not always be stable</p></li>
+<li><p><em>stable</em> Is a branch always pointing to the last tag, no development here</p></li>
 </ul>
 <p>For the future release, there always will tags pointing to the corresponding
 commits. You can also have access to previous releases on Github or via the
@@ -271,9 +264,8 @@ any question. You can also open an Issue on Github if you have a problem using
 this library or propose a Pull Request if you have any contribution you'd like
 to make to the library.</p>
 <p>Hope this may be useful to some of you :)</p>
+</section>
 </div>
-</div>
-    </div>
     <aside class="postpromonav"><nav><ul itemprop="keywords" class="tags">
 <li><a class="tag p-category" href="../../../categories/c%2B%2B.html" rel="tag">C++</a></li>
             <li><a class="tag p-category" href="../../../categories/c%2B%2B14.html" rel="tag">C++14</a></li>
@@ -295,7 +287,7 @@ to make to the library.</p>
             </li>
         </ul></nav></aside><section class="comments hidden-print"><h2>Comments</h2>
         
-        
+    
         <div id="disqus_thread"></div>
         <script>
         var disqus_shortname ="blogwichtounet",
@@ -327,7 +319,7 @@ to make to the library.</p>
 <!-- Footer -->
 
 <footer>
-    Contents © 2018         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         - License: 
+    Contents © 2023         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         - License: 
 <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="padding-left:5px;border-width:0" src="../../../assets/img/cc.png"></a>
         <ul class="footer_inline_ul">
 <li>

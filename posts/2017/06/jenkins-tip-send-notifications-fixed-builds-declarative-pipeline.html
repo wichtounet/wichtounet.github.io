@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html prefix="og: http://ogp.me/ns# article: http://ogp.me/ns/article# " lang="en">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="description" content="Short tip. How to send notifications on fixed builds in Jenkins declarative pipelines.">
@@ -8,7 +8,7 @@
 <link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
 <meta name="theme-color" content="#5670d4">
 <meta name="generator" content="Nikola (getnikola.com)">
-<link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
+<link rel="alternate" type="application/rss+xml" title="RSS" hreflang="en" href="../../../rss.xml">
 <link rel="canonical" href="https://baptiste-wicht.com/posts/2017/06/jenkins-tip-send-notifications-fixed-builds-declarative-pipeline.html">
 <!--[if lt IE 9]><script src="../../../assets/js/html5.js"></script><![endif]--><meta name="author" content="Baptiste Wicht">
 <link rel="prev" href="jenkins-declarative-pipeline-and-awesome-github-integration.html" title="Jenkins Declarative Pipeline and Awesome Github Integration" type="text/html">
@@ -123,12 +123,15 @@
 <article class="post-text h-entry hentry postpage" itemscope="itemscope" itemtype="http://schema.org/Article"><header><h1 class="p-name entry-title" itemprop="headline name"><a href="#" class="u-url">Jenkins Tip: Send notifications on fixed builds in declarative pipeline</a></h1>
 
         <div class="metadata">
-            <p class="byline author vcard"><span class="byline-name fn" itemprop="author">
+            <p class="byline author vcard p-author h-card"><span class="byline-name fn p-name" itemprop="author">
                     Baptiste Wicht
             </span></p>
-            <p class="dateline"><a href="#" rel="bookmark"><time class="published dt-published" datetime="2017-06-07T09:52:57+02:00" itemprop="datePublished" title="2017-06-07 09:52">2017-06-07 09:52</time></a></p>
+            <p class="dateline">
+            <a href="#" rel="bookmark">
+            <time class="published dt-published" datetime="2017-06-07T09:52:57+02:00" itemprop="datePublished" title="2017-06-07 09:52">2017-06-07 09:52</time></a>
+            </p>
                 <p class="commentline">
-        
+    
     <a href="jenkins-tip-send-notifications-fixed-builds-declarative-pipeline.html#disqus_thread" data-disqus-identifier="cache/posts/2017/06/jenkins-tip-send-notifications-fixed-builds-declarative-pipeline.html">Comments</a>
 
 
@@ -140,8 +143,7 @@
         
 
     </header><div class="e-content entry-content" itemprop="articleBody text">
-    <div>
-<p>In <a class="reference external" href="https://baptiste-wicht.com/posts/2017/06/jenkins-declarative-pipeline-and-awesome-github-integration.html">my previous post</a>, I presented a few news about Jenkins and about the fact that I switched to declarative pipelines and Github Organization support for my projects.</p>
+    <p>In <a class="reference external" href="https://baptiste-wicht.com/posts/2017/06/jenkins-declarative-pipeline-and-awesome-github-integration.html">my previous post</a>, I presented a few news about Jenkins and about the fact that I switched to declarative pipelines and Github Organization support for my projects.</p>
 <p>The main issue I had with this system is that I lost the ability to get
 notifications on build that recover. Normally, I would get an email indicating
 that build X was back to normal, but I haven't found a way to solve that for
@@ -151,38 +153,38 @@ same problem that was already present in scripted pipelines. Namely, the status
 of the current build is not set early enough for the notification.  Basically,
 you have to set the notification yourself. Here is what a declarative pipeline
 looks like:</p>
-<pre class="code groovy"><a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-1"></a><span class="n">pipeline</span> <span class="o">{</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-2"></a>    <span class="n">agent</span> <span class="n">any</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-3"></a>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-4"></a>    <span class="n">stages</span> <span class="o">{</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-5"></a>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-6"></a>        <span class="c1">// Normal Stages</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-7"></a>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-8"></a>        <span class="n">stage</span> <span class="o">(</span><span class="s1">'success'</span><span class="o">){</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-9"></a>            <span class="n">steps</span> <span class="o">{</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-10"></a>                <span class="n">script</span> <span class="o">{</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-11"></a>                    <span class="n">currentBuild</span><span class="o">.</span><span class="na">result</span> <span class="o">=</span> <span class="s1">'SUCCESS'</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-12"></a>                <span class="o">}</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-13"></a>            <span class="o">}</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-14"></a>        <span class="o">}</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-15"></a>    <span class="o">}</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-16"></a>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-17"></a>    <span class="n">post</span> <span class="o">{</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-18"></a>        <span class="n">failure</span> <span class="o">{</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-19"></a>            <span class="n">script</span> <span class="o">{</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-20"></a>                <span class="n">currentBuild</span><span class="o">.</span><span class="na">result</span> <span class="o">=</span> <span class="s1">'FAILURE'</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-21"></a>            <span class="o">}</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-22"></a>        <span class="o">}</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-23"></a>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-24"></a>        <span class="n">always</span> <span class="o">{</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-25"></a>            <span class="n">step</span><span class="o">([</span><span class="n">$class</span><span class="o">:</span> <span class="s1">'Mailer'</span><span class="o">,</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-26"></a>                <span class="nl">notifyEveryUnstableBuild:</span> <span class="kc">true</span><span class="o">,</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-27"></a>                <span class="nl">recipients:</span> <span class="s2">"baptiste.wicht@gmail.com"</span><span class="o">,</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-28"></a>                <span class="nl">sendToIndividuals:</span> <span class="kc">true</span><span class="o">])</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-29"></a>        <span class="o">}</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-30"></a>    <span class="o">}</span>
-<a name="rest_code_fa9325ba41204aaf9cce7b65733e1a52-31"></a><span class="o">}</span>
-</pre>
+<div class="code"><pre class="code groovy"><a id="rest_code_77c77032c82f4b89b013cae777942e18-1" name="rest_code_77c77032c82f4b89b013cae777942e18-1" href="jenkins-tip-send-notifications-fixed-builds-declarative-pipeline.html#rest_code_77c77032c82f4b89b013cae777942e18-1"></a><span class="n">pipeline</span><span class="w"> </span><span class="o">{</span>
+<a id="rest_code_77c77032c82f4b89b013cae777942e18-2" name="rest_code_77c77032c82f4b89b013cae777942e18-2" href="jenkins-tip-send-notifications-fixed-builds-declarative-pipeline.html#rest_code_77c77032c82f4b89b013cae777942e18-2"></a><span class="w">    </span><span class="n">agent</span><span class="w"> </span><span class="n">any</span>
+<a id="rest_code_77c77032c82f4b89b013cae777942e18-3" name="rest_code_77c77032c82f4b89b013cae777942e18-3" href="jenkins-tip-send-notifications-fixed-builds-declarative-pipeline.html#rest_code_77c77032c82f4b89b013cae777942e18-3"></a>
+<a id="rest_code_77c77032c82f4b89b013cae777942e18-4" name="rest_code_77c77032c82f4b89b013cae777942e18-4" href="jenkins-tip-send-notifications-fixed-builds-declarative-pipeline.html#rest_code_77c77032c82f4b89b013cae777942e18-4"></a><span class="w">    </span><span class="n">stages</span><span class="w"> </span><span class="o">{</span>
+<a id="rest_code_77c77032c82f4b89b013cae777942e18-5" name="rest_code_77c77032c82f4b89b013cae777942e18-5" href="jenkins-tip-send-notifications-fixed-builds-declarative-pipeline.html#rest_code_77c77032c82f4b89b013cae777942e18-5"></a>
+<a id="rest_code_77c77032c82f4b89b013cae777942e18-6" name="rest_code_77c77032c82f4b89b013cae777942e18-6" href="jenkins-tip-send-notifications-fixed-builds-declarative-pipeline.html#rest_code_77c77032c82f4b89b013cae777942e18-6"></a><span class="w">        </span><span class="c1">// Normal Stages</span>
+<a id="rest_code_77c77032c82f4b89b013cae777942e18-7" name="rest_code_77c77032c82f4b89b013cae777942e18-7" href="jenkins-tip-send-notifications-fixed-builds-declarative-pipeline.html#rest_code_77c77032c82f4b89b013cae777942e18-7"></a>
+<a id="rest_code_77c77032c82f4b89b013cae777942e18-8" name="rest_code_77c77032c82f4b89b013cae777942e18-8" href="jenkins-tip-send-notifications-fixed-builds-declarative-pipeline.html#rest_code_77c77032c82f4b89b013cae777942e18-8"></a><span class="w">        </span><span class="n">stage</span><span class="w"> </span><span class="o">(</span><span class="s1">'success'</span><span class="o">){</span>
+<a id="rest_code_77c77032c82f4b89b013cae777942e18-9" name="rest_code_77c77032c82f4b89b013cae777942e18-9" href="jenkins-tip-send-notifications-fixed-builds-declarative-pipeline.html#rest_code_77c77032c82f4b89b013cae777942e18-9"></a><span class="w">            </span><span class="n">steps</span><span class="w"> </span><span class="o">{</span>
+<a id="rest_code_77c77032c82f4b89b013cae777942e18-10" name="rest_code_77c77032c82f4b89b013cae777942e18-10" href="jenkins-tip-send-notifications-fixed-builds-declarative-pipeline.html#rest_code_77c77032c82f4b89b013cae777942e18-10"></a><span class="w">                </span><span class="n">script</span><span class="w"> </span><span class="o">{</span>
+<a id="rest_code_77c77032c82f4b89b013cae777942e18-11" name="rest_code_77c77032c82f4b89b013cae777942e18-11" href="jenkins-tip-send-notifications-fixed-builds-declarative-pipeline.html#rest_code_77c77032c82f4b89b013cae777942e18-11"></a><span class="w">                    </span><span class="n">currentBuild</span><span class="o">.</span><span class="na">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">'SUCCESS'</span>
+<a id="rest_code_77c77032c82f4b89b013cae777942e18-12" name="rest_code_77c77032c82f4b89b013cae777942e18-12" href="jenkins-tip-send-notifications-fixed-builds-declarative-pipeline.html#rest_code_77c77032c82f4b89b013cae777942e18-12"></a><span class="w">                </span><span class="o">}</span>
+<a id="rest_code_77c77032c82f4b89b013cae777942e18-13" name="rest_code_77c77032c82f4b89b013cae777942e18-13" href="jenkins-tip-send-notifications-fixed-builds-declarative-pipeline.html#rest_code_77c77032c82f4b89b013cae777942e18-13"></a><span class="w">            </span><span class="o">}</span>
+<a id="rest_code_77c77032c82f4b89b013cae777942e18-14" name="rest_code_77c77032c82f4b89b013cae777942e18-14" href="jenkins-tip-send-notifications-fixed-builds-declarative-pipeline.html#rest_code_77c77032c82f4b89b013cae777942e18-14"></a><span class="w">        </span><span class="o">}</span>
+<a id="rest_code_77c77032c82f4b89b013cae777942e18-15" name="rest_code_77c77032c82f4b89b013cae777942e18-15" href="jenkins-tip-send-notifications-fixed-builds-declarative-pipeline.html#rest_code_77c77032c82f4b89b013cae777942e18-15"></a><span class="w">    </span><span class="o">}</span>
+<a id="rest_code_77c77032c82f4b89b013cae777942e18-16" name="rest_code_77c77032c82f4b89b013cae777942e18-16" href="jenkins-tip-send-notifications-fixed-builds-declarative-pipeline.html#rest_code_77c77032c82f4b89b013cae777942e18-16"></a>
+<a id="rest_code_77c77032c82f4b89b013cae777942e18-17" name="rest_code_77c77032c82f4b89b013cae777942e18-17" href="jenkins-tip-send-notifications-fixed-builds-declarative-pipeline.html#rest_code_77c77032c82f4b89b013cae777942e18-17"></a><span class="w">    </span><span class="n">post</span><span class="w"> </span><span class="o">{</span>
+<a id="rest_code_77c77032c82f4b89b013cae777942e18-18" name="rest_code_77c77032c82f4b89b013cae777942e18-18" href="jenkins-tip-send-notifications-fixed-builds-declarative-pipeline.html#rest_code_77c77032c82f4b89b013cae777942e18-18"></a><span class="w">        </span><span class="n">failure</span><span class="w"> </span><span class="o">{</span>
+<a id="rest_code_77c77032c82f4b89b013cae777942e18-19" name="rest_code_77c77032c82f4b89b013cae777942e18-19" href="jenkins-tip-send-notifications-fixed-builds-declarative-pipeline.html#rest_code_77c77032c82f4b89b013cae777942e18-19"></a><span class="w">            </span><span class="n">script</span><span class="w"> </span><span class="o">{</span>
+<a id="rest_code_77c77032c82f4b89b013cae777942e18-20" name="rest_code_77c77032c82f4b89b013cae777942e18-20" href="jenkins-tip-send-notifications-fixed-builds-declarative-pipeline.html#rest_code_77c77032c82f4b89b013cae777942e18-20"></a><span class="w">                </span><span class="n">currentBuild</span><span class="o">.</span><span class="na">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">'FAILURE'</span>
+<a id="rest_code_77c77032c82f4b89b013cae777942e18-21" name="rest_code_77c77032c82f4b89b013cae777942e18-21" href="jenkins-tip-send-notifications-fixed-builds-declarative-pipeline.html#rest_code_77c77032c82f4b89b013cae777942e18-21"></a><span class="w">            </span><span class="o">}</span>
+<a id="rest_code_77c77032c82f4b89b013cae777942e18-22" name="rest_code_77c77032c82f4b89b013cae777942e18-22" href="jenkins-tip-send-notifications-fixed-builds-declarative-pipeline.html#rest_code_77c77032c82f4b89b013cae777942e18-22"></a><span class="w">        </span><span class="o">}</span>
+<a id="rest_code_77c77032c82f4b89b013cae777942e18-23" name="rest_code_77c77032c82f4b89b013cae777942e18-23" href="jenkins-tip-send-notifications-fixed-builds-declarative-pipeline.html#rest_code_77c77032c82f4b89b013cae777942e18-23"></a>
+<a id="rest_code_77c77032c82f4b89b013cae777942e18-24" name="rest_code_77c77032c82f4b89b013cae777942e18-24" href="jenkins-tip-send-notifications-fixed-builds-declarative-pipeline.html#rest_code_77c77032c82f4b89b013cae777942e18-24"></a><span class="w">        </span><span class="n">always</span><span class="w"> </span><span class="o">{</span>
+<a id="rest_code_77c77032c82f4b89b013cae777942e18-25" name="rest_code_77c77032c82f4b89b013cae777942e18-25" href="jenkins-tip-send-notifications-fixed-builds-declarative-pipeline.html#rest_code_77c77032c82f4b89b013cae777942e18-25"></a><span class="w">            </span><span class="n">step</span><span class="o">([</span><span class="n">$class</span><span class="o">:</span><span class="w"> </span><span class="s1">'Mailer'</span><span class="o">,</span>
+<a id="rest_code_77c77032c82f4b89b013cae777942e18-26" name="rest_code_77c77032c82f4b89b013cae777942e18-26" href="jenkins-tip-send-notifications-fixed-builds-declarative-pipeline.html#rest_code_77c77032c82f4b89b013cae777942e18-26"></a><span class="w">                </span><span class="nl">notifyEveryUnstableBuild:</span><span class="w"> </span><span class="kc">true</span><span class="o">,</span>
+<a id="rest_code_77c77032c82f4b89b013cae777942e18-27" name="rest_code_77c77032c82f4b89b013cae777942e18-27" href="jenkins-tip-send-notifications-fixed-builds-declarative-pipeline.html#rest_code_77c77032c82f4b89b013cae777942e18-27"></a><span class="w">                </span><span class="nl">recipients:</span><span class="w"> </span><span class="s2">"baptiste.wicht@gmail.com"</span><span class="o">,</span>
+<a id="rest_code_77c77032c82f4b89b013cae777942e18-28" name="rest_code_77c77032c82f4b89b013cae777942e18-28" href="jenkins-tip-send-notifications-fixed-builds-declarative-pipeline.html#rest_code_77c77032c82f4b89b013cae777942e18-28"></a><span class="w">                </span><span class="nl">sendToIndividuals:</span><span class="w"> </span><span class="kc">true</span><span class="o">])</span>
+<a id="rest_code_77c77032c82f4b89b013cae777942e18-29" name="rest_code_77c77032c82f4b89b013cae777942e18-29" href="jenkins-tip-send-notifications-fixed-builds-declarative-pipeline.html#rest_code_77c77032c82f4b89b013cae777942e18-29"></a><span class="w">        </span><span class="o">}</span>
+<a id="rest_code_77c77032c82f4b89b013cae777942e18-30" name="rest_code_77c77032c82f4b89b013cae777942e18-30" href="jenkins-tip-send-notifications-fixed-builds-declarative-pipeline.html#rest_code_77c77032c82f4b89b013cae777942e18-30"></a><span class="w">    </span><span class="o">}</span>
+<a id="rest_code_77c77032c82f4b89b013cae777942e18-31" name="rest_code_77c77032c82f4b89b013cae777942e18-31" href="jenkins-tip-send-notifications-fixed-builds-declarative-pipeline.html#rest_code_77c77032c82f4b89b013cae777942e18-31"></a><span class="o">}</span>
+</pre></div>
 <p>There are two important things here. First, a new stage (success) is added that
 simply set the result of the current build to SUCCESS once it is done. It must
 be the last stage on the pipeline. This could also be added as the last step of
@@ -195,7 +197,6 @@ easier than that. All this boilerplate is polluting the pipeline that should be
 kept more maintainable, but for now it seems, it's the nicest way to achieve
 that, short of handling all conditions in the post block and sending mail
 directly there, but that would result in even more boilerplate code.</p>
-</div>
     </div>
     <aside class="postpromonav"><nav><ul itemprop="keywords" class="tags">
 <li><a class="tag p-category" href="../../../categories/continuous-integration.html" rel="tag">Continuous Integration</a></li>
@@ -211,7 +212,7 @@ directly there, but that would result in even more boilerplate code.</p>
             </li>
         </ul></nav></aside><section class="comments hidden-print"><h2>Comments</h2>
         
-        
+    
         <div id="disqus_thread"></div>
         <script>
         var disqus_shortname ="blogwichtounet",
@@ -243,7 +244,7 @@ directly there, but that would result in even more boilerplate code.</p>
 <!-- Footer -->
 
 <footer>
-    Contents © 2018         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         - License: 
+    Contents © 2023         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         - License: 
 <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="padding-left:5px;border-width:0" src="../../../assets/img/cc.png"></a>
         <ul class="footer_inline_ul">
 <li>

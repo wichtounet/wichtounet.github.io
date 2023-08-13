@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html prefix="og: http://ogp.me/ns# article: http://ogp.me/ns/article# " lang="en">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="description" content="Explanation on how I made DLL library 38% faster to compile with optimizations and using C++17 if constexpr.">
@@ -8,7 +8,7 @@
 <link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
 <meta name="theme-color" content="#5670d4">
 <meta name="generator" content="Nikola (getnikola.com)">
-<link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
+<link rel="alternate" type="application/rss+xml" title="RSS" hreflang="en" href="../../../rss.xml">
 <link rel="canonical" href="https://baptiste-wicht.com/posts/2017/09/how-i-made-deep-learning-library-38-faster-to-compile-optimization-and-cpp17-if-constexpr.html">
 <!--[if lt IE 9]><script src="../../../assets/js/html5.js"></script><![endif]--><meta name="author" content="Baptiste Wicht">
 <link rel="prev" href="cpp11-performance-tip-when-to-use-std-pow.html" title="C++11 Performance tip: When to use std::pow ?" type="text/html">
@@ -129,12 +129,15 @@
 <article class="post-text h-entry hentry postpage" itemscope="itemscope" itemtype="http://schema.org/Article"><header><h1 class="p-name entry-title" itemprop="headline name"><a href="#" class="u-url">How I made my Deep Learning Library 38% faster to compile (Optimization and C++17 if constexpr)</a></h1>
 
         <div class="metadata">
-            <p class="byline author vcard"><span class="byline-name fn" itemprop="author">
+            <p class="byline author vcard p-author h-card"><span class="byline-name fn p-name" itemprop="author">
                     Baptiste Wicht
             </span></p>
-            <p class="dateline"><a href="#" rel="bookmark"><time class="published dt-published" datetime="2017-09-21T19:44:34+02:00" itemprop="datePublished" title="2017-09-21 19:44">2017-09-21 19:44</time></a></p>
+            <p class="dateline">
+            <a href="#" rel="bookmark">
+            <time class="published dt-published" datetime="2017-09-21T19:44:34+02:00" itemprop="datePublished" title="2017-09-21 19:44">2017-09-21 19:44</time></a>
+            </p>
                 <p class="commentline">
-        
+    
     <a href="how-i-made-deep-learning-library-38-faster-to-compile-optimization-and-cpp17-if-constexpr.html#disqus_thread" data-disqus-identifier="cache/posts/2017/09/how-i-made-deep-learning-library-38-faster-to-compile-optimization-and-cpp17-if-constexpr.html">Comments</a>
 
 
@@ -146,8 +149,7 @@
         
 
     </header><div class="e-content entry-content" itemprop="articleBody text">
-    <div>
-<p>My Deep Learning Library (DLL) project is a C++ library for training and using
+    <p>My Deep Learning Library (DLL) project is a C++ library for training and using
 artificial neural networks (you can take a look at
 <a class="reference external" href="https://baptiste-wicht.com/posts/2017/07/update-on-deep-learning-library-dll-dropout-batch-normalization-adaptive-learning-rates.html">this post about DLL</a>
 if you want more information).</p>
@@ -159,14 +161,13 @@ template-heavy itself.</p>
 <p>In this post, I'll present two techniques with which I've been able to reduce
 the total compilation of the DLL unit tests by up to 38%.</p>
 <!-- TEASER_END -->
-<div class="section" id="reduce-overhead-of-expression-templates-library">
-<h2>Reduce overhead of Expression Templates Library</h2>
+<section id="reduce-overhead-of-expression-templates-library"><h2>Reduce overhead of Expression Templates Library</h2>
 <p>One of the feature I'm using a lot in ETL is that the implementation of each
 algorithm can be chosen in the code directly.</p>
 <p>For example, for a matrix multiplication, to force the vectorized
 implementation:</p>
-<pre class="code c++"><a name="rest_code_230cc1cba2e44c3ab13e125080f954d9-1"></a><span class="n">C</span> <span class="o">=</span> <span class="n">selected_helper</span><span class="p">(</span><span class="n">etl</span><span class="o">::</span><span class="n">gemm_impl</span><span class="o">::</span><span class="n">VEC</span><span class="p">,</span> <span class="n">A</span> <span class="o">*</span> <span class="n">B</span><span class="p">);</span>
-</pre>
+<div class="code"><pre class="code c++"><a id="rest_code_06b4b4731105414585db69c1ef867b34-1" name="rest_code_06b4b4731105414585db69c1ef867b34-1" href="how-i-made-deep-learning-library-38-faster-to-compile-optimization-and-cpp17-if-constexpr.html#rest_code_06b4b4731105414585db69c1ef867b34-1"></a><span class="n">C</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">selected_helper</span><span class="p">(</span><span class="n">etl</span><span class="o">::</span><span class="n">gemm_impl</span><span class="o">::</span><span class="n">VEC</span><span class="p">,</span><span class="w"> </span><span class="n">A</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">B</span><span class="p">);</span>
+</pre></div>
 <p>This works great and simplifies a lot the testing and benchmarking of the
 application. Nevertheless, this complicates a lot the selection of the algorithm
 and incurs quite some overhead on compilation time. I've come to realize that
@@ -182,51 +183,42 @@ Therefore, I updated DLL to see the difference with this new version of ETL.
 I tested the difference with GCC 7.1 and clang 3.9 with all the possible options
 from ETL. Nothing changed in DLL, only the ETL library was updated. Here are the
 results with DLL's unit tests:</p>
-<table border="1" class="docutils">
-<colgroup>
-<col width="26%">
-<col width="16%">
-<col width="19%">
-<col width="19%">
-<col width="21%">
-</colgroup>
-<thead valign="bottom"><tr>
-<th class="head">Compiler</th>
-<th class="head">GCC Debug</th>
-<th class="head">GCC Release</th>
-<th class="head">Clang Debug</th>
-<th class="head">Clang Release</th>
+<table>
+<thead><tr>
+<th class="head"><p>Compiler</p></th>
+<th class="head"><p>GCC Debug</p></th>
+<th class="head"><p>GCC Release</p></th>
+<th class="head"><p>Clang Debug</p></th>
+<th class="head"><p>Clang Release</p></th>
 </tr></thead>
-<tbody valign="top">
+<tbody>
 <tr>
-<td>Base version</td>
-<td>560s</td>
-<td>1188s</td>
-<td>861s</td>
-<td>1179s</td>
+<td><p>Base version</p></td>
+<td><p>560s</p></td>
+<td><p>1188s</p></td>
+<td><p>861s</p></td>
+<td><p>1179s</p></td>
 </tr>
 <tr>
-<td>Manual selection</td>
-<td>490s</td>
-<td>866s</td>
-<td>704s</td>
-<td>813s</td>
+<td><p>Manual selection</p></td>
+<td><p>490s</p></td>
+<td><p>866s</p></td>
+<td><p>704s</p></td>
+<td><p>813s</p></td>
 </tr>
 <tr>
-<td>Improvement</td>
-<td>12.5%</td>
-<td>27.5%</td>
-<td>18%</td>
-<td>31%</td>
+<td><p>Improvement</p></td>
+<td><p>12.5%</p></td>
+<td><p>27.5%</p></td>
+<td><p>18%</p></td>
+<td><p>31%</p></td>
 </tr>
 </tbody>
 </table>
 <p>As you can see, the compilation time improvement are quite substantial :)</p>
 <p>I'm really happy with these results. With not that much changes in ETL, the
 compilation time of DLL has been nicely reduced.</p>
-</div>
-<div class="section" id="use-if-constexpr-for-algorithm-selection">
-<h2>Use if constexpr for algorithm selection</h2>
+</section><section id="use-if-constexpr-for-algorithm-selection"><h2>Use if constexpr for algorithm selection</h2>
 <p>Since C++17 has been supported in compilers, I've been wanting to play around
 with <code>if constexpr</code>. Before, when necessary, I've been emulated if
 constexpr with SFINAE and a lambda, but it's really not nice code. However, it
@@ -250,49 +242,42 @@ made constexpr and resolved at compile time.And therefore, all the branches can
 be resolved at compile time. Hopefully, this should avoid a lot of algorithms
 implementation to be instantiated.</p>
 <p>Here are the results I've obtained:</p>
-<table border="1" class="docutils">
-<colgroup>
-<col width="33%">
-<col width="14%">
-<col width="17%">
-<col width="17%">
-<col width="19%">
-</colgroup>
-<thead valign="bottom"><tr>
-<th class="head">Compiler</th>
-<th class="head">GCC Debug</th>
-<th class="head">GCC Release</th>
-<th class="head">Clang Debug</th>
-<th class="head">Clang Release</th>
+<table>
+<thead><tr>
+<th class="head"><p>Compiler</p></th>
+<th class="head"><p>GCC Debug</p></th>
+<th class="head"><p>GCC Release</p></th>
+<th class="head"><p>Clang Debug</p></th>
+<th class="head"><p>Clang Release</p></th>
 </tr></thead>
-<tbody valign="top">
+<tbody>
 <tr>
-<td>Base version</td>
-<td>560s</td>
-<td>1188s</td>
-<td>861s</td>
-<td>1179s</td>
+<td><p>Base version</p></td>
+<td><p>560s</p></td>
+<td><p>1188s</p></td>
+<td><p>861s</p></td>
+<td><p>1179s</p></td>
 </tr>
 <tr>
-<td>Manual selection</td>
-<td>490s</td>
-<td>866s</td>
-<td>704s</td>
-<td>813s</td>
+<td><p>Manual selection</p></td>
+<td><p>490s</p></td>
+<td><p>866s</p></td>
+<td><p>704s</p></td>
+<td><p>813s</p></td>
 </tr>
 <tr>
-<td>C++17 if constexpr (ETL)</td>
-<td>444s</td>
-<td>767s</td>
-<td>663s</td>
-<td>731s</td>
+<td><p>C++17 if constexpr (ETL)</p></td>
+<td><p>444s</p></td>
+<td><p>767s</p></td>
+<td><p>663s</p></td>
+<td><p>731s</p></td>
 </tr>
 <tr>
-<td>Improvement</td>
-<td>10%</td>
-<td>11.5%</td>
-<td>6%</td>
-<td>10%</td>
+<td><p>Improvement</p></td>
+<td><p>10%</p></td>
+<td><p>11.5%</p></td>
+<td><p>6%</p></td>
+<td><p>10%</p></td>
 </tr>
 </tbody>
 </table>
@@ -304,56 +289,49 @@ remove quite a lot of code hard to optimize.</p>
 <p>I've also started experimenting with <code>if constexpr</code> in DLL itself.
 Unfortunately, this didn't have as much effect as I wanted. Here are some
 preliminary results:</p>
-<table border="1" class="docutils">
-<colgroup>
-<col width="33%">
-<col width="14%">
-<col width="17%">
-<col width="17%">
-<col width="19%">
-</colgroup>
-<thead valign="bottom"><tr>
-<th class="head">Compiler</th>
-<th class="head">GCC Debug</th>
-<th class="head">GCC Release</th>
-<th class="head">Clang Debug</th>
-<th class="head">Clang Release</th>
+<table>
+<thead><tr>
+<th class="head"><p>Compiler</p></th>
+<th class="head"><p>GCC Debug</p></th>
+<th class="head"><p>GCC Release</p></th>
+<th class="head"><p>Clang Debug</p></th>
+<th class="head"><p>Clang Release</p></th>
 </tr></thead>
-<tbody valign="top">
+<tbody>
 <tr>
-<td>Base version</td>
-<td>560s</td>
-<td>1188s</td>
-<td>861s</td>
-<td>1179s</td>
+<td><p>Base version</p></td>
+<td><p>560s</p></td>
+<td><p>1188s</p></td>
+<td><p>861s</p></td>
+<td><p>1179s</p></td>
 </tr>
 <tr>
-<td>Manual selection</td>
-<td>490s</td>
-<td>866s</td>
-<td>704s</td>
-<td>813s</td>
+<td><p>Manual selection</p></td>
+<td><p>490s</p></td>
+<td><p>866s</p></td>
+<td><p>704s</p></td>
+<td><p>813s</p></td>
 </tr>
 <tr>
-<td>C++17 if constexpr (ETL)</td>
-<td>444s</td>
-<td>767s</td>
-<td>663s</td>
-<td>731s</td>
+<td><p>C++17 if constexpr (ETL)</p></td>
+<td><p>444s</p></td>
+<td><p>767s</p></td>
+<td><p>663s</p></td>
+<td><p>731s</p></td>
 </tr>
 <tr>
-<td>C++17 if constexpr (DLL)</td>
-<td>434s</td>
-<td>765s</td>
-<td>658s</td>
-<td>725s</td>
+<td><p>C++17 if constexpr (DLL)</p></td>
+<td><p>434s</p></td>
+<td><p>765s</p></td>
+<td><p>658s</p></td>
+<td><p>725s</p></td>
 </tr>
 <tr>
-<td>Improvement</td>
-<td>2.3%</td>
-<td>0.3%</td>
-<td>0.75%</td>
-<td>1%</td>
+<td><p>Improvement</p></td>
+<td><p>2.3%</p></td>
+<td><p>0.3%</p></td>
+<td><p>0.75%</p></td>
+<td><p>1%</p></td>
 </tr>
 </tbody>
 </table>
@@ -361,9 +339,7 @@ preliminary results:</p>
 some cases. Nevertheless, I believe there is some improvements that is possible.
 I've got a few other cases that I plan to refactor to allow for more
 <code>if constexpr</code> action. I'll see about that in the coming months.</p>
-</div>
-<div class="section" id="conclusion">
-<h2>Conclusion</h2>
+</section><section id="conclusion"><h2>Conclusion</h2>
 <p>By disabling manual selection by default in my Expression Templates Library
 (ETL) and by making use of C++17 <code>if constexpr</code> feature, I've been able to
 reduce the compilation time of DLL's unit test suite by up to 38% in the best
@@ -375,14 +351,13 @@ probably gonna be enabled for ETL 1.3. And, by the way, the version 1.2 of ETL
 should soon be released.</p>
 <p>You can take a look at my libraries on Github:</p>
 <ul class="simple">
-<li><a class="reference external" href="https://github.com/wichtounet/etl">Expression Templates Library (ETL)</a></li>
-<li><a class="reference external" href="https://github.com/wichtounet/dll">Deep Learning Library (DLL)</a></li>
+<li><p><a class="reference external" href="https://github.com/wichtounet/etl">Expression Templates Library (ETL)</a></p></li>
+<li><p><a class="reference external" href="https://github.com/wichtounet/dll">Deep Learning Library (DLL)</a></p></li>
 </ul>
 <p>As ever, don't hesitate if you have any question or comment on the matter, to
 post a comment on this blog or on Github :)</p>
+</section>
 </div>
-</div>
-    </div>
     <aside class="postpromonav"><nav><ul itemprop="keywords" class="tags">
 <li><a class="tag p-category" href="../../../categories/c%2B%2B.html" rel="tag">C++</a></li>
             <li><a class="tag p-category" href="../../../categories/c%2B%2B17.html" rel="tag">C++17</a></li>
@@ -403,7 +378,7 @@ post a comment on this blog or on Github :)</p>
             </li>
         </ul></nav></aside><section class="comments hidden-print"><h2>Comments</h2>
         
-        
+    
         <div id="disqus_thread"></div>
         <script>
         var disqus_shortname ="blogwichtounet",
@@ -435,7 +410,7 @@ post a comment on this blog or on Github :)</p>
 <!-- Footer -->
 
 <footer>
-    Contents © 2018         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         - License: 
+    Contents © 2023         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         - License: 
 <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="padding-left:5px;border-width:0" src="../../../assets/img/cc.png"></a>
         <ul class="footer_inline_ul">
 <li>

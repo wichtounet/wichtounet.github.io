@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html prefix="og: http://ogp.me/ns# article: http://ogp.me/ns/article# " lang="en">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,7 +7,7 @@
 <link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
 <meta name="theme-color" content="#5670d4">
 <meta name="generator" content="Nikola (getnikola.com)">
-<link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
+<link rel="alternate" type="application/rss+xml" title="RSS" hreflang="en" href="../../../rss.xml">
 <link rel="canonical" href="https://baptiste-wicht.com/posts/2016/09/blazing-fast-unit-test-compilation-with-doctest-11.html">
 <!--[if lt IE 9]><script src="../../../assets/js/html5.js"></script><![endif]--><meta name="author" content="Baptiste Wicht">
 <link rel="prev" href="short-review-of-bullseye-coverage.html" title="Short review of Bullseye Coverage" type="text/html">
@@ -128,12 +128,15 @@
 <article class="post-text h-entry hentry postpage" itemscope="itemscope" itemtype="http://schema.org/Article"><header><h1 class="p-name entry-title" itemprop="headline name"><a href="#" class="u-url">Blazing fast unit test compilation with doctest 1.1</a></h1>
 
         <div class="metadata">
-            <p class="byline author vcard"><span class="byline-name fn" itemprop="author">
+            <p class="byline author vcard p-author h-card"><span class="byline-name fn p-name" itemprop="author">
                     Baptiste Wicht
             </span></p>
-            <p class="dateline"><a href="#" rel="bookmark"><time class="published dt-published" datetime="2016-09-21T21:45:13+02:00" itemprop="datePublished" title="2016-09-21 21:45">2016-09-21 21:45</time></a></p>
+            <p class="dateline">
+            <a href="#" rel="bookmark">
+            <time class="published dt-published" datetime="2016-09-21T21:45:13+02:00" itemprop="datePublished" title="2016-09-21 21:45">2016-09-21 21:45</time></a>
+            </p>
                 <p class="commentline">
-        
+    
     <a href="blazing-fast-unit-test-compilation-with-doctest-11.html#disqus_thread" data-disqus-identifier="cache/posts/2016/09/blazing-fast-unit-test-compilation-with-doctest-11.html">Comments</a>
 
 
@@ -145,17 +148,15 @@
         
 
     </header><div class="e-content entry-content" itemprop="articleBody text">
-    <div>
-<p>You may remember <a class="reference external" href="http://baptiste-wicht.com/posts/2016/06/reduce-compilation-time-by-another-16-with-catch.html">my quest for faster compilation times</a>. I had made several changes to the Catch test framework macros in order to save some compilation at the expense of my test code looking a bit less nice:</p>
-<pre class="code cpp"><a name="rest_code_9399a9d3683d452a97b6626a15a07b67-1"></a><span class="n">REQUIRE</span><span class="p">(</span><span class="n">a</span> <span class="o">==</span> <span class="mi">9</span><span class="p">);</span> <span class="c1">//Before</span>
-<a name="rest_code_9399a9d3683d452a97b6626a15a07b67-2"></a><span class="n">REQUIRE_EQUALS</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="mi">9</span><span class="p">);</span> <span class="c1">//After</span>
-</pre>
+    <p>You may remember <a class="reference external" href="http://baptiste-wicht.com/posts/2016/06/reduce-compilation-time-by-another-16-with-catch.html">my quest for faster compilation times</a>. I had made several changes to the Catch test framework macros in order to save some compilation at the expense of my test code looking a bit less nice:</p>
+<div class="code"><pre class="code cpp"><a id="rest_code_2cb655aa7b1545fb8d1b6ed76d6b2256-1" name="rest_code_2cb655aa7b1545fb8d1b6ed76d6b2256-1" href="blazing-fast-unit-test-compilation-with-doctest-11.html#rest_code_2cb655aa7b1545fb8d1b6ed76d6b2256-1"></a><span class="n">REQUIRE</span><span class="p">(</span><span class="n">a</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">9</span><span class="p">);</span><span class="w"> </span><span class="c1">//Before</span>
+<a id="rest_code_2cb655aa7b1545fb8d1b6ed76d6b2256-2" name="rest_code_2cb655aa7b1545fb8d1b6ed76d6b2256-2" href="blazing-fast-unit-test-compilation-with-doctest-11.html#rest_code_2cb655aa7b1545fb8d1b6ed76d6b2256-2"></a><span class="n">REQUIRE_EQUALS</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="mi">9</span><span class="p">);</span><span class="w"> </span><span class="c1">//After</span>
+</pre></div>
 <p>The first line is a little bit better, but using several optimizations, I was
 able to dramatically change the compilation time of the test cases of ETL. In
 the end, I don't think that the difference between the two lines justifies the
 high overhead in compilation times.</p>
-<div class="section" id="doctest">
-<h2>doctest</h2>
+<section id="doctest"><h2>doctest</h2>
 <p><a class="reference external" href="https://github.com/onqtam/doctest">doctest</a> is a framework quite similar to
 Catch but that claims to be much lighter. I tested doctest 1.0 early on, but at
 this point it was actually slower than Catch and especially slower than my
@@ -178,76 +179,67 @@ removes some features related to automatic debugger breaks. Since I don't use
 the debugger features and I don't need to capture exception everywhere (it's
 sufficient for me that the test fails completely if an exception is thrown), I'm
 more than eager to use these new features.</p>
-</div>
-<div class="section" id="results">
-<h2>Results</h2>
+</section><section id="results"><h2>Results</h2>
 <p>For evaluation, I have compiled the complete test suite of ETL, with 1 thread,
 using gcc 4.9.3 with various different options, starting from Catch to doctest
 1.1 with all compilation time features. Here are the results, in seconds:</p>
-<table border="1" class="docutils">
-<colgroup>
-<col width="29%">
-<col width="12%">
-<col width="14%">
-<col width="22%">
-<col width="23%">
-</colgroup>
-<thead valign="bottom"><tr>
-<th class="head">Version</th>
-<th class="head">Time</th>
-<th class="head">VS Catch</th>
-<th class="head">VS Fast Catch</th>
-<th class="head">VS doctest 1.0</th>
+<table>
+<thead><tr>
+<th class="head"><p>Version</p></th>
+<th class="head"><p>Time</p></th>
+<th class="head"><p>VS Catch</p></th>
+<th class="head"><p>VS Fast Catch</p></th>
+<th class="head"><p>VS doctest 1.0</p></th>
 </tr></thead>
-<tbody valign="top">
+<tbody>
 <tr>
-<td>Catch</td>
-<td>724.22</td>
-<td> </td>
-<td> </td>
-<td> </td>
+<td><p>Catch</p></td>
+<td><p>724.22</p></td>
+<td></td>
+<td></td>
+<td></td>
 </tr>
 <tr>
-<td>Fast Catch</td>
-<td>464.52</td>
-<td>-36%</td>
-<td> </td>
-<td> </td>
+<td><p>Fast Catch</p></td>
+<td><p>464.52</p></td>
+<td><p>-36%</p></td>
+<td></td>
+<td></td>
 </tr>
 <tr>
-<td>doctest 1.0</td>
-<td>871.54</td>
-<td>+20%</td>
-<td>+87%</td>
-<td> </td>
+<td><p>doctest 1.0</p></td>
+<td><p>871.54</p></td>
+<td><p>+20%</p></td>
+<td><p>+87%</p></td>
+<td></td>
 </tr>
 <tr>
-<td>doctest 1.1</td>
-<td>614.67</td>
-<td>-16%</td>
-<td>+32%</td>
-<td>-30%</td>
+<td><p>doctest 1.1</p></td>
+<td><p>614.67</p></td>
+<td><p>-16%</p></td>
+<td><p>+32%</p></td>
+<td><p>-30%</p></td>
 </tr>
 <tr>
-<td>REQUIRE_EQ</td>
-<td>493.97</td>
-<td>-32%</td>
-<td>+6%</td>
-<td>-43%</td>
+<td><p>REQUIRE_EQ</p></td>
+<td><p>493.97</p></td>
+<td><p>-32%</p></td>
+<td><p>+6%</p></td>
+<td><p>-43%</p></td>
 </tr>
 <tr>
-<td>FAST_REQUIRE_EQ</td>
-<td>439.09</td>
-<td>-39%</td>
-<td>-6%</td>
-<td>-50%</td>
+<td><p>FAST_REQUIRE_EQ</p></td>
+<td><p>439.09</p></td>
+<td><p>-39%</p></td>
+<td><p>-6%</p></td>
+<td><p>-50%</p></td>
 </tr>
 <tr>
-<td>SUPER_FAST_ASSERTS</td>
-<td>411.11</td>
-<td>-43%</td>
-<td>-12%</td>
-<td>-53%</td>
+<td><p>SUPER_FAST_ASSERTS</p></td>
+<td><p>411.11</p></td>
+<td><p>-43%</p></td>
+<td><p>-12%</p></td>
+<td><p>-53%</p></td>
 </tr>
 </tbody>
 </table>
@@ -262,9 +254,7 @@ framework.</p>
 Although this was not of as much interest for me, there are also a lot of
 other changes in the new version. You can consult the
 <a class="reference external" href="https://github.com/onqtam/doctest/blob/master/CHANGELOG.md">changelog</a> if you want more information.</p>
-</div>
-<div class="section" id="conclusion">
-<h2>Conclusion</h2>
+</section><section id="conclusion"><h2>Conclusion</h2>
 <p>Overall, doctest 1.1 is much faster to compile than doctest 1.0. Moreover, it
 offers very fast macros for test assertions that are much faster to compile
 than Catch versions and even faster than the versions I created myself to reduce
@@ -278,9 +268,8 @@ for Sonarqube. Once this feature appears in doctest, I'll probably drop Catch
 from ETL and DLL</p>
 <p>If you need blazing fast compilation times for your unit tests, doctest 1.1 is
 probably the way to go.</p>
+</section>
 </div>
-</div>
-    </div>
     <aside class="postpromonav"><nav><ul itemprop="keywords" class="tags">
 <li><a class="tag p-category" href="../../../categories/c%2B%2B.html" rel="tag">C++</a></li>
             <li><a class="tag p-category" href="../../../categories/catch.html" rel="tag">Catch</a></li>
@@ -301,7 +290,7 @@ probably the way to go.</p>
             </li>
         </ul></nav></aside><section class="comments hidden-print"><h2>Comments</h2>
         
-        
+    
         <div id="disqus_thread"></div>
         <script>
         var disqus_shortname ="blogwichtounet",
@@ -333,7 +322,7 @@ probably the way to go.</p>
 <!-- Footer -->
 
 <footer>
-    Contents © 2018         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         - License: 
+    Contents © 2023         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         - License: 
 <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="padding-left:5px;border-width:0" src="../../../assets/img/cc.png"></a>
         <ul class="footer_inline_ul">
 <li>

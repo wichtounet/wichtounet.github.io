@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html prefix="og: http://ogp.me/ns# article: http://ogp.me/ns/article# " lang="en">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,7 +7,7 @@
 <link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
 <meta name="theme-color" content="#5670d4">
 <meta name="generator" content="Nikola (getnikola.com)">
-<link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
+<link rel="alternate" type="application/rss+xml" title="RSS" hreflang="en" href="../../../rss.xml">
 <link rel="canonical" href="https://baptiste-wicht.com/posts/2012/02/local-optimization-on-three-address-code.html">
 <!--[if lt IE 9]><script src="../../../assets/js/html5.js"></script><![endif]--><meta name="author" content="Baptiste Wicht">
 <link rel="prev" href="eddic-0-7-1-boolean-operators.html" title="EDDIC 0.7.1 : Boolean conditions and new operators" type="text/html">
@@ -122,12 +122,15 @@
 <article class="post-text h-entry hentry postpage" itemscope="itemscope" itemtype="http://schema.org/Article"><header><h1 class="p-name entry-title" itemprop="headline name"><a href="#" class="u-url">Local optimization of Three-Address-Code</a></h1>
 
         <div class="metadata">
-            <p class="byline author vcard"><span class="byline-name fn" itemprop="author">
+            <p class="byline author vcard p-author h-card"><span class="byline-name fn p-name" itemprop="author">
                     Baptiste Wicht
             </span></p>
-            <p class="dateline"><a href="#" rel="bookmark"><time class="published dt-published" datetime="2012-02-08T08:55:40+01:00" itemprop="datePublished" title="2012-02-08 08:55">2012-02-08 08:55</time></a></p>
+            <p class="dateline">
+            <a href="#" rel="bookmark">
+            <time class="published dt-published" datetime="2012-02-08T08:55:40+01:00" itemprop="datePublished" title="2012-02-08 08:55">2012-02-08 08:55</time></a>
+            </p>
                 <p class="commentline">
-        
+    
     <a href="local-optimization-on-three-address-code.html#disqus_thread" data-disqus-identifier="cache/posts/2012/02/local-optimization-on-three-address-code.html">Comments</a>
 
 
@@ -139,20 +142,18 @@
         
 
     </header><div class="e-content entry-content" itemprop="articleBody text">
-    <div>
-<p>Some compilers are using Three-Address-Code (TAC) as an intermediate representation. This representation is very simple to understand and write. Moreover, it's easy to run some optimization on this representation.</p>
+    <p>Some compilers are using Three-Address-Code (TAC) as an intermediate representation. This representation is very simple to understand and write. Moreover, it's easy to run some optimization on this representation.</p>
 <p>Each TAC statement has this general form : result = operand1 operator operand2</p>
 <p>For example, here are some TAC statements:</p>
-<pre class="code literal-block"><span></span><span class="n">a</span> <span class="o">=</span> <span class="mi">1</span>
-<span class="n">x</span> <span class="o">=</span> <span class="n">a</span> <span class="o">*</span> <span class="mi">3</span>
-<span class="k">if</span> <span class="n">x</span> <span class="o">&gt;</span> <span class="n">a</span> <span class="k">goto</span> <span class="n">test</span>
-<span class="n">param</span> <span class="s">"dddd"</span>
-<span class="n">call</span> <span class="n">print</span>
+<div class="code"><pre class="code literal-block"><span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span>
+<span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">3</span>
+<span class="k">if</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="k">goto</span><span class="w"> </span><span class="n">test</span>
+<span class="n">param</span><span class="w"> </span><span class="s">"dddd"</span>
+<span class="n">call</span><span class="w"> </span><span class="n">print</span>
 <span class="nl">test</span><span class="p">:</span>
-<span class="n">param</span> <span class="s">"asdf"</span>
-<span class="n">call</span> <span class="n">print</span>
-</pre>
-
+<span class="n">param</span><span class="w"> </span><span class="s">"asdf"</span>
+<span class="n">call</span><span class="w"> </span><span class="n">print</span>
+</pre></div>
 
 <p>In this post, we will see some of the local optimizations that can be applied on TAC. A local optimization is an optimization that is applied locally to a basic block. A basic block is a set of TAC statements that has only one entry point and one exit point. Once the first instruction of the basic block is executed, the rest of the instructions are necessarily executed exactly once. These optimizations are easy to design and implement. If you want to run global optimizations (through all the basic blocks of a function) or even Interprocedural Optimization (IPO), you will need a far more complex framework to run optimizations. I will try to write something on global optimization when I will have implemented some of them in EDDI.</p>
 <p>The goal of optimization is of course to replace some statements with more efficient statements. </p>
@@ -246,22 +247,20 @@
 <h4>4. Constant propagation</h4>
 
 <p>This optimization consists in replacing a variable by its constant value at each place we know it's constant. For example, this basic block: </p>
-<pre class="code literal-block"><span></span><span class="n">a</span> <span class="o">=</span> <span class="mi">2</span>
-<span class="n">b</span> <span class="o">=</span> <span class="n">c</span> <span class="o">*</span> <span class="n">a</span> 
-<span class="n">a</span> <span class="o">=</span> <span class="mi">5</span>
-<span class="n">a</span> <span class="o">=</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span>
-<span class="n">c</span> <span class="o">=</span> <span class="n">a</span> <span class="o">+</span> <span class="mi">2</span>
-</pre>
-
+<div class="code"><pre class="code literal-block"><span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span>
+<span class="n">b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">c</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">a</span><span class="w"> </span>
+<span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">5</span>
+<span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">b</span>
+<span class="n">c</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">2</span>
+</pre></div>
 
 <p>can be optimized into:</p>
-<pre class="code literal-block"><span></span><span class="n">a</span> <span class="o">=</span> <span class="mi">2</span>
-<span class="n">b</span> <span class="o">=</span> <span class="n">c</span> <span class="o">*</span> <span class="mi">2</span>
-<span class="n">a</span> <span class="o">=</span> <span class="mi">5</span>
-<span class="n">a</span> <span class="o">=</span> <span class="mi">5</span> <span class="o">+</span> <span class="n">b</span>
-<span class="n">c</span> <span class="o">=</span> <span class="n">a</span> <span class="o">+</span> <span class="mi">2</span>
-</pre>
-
+<div class="code"><pre class="code literal-block"><span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span>
+<span class="n">b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">c</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">2</span>
+<span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">5</span>
+<span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">5</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">b</span>
+<span class="n">c</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">2</span>
+</pre></div>
 
 <p>Two use of a variable have been replaced by its value. In this case, we cannot replace the last use of a because we do not know its value there. </p>
 <p>This optimization can be made using a simple algorithm on each statement of a basic block: </p>
@@ -274,16 +273,14 @@
 <h4>5. Copy propagation</h4>
 
 <p>Copy propagation is almost the same as constant propagation. We replace a variable by the variable it refers to. For example, we can optimize: </p>
-<pre class="code literal-block"><span></span><span class="n">b</span> <span class="o">=</span> <span class="n">a</span>
-<span class="n">c</span> <span class="o">=</span> <span class="n">b</span> <span class="o">+</span> <span class="mi">2</span>
-</pre>
-
+<div class="code"><pre class="code literal-block"><span class="n">b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">a</span>
+<span class="n">c</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">2</span>
+</pre></div>
 
 <p>into:</p>
-<pre class="code literal-block"><span></span><span class="n">b</span> <span class="o">=</span> <span class="n">a</span>
-<span class="n">c</span> <span class="o">=</span> <span class="n">a</span> <span class="o">+</span> <span class="mi">2</span>
-</pre>
-
+<div class="code"><pre class="code literal-block"><span class="n">b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">a</span>
+<span class="n">c</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">2</span>
+</pre></div>
 
 <p>The algorithm is the same as the one for constant propagation but we keep track of the variables that are assigned to a variable. </p>
 <p>These two optimizations does not create a more efficient code, but the optimized code can be optimized again. </p>
@@ -300,77 +297,69 @@
 <h4>7. Remove temporaries</h4>
 
 <p>When compiling some expression, we often generate this kind of code: </p>
-<pre class="code literal-block"><span></span><span class="n">t1</span> <span class="o">=</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span>
-<span class="n">x</span> <span class="o">=</span> <span class="n">t1</span>
-</pre>
-
+<div class="code"><pre class="code literal-block"><span class="n">t1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">b</span>
+<span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">t1</span>
+</pre></div>
 
 <p>We can simplify this code into: </p>
-<pre class="code literal-block"><span></span><span class="n">x</span> <span class="o">=</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span>
-</pre>
-
+<div class="code"><pre class="code literal-block"><span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">b</span>
+</pre></div>
 
 <p>For that optimization, we can apply a more complex propagation. For each assignment to a temporary, we store the right side of the assignment. Then, for each assignment of a temporary to another variable (<em>x = t1</em>) if this use of the temporary is the only one, we replace the right side by the right side of the assignment to the temporary. </p>
 <h4>8. Remove needless jumps</h4>
 
 <p>We can also find some jumps from basic blocks to basic that are not useful. A jump (conditional or not) to the next basic blocks is not useful. If we have two basic blocks: </p>
-<pre class="code literal-block"><span></span><span class="nl">B1</span><span class="p">:</span>
-<span class="n">a</span> <span class="o">=</span> <span class="mi">2</span>
-<span class="k">goto</span> <span class="n">B2</span>
-<span class="nl">B2</span><span class="p">:</span> 
-<span class="n">b</span> <span class="o">=</span> <span class="n">a</span>
-</pre>
-
+<div class="code"><pre class="code literal-block"><span class="nl">B1</span><span class="p">:</span>
+<span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span>
+<span class="k">goto</span><span class="w"> </span><span class="n">B2</span>
+<span class="nl">B2</span><span class="p">:</span><span class="w"> </span>
+<span class="n">b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">a</span>
+</pre></div>
 
 <p>we can optimize into: </p>
-<pre class="code literal-block"><span></span><span class="nl">B1</span><span class="p">:</span>
-<span class="n">a</span> <span class="o">=</span> <span class="mi">2</span>
-<span class="nl">B2</span><span class="p">:</span> 
-<span class="n">b</span> <span class="o">=</span> <span class="n">a</span>
-</pre>
-
+<div class="code"><pre class="code literal-block"><span class="nl">B1</span><span class="p">:</span>
+<span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span>
+<span class="nl">B2</span><span class="p">:</span><span class="w"> </span>
+<span class="n">b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">a</span>
+</pre></div>
 
 <p>For that optimization, we have to test each jump for the distance of the target block. If the distance is only one, we can remove the jump. This works also for conditional jumps. A conditional has two exit points. If the condition is true, we jump to the specified block, otherwise we jump to the next block. If the target block is the next one, the effect is the same has a non-conditional jump and then can be removed. </p>
 <p>The last two optimizations are not really local, but are simple versions of global optimizations. There are not as powerful as they are not following a data-flow, but they can be greatly improve the efficiency of some function, even if they don't have the power of the equivalent global optimization.  </p>
 <h4>9. Remove dead basic blocks</h4>
 
 <p>Sometimes after having simplified some conditional jumps into simple jumps or even removed some of them, some basic blocks are not reachable. For example, this set of basic block:</p>
-<pre class="code literal-block"><span></span><span class="nl">B1</span><span class="p">:</span>
-<span class="n">a</span> <span class="o">=</span> <span class="mi">2</span>
-<span class="k">goto</span> <span class="n">B3</span>
-<span class="nl">B2</span><span class="p">:</span> 
-<span class="n">b</span> <span class="o">=</span> <span class="n">a</span>
+<div class="code"><pre class="code literal-block"><span class="nl">B1</span><span class="p">:</span>
+<span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span>
+<span class="k">goto</span><span class="w"> </span><span class="n">B3</span>
+<span class="nl">B2</span><span class="p">:</span><span class="w"> </span>
+<span class="n">b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">a</span>
 <span class="nl">B3</span><span class="p">:</span>
-<span class="n">b</span> <span class="o">=</span> <span class="mi">33</span>
-</pre>
-
+<span class="n">b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">33</span>
+</pre></div>
 
 <p>can be optimized into:</p>
-<pre class="code literal-block"><span></span><span class="nl">B1</span><span class="p">:</span>
-<span class="n">a</span> <span class="o">=</span> <span class="mi">2</span>
-<span class="k">goto</span> <span class="n">B3</span>
+<div class="code"><pre class="code literal-block"><span class="nl">B1</span><span class="p">:</span>
+<span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span>
+<span class="k">goto</span><span class="w"> </span><span class="n">B3</span>
 <span class="nl">B3</span><span class="p">:</span>
-<span class="n">b</span> <span class="o">=</span> <span class="mi">33</span>
-</pre>
-
+<span class="n">b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">33</span>
+</pre></div>
 
 <p>There are no general algorithm for applying that. It depends on the instruction set that you TAC language has. </p>
 <h4>10. Merge basic blocks</h4>
 
 <p>Finally, another optimization, not really local again, is to merge some basic blocks. After the basic blocks have been optimized, we often have some blocks that are redundant. For example: </p>
-<pre class="code literal-block"><span></span><span class="nl">B1</span><span class="p">:</span>
-<span class="n">a</span> <span class="o">=</span> <span class="mi">2</span>
-<span class="nl">B2</span><span class="p">:</span> 
-<span class="n">b</span> <span class="o">=</span> <span class="n">a</span>
-</pre>
-
+<div class="code"><pre class="code literal-block"><span class="nl">B1</span><span class="p">:</span>
+<span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span>
+<span class="nl">B2</span><span class="p">:</span><span class="w"> </span>
+<span class="n">b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">a</span>
+</pre></div>
 
 <p>can be optimized into:</p>
-<pre class="code literal-block"><span></span><span class="nl">B1</span><span class="p">:</span>
-<span class="n">a</span> <span class="o">=</span> <span class="mi">2</span>
-<span class="n">b</span> <span class="o">=</span> <span class="n">a</span>
-</pre>
-
+<div class="code"><pre class="code literal-block"><span class="nl">B1</span><span class="p">:</span>
+<span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span>
+<span class="n">b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">a</span>
+</pre></div>
 
 <p>Of course, the second basic block that is merged with the first one must not be referred by a jump. </p>
 <h4>Optimization passes</h4>
@@ -381,7 +370,6 @@
 
 <p>By using all the techniques described in this post, you will be able to have an efficient code. It won't be as good as with local optimization coupled to global optimization, but it's a good start for a simple compiler. </p>
 <p>I hope I will have the time to implement some global optimization techniques into eddic and then write about it on this blog.</p>
-</div>
     </div>
     <aside class="postpromonav"><nav><ul itemprop="keywords" class="tags">
 <li><a class="tag p-category" href="../../../categories/compilers.html" rel="tag">Compilers</a></li>
@@ -397,7 +385,7 @@
             </li>
         </ul></nav></aside><section class="comments hidden-print"><h2>Comments</h2>
         
-        
+    
         <div id="disqus_thread"></div>
         <script>
         var disqus_shortname ="blogwichtounet",
@@ -429,7 +417,7 @@
 <!-- Footer -->
 
 <footer>
-    Contents © 2018         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         - License: 
+    Contents © 2023         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         - License: 
 <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="padding-left:5px;border-width:0" src="../../../assets/img/cc.png"></a>
         <ul class="footer_inline_ul">
 <li>

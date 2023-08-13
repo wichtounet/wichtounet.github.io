@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html prefix="og: http://ogp.me/ns# article: http://ogp.me/ns/article# " lang="en">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,7 +7,7 @@
 <link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
 <meta name="theme-color" content="#5670d4">
 <meta name="generator" content="Nikola (getnikola.com)">
-<link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
+<link rel="alternate" type="application/rss+xml" title="RSS" hreflang="en" href="../../../rss.xml">
 <link rel="canonical" href="https://baptiste-wicht.com/posts/2017/05/cpp-containers-benchmark-vector-list-deque-plf-colony.html">
 <!--[if lt IE 9]><script src="../../../assets/js/html5.js"></script><![endif]--><meta name="author" content="Baptiste Wicht">
 <link rel="prev" href="speed-up-tensorflow-inference-compiling-from-source.html" title="Speed up TensorFlow inference by compiling it from source" type="text/html">
@@ -125,12 +125,15 @@ I decided to improve the benc">
 <article class="post-text h-entry hentry postpage" itemscope="itemscope" itemtype="http://schema.org/Article"><header><h1 class="p-name entry-title" itemprop="headline name"><a href="#" class="u-url">C++ Containers Benchmark: vector/list/deque and plf::colony</a></h1>
 
         <div class="metadata">
-            <p class="byline author vcard"><span class="byline-name fn" itemprop="author">
+            <p class="byline author vcard p-author h-card"><span class="byline-name fn p-name" itemprop="author">
                     Baptiste Wicht
             </span></p>
-            <p class="dateline"><a href="#" rel="bookmark"><time class="published dt-published" datetime="2017-05-21T12:46:23+02:00" itemprop="datePublished" title="2017-05-21 12:46">2017-05-21 12:46</time></a></p>
+            <p class="dateline">
+            <a href="#" rel="bookmark">
+            <time class="published dt-published" datetime="2017-05-21T12:46:23+02:00" itemprop="datePublished" title="2017-05-21 12:46">2017-05-21 12:46</time></a>
+            </p>
                 <p class="commentline">
-        
+    
     <a href="cpp-containers-benchmark-vector-list-deque-plf-colony.html#disqus_thread" data-disqus-identifier="cache/posts/2017/05/cpp-containers-benchmark-vector-list-deque-plf-colony.html">Comments</a>
 
 
@@ -142,22 +145,21 @@ I decided to improve the benc">
         
 
     </header><div class="e-content entry-content" itemprop="articleBody text">
-    <div>
-<p>Already more than three years ago, I've written a <a class="reference external" href="https://baptiste-wicht.com/posts/2012/12/cpp-benchmark-vector-list-deque.html">benchmark of some of the STL containers</a>,
+    <p>Already more than three years ago, I've written a <a class="reference external" href="https://baptiste-wicht.com/posts/2012/12/cpp-benchmark-vector-list-deque.html">benchmark of some of the STL containers</a>,
 namely the vector, the list and the deque. Since this article was very popular,
 I decided to improve the benchmarks and collect again all the results. There are
 now more benchmarks and some problems have been fixed in the benchmark code.
 Moreover, I have also added a new container, the plf::colony. Therefore, there
 are four containers tested:</p>
 <ul class="simple">
-<li>The std::vector: This is a dynamically-resized array of elements. All the
+<li><p>The std::vector: This is a dynamically-resized array of elements. All the
 elements are contiguous in memory. If an element is inserted or removed it at
 a position other than the end, the following elements will be moved to fill
 the gap or to open a gap. Elements can be accessed at random position in
 constant time. The array is resized so that it can several more elements, not
 resized at each insert operation. This means that insertion at the end of the
-container is done in amortized constant time.</li>
-<li>The std::deque: The deque is a container that offer constant time insertion
+container is done in amortized constant time.</p></li>
+<li><p>The std::deque: The deque is a container that offer constant time insertion
 both at the front and at the back of the collection. In current c++ libraries,
 it is implementation as a collection of dynamically allocated fixed-size
 array. Not all elements are contiguous, but depending on the size of the data
@@ -165,13 +167,13 @@ type, this still has good data locality. Access to a random element is also
 done in constant time, but with more overhead than the vector. For insertions
 and removal at random positions, the elements are shifted either to the front
 or to the back meaning that it is generally faster than the vector, by twice
-in average.</li>
-<li>The std::list: This is a doubly-linked list. It supports constant time
+in average.</p></li>
+<li><p>The std::list: This is a doubly-linked list. It supports constant time
 insertions at any position of the collection. However, it does not support
 constant time random access. The elements are obviously not contiguous, since
 they are all allocated in nodes. For small elements, this collection has
-a very big memory overhead.</li>
-<li>The plf::colony: This container is a non-standard container which is
+a very big memory overhead.</p></li>
+<li><p>The plf::colony: This container is a non-standard container which is
 unordered, it means that the insertion order will not necessarily be
 preserved. It provides strong iterators guarantee, pointers to non-erased
 element are not invalidated by insertion or erasure. It is especially tailored
@@ -185,7 +187,7 @@ that it can be reused for fast insertion later on. This container uses the
 same conventions as the standard containers and was proposed for inclusion to
 the standard library, which is the main reason why it's included in this
 benchmark. If you want more information, you can consult the
-<a class="reference external" href="http://plflib.org/colony.htm">official website</a>.</li>
+<a class="reference external" href="http://plflib.org/colony.htm">official website</a>.</p></li>
 </ul>
 <p>In the text and results, the namespaces will be omitted. Note that I have only
 included sequence containers in my test. These are the most common containers in
@@ -210,31 +212,19 @@ relatively short (it's already probably too long :P).</p>
 <!-- TEASER_END -->
 <p>Here are direct links to all results:</p>
 <ul class="simple">
-<li>
-<a class="reference internal" href="cpp-containers-benchmark-vector-list-deque-plf-colony.html#fill">Fill</a> Benchmark</li>
-<li>
-<a class="reference internal" href="cpp-containers-benchmark-vector-list-deque-plf-colony.html#emplace">Emplace</a> Benchmark</li>
-<li>
-<a class="reference internal" href="cpp-containers-benchmark-vector-list-deque-plf-colony.html#fill-front">Fill Front</a> Benchmark</li>
-<li>
-<a class="reference internal" href="cpp-containers-benchmark-vector-list-deque-plf-colony.html#linear-search">Linear Search</a> Benchmark</li>
-<li>
-<a class="reference internal" href="cpp-containers-benchmark-vector-list-deque-plf-colony.html#iterate-and-modify">Iterate and modify</a> Benchmark</li>
-<li>
-<a class="reference internal" href="cpp-containers-benchmark-vector-list-deque-plf-colony.html#random-insert">Random Insert</a> Benchmark</li>
-<li>
-<a class="reference internal" href="cpp-containers-benchmark-vector-list-deque-plf-colony.html#random-remove">Random Remove</a> Benchmark</li>
-<li>
-<a class="reference internal" href="cpp-containers-benchmark-vector-list-deque-plf-colony.html#iterate-and-erase">Iterate and Erase</a> Benchmark</li>
-<li>
-<a class="reference internal" href="cpp-containers-benchmark-vector-list-deque-plf-colony.html#number-crunching">Number Crunching</a> Benchmark</li>
-<li>
-<a class="reference internal" href="cpp-containers-benchmark-vector-list-deque-plf-colony.html#sort">Sort</a> Benchmark</li>
-<li>
-<a class="reference internal" href="cpp-containers-benchmark-vector-list-deque-plf-colony.html#destruction">Destruction</a> Benchmark</li>
+<li><p><a class="reference internal" href="cpp-containers-benchmark-vector-list-deque-plf-colony.html#fill">Fill</a> Benchmark</p></li>
+<li><p><a class="reference internal" href="cpp-containers-benchmark-vector-list-deque-plf-colony.html#emplace">Emplace</a> Benchmark</p></li>
+<li><p><a class="reference internal" href="cpp-containers-benchmark-vector-list-deque-plf-colony.html#fill-front">Fill Front</a> Benchmark</p></li>
+<li><p><a class="reference internal" href="cpp-containers-benchmark-vector-list-deque-plf-colony.html#linear-search">Linear Search</a> Benchmark</p></li>
+<li><p><a class="reference internal" href="cpp-containers-benchmark-vector-list-deque-plf-colony.html#iterate-and-modify">Iterate and modify</a> Benchmark</p></li>
+<li><p><a class="reference internal" href="cpp-containers-benchmark-vector-list-deque-plf-colony.html#random-insert">Random Insert</a> Benchmark</p></li>
+<li><p><a class="reference internal" href="cpp-containers-benchmark-vector-list-deque-plf-colony.html#random-remove">Random Remove</a> Benchmark</p></li>
+<li><p><a class="reference internal" href="cpp-containers-benchmark-vector-list-deque-plf-colony.html#iterate-and-erase">Iterate and Erase</a> Benchmark</p></li>
+<li><p><a class="reference internal" href="cpp-containers-benchmark-vector-list-deque-plf-colony.html#number-crunching">Number Crunching</a> Benchmark</p></li>
+<li><p><a class="reference internal" href="cpp-containers-benchmark-vector-list-deque-plf-colony.html#sort">Sort</a> Benchmark</p></li>
+<li><p><a class="reference internal" href="cpp-containers-benchmark-vector-list-deque-plf-colony.html#destruction">Destruction</a> Benchmark</p></li>
 </ul>
-<div class="section" id="fill">
-<h2>Fill</h2>
+<section id="fill"><h2>Fill</h2>
 <p>Let's start with the most obvious benchmark, insertion. A series of elements
 will be inserted at the back of the container. Vector and colony both have
 a reserve function that is able to preallocate memory for the necessary
@@ -275,9 +265,7 @@ performance on this benchmark but is quite stable for different data types. When
 you know the size of the collection, you should always use reserve() on vectors.
 Moreover, if you can use noexcept operations, you should always do it since it
 can significantly speedup the vector performance.</p>
-</div>
-<div class="section" id="emplace">
-<h2>Emplace</h2>
+</section><section id="emplace"><h2>Emplace</h2>
 <p>The next operation is very similar to the first except that we use emplace
 insertions instead of pushes.</p>
 <div id="graph_emplace_back___Trivial_8_" style="width: 700px; height: 400px;"></div>
@@ -299,9 +287,7 @@ Copy-On-Write and now COW is not allowed by the standard anymore in C++11.</p>
 <p>Overall, for the tested types, emplace should have exactly the same performance
 as normal push_back. Except for the special case of COW for GCC that should not
 happen anymore if you use a recent compiler and C++11.</p>
-</div>
-<div class="section" id="fill-front">
-<h2>Fill Front</h2>
+</section><section id="fill-front"><h2>Fill Front</h2>
 <p>The next benchmark is again a fill benchmark but elements are inserted at the
 front of the container. Since colony is unordered, it's removed from the
 benchmark. This benchmark is mostly used because this is the worst case for
@@ -313,9 +299,7 @@ the list.</p>
 <p>If you really need a collection that offers performance for front and back
 insertions, you should definitely prefer the deque over the vector. The list
 should only be preferred for very large data types.</p>
-</div>
-<div class="section" id="linear-search">
-<h2>Linear Search</h2>
+</section><section id="linear-search"><h2>Linear Search</h2>
 <p>The next operation is that is tested is the search. The container is filled with
 all the numbers in [0, N] and shuffled. Then, each number in [0,N] is searched
 in the container with std::find that performs a simple linear search.  In
@@ -350,9 +334,7 @@ limited by the data locality of the container. For this reason, the deque and
 vector containers are significantly faster than the list. Interestingly, the
 colony container becomes faster than the other containers for large data types.
 Overall, a list should never be used if the container is to be searched a lot.</p>
-</div>
-<div class="section" id="iterate-and-modify">
-<h2>Iterate and modify</h2>
+</section><section id="iterate-and-modify"><h2>Iterate and modify</h2>
 <p>The next test iterates over the entire collection and increment each number
 contained inside it. It uses the begin and end iterators for each container. The
 time should be mostly dominated by the iteration time.</p>
@@ -375,9 +357,7 @@ again, very close to the colony and the deque a bit behind.</p>
 container starts to shine when the size of the data type is around 128B, but
 does not provide a very significant speedup. The vector is generally the fastest
 for this kind of workload.</p>
-</div>
-<div class="section" id="random-insert">
-<h2>Random Insert</h2>
+</section><section id="random-insert"><h2>Random Insert</h2>
 <p>The following test is performing insertions at random places.  In the case of
 random insert, in theory, the list should be much faster, its insert operation
 being in O(1) versus O(n) for a vector or a deque.  The container is filled with
@@ -432,9 +412,7 @@ data types. However, for large data types or non-trivial, the list is becoming
 very interesting because it will perform O(1) insertion and the cost of
 insertion of the other containers is now bigger than the cost of iterating
 through the list.</p>
-</div>
-<div class="section" id="random-remove">
-<h2>Random Remove</h2>
+</section><section id="random-remove"><h2>Random Remove</h2>
 <p>The following benchmark is quite similar than the previous except that instead of
 inserting an element at a random position, a random element is removed. However,
 this is done a bit differently. The collection is filled with the numbers of
@@ -489,9 +467,7 @@ the naive versions. Interestingly, with the remove version, all the collections
 are performing at almost the same speed, with the list being the slowest. In
 practice, if you know that you have to erase a series of elements, you should do
 a erase with remove_if instead of several erase.</p>
-</div>
-<div class="section" id="iterate-and-erase">
-<h2>Iterate and Erase</h2>
+</section><section id="iterate-and-erase"><h2>Iterate and Erase</h2>
 <p>The next benchmark is about erasure again, but is quite different than the
 previous one. This benchmark iterates through the entire collection and at each
 point, randomly decides if the element is to be removed or not. This may seem
@@ -538,9 +514,7 @@ about the same if were were to insert instead of erase. In each test the vecotr
 and deque are several orders of magnitude slower than the other contenders. The
 colony is always as fast and the list and several times faster than the list
 with larger data types.</p>
-</div>
-<div class="section" id="number-crunching">
-<h2>Number Crunching</h2>
+</section><section id="number-crunching"><h2>Number Crunching</h2>
 <p>The next test is about numbers. Random numbers are inserted into the container
 so that it is kept sorted. That means that a linear search will be performed to
 find the insertion point. Since colony is unordered, it is excluded from this
@@ -564,9 +538,7 @@ their excellent iteration performance compared to the poor performance of the
 list. Moreover, keep into account that in practice this would be done using
 binary search for the vector and deque, probably meaning faster time for them
 (even though binary search is not cache-efficient).</p>
-</div>
-<div class="section" id="sort">
-<h2>Sort</h2>
+</section><section id="sort"><h2>Sort</h2>
 <p>Let's see how the different collections are efficient at being sorted. For
 list and colony, the sort member function is used while the other are using
 std::sort directly. Moreover, since the colony offers two different sort
@@ -589,9 +561,7 @@ faster than the vector on this data type but still twice slower than the list.</
 data type gets too big (&gt;1KB). Again, the colony container is in a sort of
 middle ground with very stable performance for both large and small data types
 but is never the fastest on this benchmark.</p>
-</div>
-<div class="section" id="destruction">
-<h2>Destruction</h2>
+</section><section id="destruction"><h2>Destruction</h2>
 <p>The last test that is done is used to measure the time necessary to delete
 a container. The containers are dynamically allocated, filled with n numbers,
 and then their destruction time (via delete) is computed. This is probably never
@@ -633,81 +603,79 @@ overhead as the data type grows since each block will be able to hold less and
 elements and therefore resembles a list. When types are non-trivial, the time
 for destruction is generally tied to the time necessary to walk through the
 entire collection and calls each of the destructor.</p>
-</div>
-<div class="section" id="conclusion">
-<h2>Conclusion</h2>
+</section><section id="conclusion"><h2>Conclusion</h2>
 <p>With all these results in mind, it's now time to try to get some conclusions
 about the different containers.</p>
 <p>vector:</p>
 <ul class="simple">
-<li>The best iteration performance</li>
-<li>The best back insertion performance (with reserve)</li>
-<li>Excellent number crunching performance</li>
-<li>Very good for sorting small data types, bad for big types</li>
-<li>Very fast destruction</li>
-<li>Slow insertion/removal at random positions</li>
+<li><p>The best iteration performance</p></li>
+<li><p>The best back insertion performance (with reserve)</p></li>
+<li><p>Excellent number crunching performance</p></li>
+<li><p>Very good for sorting small data types, bad for big types</p></li>
+<li><p>Very fast destruction</p></li>
+<li><p>Slow insertion/removal at random positions</p></li>
 </ul>
 <p>deque:</p>
 <ul class="simple">
-<li>Very good iteration performance</li>
-<li>Very good insertion at the back (better with vector without reserve)</li>
-<li>The best front insertion performance</li>
-<li>Excellent number crunching performance</li>
-<li>Very good for sorting small data types, bad for big types</li>
-<li>Slow destruction for large data types</li>
-<li>Better insertion/removal at random position than vector, but still slow for
-many modifications</li>
+<li><p>Very good iteration performance</p></li>
+<li><p>Very good insertion at the back (better with vector without reserve)</p></li>
+<li><p>The best front insertion performance</p></li>
+<li><p>Excellent number crunching performance</p></li>
+<li><p>Very good for sorting small data types, bad for big types</p></li>
+<li><p>Slow destruction for large data types</p></li>
+<li><p>Better insertion/removal at random position than vector, but still slow for
+many modifications</p></li>
 </ul>
 <p>list:</p>
 <ul class="simple">
-<li>The slowest iteration performance in general</li>
-<li>Slow destruction</li>
-<li>Very fast insertion/removal from a known position</li>
+<li><p>The slowest iteration performance in general</p></li>
+<li><p>Slow destruction</p></li>
+<li><p>Very fast insertion/removal from a known position</p></li>
 </ul>
 <p>colony:</p>
 <ul class="simple">
-<li>Bad iteration performance for small types</li>
-<li>Good iteration performance starting from medium data types (and excellent for
-large ones)</li>
-<li>No possibility of random insertions</li>
-<li>The fastest insertion/removal from a known position</li>
-<li>Good sort performance for large data types, bad performance for small data
-types</li>
+<li><p>Bad iteration performance for small types</p></li>
+<li><p>Good iteration performance starting from medium data types (and excellent for
+large ones)</p></li>
+<li><p>No possibility of random insertions</p></li>
+<li><p>The fastest insertion/removal from a known position</p></li>
+<li><p>Good sort performance for large data types, bad performance for small data
+types</p></li>
 </ul>
 <p>Overall, each container has some advantages and disadvantages. It highly depends
 on your workload:</p>
 <ul class="simple">
-<li>If you have purely iteration oriented workload, the vector is your best option, followed by
+<li><p>If you have purely iteration oriented workload, the vector is your best option, followed by
 the deque and finally the colony is quite good too if you have large elements to
-store. The list is terrible at iteration, whatever the element type.</li>
-<li>If you need to search a position and insert at this position, you should choose
+store. The list is terrible at iteration, whatever the element type.</p></li>
+<li><p>If you need to search a position and insert at this position, you should choose
 a deque or a vector for small trivial data types and a list or large data types
-or non-trivial ones.</li>
-<li>If you have to search a position and remove at this position, it depends if
+or non-trivial ones.</p></li>
+<li><p>If you have to search a position and remove at this position, it depends if
 you can use erase-remove_if instead of several erase. If you can use
 erase-remove, you should use a vector or a deque or maybe a colony (only for
 large data types). If you cannot, use a deque or a vector for small data
-types and a colony (or list if you can't use colony) for larger types.</li>
-<li>If you iterate and do several removal and/or insertions during the same
+types and a colony (or list if you can't use colony) for larger types.</p></li>
+<li><p>If you iterate and do several removal and/or insertions during the same
 iteration, you should NOT use a vector or a deque and should use a colony (or
-list, if you can't) for all data types.</li>
-<li>If you have a sort-driven workload, you should use a vector or a deque for
-small types, a colony for medium types and a list for the big data types.</li>
-<li>If you have another workload, just benchmark it ;)</li>
+list, if you can't) for all data types.</p></li>
+<li><p>If you have a sort-driven workload, you should use a vector or a deque for
+small types, a colony for medium types and a list for the big data types.</p></li>
+<li><p>If you have another workload, just benchmark it ;)</p></li>
 </ul>
 <p>And maybe a few tips that can be extracted from the results:</p>
 <ul class="simple">
-<li>If you need to decide on which container to use for your task, the best way to
-decide is still to benchmark for your specific workload.</li>
-<li>Don't base your decisions only on Complexity Analysis, it does not take memory
-locality into account.</li>
-<li>If you can, try to make noexcept move operations, this will significantly
+<li><p>If you need to decide on which container to use for your task, the best way to
+decide is still to benchmark for your specific workload.</p></li>
+<li><p>Don't base your decisions only on Complexity Analysis, it does not take memory
+locality into account.</p></li>
+<li><p>If you can, try to make noexcept move operations, this will significantly
 speedup your vector and deque operations (when insert or remove occurs in the
-middle).</li>
-<li>If you need to erase several elements of a collection, you should always use
-one erase remove_if instead of several.</li>
-<li>If you need to insert several elements in a vector, always reserve the memory
-first to save some time on reallocations.</li>
+middle).</p></li>
+<li><p>If you need to erase several elements of a collection, you should always use
+one erase remove_if instead of several.</p></li>
+<li><p>If you need to insert several elements in a vector, always reserve the memory
+first to save some time on reallocations.</p></li>
 </ul>
 <p>I hope this overly long post was interesting to you and that you learned
 something. If you have any questions or comments, don't hesitate to post in the
@@ -2136,10 +2104,8 @@ draw_destruction___Trivial_4096_();
 draw_destruction___NonTrivialStringMovable();
 }
 google.setOnLoadCallback(draw_all);
-</script>
+</script></section>
 </div>
-</div>
-    </div>
     <aside class="postpromonav"><nav><ul itemprop="keywords" class="tags">
 <li><a class="tag p-category" href="../../../categories/benchmarks.html" rel="tag">Benchmarks</a></li>
             <li><a class="tag p-category" href="../../../categories/c%2B%2B.html" rel="tag">C++</a></li>
@@ -2155,7 +2121,7 @@ google.setOnLoadCallback(draw_all);
             </li>
         </ul></nav></aside><section class="comments hidden-print"><h2>Comments</h2>
         
-        
+    
         <div id="disqus_thread"></div>
         <script>
         var disqus_shortname ="blogwichtounet",
@@ -2187,7 +2153,7 @@ google.setOnLoadCallback(draw_all);
 <!-- Footer -->
 
 <footer>
-    Contents © 2018         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         - License: 
+    Contents © 2023         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         - License: 
 <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="padding-left:5px;border-width:0" src="../../../assets/img/cc.png"></a>
         <ul class="footer_inline_ul">
 <li>

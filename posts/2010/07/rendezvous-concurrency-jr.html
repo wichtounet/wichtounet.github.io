@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html prefix="og: http://ogp.me/ns# article: http://ogp.me/ns/article# " lang="en">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,7 +7,7 @@
 <link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
 <meta name="theme-color" content="#5670d4">
 <meta name="generator" content="Nikola (getnikola.com)">
-<link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
+<link rel="alternate" type="application/rss+xml" title="RSS" hreflang="en" href="../../../rss.xml">
 <link rel="canonical" href="https://baptiste-wicht.com/posts/2010/07/rendezvous-concurrency-jr.html">
 <!--[if lt IE 9]><script src="../../../assets/js/html5.js"></script><![endif]--><meta name="author" content="Baptiste Wicht">
 <link rel="prev" href="integrate-play-framework-intellij-idea.html" title="Tip : Integrate Play Framework in IntelliJ Idea" type="text/html">
@@ -123,12 +123,15 @@ Like asynchronous message passing, this synchronization method involves two proc
 <article class="post-text h-entry hentry postpage" itemscope="itemscope" itemtype="http://schema.org/Article"><header><h1 class="p-name entry-title" itemprop="headline name"><a href="#" class="u-url">Rendezvous, concurrency method, in JR</a></h1>
 
         <div class="metadata">
-            <p class="byline author vcard"><span class="byline-name fn" itemprop="author">
+            <p class="byline author vcard p-author h-card"><span class="byline-name fn p-name" itemprop="author">
                     Baptiste Wicht
             </span></p>
-            <p class="dateline"><a href="#" rel="bookmark"><time class="published dt-published" datetime="2010-07-07T07:05:20+02:00" itemprop="datePublished" title="2010-07-07 07:05">2010-07-07 07:05</time></a></p>
+            <p class="dateline">
+            <a href="#" rel="bookmark">
+            <time class="published dt-published" datetime="2010-07-07T07:05:20+02:00" itemprop="datePublished" title="2010-07-07 07:05">2010-07-07 07:05</time></a>
+            </p>
                 <p class="commentline">
-        
+    
     <a href="rendezvous-concurrency-jr.html#disqus_thread" data-disqus-identifier="cache/posts/2010/07/rendezvous-concurrency-jr.html">Comments</a>
 
 
@@ -140,33 +143,29 @@ Like asynchronous message passing, this synchronization method involves two proc
         
 
     </header><div class="e-content entry-content" itemprop="articleBody text">
-    <div>
-<p>In this post, we'll see a new feature of JR : the rendezvous.</p>
+    <p>In this post, we'll see a new feature of JR : the rendezvous.</p>
 <p>Like asynchronous message passing, this synchronization method involves two processes : a caller and a receiver. But this time, the invocation is synchronous, the caller delays until the operation completes. The rendezvous does not create a new thread to the receiver. The receiver must invoke an input statement (the implementation of rendezvous) and wait for the message. Like asynchronous message passing, this is achieved using operations as message queue.</p>
 <!-- TEASER_END -->
 
 <p>The rendezvous can simplify this kind of operations :</p>
-<pre class="code literal-block"><span></span><span class="kt">int</span> <span class="n">x</span><span class="o">;</span>
-<span class="kt">int</span> <span class="n">y</span><span class="o">;</span>
-<span class="n">send</span> <span class="nf">op_command</span><span class="o">(</span><span class="mi">2</span><span class="o">,</span> <span class="mi">3</span><span class="o">);</span>
-<span class="n">receive</span><span class="o">(</span><span class="n">x</span><span class="o">,</span> <span class="n">y</span><span class="o">);</span>
-</pre>
-
+<div class="code"><pre class="code literal-block"><span class="kt">int</span><span class="w"> </span><span class="n">x</span><span class="p">;</span>
+<span class="kt">int</span><span class="w"> </span><span class="n">y</span><span class="p">;</span>
+<span class="n">send</span><span class="w"> </span><span class="nf">op_command</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">);</span>
+<span class="n">receive</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="p">);</span>
+</pre></div>
 
 <p>To make a rendezvous, we'use the input statement. I think it's the harder (but also most complete) statement of the JR programming language. Here is the general form :</p>
-<pre class="code literal-block"><span></span><span class="n">inni</span> <span class="n">op_command</span> <span class="o">{</span>
+<div class="code"><pre class="code literal-block"><span class="n">inni</span><span class="w"> </span><span class="n">op_command</span><span class="w"> </span><span class="p">{</span>
 <span class="c1">//Code block</span>
-<span class="o">}</span>
-<span class="o">[]</span> <span class="n">op_command</span> <span class="o">{</span>
+<span class="p">}</span>
+<span class="o">[]</span><span class="w"> </span><span class="n">op_command</span><span class="w"> </span><span class="p">{</span>
 <span class="c1">//Code block</span>
-<span class="o">}..</span>
-</pre>
-
+<span class="p">}..</span>
+</pre></div>
 
 <p>An op_command specifiy an operation to wait for. An op_command is of this form :</p>
-<pre class="code literal-block"><span></span><span class="n">return_type</span> <span class="nf">op_exp</span><span class="o">(</span><span class="n">args</span><span class="o">)</span> <span class="n">st</span> <span class="n">synch</span> <span class="n">by</span> <span class="n">sched</span>
-</pre>
-
+<div class="code"><pre class="code literal-block"><span class="n">return_type</span><span class="w"> </span><span class="nf">op_exp</span><span class="p">(</span><span class="n">args</span><span class="p">)</span><span class="w"> </span><span class="n">st</span><span class="w"> </span><span class="n">synch</span><span class="w"> </span><span class="n">by</span><span class="w"> </span><span class="n">sched</span>
+</pre></div>
 
 <p>Explanations :</p>
 <ul>
@@ -178,94 +177,87 @@ Like asynchronous message passing, this synchronization method involves two proc
 </ul>
 <p>If there is no synchronization expression and no scheduling expression, the first serviced invocation is the oldest. If there is a synchronization expression, the first serviced invocation is the oldest selectable expression and if there is a scheduling expression, the first serviced is the first selectable invocation that minimizes the scheduling expression. If there is no selectable message, the input statement delays until there is one.</p>
 <p>You can also add an else statement to the input statement :</p>
-<pre class="code literal-block"><span></span><span class="n">inni</span> <span class="n">op_command</span> <span class="o">{</span>
+<div class="code"><pre class="code literal-block"><span class="n">inni</span><span class="w"> </span><span class="n">op_command</span><span class="w"> </span><span class="p">{</span>
 <span class="c1">//Code block</span>
-<span class="o">}</span> <span class="o">...</span>
-<span class="o">[]</span> <span class="k">else</span> <span class="o">{</span>
+<span class="p">}</span><span class="w"> </span><span class="p">...</span>
+<span class="o">[]</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
 <span class="c1">//Code block</span>
-<span class="o">}</span>
-</pre>
-
+<span class="p">}</span>
+</pre></div>
 
 <p>The else block will be executed if there is no selectable message. So an input statement with an else statement will never delays.</p>
 <p>Lets imagine a simple example. The server return the sum of 2 numbers after receiving a message. If we write this simple program using asynchronous message, it'll give us something like that :</p>
-<pre class="code literal-block"><span></span><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Calculator</span> <span class="o">{</span>
-    <span class="kd">private</span> <span class="kd">static</span> <span class="n">op</span> <span class="kt">void</span> <span class="nf">request</span><span class="o">(</span><span class="kt">int</span> <span class="n">x</span><span class="o">,</span> <span class="kt">int</span> <span class="n">y</span><span class="o">);</span>
-    <span class="kd">private</span> <span class="kd">static</span> <span class="n">op</span> <span class="kt">void</span> <span class="nf">response</span><span class="o">(</span><span class="kt">int</span> <span class="n">sum</span><span class="o">,</span> <span class="kt">int</span> <span class="n">sub</span><span class="o">);</span>
+<div class="code"><pre class="code literal-block"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">Calculator</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="n">op</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">request</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">y</span><span class="p">);</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="n">op</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">response</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">sum</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">sub</span><span class="p">);</span>
 
-    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">...</span> <span class="n">args</span><span class="o">){}</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">String</span><span class="p">...</span><span class="w"> </span><span class="n">args</span><span class="p">){}</span>
 
-    <span class="kd">private</span> <span class="kd">static</span> <span class="n">process</span> <span class="n">Client</span> <span class="o">{</span>
-        <span class="n">send</span> <span class="nf">request</span><span class="o">(</span><span class="mi">33</span><span class="o">,</span> <span class="mi">22</span><span class="o">);</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="n">process</span><span class="w"> </span><span class="n">Client</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">send</span><span class="w"> </span><span class="nf">request</span><span class="p">(</span><span class="mi">33</span><span class="p">,</span><span class="w"> </span><span class="mi">22</span><span class="p">);</span>
 
-        <span class="kt">int</span> <span class="n">sum</span><span class="o">;</span>
-        <span class="kt">int</span> <span class="n">sub</span><span class="o">;</span>
-        <span class="n">receive</span> <span class="nf">response</span><span class="o">(</span><span class="n">sum</span><span class="o">,</span> <span class="n">sub</span><span class="o">);</span>
+<span class="w">        </span><span class="kt">int</span><span class="w"> </span><span class="n">sum</span><span class="p">;</span>
+<span class="w">        </span><span class="kt">int</span><span class="w"> </span><span class="n">sub</span><span class="p">;</span>
+<span class="w">        </span><span class="n">receive</span><span class="w"> </span><span class="nf">response</span><span class="p">(</span><span class="n">sum</span><span class="p">,</span><span class="w"> </span><span class="n">sub</span><span class="p">);</span>
 
-        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">printf</span><span class="o">(</span><span class="s">"Sum %d Sub %d"</span><span class="o">,</span> <span class="n">sum</span><span class="o">,</span> <span class="n">sub</span><span class="o">);</span>
-    <span class="o">}</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">printf</span><span class="p">(</span><span class="s">"Sum %d Sub %d"</span><span class="p">,</span><span class="w"> </span><span class="n">sum</span><span class="p">,</span><span class="w"> </span><span class="n">sub</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
 
-    <span class="kd">private</span> <span class="kd">static</span> <span class="n">process</span> <span class="n">Server</span> <span class="o">{</span>
-        <span class="kt">int</span> <span class="n">x</span><span class="o">;</span>
-        <span class="kt">int</span> <span class="n">y</span><span class="o">;</span>
-        <span class="n">receive</span> <span class="nf">request</span><span class="o">(</span><span class="n">x</span><span class="o">,</span> <span class="n">y</span><span class="o">);</span>
-        <span class="n">send</span> <span class="nf">response</span><span class="o">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">y</span><span class="o">,</span> <span class="n">x</span> <span class="o">-</span> <span class="n">y</span><span class="o">);</span>
-    <span class="o">}</span>
-<span class="o">}</span>
-</pre>
-
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="n">process</span><span class="w"> </span><span class="n">Server</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kt">int</span><span class="w"> </span><span class="n">x</span><span class="p">;</span>
+<span class="w">        </span><span class="kt">int</span><span class="w"> </span><span class="n">y</span><span class="p">;</span>
+<span class="w">        </span><span class="n">receive</span><span class="w"> </span><span class="nf">request</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="p">);</span>
+<span class="w">        </span><span class="n">send</span><span class="w"> </span><span class="nf">response</span><span class="p">(</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">y</span><span class="p">,</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">y</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
 
 <p>It little bit complicated for a thing as simple, isn't it ? Let's rewrite it with input statement :</p>
-<pre class="code literal-block"><span></span><span class="kd">public</span> <span class="kd">class</span> <span class="nc">CalculatorInni</span> <span class="o">{</span>
-    <span class="kd">private</span> <span class="kd">static</span> <span class="n">op</span> <span class="kt">int</span> <span class="nf">compute</span><span class="o">(</span><span class="kt">int</span> <span class="n">x</span><span class="o">,</span> <span class="kt">int</span> <span class="n">y</span><span class="o">);</span>
+<div class="code"><pre class="code literal-block"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">CalculatorInni</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="n">op</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">y</span><span class="p">);</span>
 
-    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">...</span> <span class="n">args</span><span class="o">){}</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">String</span><span class="p">...</span><span class="w"> </span><span class="n">args</span><span class="p">){}</span>
 
-    <span class="kd">private</span> <span class="kd">static</span> <span class="n">process</span> <span class="n">Client</span> <span class="o">{</span>
-        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">printf</span><span class="o">(</span><span class="s">"Sum %d"</span><span class="o">,</span> <span class="n">compute</span><span class="o">(</span><span class="mi">33</span><span class="o">,</span> <span class="mi">22</span><span class="o">));</span>
-    <span class="o">}</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="n">process</span><span class="w"> </span><span class="n">Client</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">printf</span><span class="p">(</span><span class="s">"Sum %d"</span><span class="p">,</span><span class="w"> </span><span class="n">compute</span><span class="p">(</span><span class="mi">33</span><span class="p">,</span><span class="w"> </span><span class="mi">22</span><span class="p">));</span>
+<span class="w">    </span><span class="p">}</span>
 
-    <span class="kd">private</span> <span class="kd">static</span> <span class="n">process</span> <span class="n">Server</span> <span class="o">{</span>
-        <span class="n">inni</span> <span class="kt">int</span> <span class="nf">compute</span><span class="o">(</span><span class="kt">int</span> <span class="n">x</span><span class="o">,</span> <span class="kt">int</span> <span class="n">y</span><span class="o">){</span>
-            <span class="k">return</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span><span class="o">;</span>
-        <span class="o">}</span>
-    <span class="o">}</span>
-<span class="o">}</span>
-</pre>
-
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="n">process</span><span class="w"> </span><span class="n">Server</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">inni</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">y</span><span class="p">){</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">y</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
 
 <p>Easier, shorter and clearer, isn't it ?</p>
 <p>The Client invoke the compute operation and get the return value directly because it's synchronous. If you have an operation with a return value, you doesn't have to use the call statement, it's implicit. If you have a void operation, you can use the call statement (but if you don't, it's the same by default) before the operation :</p>
-<pre class="code literal-block"><span></span><span class="n">call</span> <span class="nf">op_command</span><span class="o">(</span><span class="n">args</span><span class="o">);</span>
-</pre>
-
+<div class="code"><pre class="code literal-block"><span class="n">call</span><span class="w"> </span><span class="nf">op_command</span><span class="p">(</span><span class="n">args</span><span class="p">);</span>
+</pre></div>
 
 <p>And the Server has only to use the input statement to return the sum of the numbers.</p>
 <p>As you've perhaps seen, the receive is only an abbreviation to the simplest form of input statement. So if you write :</p>
-<pre class="code literal-block"><span></span><span class="kt">int</span> <span class="n">x</span><span class="o">;</span>
-<span class="kt">int</span> <span class="n">y</span><span class="o">;</span>
-<span class="n">receive</span> <span class="nf">op_command</span><span class="o">(</span><span class="n">x</span>
-</pre>
-
+<div class="code"><pre class="code literal-block"><span class="kt">int</span><span class="w"> </span><span class="n">x</span><span class="p">;</span>
+<span class="kt">int</span><span class="w"> </span><span class="n">y</span><span class="p">;</span>
+<span class="n">receive</span><span class="w"> </span><span class="nf">op_command</span><span class="p">(</span><span class="n">x</span>
+</pre></div>
 
 <p>It's the same as if you write :</p>
-<pre class="code literal-block"><span></span><span class="n">inni</span> <span class="kt">void</span> <span class="nf">op_command</span><span class="o">(</span><span class="kt">int</span> <span class="n">a</span><span class="o">,</span> <span class="kt">int</span> <span class="n">b</span><span class="o">){</span>
-      <span class="n">x</span> <span class="o">=</span> <span class="n">a</span><span class="o">;</span>
-      <span class="n">y</span> <span class="o">=</span> <span class="n">b</span><span class="o">;</span>
-<span class="o">}</span>
-</pre>
-
+<div class="code"><pre class="code literal-block"><span class="n">inni</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">op_command</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">b</span><span class="p">){</span>
+<span class="w">      </span><span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">a</span><span class="p">;</span>
+<span class="w">      </span><span class="n">y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">b</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
 
 <p>But in this case, it's easier to use the receive statement.</p>
 <p>The input statement can also be used to service a group of operations in an array :</p>
-<pre class="code literal-block"><span></span><span class="n">cap</span> <span class="nf">void</span> <span class="o">(</span><span class="kt">int</span><span class="o">)</span> <span class="n">operations</span> <span class="o">=</span> <span class="k">new</span> <span class="n">cap</span> <span class="nf">void</span> <span class="o">(</span><span class="kt">int</span><span class="o">)[</span><span class="mi">12</span><span class="o">];</span>
+<div class="code"><pre class="code literal-block"><span class="n">cap</span><span class="w"> </span><span class="nf">void</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="w"> </span><span class="n">operations</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">cap</span><span class="w"> </span><span class="nf">void</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="o">[</span><span class="mi">12</span><span class="o">]</span><span class="p">;</span>
 
 <span class="c1">//Fill the array</span>
-<span class="n">inni</span> <span class="o">((</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&amp;</span><span class="n">amp</span><span class="o">;</span><span class="n">lt</span><span class="o">;</span> <span class="mi">12</span><span class="o">;</span> <span class="n">i</span><span class="o">++))</span> <span class="n">operations</span><span class="o">[</span><span class="n">i</span><span class="o">](</span><span class="kt">int</span> <span class="n">x</span><span class="o">)</span> <span class="o">{</span>
-   <span class="c1">//Code b</span>
-<span class="o">}</span>
-</pre>
-
+<span class="n">inni</span><span class="w"> </span><span class="p">((</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">lt</span><span class="p">;</span><span class="w"> </span><span class="mi">12</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">))</span><span class="w"> </span><span class="n">operations</span><span class="o">[</span><span class="n">i</span><span class="o">]</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">x</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">   </span><span class="c1">//Code b</span>
+<span class="p">}</span>
+</pre></div>
 
 <p>More than return, we could also use two new statements in an input statement :</p>
 <ul>
@@ -273,65 +265,63 @@ Like asynchronous message passing, this synchronization method involves two proc
     <li>forward : delegate the answer to an other operation. So this is the other operation who will answer to the caller, the input statement continues its execution but cannot return a value anymore.</li>
 </ul>
 <p>Now that we know how to use input statement, we can simplify the ResourceAllocator of the next post. We can do a lot more easier, with two operations and input statements :</p>
-<pre class="code literal-block"><span></span><span class="kn">import</span> <span class="nn">java.util.*</span><span class="o">;</span>
+<div class="code"><pre class="code literal-block"><span class="kn">import</span><span class="w"> </span><span class="nn">java.util.*</span><span class="p">;</span>
 
-<span class="kd">public</span> <span class="kd">class</span> <span class="nc">ResourceAllocator</span> <span class="o">{</span>
-    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">int</span> <span class="n">N</span> <span class="o">=</span> <span class="mi">25</span><span class="o">;</span> <span class="c1">//Number of clients</span>
-    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">int</span> <span class="n">I</span> <span class="o">=</span> <span class="mi">25</span><span class="o">;</span> <span class="c1">//Number of iterations</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">ResourceAllocator</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">N</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">25</span><span class="p">;</span><span class="w"> </span><span class="c1">//Number of clients</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">I</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">25</span><span class="p">;</span><span class="w"> </span><span class="c1">//Number of iterations</span>
 
-    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">...</span> <span class="n">args</span><span class="o">){}</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">String</span><span class="p">...</span><span class="w"> </span><span class="n">args</span><span class="p">){}</span>
 
-    <span class="kd">private</span> <span class="kd">static</span> <span class="n">op</span> <span class="n">Resource</span> <span class="nf">request</span><span class="o">();</span>
-    <span class="kd">private</span> <span class="kd">static</span> <span class="n">op</span> <span class="kt">void</span> <span class="nf">release</span><span class="o">(</span><span class="n">Resource</span><span class="o">);</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="n">op</span><span class="w"> </span><span class="n">Resource</span><span class="w"> </span><span class="nf">request</span><span class="p">();</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="n">op</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">release</span><span class="p">(</span><span class="n">Resource</span><span class="p">);</span>
 
-    <span class="kd">private</span> <span class="kd">static</span> <span class="n">process</span> <span class="nf">Client</span><span class="o">((</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&amp;</span><span class="n">amp</span><span class="o">;</span><span class="n">lt</span><span class="o">;</span> <span class="n">N</span><span class="o">;</span> <span class="n">i</span><span class="o">++)){</span>
-        <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">a</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">a</span> <span class="o">&amp;</span><span class="n">amp</span><span class="o">;</span><span class="n">lt</span><span class="o">;</span> <span class="n">I</span><span class="o">;</span> <span class="n">a</span><span class="o">++){</span>
-            <span class="n">Resource</span> <span class="n">resource</span> <span class="o">=</span> <span class="n">request</span><span class="o">();</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="n">process</span><span class="w"> </span><span class="nf">Client</span><span class="p">((</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">lt</span><span class="p">;</span><span class="w"> </span><span class="n">N</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)){</span>
+<span class="w">        </span><span class="k">for</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">lt</span><span class="p">;</span><span class="w"> </span><span class="n">I</span><span class="p">;</span><span class="w"> </span><span class="n">a</span><span class="o">++</span><span class="p">){</span>
+<span class="w">            </span><span class="n">Resource</span><span class="w"> </span><span class="n">resource</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">request</span><span class="p">();</span>
 
-            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">printf</span><span class="o">(</span><span class="s">"Client %d use resource %d \n"</span><span class="o">,</span> <span class="n">i</span><span class="o">,</span> <span class="n">resource</span><span class="o">.</span><span class="na">getId</span><span class="o">());</span>
+<span class="w">            </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">printf</span><span class="p">(</span><span class="s">"Client %d use resource %d \n"</span><span class="p">,</span><span class="w"> </span><span class="n">i</span><span class="p">,</span><span class="w"> </span><span class="n">resource</span><span class="p">.</span><span class="na">getId</span><span class="p">());</span>
 
-            <span class="n">call</span> <span class="nf">release</span><span class="o">(</span><span class="n">resource</span><span class="o">);</span>
-        <span class="o">}</span>
-    <span class="o">}</span>
+<span class="w">            </span><span class="n">call</span><span class="w"> </span><span class="nf">release</span><span class="p">(</span><span class="n">resource</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
 
-    <span class="kd">private</span> <span class="kd">static</span> <span class="n">process</span> <span class="n">Server</span><span class="o">{</span>
-        <span class="n">Queue</span> <span class="n">resources</span> <span class="o">=</span> <span class="k">new</span> <span class="n">LinkedList</span><span class="o">();</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="n">process</span><span class="w"> </span><span class="n">Server</span><span class="p">{</span>
+<span class="w">        </span><span class="n">Queue</span><span class="w"> </span><span class="n">resources</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">LinkedList</span><span class="p">();</span>
 
-        <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">1</span><span class="o">;</span> <span class="n">i</span> <span class="o">&amp;</span><span class="n">amp</span><span class="o">;</span><span class="n">lt</span><span class="o">;=</span> <span class="mi">5</span><span class="o">;</span> <span class="n">i</span><span class="o">++){</span>
-            <span class="n">resources</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="k">new</span> <span class="n">Resource</span><span class="o">(</span><span class="n">i</span><span class="o">));</span>
-        <span class="o">}</span>
+<span class="w">        </span><span class="k">for</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">lt</span><span class="p">;</span><span class="o">=</span><span class="w"> </span><span class="mi">5</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">){</span>
+<span class="w">            </span><span class="n">resources</span><span class="p">.</span><span class="na">add</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="n">Resource</span><span class="p">(</span><span class="n">i</span><span class="p">));</span>
+<span class="w">        </span><span class="p">}</span>
 
-        <span class="k">while</span><span class="o">(</span><span class="kc">true</span><span class="o">){</span>
-            <span class="n">inni</span> <span class="n">Resource</span> <span class="nf">request</span><span class="o">()</span> <span class="n">st</span> <span class="o">!</span><span class="n">resources</span><span class="o">.</span><span class="na">isEmpty</span><span class="o">()</span> <span class="o">{</span>
-                <span class="k">return</span> <span class="n">resources</span><span class="o">.</span><span class="na">poll</span><span class="o">();</span>
-            <span class="o">}</span>
-            <span class="o">[]</span> <span class="kt">void</span> <span class="nf">release</span><span class="o">(</span><span class="n">Resource</span> <span class="n">resource</span><span class="o">){</span>
-                <span class="n">resources</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">resource</span><span class="o">);</span>
-            <span class="o">}</span>
-        <span class="o">}</span>
-    <span class="o">}</span>
+<span class="w">        </span><span class="k">while</span><span class="p">(</span><span class="kc">true</span><span class="p">){</span>
+<span class="w">            </span><span class="n">inni</span><span class="w"> </span><span class="n">Resource</span><span class="w"> </span><span class="nf">request</span><span class="p">()</span><span class="w"> </span><span class="n">st</span><span class="w"> </span><span class="o">!</span><span class="n">resources</span><span class="p">.</span><span class="na">isEmpty</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="k">return</span><span class="w"> </span><span class="n">resources</span><span class="p">.</span><span class="na">poll</span><span class="p">();</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">            </span><span class="o">[]</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">release</span><span class="p">(</span><span class="n">Resource</span><span class="w"> </span><span class="n">resource</span><span class="p">){</span>
+<span class="w">                </span><span class="n">resources</span><span class="p">.</span><span class="na">add</span><span class="p">(</span><span class="n">resource</span><span class="p">);</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
 
-    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kd">class</span> <span class="nc">Resource</span> <span class="o">{</span>
-        <span class="kd">private</span> <span class="kd">final</span> <span class="kt">int</span> <span class="n">id</span><span class="o">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="kd">class</span> <span class="nc">Resource</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kd">private</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">id</span><span class="p">;</span>
 
-        <span class="kd">private</span> <span class="nf">Resource</span><span class="o">(</span><span class="kt">int</span> <span class="n">id</span><span class="o">){</span>
-            <span class="kd">super</span><span class="o">();</span>
+<span class="w">        </span><span class="kd">private</span><span class="w"> </span><span class="nf">Resource</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">id</span><span class="p">){</span>
+<span class="w">            </span><span class="kd">super</span><span class="p">();</span>
 
-            <span class="k">this</span><span class="o">.</span><span class="na">id</span> <span class="o">=</span> <span class="n">id</span><span class="o">;</span>
-        <span class="o">}</span>
+<span class="w">            </span><span class="k">this</span><span class="p">.</span><span class="na">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">id</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
 
-        <span class="kd">private</span> <span class="kt">int</span> <span class="nf">getId</span><span class="o">(){</span>
-            <span class="k">return</span> <span class="n">id</span><span class="o">;</span>
-        <span class="o">}</span>
-    <span class="o">}</span>
-<span class="o">}</span>
-</pre>
-
+<span class="w">        </span><span class="kd">private</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="nf">getId</span><span class="p">(){</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">id</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
 
 <p>Clearer, not ?</p>
 <p>The last improvement we can do is to use a send instead of a call in the Client. We doesn't need to wait for release in client and the input statement can service send invocations as well as call but the send  invocations cannot return something.</p>
 <p>So we've now covered the rendezvous synchronization system in the JR system. In the next, and last, post about JR programming language, we'll see how to distribute our processes on several virtual machines.</p>
-</div>
     </div>
     <aside class="postpromonav"><nav><ul itemprop="keywords" class="tags">
 <li><a class="tag p-category" href="../../../categories/concurrency.html" rel="tag">Concurrency</a></li>
@@ -347,7 +337,7 @@ Like asynchronous message passing, this synchronization method involves two proc
             </li>
         </ul></nav></aside><section class="comments hidden-print"><h2>Comments</h2>
         
-        
+    
         <div id="disqus_thread"></div>
         <script>
         var disqus_shortname ="blogwichtounet",
@@ -379,7 +369,7 @@ Like asynchronous message passing, this synchronization method involves two proc
 <!-- Footer -->
 
 <footer>
-    Contents © 2018         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         - License: 
+    Contents © 2023         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         - License: 
 <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="padding-left:5px;border-width:0" src="../../../assets/img/cc.png"></a>
         <ul class="footer_inline_ul">
 <li>

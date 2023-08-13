@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html prefix="og: http://ogp.me/ns# article: http://ogp.me/ns/article# " lang="en">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,7 +7,7 @@
 <link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
 <meta name="theme-color" content="#5670d4">
 <meta name="generator" content="Nikola (getnikola.com)">
-<link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
+<link rel="alternate" type="application/rss+xml" title="RSS" hreflang="en" href="../../../rss.xml">
 <link rel="canonical" href="https://baptiste-wicht.com/posts/2014/04/install-use-clang-static-analyzer-cmake.html">
 <!--[if lt IE 9]><script src="../../../assets/js/html5.js"></script><![endif]--><meta name="author" content="Baptiste Wicht">
 <link rel="prev" href="related-posts-nikola-website.html" title="Related posts on a Nikola website" type="text/html">
@@ -126,12 +126,15 @@
 <article class="post-text h-entry hentry postpage" itemscope="itemscope" itemtype="http://schema.org/Article"><header><h1 class="p-name entry-title" itemprop="headline name"><a href="#" class="u-url">Install and Use CLang Static Analyzer on a CMake project</a></h1>
 
         <div class="metadata">
-            <p class="byline author vcard"><span class="byline-name fn" itemprop="author">
+            <p class="byline author vcard p-author h-card"><span class="byline-name fn p-name" itemprop="author">
                     Baptiste Wicht
             </span></p>
-            <p class="dateline"><a href="#" rel="bookmark"><time class="published dt-published" datetime="2014-04-09T16:39:11+02:00" itemprop="datePublished" title="2014-04-09 16:39">2014-04-09 16:39</time></a></p>
+            <p class="dateline">
+            <a href="#" rel="bookmark">
+            <time class="published dt-published" datetime="2014-04-09T16:39:11+02:00" itemprop="datePublished" title="2014-04-09 16:39">2014-04-09 16:39</time></a>
+            </p>
                 <p class="commentline">
-        
+    
     <a href="install-use-clang-static-analyzer-cmake.html#disqus_thread" data-disqus-identifier="cache/posts/2014/04/testing-clang-static-analyzer.html">Comments</a>
 
 
@@ -143,8 +146,7 @@
         
 
     </header><div class="e-content entry-content" itemprop="articleBody text">
-    <div>
-<p>I recently started a bit of work on my compiler (eddic) again. I started by adapting it to build on CLang with libc++. There was some minor adaptions to make it compile, but nothing really fancy. It now compiles and runs fine on LLVM/Clang 3.4 with the last version of libc++. I'm gonna use some features of C++14 in it and I plan to refactor some parts to make it more <em>STL-correct</em>. I also plan to use only CLang on eddic right now, since C++14 support of GCC is not released right now. </p>
+    <p>I recently started a bit of work on my compiler (eddic) again. I started by adapting it to build on CLang with libc++. There was some minor adaptions to make it compile, but nothing really fancy. It now compiles and runs fine on LLVM/Clang 3.4 with the last version of libc++. I'm gonna use some features of C++14 in it and I plan to refactor some parts to make it more <em>STL-correct</em>. I also plan to use only CLang on eddic right now, since C++14 support of GCC is not released right now. </p>
 <p>I decided it was a good time to try again the CLang static analyzer. </p>
 <h3>Installation</h3>
 <p>If, like me, you're using Gentoo, the static analyzer is directly installed with the <em>sys-devel/clang</em> package, unless you disabled the <em>static-analyzer</em> USE flag. </p>
@@ -152,23 +154,20 @@
 <h3>Usage</h3>
 <p>The usage of CLang static analyzer can be a bit disturbing at first. Most static analysis tools generally takes the sources directly and do their stuff. But that is not how Clang Static Analyzer works. It works as a kind of monitor in top of building the program, using <em>scan-build</em>. When you are analyzing a program, you are also building the program. </p>
 <p>For instance, if you are compiling a source file like that: </p>
-<pre class="code literal-block"><span></span>clang [clang-options] source_file.cpp
-</pre>
-
+<div class="code"><pre class="code literal-block">clang [clang-options] source_file.cpp
+</pre></div>
 
 <p>you can perform static analysis like that: </p>
-<pre class="code literal-block"><span></span>scan-build [scan-build-options] clang [clang-options] source_file.cpp
-</pre>
-
+<div class="code"><pre class="code literal-block">scan-build [scan-build-options] clang [clang-options] source_file.cpp
+</pre></div>
 
 <p>scan-build works by replacing calls to the compiler by calls to <em>ccc-analyzer </em>. This works generally well, but there are some cases where that things get a bit more complicated. That is the case of CMake where the paths to the compiler are hardcoded in the generated makefiles. </p>
 <p>For that, you have to run <em>cmake</em> and <em>make</em> with <em>scan-build</em>: </p>
-<pre class="code literal-block"><span></span>export CCC_CC=clang
-export CCC_CXX=clang++
-scan-build cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang .
-scan-build make
-</pre>
-
+<div class="code"><pre class="code literal-block"><span class="k">export</span><span class="w"> </span><span class="n">CCC_CC</span><span class="o">=</span><span class="n">clang</span>
+<span class="k">export</span><span class="w"> </span><span class="n">CCC_CXX</span><span class="o">=</span><span class="n">clang</span><span class="o">++</span>
+<span class="n">scan</span><span class="o">-</span><span class="n">build</span><span class="w"> </span><span class="n">cmake</span><span class="w"> </span><span class="o">-</span><span class="n">DCMAKE_CXX_COMPILER</span><span class="o">=</span><span class="n">clang</span><span class="o">++</span><span class="w"> </span><span class="o">-</span><span class="n">DCMAKE_C_COMPILER</span><span class="o">=</span><span class="n">clang</span><span class="w"> </span><span class="o">.</span>
+<span class="n">scan</span><span class="o">-</span><span class="n">build</span><span class="w"> </span><span class="n">make</span>
+</pre></div>
 
 <p>This can take a very long time. On eddic, it is about three times slower than a normal compilation. An important point to note about performance, is that you can run compilations in parallel (-j option of make) and that it is supported by scan-build quite well. </p>
 <p>Once analysis is performed, the found bugs are put into an HTML report. By default, the HTML report is created in <em>/tmp/</em>, but you can specificy the folder with -o option of scan-build. </p>
@@ -182,7 +181,6 @@ scan-build make
 <p>It is indeed an unreachable statement, but it is expected, since it is an assert to ensure that the code is unreachable. But that proves that the analysis works ;) </p>
 <p>Even if it didn't found anything, this time it worked much better than the last time I checked and the HTML results are just really good. </p>
 <p>I hope you found this article interesting. If you happen to have interesting results on your codebase with the CLang static analyzer, I'd be glad to hear about them ;)</p>
-</div>
     </div>
     <aside class="postpromonav"><nav><ul itemprop="keywords" class="tags">
 <li><a class="tag p-category" href="../../../categories/c%2B%2B.html" rel="tag">C++</a></li>
@@ -202,7 +200,7 @@ scan-build make
             </li>
         </ul></nav></aside><section class="comments hidden-print"><h2>Comments</h2>
         
-        
+    
         <div id="disqus_thread"></div>
         <script>
         var disqus_shortname ="blogwichtounet",
@@ -234,7 +232,7 @@ scan-build make
 <!-- Footer -->
 
 <footer>
-    Contents © 2018         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         - License: 
+    Contents © 2023         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         - License: 
 <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="padding-left:5px;border-width:0" src="../../../assets/img/cc.png"></a>
         <ul class="footer_inline_ul">
 <li>

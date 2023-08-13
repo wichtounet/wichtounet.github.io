@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html prefix="og: http://ogp.me/ns# article: http://ogp.me/ns/article# " lang="en">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,7 +7,7 @@
 <link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
 <meta name="theme-color" content="#5670d4">
 <meta name="generator" content="Nikola (getnikola.com)">
-<link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
+<link rel="alternate" type="application/rss+xml" title="RSS" hreflang="en" href="../../../rss.xml">
 <link rel="canonical" href="https://baptiste-wicht.com/posts/2010/05/java-concurrency-part-2-manipulate-threads.html">
 <!--[if lt IE 9]><script src="../../../assets/js/html5.js"></script><![endif]--><meta name="author" content="Baptiste Wicht">
 <link rel="prev" href="tip-add-resources-dynamically-to-a-classloader.html" title="Tip : Add resources dynamically to a ClassLoader" type="text/html">
@@ -124,12 +124,15 @@ When we've Threads, we can make several operations on the Threads :
 <article class="post-text h-entry hentry postpage" itemscope="itemscope" itemtype="http://schema.org/Article"><header><h1 class="p-name entry-title" itemprop="headline name"><a href="#" class="u-url">Java Concurrency : Part 2 - Manipulate Threads</a></h1>
 
         <div class="metadata">
-            <p class="byline author vcard"><span class="byline-name fn" itemprop="author">
+            <p class="byline author vcard p-author h-card"><span class="byline-name fn p-name" itemprop="author">
                     Baptiste Wicht
             </span></p>
-            <p class="dateline"><a href="#" rel="bookmark"><time class="published dt-published" datetime="2010-05-17T06:33:07+02:00" itemprop="datePublished" title="2010-05-17 06:33">2010-05-17 06:33</time></a></p>
+            <p class="dateline">
+            <a href="#" rel="bookmark">
+            <time class="published dt-published" datetime="2010-05-17T06:33:07+02:00" itemprop="datePublished" title="2010-05-17 06:33">2010-05-17 06:33</time></a>
+            </p>
                 <p class="commentline">
-        
+    
     <a href="java-concurrency-part-2-manipulate-threads.html#disqus_thread" data-disqus-identifier="cache/posts/2010/05/java-concurrency-part-2-manipulate-threads.html">Comments</a>
 
 
@@ -141,8 +144,7 @@ When we've Threads, we can make several operations on the Threads :
         
 
     </header><div class="e-content entry-content" itemprop="articleBody text">
-    <div>
-<p><a href="http://www.baptiste-wicht.com/2010/05/java-concurrency-part-1-threads/">After seeing how to create Threads</a>, we'll see in this article what we can do to <strong>manipulate Threads</strong>.</p>
+    <p><a href="http://www.baptiste-wicht.com/2010/05/java-concurrency-part-1-threads/">After seeing how to create Threads</a>, we'll see in this article what we can do to <strong>manipulate Threads</strong>.</p>
 <p>When we've Threads, we can make several operations on the Threads :</p>
 <ul>
 <li>Make the current Thread <strong>sleeping</strong> during x milliseconds</li>
@@ -156,56 +158,52 @@ When we've Threads, we can make several operations on the Threads :
 <!-- TEASER_END -->
 
 <p>First and easier, we can make a thread sleeping for a certain number of milliseconds. To do that, the Thread class has a method sleep(long millis). But this method is static, so you can only make the current Thread sleeping. You cannot choose the thread you want to make sleeping, your only choice is the current Thread so :</p>
-<pre class="code literal-block"><span></span><span class="n">Thread</span><span class="o">.</span><span class="na">sleep</span><span class="o">(</span><span class="mi">1000</span><span class="o">);</span>
-</pre>
-
+<div class="code"><pre class="code literal-block"><span class="n">Thread</span><span class="p">.</span><span class="na">sleep</span><span class="p">(</span><span class="mi">1000</span><span class="p">);</span>
+</pre></div>
 
 <p>makes the current Thread sleep during 1000 milliseconds (1 second). But, you have to catch an exception, InterruptedException. This exception occurs if the sleeping thread is interrupted. So you have to do that :</p>
-<pre class="code literal-block"><span></span><span class="k">try</span> <span class="o">{</span>
-    <span class="n">Thread</span><span class="o">.</span><span class="na">sleep</span><span class="o">(</span><span class="mi">1000</span><span class="o">);</span>
-<span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">InterruptedException</span> <span class="n">e</span><span class="o">){</span>
-    <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
-<span class="o">}</span>
-</pre>
-
+<div class="code"><pre class="code literal-block"><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">Thread</span><span class="p">.</span><span class="na">sleep</span><span class="p">(</span><span class="mi">1000</span><span class="p">);</span>
+<span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">InterruptedException</span><span class="w"> </span><span class="n">e</span><span class="p">){</span>
+<span class="w">    </span><span class="n">e</span><span class="p">.</span><span class="na">printStackTrace</span><span class="p">();</span>
+<span class="p">}</span>
+</pre></div>
 
 <p>But this not the good way to manage the InterruptedException. We'll see in one moment, how to deal with this exception. </p>
 <p>If you want more precision, you can use the overloaded version of sleep that takes the number of milliseconds plus a certain number of nanoseconds to sleep. The precision of this sleep depends on the system timers and clocks.</p>
 <p>For example, if you want to sleep 1000 milliseconds and 1000 nanoseconds (1 microsecond), you can do like that :</p>
-<pre class="code literal-block"><span></span><span class="k">try</span> <span class="o">{</span>
-    <span class="n">Thread</span><span class="o">.</span><span class="na">sleep</span><span class="o">(</span><span class="mi">1000</span><span class="o">,</span> <span class="mi">1000</span><span class="o">);</span>
-<span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">InterruptedException</span> <span class="n">e</span><span class="o">){</span>
-    <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
-<span class="o">}</span>
-</pre>
-
+<div class="code"><pre class="code literal-block"><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">Thread</span><span class="p">.</span><span class="na">sleep</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span><span class="w"> </span><span class="mi">1000</span><span class="p">);</span>
+<span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">InterruptedException</span><span class="w"> </span><span class="n">e</span><span class="p">){</span>
+<span class="w">    </span><span class="n">e</span><span class="p">.</span><span class="na">printStackTrace</span><span class="p">();</span>
+<span class="p">}</span>
+</pre></div>
 
 <p>Here is a little example to test that :</p>
-<pre class="code literal-block"><span></span><span class="kd">public</span> <span class="kd">class</span> <span class="nc">SleepThread</span> <span class="o">{</span>
-    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
-        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Current time millis : "</span> <span class="o">+</span> <span class="n">System</span><span class="o">.</span><span class="na">currentTimeMillis</span><span class="o">());</span>
+<div class="code"><pre class="code literal-block"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">SleepThread</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="n">args</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"Current time millis : "</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">currentTimeMillis</span><span class="p">());</span>
 
-        <span class="k">try</span> <span class="o">{</span>
-            <span class="n">Thread</span><span class="o">.</span><span class="na">sleep</span><span class="o">(</span><span class="mi">1000</span><span class="o">);</span>
-        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">InterruptedException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
-            <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
-        <span class="o">}</span>
+<span class="w">        </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">Thread</span><span class="p">.</span><span class="na">sleep</span><span class="p">(</span><span class="mi">1000</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">InterruptedException</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">e</span><span class="p">.</span><span class="na">printStackTrace</span><span class="p">();</span>
+<span class="w">        </span><span class="p">}</span>
 
-        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Current time millis : "</span> <span class="o">+</span> <span class="n">System</span><span class="o">.</span><span class="na">currentTimeMillis</span><span class="o">());</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"Current time millis : "</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">currentTimeMillis</span><span class="p">());</span>
 
-        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Nano time : "</span> <span class="o">+</span> <span class="n">System</span><span class="o">.</span><span class="na">nanoTime</span><span class="o">());</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"Nano time : "</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">nanoTime</span><span class="p">());</span>
 
-        <span class="k">try</span> <span class="o">{</span>
-            <span class="n">Thread</span><span class="o">.</span><span class="na">sleep</span><span class="o">(</span><span class="mi">2</span><span class="o">,</span> <span class="mi">5000</span><span class="o">);</span>
-        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">InterruptedException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
-            <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
-        <span class="o">}</span>
+<span class="w">        </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">Thread</span><span class="p">.</span><span class="na">sleep</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">5000</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">InterruptedException</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">e</span><span class="p">.</span><span class="na">printStackTrace</span><span class="p">();</span>
+<span class="w">        </span><span class="p">}</span>
 
-        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Nano time : "</span> <span class="o">+</span> <span class="n">System</span><span class="o">.</span><span class="na">nanoTime</span><span class="o">());</span>
-    <span class="o">}</span>
-<span class="o">}</span>
-</pre>
-
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"Nano time : "</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">nanoTime</span><span class="p">());</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
 
 <p>In my computer, this produce this result :</p>
 <pre>Current time millis : 1273959308480
@@ -215,56 +213,54 @@ Nano time : 5878166730976</pre>
 
 <p>You can see that the sleep of milliseconds is very precise, but with nanoseconds the result can vary a lot. And of course, the result depends of your computer, your operating system and your configuration.</p>
 <p>An other thing, you can do with Threads, is waiting for an other thread to die. For example, you can create five thread to compute sub result and wait for these 5 threads to finish to compute the final results based on the results of the five threads. To do that, you can use the join() method of the Thread class. This method is not static, so you can use it on any thread to wait for it to die. Like sleep() this method throws InterruptedException in the when the thread is interrupted during waiting for an other thread. So to wait on thread2, you just have to do that :</p>
-<pre class="code literal-block"><span></span><span class="k">try</span> <span class="o">{</span>
-    <span class="n">thread2</span><span class="o">.</span><span class="na">join</span><span class="o">();</span>
-<span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">InterruptedException</span> <span class="n">e</span><span class="o">){</span>
-    <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
-<span class="o">}</span>
-</pre>
-
+<div class="code"><pre class="code literal-block"><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">thread2</span><span class="p">.</span><span class="na">join</span><span class="p">();</span>
+<span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">InterruptedException</span><span class="w"> </span><span class="n">e</span><span class="p">){</span>
+<span class="w">    </span><span class="n">e</span><span class="p">.</span><span class="na">printStackTrace</span><span class="p">();</span>
+<span class="p">}</span>
+</pre></div>
 
 <p>That will make the current Thread waiting for thread2 to die. You can also add a timeout in millis, or millis + nanos, with the overloaded versions of join(), join(long millis) and join(long millis, int nanos). Here is little example that shows all that stuff :</p>
-<pre class="code literal-block"><span></span><span class="kd">public</span> <span class="kd">class</span> <span class="nc">JoinThread</span> <span class="o">{</span>
-    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
-        <span class="n">Thread</span> <span class="n">thread2</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Thread</span><span class="o">(</span><span class="k">new</span> <span class="n">WaitRunnable</span><span class="o">());</span>
-        <span class="n">Thread</span> <span class="n">thread3</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Thread</span><span class="o">(</span><span class="k">new</span> <span class="n">WaitRunnable</span><span class="o">());</span>
+<div class="code"><pre class="code literal-block"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">JoinThread</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="n">args</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">Thread</span><span class="w"> </span><span class="n">thread2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Thread</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="n">WaitRunnable</span><span class="p">());</span>
+<span class="w">        </span><span class="n">Thread</span><span class="w"> </span><span class="n">thread3</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Thread</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="n">WaitRunnable</span><span class="p">());</span>
 
-        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Current time millis : "</span> <span class="o">+</span> <span class="n">System</span><span class="o">.</span><span class="na">currentTimeMillis</span><span class="o">());</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"Current time millis : "</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">currentTimeMillis</span><span class="p">());</span>
 
-        <span class="n">thread2</span><span class="o">.</span><span class="na">start</span><span class="o">();</span>
+<span class="w">        </span><span class="n">thread2</span><span class="p">.</span><span class="na">start</span><span class="p">();</span>
 
-        <span class="k">try</span> <span class="o">{</span>
-            <span class="n">thread2</span><span class="o">.</span><span class="na">join</span><span class="o">();</span>
-        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">InterruptedException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
-            <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
-        <span class="o">}</span>
+<span class="w">        </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">thread2</span><span class="p">.</span><span class="na">join</span><span class="p">();</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">InterruptedException</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">e</span><span class="p">.</span><span class="na">printStackTrace</span><span class="p">();</span>
+<span class="w">        </span><span class="p">}</span>
 
-        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Current time millis : "</span> <span class="o">+</span> <span class="n">System</span><span class="o">.</span><span class="na">currentTimeMillis</span><span class="o">());</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"Current time millis : "</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">currentTimeMillis</span><span class="p">());</span>
 
-        <span class="n">thread3</span><span class="o">.</span><span class="na">start</span><span class="o">();</span>
+<span class="w">        </span><span class="n">thread3</span><span class="p">.</span><span class="na">start</span><span class="p">();</span>
 
-        <span class="k">try</span> <span class="o">{</span>
-            <span class="n">thread3</span><span class="o">.</span><span class="na">join</span><span class="o">(</span><span class="mi">1000</span><span class="o">);</span>
-        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">InterruptedException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
-            <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
-        <span class="o">}</span>
+<span class="w">        </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">thread3</span><span class="p">.</span><span class="na">join</span><span class="p">(</span><span class="mi">1000</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">InterruptedException</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">e</span><span class="p">.</span><span class="na">printStackTrace</span><span class="p">();</span>
+<span class="w">        </span><span class="p">}</span>
 
-        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Current time millis : "</span> <span class="o">+</span> <span class="n">System</span><span class="o">.</span><span class="na">currentTimeMillis</span><span class="o">());</span>
-    <span class="o">}</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"Current time millis : "</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">currentTimeMillis</span><span class="p">());</span>
+<span class="w">    </span><span class="p">}</span>
 
-    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">WaitRunnable</span> <span class="kd">implements</span> <span class="n">Runnable</span> <span class="o">{</span>
-        <span class="nd">@Override</span>
-        <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
-            <span class="k">try</span> <span class="o">{</span>
-                <span class="n">Thread</span><span class="o">.</span><span class="na">sleep</span><span class="o">(</span><span class="mi">5000</span><span class="o">);</span>
-            <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">InterruptedException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
-                <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
-            <span class="o">}</span>
-        <span class="o">}</span>
-        <span class="o">}</span>
-<span class="o">}</span>
-</pre>
-
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kd">class</span> <span class="nc">WaitRunnable</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">Runnable</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nd">@Override</span>
+<span class="w">        </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">run</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="n">Thread</span><span class="p">.</span><span class="na">sleep</span><span class="p">(</span><span class="mi">5000</span><span class="p">);</span>
+<span class="w">            </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">InterruptedException</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="n">e</span><span class="p">.</span><span class="na">printStackTrace</span><span class="p">();</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
 
 <p>That produce this result on my computer :</p>
 <pre>Current time millis : 1274015478535
@@ -274,15 +270,14 @@ Current time millis : 1274015484538</pre>
 <p>You can see that the first join() wait 5 seconds for the other thread and when we set a timeout, we wait only 1 seconds and return from join method.</p>
 <p>When working with Threads, it's also possible to change the priority of a Thread. In the Java Virtual Machine, the Thread scheduler, use a priority-based scheduling. So if a Thread enter in Runnable state with a higher priority than the running Thread, the new Thread will run and the current running thread will return to Runnable state and waits for its turn. But this behavior is not guaranteed and is completely depending on the virtual machine you are working on. So, do not rely on thread priorities, just use them to improve efficiency of your program.</p>
 <p>Normally, the priority range of Threads is an integer from 0 to 10, but some virtual machine have lower or higher ranges. To know the range of priority, you can use constants of the Thread class :</p>
-<pre class="code literal-block"><span></span><span class="kd">public</span> <span class="kd">class</span> <span class="nc">ThreadPriorityRange</span> <span class="o">{</span>
-    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
-        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Minimal priority : "</span> <span class="o">+</span> <span class="n">Thread</span><span class="o">.</span><span class="na">MIN_PRIORITY</span><span class="o">);</span>
-        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Maximal priority : "</span> <span class="o">+</span> <span class="n">Thread</span><span class="o">.</span><span class="na">MAX_PRIORITY</span><span class="o">);</span>
-        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Norm priority : "</span> <span class="o">+</span> <span class="n">Thread</span><span class="o">.</span><span class="na">NORM_PRIORITY</span><span class="o">);</span>
-         <span class="o">}</span>
-<span class="o">}</span>
-</pre>
-
+<div class="code"><pre class="code literal-block"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">ThreadPriorityRange</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="n">args</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"Minimal priority : "</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">Thread</span><span class="p">.</span><span class="na">MIN_PRIORITY</span><span class="p">);</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"Maximal priority : "</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">Thread</span><span class="p">.</span><span class="na">MAX_PRIORITY</span><span class="p">);</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"Norm priority : "</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">Thread</span><span class="p">.</span><span class="na">NORM_PRIORITY</span><span class="p">);</span>
+<span class="w">         </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
 
 <p>On my computer, I've the most current values :</p>
 <pre>Minimal priority : 1
@@ -292,39 +287,38 @@ Norm priority</pre>
 <p>To set the priority of a Thread, you can use the setPriority(int priority) method of the Thread class. If you enter a value greater than the maximal priority, the maximal value will be used. If you don't specify a priority, the used priority, will be the priority of the current Thread.</p>
 <p>An other way to works with priority is the yield() method. This method is static, so this works on the current Thread. The purpose of this method is to make the Thread going to Runnable again and to give the opportunity to other threads to get their turn. But in practice, the behavior of this method is not guaranteed. It can be implemented as a no-op on certain systems. It's not easy to test that in practice, because the results can truly depends on your computer, virtual machine and operating system. It's a good things to not use the priorities of Threads in practice.</p>
 <p>The last thing you can do with a Thread, is to interrupt it. In Java, you have no way to force a Thread to stop, if the Thread is not well-done, it can continue its execution infinitely. But you can interrupt a Thread with the interrupt() method. This method interrupt the thread, if the thread is sleeping or joining an other Thread, an InterruptedException is thrown. You have to know that if the thread was sleeping or joining, the interrupted status of the Thread will be cleared. Namely, the method isInterrupted() will return false. A little example to demonstrate that :</p>
-<pre class="code literal-block"><span></span><span class="kd">public</span> <span class="kd">class</span> <span class="nc">InterruptThread</span> <span class="o">{</span>
-    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
-        <span class="n">Thread</span> <span class="n">thread1</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Thread</span><span class="o">(</span><span class="k">new</span> <span class="n">WaitRunnable</span><span class="o">());</span>
+<div class="code"><pre class="code literal-block"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">InterruptThread</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="n">args</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">Thread</span><span class="w"> </span><span class="n">thread1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Thread</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="n">WaitRunnable</span><span class="p">());</span>
 
-        <span class="n">thread1</span><span class="o">.</span><span class="na">start</span><span class="o">();</span>
+<span class="w">        </span><span class="n">thread1</span><span class="p">.</span><span class="na">start</span><span class="p">();</span>
 
-        <span class="k">try</span> <span class="o">{</span>
-            <span class="n">Thread</span><span class="o">.</span><span class="na">sleep</span><span class="o">(</span><span class="mi">1000</span><span class="o">);</span>
-        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">InterruptedException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
-            <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
-        <span class="o">}</span>
+<span class="w">        </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">Thread</span><span class="p">.</span><span class="na">sleep</span><span class="p">(</span><span class="mi">1000</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">InterruptedException</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">e</span><span class="p">.</span><span class="na">printStackTrace</span><span class="p">();</span>
+<span class="w">        </span><span class="p">}</span>
 
-        <span class="n">thread1</span><span class="o">.</span><span class="na">interrupt</span><span class="o">();</span>
-    <span class="o">}</span>
+<span class="w">        </span><span class="n">thread1</span><span class="p">.</span><span class="na">interrupt</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
 
-    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">WaitRunnable</span> <span class="kd">implements</span> <span class="n">Runnable</span> <span class="o">{</span>
-        <span class="nd">@Override</span>
-        <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
-            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Current time millis : "</span> <span class="o">+</span> <span class="n">System</span><span class="o">.</span><span class="na">currentTimeMillis</span><span class="o">());</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kd">class</span> <span class="nc">WaitRunnable</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">Runnable</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nd">@Override</span>
+<span class="w">        </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">run</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"Current time millis : "</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">currentTimeMillis</span><span class="p">());</span>
 
-            <span class="k">try</span> <span class="o">{</span>
-                <span class="n">Thread</span><span class="o">.</span><span class="na">sleep</span><span class="o">(</span><span class="mi">5000</span><span class="o">);</span>
-            <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">InterruptedException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
-                <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"The thread has been interrupted"</span><span class="o">);</span>
-                <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"The thread is interrupted : "</span> <span class="o">+</span> <span class="n">Thread</span><span class="o">.</span><span class="na">currentThread</span><span class="o">().</span><span class="na">isInterrupted</span><span class="o">());</span>
-            <span class="o">}</span>
+<span class="w">            </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="n">Thread</span><span class="p">.</span><span class="na">sleep</span><span class="p">(</span><span class="mi">5000</span><span class="p">);</span>
+<span class="w">            </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">InterruptedException</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"The thread has been interrupted"</span><span class="p">);</span>
+<span class="w">                </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"The thread is interrupted : "</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">Thread</span><span class="p">.</span><span class="na">currentThread</span><span class="p">().</span><span class="na">isInterrupted</span><span class="p">());</span>
+<span class="w">            </span><span class="p">}</span>
 
-            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Current time millis : "</span> <span class="o">+</span> <span class="n">System</span><span class="o">.</span><span class="na">currentTimeMillis</span><span class="o">());</span>
-        <span class="o">}</span>
-        <span class="o">}</span>
-<span class="o">}</span>
-</pre>
-
+<span class="w">            </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"Current time millis : "</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">currentTimeMillis</span><span class="p">());</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
 
 <p>That produce that kind of result :</p>
 <pre>Current time millis : 1274017633151
@@ -336,58 +330,54 @@ The thread is interrupted : false
 Current time millis : 1274017634151</pre>
 
 <p>You can see that after one second, the second thread is interrupted and that the interrupted status has been set to false. If you are not sleeping, but making a lot of heavy actions, you can test for interrupt like that to make your thread correctly interrupts :</p>
-<pre class="code literal-block"><span></span><span class="kd">public</span> <span class="kd">class</span> <span class="nc">InterruptableRunnable</span> <span class="kd">implements</span> <span class="n">Runnable</span> <span class="o">{</span>
-    <span class="nd">@Override</span>
-    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
-        <span class="k">while</span><span class="o">(!</span><span class="n">Thread</span><span class="o">.</span><span class="na">currentThread</span><span class="o">().</span><span class="na">isInterrupted</span><span class="o">()){</span>
-            <span class="c1">//Heavy operation</span>
-        <span class="o">}</span>
-    <span class="o">}</span>
-<span class="o">}</span>
-</pre>
-
+<div class="code"><pre class="code literal-block"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">InterruptableRunnable</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">Runnable</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">run</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">while</span><span class="p">(</span><span class="o">!</span><span class="n">Thread</span><span class="p">.</span><span class="na">currentThread</span><span class="p">().</span><span class="na">isInterrupted</span><span class="p">()){</span>
+<span class="w">            </span><span class="c1">//Heavy operation</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
 
 <p>Now that you know how to interrupt a thread, you can imagine, that simply catch the InterruptedException is not enough to make your thread "interrupt safe". Imagine that your thread something like that : </p>
-<pre class="code literal-block"><span></span><span class="kd">public</span> <span class="kd">class</span> <span class="nc">UglyRunnable</span> <span class="kd">implements</span> <span class="n">Runnable</span> <span class="o">{</span>
-    <span class="nd">@Override</span>
-    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
-        <span class="k">while</span><span class="o">(!</span><span class="n">Thread</span><span class="o">.</span><span class="na">currentThread</span><span class="o">().</span><span class="na">isInterrupted</span><span class="o">()){</span>
-            <span class="c1">//Heavy operation</span>
-            <span class="k">try</span> <span class="o">{</span>
-                <span class="n">Thread</span><span class="o">.</span><span class="na">sleep</span><span class="o">(</span><span class="mi">5000</span><span class="o">);</span>
-            <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">InterruptedException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
-                <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
-            <span class="o">}</span>
-            <span class="c1">//Other operation</span>
-        <span class="o">}</span>
-    <span class="o">}</span>
-<span class="o">}</span>
-</pre>
-
+<div class="code"><pre class="code literal-block"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">UglyRunnable</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">Runnable</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">run</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">while</span><span class="p">(</span><span class="o">!</span><span class="n">Thread</span><span class="p">.</span><span class="na">currentThread</span><span class="p">().</span><span class="na">isInterrupted</span><span class="p">()){</span>
+<span class="w">            </span><span class="c1">//Heavy operation</span>
+<span class="w">            </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="n">Thread</span><span class="p">.</span><span class="na">sleep</span><span class="p">(</span><span class="mi">5000</span><span class="p">);</span>
+<span class="w">            </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">InterruptedException</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="n">e</span><span class="p">.</span><span class="na">printStackTrace</span><span class="p">();</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">            </span><span class="c1">//Other operation</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
 
 <p>And now, an other thread want to interrupt your thread while your thread is sleeping. The sleep will be interrupted, but the interrupted status will be cleared so the loop will continue. A solution to make a better thread is to interrupt again the thread after an InterruptedException : </p>
-<pre class="code literal-block"><span></span><span class="kd">public</span> <span class="kd">class</span> <span class="nc">BetterRunnable</span> <span class="kd">implements</span> <span class="n">Runnable</span> <span class="o">{</span>
-    <span class="nd">@Override</span>
-    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
-        <span class="k">while</span><span class="o">(!</span><span class="n">Thread</span><span class="o">.</span><span class="na">currentThread</span><span class="o">().</span><span class="na">isInterrupted</span><span class="o">()){</span>
-            <span class="c1">//Heavy operation</span>
-            <span class="k">try</span> <span class="o">{</span>
-                <span class="n">Thread</span><span class="o">.</span><span class="na">sleep</span><span class="o">(</span><span class="mi">5000</span><span class="o">);</span>
-            <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">InterruptedException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
-                <span class="n">Thread</span><span class="o">.</span><span class="na">currentThread</span><span class="o">().</span><span class="na">interrupt</span><span class="o">();</span>
-            <span class="o">}</span>
-            <span class="c1">//Other operation</span>
-        <span class="o">}</span>
-    <span class="o">}</span>
-<span class="o">}</span>
-</pre>
-
+<div class="code"><pre class="code literal-block"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">BetterRunnable</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">Runnable</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">run</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">while</span><span class="p">(</span><span class="o">!</span><span class="n">Thread</span><span class="p">.</span><span class="na">currentThread</span><span class="p">().</span><span class="na">isInterrupted</span><span class="p">()){</span>
+<span class="w">            </span><span class="c1">//Heavy operation</span>
+<span class="w">            </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="n">Thread</span><span class="p">.</span><span class="na">sleep</span><span class="p">(</span><span class="mi">5000</span><span class="p">);</span>
+<span class="w">            </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">InterruptedException</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="n">Thread</span><span class="p">.</span><span class="na">currentThread</span><span class="p">().</span><span class="na">interrupt</span><span class="p">();</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">            </span><span class="c1">//Other operation</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
 
 <p>With that code, the interrupted status will be restored and the loop will be stopped after interrupt. Depending on your code, you can also add a continue statement after the interrupt() to not make operations after interrupt. In some cases, you'll also needs to make several if statements to test the interrupted status to do or not to do some operations. </p>
 <p>So, we've now covered the main operations you can do on threads. I hope you found this article interesting.</p>
 <p>You can download the sources of this article here : <a href="../../../wp-content/uploads/2010/05/Part2.tar.gz">Java Concurrency Sources - Part 2</a></p>
 <p>In the next article about Java Concurrency, we'll see how to synchronize code to make it Thread-safe.</p>
-</div>
     </div>
     <aside class="postpromonav"><nav><ul itemprop="keywords" class="tags">
 <li><a class="tag p-category" href="../../../categories/concurrency.html" rel="tag">Concurrency</a></li>
@@ -402,7 +392,7 @@ Current time millis : 1274017634151</pre>
             </li>
         </ul></nav></aside><section class="comments hidden-print"><h2>Comments</h2>
         
-        
+    
         <div id="disqus_thread"></div>
         <script>
         var disqus_shortname ="blogwichtounet",
@@ -434,7 +424,7 @@ Current time millis : 1274017634151</pre>
 <!-- Footer -->
 
 <footer>
-    Contents © 2018         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         - License: 
+    Contents © 2023         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         - License: 
 <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="padding-left:5px;border-width:0" src="../../../assets/img/cc.png"></a>
         <ul class="footer_inline_ul">
 <li>

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html prefix="og: http://ogp.me/ns# article: http://ogp.me/ns/article# " lang="en">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,7 +7,7 @@
 <link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
 <meta name="theme-color" content="#5670d4">
 <meta name="generator" content="Nikola (getnikola.com)">
-<link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
+<link rel="alternate" type="application/rss+xml" title="RSS" hreflang="en" href="../../../rss.xml">
 <link rel="canonical" href="https://baptiste-wicht.com/posts/2016/05/speedup-compilation-by-13-by-simplifying-unit-test-with-catch.html">
 <!--[if lt IE 9]><script src="../../../assets/js/html5.js"></script><![endif]--><meta name="author" content="Baptiste Wicht">
 <link rel="prev" href="../04/simplify-deep-learning-library-usage-on-linux-and-windows.html" title="Simplify Deep Learning Library usage on Linux and Windows!" type="text/html">
@@ -123,12 +123,15 @@ compilation time of the complete test suite from 7">
 <article class="post-text h-entry hentry postpage" itemscope="itemscope" itemtype="http://schema.org/Article"><header><h1 class="p-name entry-title" itemprop="headline name"><a href="#" class="u-url">Speed up compilation by 13% by simplifying Catch unit tests</a></h1>
 
         <div class="metadata">
-            <p class="byline author vcard"><span class="byline-name fn" itemprop="author">
+            <p class="byline author vcard p-author h-card"><span class="byline-name fn p-name" itemprop="author">
                     Baptiste Wicht
             </span></p>
-            <p class="dateline"><a href="#" rel="bookmark"><time class="published dt-published" datetime="2016-05-25T12:35:16+02:00" itemprop="datePublished" title="2016-05-25 12:35">2016-05-25 12:35</time></a></p>
+            <p class="dateline">
+            <a href="#" rel="bookmark">
+            <time class="published dt-published" datetime="2016-05-25T12:35:16+02:00" itemprop="datePublished" title="2016-05-25 12:35">2016-05-25 12:35</time></a>
+            </p>
                 <p class="commentline">
-        
+    
     <a href="speedup-compilation-by-13-by-simplifying-unit-test-with-catch.html#disqus_thread" data-disqus-identifier="cache/posts/2016/05/speedup-compilation-by-13-by-simplifying-unit-test-with-catch.html">Comments</a>
 
 
@@ -140,8 +143,7 @@ compilation time of the complete test suite from 7">
         
 
     </header><div class="e-content entry-content" itemprop="articleBody text">
-    <div>
-<p>In the previous two days, I've working on improving compilation time of my
+    <p>In the previous two days, I've working on improving compilation time of my
 project Expression Templates Library (ETL). I have been able to reduce the
 compilation time of the complete test suite from 794 seconds to 764 seconds
 (using only one thread). Trying to get further, I started checking what was
@@ -154,51 +156,51 @@ everything I need from a test framework.</p>
 <p>Contrary to some popular test frameworks that provides ASSERT_EQUALS,
 ASSERT_GREATER and all fashion of assert macros, Catch only provides one
 version: REQUIRE. For instance:</p>
-<pre class="code cpp"><a name="rest_code_374432f286cc4b2fad08abc1465dd7d5-1"></a><span class="n">REQUIRE</span><span class="p">(</span><span class="n">x</span> <span class="o">==</span> <span class="mf">1.0</span><span class="p">);</span>
-<a name="rest_code_374432f286cc4b2fad08abc1465dd7d5-2"></a><span class="n">REQUIRE</span><span class="p">(</span><span class="n">y</span> <span class="o">&lt;</span> <span class="mf">5.5</span><span class="p">);</span>
-<a name="rest_code_374432f286cc4b2fad08abc1465dd7d5-3"></a><span class="n">REQUIRE</span><span class="p">((</span><span class="n">z</span> <span class="o">+</span> <span class="n">x</span><span class="p">)</span> <span class="o">!=</span> <span class="mf">22.01f</span><span class="p">);</span>
-</pre>
+<div class="code"><pre class="code cpp"><a id="rest_code_98c41b76acca4c96804a259025764ee9-1" name="rest_code_98c41b76acca4c96804a259025764ee9-1" href="speedup-compilation-by-13-by-simplifying-unit-test-with-catch.html#rest_code_98c41b76acca4c96804a259025764ee9-1"></a><span class="n">REQUIRE</span><span class="p">(</span><span class="n">x</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mf">1.0</span><span class="p">);</span>
+<a id="rest_code_98c41b76acca4c96804a259025764ee9-2" name="rest_code_98c41b76acca4c96804a259025764ee9-2" href="speedup-compilation-by-13-by-simplifying-unit-test-with-catch.html#rest_code_98c41b76acca4c96804a259025764ee9-2"></a><span class="n">REQUIRE</span><span class="p">(</span><span class="n">y</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mf">5.5</span><span class="p">);</span>
+<a id="rest_code_98c41b76acca4c96804a259025764ee9-3" name="rest_code_98c41b76acca4c96804a259025764ee9-3" href="speedup-compilation-by-13-by-simplifying-unit-test-with-catch.html#rest_code_98c41b76acca4c96804a259025764ee9-3"></a><span class="n">REQUIRE</span><span class="p">((</span><span class="n">z</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">x</span><span class="p">)</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="mf">22.01f</span><span class="p">);</span>
+</pre></div>
 <p>The left and right part are detected with some smart template and operator
 overloading techniques and this makes for very nice test output in case of
 errors, for instance:</p>
-<pre class="code text"><a name="rest_code_3bfa083996c34cd19ac0d930c2325a3f-1"></a>test/src/dyn_matrix.cpp:16: FAILED:
-<a name="rest_code_3bfa083996c34cd19ac0d930c2325a3f-2"></a>  REQUIRE( test_matrix.rows() == 2UL )
-<a name="rest_code_3bfa083996c34cd19ac0d930c2325a3f-3"></a>with expansion:
-<a name="rest_code_3bfa083996c34cd19ac0d930c2325a3f-4"></a>  3 == 2
-</pre>
+<div class="code"><pre class="code text"><a id="rest_code_6ab0971a06ce41e3abc7f80b65eed971-1" name="rest_code_6ab0971a06ce41e3abc7f80b65eed971-1" href="speedup-compilation-by-13-by-simplifying-unit-test-with-catch.html#rest_code_6ab0971a06ce41e3abc7f80b65eed971-1"></a>test/src/dyn_matrix.cpp:16: FAILED:
+<a id="rest_code_6ab0971a06ce41e3abc7f80b65eed971-2" name="rest_code_6ab0971a06ce41e3abc7f80b65eed971-2" href="speedup-compilation-by-13-by-simplifying-unit-test-with-catch.html#rest_code_6ab0971a06ce41e3abc7f80b65eed971-2"></a>  REQUIRE( test_matrix.rows() == 2UL )
+<a id="rest_code_6ab0971a06ce41e3abc7f80b65eed971-3" name="rest_code_6ab0971a06ce41e3abc7f80b65eed971-3" href="speedup-compilation-by-13-by-simplifying-unit-test-with-catch.html#rest_code_6ab0971a06ce41e3abc7f80b65eed971-3"></a>with expansion:
+<a id="rest_code_6ab0971a06ce41e3abc7f80b65eed971-4" name="rest_code_6ab0971a06ce41e3abc7f80b65eed971-4" href="speedup-compilation-by-13-by-simplifying-unit-test-with-catch.html#rest_code_6ab0971a06ce41e3abc7f80b65eed971-4"></a>  3 == 2
+</pre></div>
 <p>I think this is pretty nice and the tests are really clear. However, <em>it comes
 with a cost</em> and I underestimated this at first.</p>
 <p>To overcome this, I create two new macros (and few other variations)
 REQUIRE_EQUALS and REQUIRE_DIRECT that simply bypass Catch deduction of the
 expression:</p>
-<pre class="code cpp"><a name="rest_code_62241f0c19d348efb6d84fa88a35b736-1"></a><span class="kr">inline</span> <span class="kt">void</span> <span class="nf">evaluate_result_direct</span><span class="p">(</span><span class="n">Catch</span><span class="o">::</span><span class="n">ResultBuilder</span><span class="o">&amp;&amp;</span> <span class="n">__result</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">value</span><span class="p">){</span>
-<a name="rest_code_62241f0c19d348efb6d84fa88a35b736-2"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">setResultType</span><span class="p">(</span><span class="n">value</span><span class="p">);</span>
-<a name="rest_code_62241f0c19d348efb6d84fa88a35b736-3"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">setLhs</span><span class="p">(</span><span class="n">value</span> <span class="o">?</span> <span class="s">"true"</span> <span class="o">:</span> <span class="s">"false"</span><span class="p">);</span>
-<a name="rest_code_62241f0c19d348efb6d84fa88a35b736-4"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">setOp</span><span class="p">(</span><span class="s">""</span><span class="p">);</span>
-<a name="rest_code_62241f0c19d348efb6d84fa88a35b736-5"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">endExpression</span><span class="p">();</span>
-<a name="rest_code_62241f0c19d348efb6d84fa88a35b736-6"></a><span class="p">}</span>
-<a name="rest_code_62241f0c19d348efb6d84fa88a35b736-7"></a>
-<a name="rest_code_62241f0c19d348efb6d84fa88a35b736-8"></a><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">L</span><span class="p">,</span> <span class="k">typename</span> <span class="n">R</span><span class="o">&gt;</span>
-<a name="rest_code_62241f0c19d348efb6d84fa88a35b736-9"></a><span class="kt">void</span> <span class="n">evaluate_result</span><span class="p">(</span><span class="n">Catch</span><span class="o">::</span><span class="n">ResultBuilder</span><span class="o">&amp;&amp;</span> <span class="n">__result</span><span class="p">,</span> <span class="n">L</span> <span class="n">lhs</span><span class="p">,</span> <span class="n">R</span> <span class="n">rhs</span><span class="p">){</span>
-<a name="rest_code_62241f0c19d348efb6d84fa88a35b736-10"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">setResultType</span><span class="p">(</span><span class="n">lhs</span> <span class="o">==</span> <span class="n">rhs</span><span class="p">);</span>
-<a name="rest_code_62241f0c19d348efb6d84fa88a35b736-11"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">setLhs</span><span class="p">(</span><span class="n">Catch</span><span class="o">::</span><span class="n">toString</span><span class="p">(</span><span class="n">lhs</span><span class="p">));</span>
-<a name="rest_code_62241f0c19d348efb6d84fa88a35b736-12"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">setRhs</span><span class="p">(</span><span class="n">Catch</span><span class="o">::</span><span class="n">toString</span><span class="p">(</span><span class="n">rhs</span><span class="p">));</span>
-<a name="rest_code_62241f0c19d348efb6d84fa88a35b736-13"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">setOp</span><span class="p">(</span><span class="s">"=="</span><span class="p">);</span>
-<a name="rest_code_62241f0c19d348efb6d84fa88a35b736-14"></a>    <span class="n">__result</span><span class="p">.</span><span class="n">endExpression</span><span class="p">();</span>
-<a name="rest_code_62241f0c19d348efb6d84fa88a35b736-15"></a><span class="p">}</span>
-<a name="rest_code_62241f0c19d348efb6d84fa88a35b736-16"></a>
-<a name="rest_code_62241f0c19d348efb6d84fa88a35b736-17"></a><span class="cp">#define REQUIRE_DIRECT(value) \</span>
-<a name="rest_code_62241f0c19d348efb6d84fa88a35b736-18"></a><span class="cp">    evaluate_result_direct(Catch::ResultBuilder( "REQUIRE", CATCH_INTERNAL_LINEINFO, #value, Catch::ResultDisposition::Normal ), value);</span>
-<a name="rest_code_62241f0c19d348efb6d84fa88a35b736-19"></a>
-<a name="rest_code_62241f0c19d348efb6d84fa88a35b736-20"></a><span class="cp">#define REQUIRE_EQUALS(lhs, rhs) \</span>
-<a name="rest_code_62241f0c19d348efb6d84fa88a35b736-21"></a><span class="cp">    evaluate_result(Catch::ResultBuilder( "REQUIRE", CATCH_INTERNAL_LINEINFO, #lhs " == " #rhs, Catch::ResultDisposition::Normal ), lhs, rhs);</span>
-</pre>
+<div class="code"><pre class="code cpp"><a id="rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-1" name="rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-1" href="speedup-compilation-by-13-by-simplifying-unit-test-with-catch.html#rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-1"></a><span class="kr">inline</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">evaluate_result_direct</span><span class="p">(</span><span class="n">Catch</span><span class="o">::</span><span class="n">ResultBuilder</span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">__result</span><span class="p">,</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="n">value</span><span class="p">){</span>
+<a id="rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-2" name="rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-2" href="speedup-compilation-by-13-by-simplifying-unit-test-with-catch.html#rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-2"></a><span class="w">    </span><span class="n">__result</span><span class="p">.</span><span class="n">setResultType</span><span class="p">(</span><span class="n">value</span><span class="p">);</span>
+<a id="rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-3" name="rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-3" href="speedup-compilation-by-13-by-simplifying-unit-test-with-catch.html#rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-3"></a><span class="w">    </span><span class="n">__result</span><span class="p">.</span><span class="n">setLhs</span><span class="p">(</span><span class="n">value</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="s">"true"</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="s">"false"</span><span class="p">);</span>
+<a id="rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-4" name="rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-4" href="speedup-compilation-by-13-by-simplifying-unit-test-with-catch.html#rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-4"></a><span class="w">    </span><span class="n">__result</span><span class="p">.</span><span class="n">setOp</span><span class="p">(</span><span class="s">""</span><span class="p">);</span>
+<a id="rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-5" name="rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-5" href="speedup-compilation-by-13-by-simplifying-unit-test-with-catch.html#rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-5"></a><span class="w">    </span><span class="n">__result</span><span class="p">.</span><span class="n">endExpression</span><span class="p">();</span>
+<a id="rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-6" name="rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-6" href="speedup-compilation-by-13-by-simplifying-unit-test-with-catch.html#rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-6"></a><span class="p">}</span>
+<a id="rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-7" name="rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-7" href="speedup-compilation-by-13-by-simplifying-unit-test-with-catch.html#rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-7"></a>
+<a id="rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-8" name="rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-8" href="speedup-compilation-by-13-by-simplifying-unit-test-with-catch.html#rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-8"></a><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">L</span><span class="p">,</span><span class="w"> </span><span class="k">typename</span><span class="w"> </span><span class="nc">R</span><span class="o">&gt;</span>
+<a id="rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-9" name="rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-9" href="speedup-compilation-by-13-by-simplifying-unit-test-with-catch.html#rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-9"></a><span class="kt">void</span><span class="w"> </span><span class="n">evaluate_result</span><span class="p">(</span><span class="n">Catch</span><span class="o">::</span><span class="n">ResultBuilder</span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">__result</span><span class="p">,</span><span class="w"> </span><span class="n">L</span><span class="w"> </span><span class="n">lhs</span><span class="p">,</span><span class="w"> </span><span class="n">R</span><span class="w"> </span><span class="n">rhs</span><span class="p">){</span>
+<a id="rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-10" name="rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-10" href="speedup-compilation-by-13-by-simplifying-unit-test-with-catch.html#rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-10"></a><span class="w">    </span><span class="n">__result</span><span class="p">.</span><span class="n">setResultType</span><span class="p">(</span><span class="n">lhs</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">rhs</span><span class="p">);</span>
+<a id="rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-11" name="rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-11" href="speedup-compilation-by-13-by-simplifying-unit-test-with-catch.html#rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-11"></a><span class="w">    </span><span class="n">__result</span><span class="p">.</span><span class="n">setLhs</span><span class="p">(</span><span class="n">Catch</span><span class="o">::</span><span class="n">toString</span><span class="p">(</span><span class="n">lhs</span><span class="p">));</span>
+<a id="rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-12" name="rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-12" href="speedup-compilation-by-13-by-simplifying-unit-test-with-catch.html#rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-12"></a><span class="w">    </span><span class="n">__result</span><span class="p">.</span><span class="n">setRhs</span><span class="p">(</span><span class="n">Catch</span><span class="o">::</span><span class="n">toString</span><span class="p">(</span><span class="n">rhs</span><span class="p">));</span>
+<a id="rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-13" name="rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-13" href="speedup-compilation-by-13-by-simplifying-unit-test-with-catch.html#rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-13"></a><span class="w">    </span><span class="n">__result</span><span class="p">.</span><span class="n">setOp</span><span class="p">(</span><span class="s">"=="</span><span class="p">);</span>
+<a id="rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-14" name="rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-14" href="speedup-compilation-by-13-by-simplifying-unit-test-with-catch.html#rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-14"></a><span class="w">    </span><span class="n">__result</span><span class="p">.</span><span class="n">endExpression</span><span class="p">();</span>
+<a id="rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-15" name="rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-15" href="speedup-compilation-by-13-by-simplifying-unit-test-with-catch.html#rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-15"></a><span class="p">}</span>
+<a id="rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-16" name="rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-16" href="speedup-compilation-by-13-by-simplifying-unit-test-with-catch.html#rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-16"></a>
+<a id="rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-17" name="rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-17" href="speedup-compilation-by-13-by-simplifying-unit-test-with-catch.html#rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-17"></a><span class="cp">#define REQUIRE_DIRECT(value) \</span>
+<a id="rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-18" name="rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-18" href="speedup-compilation-by-13-by-simplifying-unit-test-with-catch.html#rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-18"></a><span class="cp">    evaluate_result_direct(Catch::ResultBuilder( "REQUIRE", CATCH_INTERNAL_LINEINFO, #value, Catch::ResultDisposition::Normal ), value);</span>
+<a id="rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-19" name="rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-19" href="speedup-compilation-by-13-by-simplifying-unit-test-with-catch.html#rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-19"></a>
+<a id="rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-20" name="rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-20" href="speedup-compilation-by-13-by-simplifying-unit-test-with-catch.html#rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-20"></a><span class="cp">#define REQUIRE_EQUALS(lhs, rhs) \</span>
+<a id="rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-21" name="rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-21" href="speedup-compilation-by-13-by-simplifying-unit-test-with-catch.html#rest_code_b24b8ed75e3b437ca8f7bd5c478ae60b-21"></a><span class="cp">    evaluate_result(Catch::ResultBuilder( "REQUIRE", CATCH_INTERNAL_LINEINFO, #lhs " == " #rhs, Catch::ResultDisposition::Normal ), lhs, rhs);</span>
+</pre></div>
 <p>There is really nothing too special about it, I simply followed the macros and
 functions in Catch source code until I found out what to bypass.</p>
 <p>And now, we use them directly:</p>
-<pre class="code cpp"><a name="rest_code_7b45640202ed4713a1a87d036e6f2c1f-1"></a><span class="n">REQUIRE_DIRECT</span><span class="p">(</span><span class="n">am_i_true</span><span class="p">());</span>
-<a name="rest_code_7b45640202ed4713a1a87d036e6f2c1f-2"></a><span class="n">REQUIRE_EQUALS</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">);</span>
-</pre>
+<div class="code"><pre class="code cpp"><a id="rest_code_bf6a7195911d4aed8161178aaffa2139-1" name="rest_code_bf6a7195911d4aed8161178aaffa2139-1" href="speedup-compilation-by-13-by-simplifying-unit-test-with-catch.html#rest_code_bf6a7195911d4aed8161178aaffa2139-1"></a><span class="n">REQUIRE_DIRECT</span><span class="p">(</span><span class="n">am_i_true</span><span class="p">());</span>
+<a id="rest_code_bf6a7195911d4aed8161178aaffa2139-2" name="rest_code_bf6a7195911d4aed8161178aaffa2139-2" href="speedup-compilation-by-13-by-simplifying-unit-test-with-catch.html#rest_code_bf6a7195911d4aed8161178aaffa2139-2"></a><span class="n">REQUIRE_EQUALS</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">);</span>
+</pre></div>
 <p>This is a bit less nice and it requires to know a few more macros, I admit, but
 it turns out to be much faster (and who really cares about the beauty of test
 code anyway...). Indeed, the total compilation time of the tests went from 764
@@ -208,7 +210,6 @@ slowdown just for a bit nicer test code. Finally, the output in case of error
 remains exactly the same as before.</p>
 <p>This proves that sometimes the bottlenecks are not where we expect them :)</p>
 <p>If you are interested, you can find the adapted code on <a class="reference external" href="https://github.com/wichtounet/etl/blob/master/test/include/fast_catch.hpp">Github</a>.</p>
-</div>
     </div>
     <aside class="postpromonav"><nav><ul itemprop="keywords" class="tags">
 <li><a class="tag p-category" href="../../../categories/c%2B%2B.html" rel="tag">C++</a></li>
@@ -223,7 +224,7 @@ remains exactly the same as before.</p>
             </li>
         </ul></nav></aside><section class="comments hidden-print"><h2>Comments</h2>
         
-        
+    
         <div id="disqus_thread"></div>
         <script>
         var disqus_shortname ="blogwichtounet",
@@ -255,7 +256,7 @@ remains exactly the same as before.</p>
 <!-- Footer -->
 
 <footer>
-    Contents © 2018         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         - License: 
+    Contents © 2023         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         - License: 
 <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="padding-left:5px;border-width:0" src="../../../assets/img/cc.png"></a>
         <ul class="footer_inline_ul">
 <li>

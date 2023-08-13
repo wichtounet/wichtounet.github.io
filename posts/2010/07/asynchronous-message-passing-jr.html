@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html prefix="og: http://ogp.me/ns# article: http://ogp.me/ns/article# " lang="en">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,7 +7,7 @@
 <link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
 <meta name="theme-color" content="#5670d4">
 <meta name="generator" content="Nikola (getnikola.com)">
-<link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
+<link rel="alternate" type="application/rss+xml" title="RSS" hreflang="en" href="../../../rss.xml">
 <link rel="canonical" href="https://baptiste-wicht.com/posts/2010/07/asynchronous-message-passing-jr.html">
 <!--[if lt IE 9]><script src="../../../assets/js/html5.js"></script><![endif]--><meta name="author" content="Baptiste Wicht">
 <link rel="prev" href="../06/jr-operations-and-capabilities.html" title="JR Operations and Capabilities" type="text/html">
@@ -122,12 +122,15 @@
 <article class="post-text h-entry hentry postpage" itemscope="itemscope" itemtype="http://schema.org/Article"><header><h1 class="p-name entry-title" itemprop="headline name"><a href="#" class="u-url">Asynchronous Message Passing in JR</a></h1>
 
         <div class="metadata">
-            <p class="byline author vcard"><span class="byline-name fn" itemprop="author">
+            <p class="byline author vcard p-author h-card"><span class="byline-name fn p-name" itemprop="author">
                     Baptiste Wicht
             </span></p>
-            <p class="dateline"><a href="#" rel="bookmark"><time class="published dt-published" datetime="2010-07-02T07:02:09+02:00" itemprop="datePublished" title="2010-07-02 07:02">2010-07-02 07:02</time></a></p>
+            <p class="dateline">
+            <a href="#" rel="bookmark">
+            <time class="published dt-published" datetime="2010-07-02T07:02:09+02:00" itemprop="datePublished" title="2010-07-02 07:02">2010-07-02 07:02</time></a>
+            </p>
                 <p class="commentline">
-        
+    
     <a href="asynchronous-message-passing-jr.html#disqus_thread" data-disqus-identifier="cache/posts/2010/07/asynchronous-message-passing-jr.html">Comments</a>
 
 
@@ -139,83 +142,76 @@
         
 
     </header><div class="e-content entry-content" itemprop="articleBody text">
-    <div>
-<p>We've now covered the basic synchronization systems (<a href="http://www.baptiste-wicht.com/2010/01/jr-introduction/" target="_blank">semaphore</a>, <a href="http://www.baptiste-wicht.com/2010/06/monitor-programming-in-jr/" target="_blank">monitors</a>) and we know how to <a href="http://www.baptiste-wicht.com/2010/06/jr-operations-and-capabilities/" target="_blank">declare operations and capabilities</a> . It's time to go to an other form of synchronization : <strong>Message Passing</strong>. In this post, we'll focus in <strong>Asynchronous Message Passing</strong>, we'll cover later, the synchronous message passing system with RendezVous.</p>
+    <p>We've now covered the basic synchronization systems (<a href="http://www.baptiste-wicht.com/2010/01/jr-introduction/" target="_blank">semaphore</a>, <a href="http://www.baptiste-wicht.com/2010/06/monitor-programming-in-jr/" target="_blank">monitors</a>) and we know how to <a href="http://www.baptiste-wicht.com/2010/06/jr-operations-and-capabilities/" target="_blank">declare operations and capabilities</a> . It's time to go to an other form of synchronization : <strong>Message Passing</strong>. In this post, we'll focus in <strong>Asynchronous Message Passing</strong>, we'll cover later, the synchronous message passing system with RendezVous.</p>
 <p>When we use message passing, the threads doesn't share datas anymore, they share channels. You can see channels like an abstraction of a network between several processes. The processes will send messages to other and the other will wait for receive a message. Normally, with that form of synchronization, the channels are the only objects shared between the threads. So you doesn't need to share memory. That makes possible to distribute the processes across several virtual machines or computers, of course, this also works on a simple computer, like any other program. In message passing, we often see models with several clients and a server that manage the messages. </p>
 <!-- TEASER_END -->
 
 <p>In Java, you will do that with Socket or RMI but in JR, this system is really easily integrated. We'll use operations as messages queues and send/receive operations in the queue to respectively send a message to the queue and receive a message from the queue. The operations must not be implemented to achieve asynchronous message passing. If the operations is implemented, this will make a remote procedure call, but we'll not cover that system for now. And because, it's asynchronous, the operations cannot have a return type. The operations visibility is the same as the method visibility. So if an operation is static in class A, a send statement on this operation can be serviced by any process who has the visibility to access this operation. </p>
 <p>So we will need that kind of operations :</p>
-<pre class="code literal-block"><span></span><span class="kd">private</span> <span class="kd">static</span> <span class="n">op</span> <span class="kt">void</span> <span class="nf">channel</span><span class="o">(</span><span class="kt">int</span><span class="o">);</span>
-</pre>
-
+<div class="code"><pre class="code literal-block"><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="n">op</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">channel</span><span class="p">(</span><span class="kt">int</span><span class="p">);</span>
+</pre></div>
 
 <p>To send a message to a channel, you just have to use the send keyword followed by the name of the operations with the arguments :</p>
-<pre class="code literal-block"><span></span><span class="n">send</span> <span class="nf">channel</span><span class="o">(</span><span class="mi">12</span><span class="o">);</span>
-</pre>
-
+<div class="code"><pre class="code literal-block"><span class="n">send</span><span class="w"> </span><span class="nf">channel</span><span class="p">(</span><span class="mi">12</span><span class="p">);</span>
+</pre></div>
 
 <p>The send operation does not block, when the same is sended, the send operation is released.</p>
 <p>To receive a message, you have to use the receive keyword, followed by the variables name in which put the values of the arguments :</p>
-<pre class="code literal-block"><span></span><span class="kt">int</span> <span class="n">x</span><span class="o">;</span>
-<span class="n">receive</span> <span class="nf">channel</span><span class="o">(</span><span class="n">x</span><span class="o">);</span>
-</pre>
-
+<div class="code"><pre class="code literal-block"><span class="kt">int</span><span class="w"> </span><span class="n">x</span><span class="p">;</span>
+<span class="n">receive</span><span class="w"> </span><span class="nf">channel</span><span class="p">(</span><span class="n">x</span><span class="p">);</span>
+</pre></div>
 
 <p>The variables must have been declared before used in the receive statement. It's a little weird when we start, but it's really practical to assign them in one operation even if we have a lot of parameters. When we the process are on the same virtual machines, the parameters are passed like for any method in Java, by value. If we put all that together in processes :</p>
-<pre class="code literal-block"><span></span><span class="kd">public</span> <span class="kd">class</span> <span class="nc">AMP1</span> <span class="o">{</span>
-    <span class="kd">private</span> <span class="kd">static</span> <span class="n">op</span> <span class="kt">void</span> <span class="nf">channel</span><span class="o">(</span><span class="kt">int</span><span class="o">);</span>
+<div class="code"><pre class="code literal-block"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">AMP1</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="n">op</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">channel</span><span class="p">(</span><span class="kt">int</span><span class="p">);</span>
 
-    <span class="kd">private</span> <span class="kd">static</span> <span class="n">process</span> <span class="n">p1</span><span class="o">{</span>
-        <span class="n">send</span> <span class="nf">channel</span><span class="o">(</span><span class="mi">12</span><span class="o">);</span>
-    <span class="o">}</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="n">process</span><span class="w"> </span><span class="n">p1</span><span class="p">{</span>
+<span class="w">        </span><span class="n">send</span><span class="w"> </span><span class="nf">channel</span><span class="p">(</span><span class="mi">12</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
 
-    <span class="kd">private</span> <span class="kd">static</span> <span class="n">process</span> <span class="n">p2</span><span class="o">{</span>
-        <span class="kt">int</span> <span class="n">x</span><span class="o">;</span>      
-        <span class="n">receive</span> <span class="nf">channel</span><span class="o">(</span><span class="n">x</span><span class="o">);</span>
-        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">x</span><span class="o">);</span>
-    <span class="o">}</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="n">process</span><span class="w"> </span><span class="n">p2</span><span class="p">{</span>
+<span class="w">        </span><span class="kt">int</span><span class="w"> </span><span class="n">x</span><span class="p">;</span><span class="w">      </span>
+<span class="w">        </span><span class="n">receive</span><span class="w"> </span><span class="nf">channel</span><span class="p">(</span><span class="n">x</span><span class="p">);</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">x</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
 
-    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">...</span> <span class="n">args</span><span class="o">){}</span>
-<span class="o">}</span>
-</pre>
-
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">String</span><span class="p">...</span><span class="w"> </span><span class="n">args</span><span class="p">){}</span>
+<span class="p">}</span>
+</pre></div>
 
 <p>The messages are received in the order they are sent for each sender. But it's possible that a message sent by Thread 1 before an other message sent by Thread 2 will be received after the one of Thread 2. Normally this would never appears when working in a simple computer, but that could appear often when working with several computers. So don't make any assumptions on the order your messages will be received. </p>
 <p>With all that, we can solve the producer-consumer problem really easily : </p>
-<pre class="code literal-block"><span></span><span class="kd">public</span> <span class="kd">class</span> <span class="nc">ProducerConsumer</span> <span class="o">{</span>
-    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">int</span> <span class="n">N</span> <span class="o">=</span> <span class="mi">12</span><span class="o">;</span> <span class="c1">//Number of producers and consumers</span>
+<div class="code"><pre class="code literal-block"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">ProducerConsumer</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">N</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">12</span><span class="p">;</span><span class="w"> </span><span class="c1">//Number of producers and consumers</span>
 
-    <span class="kd">private</span> <span class="kd">static</span> <span class="n">op</span> <span class="kt">void</span> <span class="nf">deposit</span><span class="o">(</span><span class="n">String</span><span class="o">);</span> <span class="c1">//The channel</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="n">op</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">deposit</span><span class="p">(</span><span class="n">String</span><span class="p">);</span><span class="w"> </span><span class="c1">//The channel</span>
 
-    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">...</span> <span class="n">args</span><span class="o">){}</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">String</span><span class="p">...</span><span class="w"> </span><span class="n">args</span><span class="p">){}</span>
 
-    <span class="kd">private</span> <span class="kd">static</span> <span class="n">process</span> <span class="nf">Producer</span><span class="o">((</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">N</span><span class="o">;</span> <span class="n">i</span><span class="o">++)){</span>
-        <span class="n">send</span> <span class="nf">deposit</span><span class="o">(</span><span class="s">"Producer"</span> <span class="o">+</span> <span class="n">i</span><span class="o">);</span>
-    <span class="o">}</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="n">process</span><span class="w"> </span><span class="nf">Producer</span><span class="p">((</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">N</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)){</span>
+<span class="w">        </span><span class="n">send</span><span class="w"> </span><span class="nf">deposit</span><span class="p">(</span><span class="s">"Producer"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">i</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
 
-    <span class="kd">private</span> <span class="kd">static</span> <span class="n">process</span> <span class="nf">Consumer</span><span class="o">((</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">N</span><span class="o">;</span> <span class="n">i</span><span class="o">++)){</span>
-        <span class="n">String</span> <span class="n">data</span><span class="o">;</span>
-        <span class="n">receive</span> <span class="nf">deposit</span><span class="o">(</span><span class="n">data</span><span class="o">);</span>
-        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Consumer"</span> <span class="o">+</span> <span class="n">i</span> <span class="o">+</span> <span class="s">" : "</span> <span class="o">+</span> <span class="n">data</span><span class="o">);</span>
-    <span class="o">}</span>
-<span class="o">}</span>
-</pre>
-
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="n">process</span><span class="w"> </span><span class="nf">Consumer</span><span class="p">((</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">N</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)){</span>
+<span class="w">        </span><span class="n">String</span><span class="w"> </span><span class="n">data</span><span class="p">;</span>
+<span class="w">        </span><span class="n">receive</span><span class="w"> </span><span class="nf">deposit</span><span class="p">(</span><span class="n">data</span><span class="p">);</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"Consumer"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s">" : "</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">data</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
 
 <p>No need to great explanations. A Producer send a message with the informations it has produced and doesn't wait for the receive. And a Consumer wait for a deposit (a send) with a receive statement and print the result when it has received the message. </p>
 <p>Like you can invoke operations with capabilities, you can also send messages through a capability. It's very easy to share channels because this is only a variable. We often send the channels in a message for an answer. </p>
 <p>Let's imagine a simple problem. We have N clients that needs resources shared by all the clients. We need something to manage the resources. So we'll use a kind of server to achieve that. So we can start with something really simple for the clients : </p>
-<pre class="code literal-block"><span></span><span class="n">op</span> <span class="kt">void</span> <span class="nf">request</span><span class="o">();</span>
-<span class="n">op</span> <span class="kt">void</span> <span class="nf">resource</span><span class="o">(</span><span class="n">Resource</span><span class="o">);</span>
-<span class="n">op</span> <span class="kt">void</span> <span class="nf">release</span><span class="o">(</span><span class="n">Resource</span><span class="o">);</span>
-<span class="n">send</span> <span class="nf">request</span><span class="o">();</span>
-<span class="n">receive</span> <span class="nf">resource</span><span class="o">(</span><span class="n">resource</span><span class="o">);</span>
+<div class="code"><pre class="code literal-block"><span class="n">op</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">request</span><span class="p">();</span>
+<span class="n">op</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">resource</span><span class="p">(</span><span class="n">Resource</span><span class="p">);</span>
+<span class="n">op</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">release</span><span class="p">(</span><span class="n">Resource</span><span class="p">);</span>
+<span class="n">send</span><span class="w"> </span><span class="nf">request</span><span class="p">();</span>
+<span class="n">receive</span><span class="w"> </span><span class="nf">resource</span><span class="p">(</span><span class="n">resource</span><span class="p">);</span>
 
 <span class="c1">//Use resources</span>
-<span class="n">send</span> <span class="nf">release</span><span class="o">(</span><span class="n">resource</span><span class="o">);</span>
-</pre>
-
+<span class="n">send</span><span class="w"> </span><span class="nf">release</span><span class="p">(</span><span class="n">resource</span><span class="p">);</span>
+</pre></div>
 
 <p>That seems good, but there are some problems : </p>
 <ul>
@@ -223,53 +219,50 @@
 <li>If the server wait for request messages, it cannot wait for release messages and vice-versa. A solution is to have two process in the servers, but with that, you must synchronize the two process. A better solution is to create an operation that give informations about the type of request. </li>
 </ul>
 <p>So here, is the new version of client : </p>
-<pre class="code literal-block"><span></span><span class="kd">enum</span> <span class="n">Type</span> <span class="o">{</span><span class="n">REQUEST</span><span class="o">,</span> <span class="n">RELEASE</span><span class="o">};</span>
-<span class="n">op</span> <span class="kt">void</span> <span class="nf">request</span><span class="o">(</span><span class="n">Type</span><span class="o">,</span> <span class="n">cap</span> <span class="nf">void</span> <span class="o">(</span><span class="n">Resource</span><span class="o">),</span> <span class="n">Resource</span><span class="o">);</span>
-<span class="n">cap</span> <span class="nf">void</span> <span class="o">(</span><span class="n">Resource</span><span class="o">)</span> <span class="n">channel</span> <span class="o">=</span> <span class="k">new</span> <span class="n">op</span> <span class="nf">void</span> <span class="o">(</span><span class="n">Resource</span><span class="o">);</span>
+<div class="code"><pre class="code literal-block"><span class="kd">enum</span><span class="w"> </span><span class="n">Type</span><span class="w"> </span><span class="p">{</span><span class="n">REQUEST</span><span class="p">,</span><span class="w"> </span><span class="n">RELEASE</span><span class="p">};</span>
+<span class="n">op</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">request</span><span class="p">(</span><span class="n">Type</span><span class="p">,</span><span class="w"> </span><span class="n">cap</span><span class="w"> </span><span class="nf">void</span><span class="w"> </span><span class="p">(</span><span class="n">Resource</span><span class="p">),</span><span class="w"> </span><span class="n">Resource</span><span class="p">);</span>
+<span class="n">cap</span><span class="w"> </span><span class="nf">void</span><span class="w"> </span><span class="p">(</span><span class="n">Resource</span><span class="p">)</span><span class="w"> </span><span class="n">channel</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">op</span><span class="w"> </span><span class="nf">void</span><span class="w"> </span><span class="p">(</span><span class="n">Resource</span><span class="p">);</span>
 
-<span class="n">send</span> <span class="nf">request</span><span class="o">(</span><span class="n">Type</span><span class="o">.</span><span class="na">REQUEST</span><span class="o">,</span> <span class="n">channel</span><span class="o">,</span> <span class="kc">null</span><span class="o">);</span>
-<span class="n">Resource</span> <span class="n">resource</span><span class="o">;</span>
-<span class="n">receive</span> <span class="nf">channel</span><span class="o">(</span><span class="n">resource</span><span class="o">);</span>
-<span class="n">send</span> <span class="nf">request</span><span class="o">(</span><span class="n">Type</span><span class="o">.</span><span class="na">RELEASE</span><span class="o">,</span> <span class="n">noop</span><span class="o">,</span> <span class="n">resoure</span><span class="o">);</span> 
-</pre>
-
+<span class="n">send</span><span class="w"> </span><span class="nf">request</span><span class="p">(</span><span class="n">Type</span><span class="p">.</span><span class="na">REQUEST</span><span class="p">,</span><span class="w"> </span><span class="n">channel</span><span class="p">,</span><span class="w"> </span><span class="kc">null</span><span class="p">);</span>
+<span class="n">Resource</span><span class="w"> </span><span class="n">resource</span><span class="p">;</span>
+<span class="n">receive</span><span class="w"> </span><span class="nf">channel</span><span class="p">(</span><span class="n">resource</span><span class="p">);</span>
+<span class="n">send</span><span class="w"> </span><span class="nf">request</span><span class="p">(</span><span class="n">Type</span><span class="p">.</span><span class="na">RELEASE</span><span class="p">,</span><span class="w"> </span><span class="n">noop</span><span class="p">,</span><span class="w"> </span><span class="n">resoure</span><span class="p">);</span><span class="w"> </span>
+</pre></div>
 
 <p>and now the server : </p>
-<pre class="code literal-block"><span></span><span class="n">cap</span> <span class="nf">void</span> <span class="o">(</span><span class="n">Resource</span><span class="o">)</span> <span class="n">client</span><span class="o">;</span>
+<div class="code"><pre class="code literal-block"><span class="n">cap</span><span class="w"> </span><span class="nf">void</span><span class="w"> </span><span class="p">(</span><span class="n">Resource</span><span class="p">)</span><span class="w"> </span><span class="n">client</span><span class="p">;</span>
 
-<span class="n">Type</span> <span class="n">type</span><span class="o">;</span>
-<span class="n">Resource</span> <span class="n">resource</span><span class="o">;</span>
+<span class="n">Type</span><span class="w"> </span><span class="n">type</span><span class="p">;</span>
+<span class="n">Resource</span><span class="w"> </span><span class="n">resource</span><span class="p">;</span>
 
-<span class="n">Queue</span><span class="o">&lt;</span><span class="n">Resource</span><span class="o">&gt;</span> <span class="n">resources</span> <span class="o">=</span> <span class="k">new</span> <span class="n">LinkedQueue</span><span class="o">&lt;</span><span class="n">Resource</span><span class="o">&gt;();</span>
+<span class="n">Queue</span><span class="o">&lt;</span><span class="n">Resource</span><span class="o">&gt;</span><span class="w"> </span><span class="n">resources</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">LinkedQueue</span><span class="o">&lt;</span><span class="n">Resource</span><span class="o">&gt;</span><span class="p">();</span>
 
 <span class="c1">//Fill the queue of resources</span>
 
-<span class="n">Queue</span><span class="o">&lt;</span><span class="n">cap</span> <span class="nf">void</span> <span class="o">(</span><span class="kt">int</span><span class="o">)&gt;</span> <span class="n">clients</span> <span class="o">=</span> <span class="k">new</span> <span class="n">LinkedQueue</span><span class="o">&lt;</span><span class="n">cap</span> <span class="kt">void</span> <span class="kt">int</span><span class="o">&gt;();</span>
+<span class="n">Queue</span><span class="o">&lt;</span><span class="n">cap</span><span class="w"> </span><span class="nf">void</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="o">&gt;</span><span class="w"> </span><span class="n">clients</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">LinkedQueue</span><span class="o">&lt;</span><span class="n">cap</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="kt">int</span><span class="o">&gt;</span><span class="p">();</span>
 
-<span class="k">while</span><span class="o">(</span><span class="kc">true</span><span class="o">){</span>
-    <span class="n">receive</span> <span class="nf">request</span><span class="o">(</span><span class="n">type</span><span class="o">,</span> <span class="n">client</span><span class="o">,</span> <span class="n">resource</span><span class="o">);</span>
+<span class="k">while</span><span class="p">(</span><span class="kc">true</span><span class="p">){</span>
+<span class="w">    </span><span class="n">receive</span><span class="w"> </span><span class="nf">request</span><span class="p">(</span><span class="n">type</span><span class="p">,</span><span class="w"> </span><span class="n">client</span><span class="p">,</span><span class="w"> </span><span class="n">resource</span><span class="p">);</span>
 
-    <span class="k">if</span><span class="o">(</span><span class="n">type</span> <span class="o">==</span> <span class="n">Type</span><span class="o">.</span><span class="na">REQUEST</span><span class="o">){</span>
-        <span class="k">if</span><span class="o">(</span><span class="n">resources</span><span class="o">.</span><span class="na">isEmpty</span><span class="o">()){</span>
-            <span class="n">clients</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">client</span><span class="o">);</span>
-        <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
-            <span class="n">send</span> <span class="nf">client</span><span class="o">(</span><span class="n">resource</span><span class="o">.</span><span class="na">pop</span><span class="o">());</span>
-        <span class="o">}</span>
-    <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
-        <span class="k">if</span><span class="o">(</span><span class="n">clients</span><span class="o">.</span><span class="na">isEmpty</span><span class="o">()){</span>
-            <span class="n">resources</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">resource</span><span class="o">);</span>
-        <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
-            <span class="n">send</span> <span class="n">clients</span><span class="o">.</span><span class="na">pop</span><span class="o">()(</span><span class="n">resource</span><span class="o">);</span>
-        <span class="o">}</span>   
-    <span class="o">}</span>
-<span class="o">}</span>
-</pre>
-
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="n">type</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">Type</span><span class="p">.</span><span class="na">REQUEST</span><span class="p">){</span>
+<span class="w">        </span><span class="k">if</span><span class="p">(</span><span class="n">resources</span><span class="p">.</span><span class="na">isEmpty</span><span class="p">()){</span>
+<span class="w">            </span><span class="n">clients</span><span class="p">.</span><span class="na">add</span><span class="p">(</span><span class="n">client</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">send</span><span class="w"> </span><span class="nf">client</span><span class="p">(</span><span class="n">resource</span><span class="p">.</span><span class="na">pop</span><span class="p">());</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">if</span><span class="p">(</span><span class="n">clients</span><span class="p">.</span><span class="na">isEmpty</span><span class="p">()){</span>
+<span class="w">            </span><span class="n">resources</span><span class="p">.</span><span class="na">put</span><span class="p">(</span><span class="n">resource</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">send</span><span class="w"> </span><span class="n">clients</span><span class="p">.</span><span class="na">pop</span><span class="p">()(</span><span class="n">resource</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span><span class="w">   </span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
 
 <p>Really easy no ? And that code can be distributed with only minor changes. And it works for any number of process your want. You will find the complete code of this problem joined to this post. </p>
 <p>We have now covered the complete informations about Asynchronous Message Passing in JR. I hope you found that article interesting. The next post will be about the RendezVous in JR. RendezVous are a very powerful way to achieve synchronization also with message passing, but synchronous. </p>
 <p><a href="../../../wp-content/uploads/2010/07/ResourceAllocator.jr_.tar.gz">The complete source</a></p>
-</div>
     </div>
     <aside class="postpromonav"><nav><ul itemprop="keywords" class="tags">
 <li><a class="tag p-category" href="../../../categories/concurrency.html" rel="tag">Concurrency</a></li>
@@ -285,7 +278,7 @@
             </li>
         </ul></nav></aside><section class="comments hidden-print"><h2>Comments</h2>
         
-        
+    
         <div id="disqus_thread"></div>
         <script>
         var disqus_shortname ="blogwichtounet",
@@ -317,7 +310,7 @@
 <!-- Footer -->
 
 <footer>
-    Contents © 2018         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         - License: 
+    Contents © 2023         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         - License: 
 <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="padding-left:5px;border-width:0" src="../../../assets/img/cc.png"></a>
         <ul class="footer_inline_ul">
 <li>

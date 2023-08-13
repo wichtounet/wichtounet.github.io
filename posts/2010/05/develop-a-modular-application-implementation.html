@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html prefix="og: http://ogp.me/ns# article: http://ogp.me/ns/article# " lang="en">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,7 +7,7 @@
 <link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
 <meta name="theme-color" content="#5670d4">
 <meta name="generator" content="Nikola (getnikola.com)">
-<link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
+<link rel="alternate" type="application/rss+xml" title="RSS" hreflang="en" href="../../../rss.xml">
 <link rel="canonical" href="https://baptiste-wicht.com/posts/2010/05/develop-a-modular-application-implementation.html">
 <!--[if lt IE 9]><script src="../../../assets/js/html5.js"></script><![endif]--><meta name="author" content="Baptiste Wicht">
 <link rel="prev" href="modular-application-modules.html" title="Develop a modular application – The modules" type="text/html">
@@ -123,12 +123,15 @@ We need a simple container for our module to load it after with a loader from th
 <article class="post-text h-entry hentry postpage" itemscope="itemscope" itemtype="http://schema.org/Article"><header><h1 class="p-name entry-title" itemprop="headline name"><a href="#" class="u-url">Develop a modular application – Implementation</a></h1>
 
         <div class="metadata">
-            <p class="byline author vcard"><span class="byline-name fn" itemprop="author">
+            <p class="byline author vcard p-author h-card"><span class="byline-name fn p-name" itemprop="author">
                     Baptiste Wicht
             </span></p>
-            <p class="dateline"><a href="#" rel="bookmark"><time class="published dt-published" datetime="2010-05-12T06:29:23+02:00" itemprop="datePublished" title="2010-05-12 06:29">2010-05-12 06:29</time></a></p>
+            <p class="dateline">
+            <a href="#" rel="bookmark">
+            <time class="published dt-published" datetime="2010-05-12T06:29:23+02:00" itemprop="datePublished" title="2010-05-12 06:29">2010-05-12 06:29</time></a>
+            </p>
                 <p class="commentline">
-        
+    
     <a href="develop-a-modular-application-implementation.html#disqus_thread" data-disqus-identifier="cache/posts/2010/05/develop-a-modular-application-implementation.html">Comments</a>
 
 
@@ -140,8 +143,7 @@ We need a simple container for our module to load it after with a loader from th
         
 
     </header><div class="e-content entry-content" itemprop="articleBody text">
-    <div>
-<p>Now that we saw in details <a href="http://www.baptiste-wicht.com/2010/05/modular-application-modules/">the characteristics of the modules</a>, we'll see how to implement a module.</p>
+    <p>Now that we saw in details <a href="http://www.baptiste-wicht.com/2010/05/modular-application-modules/">the characteristics of the modules</a>, we'll see how to implement a module.</p>
 <p>We need a simple container for our module to load it after with a loader from the modular application.</p>
 <p>In this post, we'll only see what will be a module in Java, we'll the loading of the modules in the next (and last) post.</p>
 <!-- TEASER_END -->
@@ -150,35 +152,33 @@ We need a simple container for our module to load it after with a loader from th
 <p>So what will be these files ? Because we're in Java, we use Jar files. So the modules will be Jar files extending the applications.</p>
 <p>And now in Java, a module will be an interface  describing the main characteristics of the module. We'll be simple for the moment. A module must be pluggable to the application and unpluggable. Moreover the module has also a name and we can get this name. At this moment, this is all we need :</p>
 <p>We must have a simple interface to describe a module :</p>
-<pre class="code literal-block"><span></span><span class="kd">public</span> <span class="kd">interface</span> <span class="nc">IModule</span> <span class="o">{</span>
-  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">plug</span><span class="o">();</span>
-  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">unplug</span><span class="o">();</span>
-  <span class="kd">public</span> <span class="n">String</span> <span class="nf">getName</span><span class="o">();</span>
-<span class="o">}</span>
-</pre>
-
+<div class="code"><pre class="code literal-block"><span class="kd">public</span><span class="w"> </span><span class="kd">interface</span> <span class="nc">IModule</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">plug</span><span class="p">();</span>
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">unplug</span><span class="p">();</span>
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">getName</span><span class="p">();</span>
+<span class="p">}</span>
+</pre></div>
 
 <p>With that interface, we can create the most simple module that only prints to the console :</p>
-<pre class="code literal-block"><span></span><span class="kn">package</span> <span class="nn">org.modules.simple</span><span class="o">;</span> 
+<div class="code"><pre class="code literal-block"><span class="kn">package</span><span class="w"> </span><span class="nn">org.modules.simple</span><span class="p">;</span><span class="w"> </span>
 
-<span class="kd">public</span> <span class="kd">class</span> <span class="nc">SimpleModule</span> <span class="kd">implements</span> <span class="n">IModule</span> <span class="o">{</span>
-  <span class="nd">@Override</span>
-  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">plug</span><span class="o">(){</span>
-    <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Hello kernel !"</span><span class="o">);</span>
-  <span class="o">}</span> 
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">SimpleModule</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">IModule</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nd">@Override</span>
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">plug</span><span class="p">(){</span>
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"Hello kernel !"</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span>
 
-  <span class="nd">@Override</span>
-  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">unplug</span><span class="o">(){</span>
-    <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Bye kernel !"</span><span class="o">);</span>
-  <span class="o">}</span> 
+<span class="w">  </span><span class="nd">@Override</span>
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">unplug</span><span class="p">(){</span>
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"Bye kernel !"</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span>
 
-  <span class="nd">@Override</span>
-  <span class="kd">public</span> <span class="n">String</span> <span class="nf">getName</span><span class="o">(){</span>
-    <span class="k">return</span> <span class="s">"Simple module"</span><span class="o">;</span>
-  <span class="o">}</span>
-<span class="o">}</span>
-</pre>
-
+<span class="w">  </span><span class="nd">@Override</span>
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">getName</span><span class="p">(){</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="s">"Simple module"</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
 
 <p>So we'll create a Jar file containing our class. We need a solution for the application to know which class to launch. So we need write this somewhere.</p>
 <p>A naïve solution is to browse the Jar file and test each class if it implements the interface. This method works but is not optimal but that can be really inefficient in large Jar file. So we'll use the tools offered by Java and add an information in the Jar manifest to indicate to the application which class must be loaded.</p>
@@ -188,7 +188,6 @@ Module-Class: org.modules.simple.SimpleModule</pre>
 
 <p>With that the module loader will know which class it must instantiate to create a module.  An other solution is to use the ServiceLoader of Java 6.</p>
 <p>In the next post, we'll see how to load our module and we'll test an application with two simples modules.</p>
-</div>
     </div>
     <aside class="postpromonav"><nav><ul itemprop="keywords" class="tags">
 <li><a class="tag p-category" href="../../../categories/conception.html" rel="tag">Conception</a></li>
@@ -204,7 +203,7 @@ Module-Class: org.modules.simple.SimpleModule</pre>
             </li>
         </ul></nav></aside><section class="comments hidden-print"><h2>Comments</h2>
         
-        
+    
         <div id="disqus_thread"></div>
         <script>
         var disqus_shortname ="blogwichtounet",
@@ -236,7 +235,7 @@ Module-Class: org.modules.simple.SimpleModule</pre>
 <!-- Footer -->
 
 <footer>
-    Contents © 2018         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         - License: 
+    Contents © 2023         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         - License: 
 <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="padding-left:5px;border-width:0" src="../../../assets/img/cc.png"></a>
         <ul class="footer_inline_ul">
 <li>

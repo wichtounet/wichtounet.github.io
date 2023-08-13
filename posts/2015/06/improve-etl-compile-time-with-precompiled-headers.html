@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html prefix="og: http://ogp.me/ns# article: http://ogp.me/ns/article# " lang="en">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,7 +7,7 @@
 <link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
 <meta name="theme-color" content="#5670d4">
 <meta name="generator" content="Nikola (getnikola.com)">
-<link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
+<link rel="alternate" type="application/rss+xml" title="RSS" hreflang="en" href="../../../rss.xml">
 <link rel="canonical" href="https://baptiste-wicht.com/posts/2015/06/improve-etl-compile-time-with-precompiled-headers.html">
 <!--[if lt IE 9]><script src="../../../assets/js/html5.js"></script><![endif]--><meta name="author" content="Baptiste Wicht">
 <link rel="prev" href="how-i-improved-a-bit-compile-time-of-etl.html" title="How I improved (a bit) compile time of ETL ?" type="text/html">
@@ -124,12 +124,15 @@
 <article class="post-text h-entry hentry postpage" itemscope="itemscope" itemtype="http://schema.org/Article"><header><h1 class="p-name entry-title" itemprop="headline name"><a href="#" class="u-url">Improve ETL compile-time with Precompiled Headers</a></h1>
 
         <div class="metadata">
-            <p class="byline author vcard"><span class="byline-name fn" itemprop="author">
+            <p class="byline author vcard p-author h-card"><span class="byline-name fn p-name" itemprop="author">
                     Baptiste Wicht
             </span></p>
-            <p class="dateline"><a href="#" rel="bookmark"><time class="published dt-published" datetime="2015-06-20T15:08:31+02:00" itemprop="datePublished" title="2015-06-20 15:08">2015-06-20 15:08</time></a></p>
+            <p class="dateline">
+            <a href="#" rel="bookmark">
+            <time class="published dt-published" datetime="2015-06-20T15:08:31+02:00" itemprop="datePublished" title="2015-06-20 15:08">2015-06-20 15:08</time></a>
+            </p>
                 <p class="commentline">
-        
+    
     <a href="improve-etl-compile-time-with-precompiled-headers.html#disqus_thread" data-disqus-identifier="cache/posts/2015/06/improve-etl-compile-time-with-precompiled-headers.html">Comments</a>
 
 
@@ -141,39 +144,30 @@
         
 
     </header><div class="e-content entry-content" itemprop="articleBody text">
-    <div>
-<p>Very recently, I started trying to improve the compile-time of the ETL test suite. While not critical, it is always better to have tests that compile as fast as possible. In a <a class="reference external" href="http://baptiste-wicht.com/posts/2015/06/how-i-improved-a-bit-compile-time-of-etl.html">previous post</a>, I was able to improve the time a bit by improve the makefile, using pragra once and avoiding <cite>&lt;iostream&gt;</cite> headers. With these techniques, I reduced the compile-time from 87.5 to 84.1, which is not bad, but not as good as I would have expected.</p>
+    <p>Very recently, I started trying to improve the compile-time of the ETL test suite. While not critical, it is always better to have tests that compile as fast as possible. In a <a class="reference external" href="http://baptiste-wicht.com/posts/2015/06/how-i-improved-a-bit-compile-time-of-etl.html">previous post</a>, I was able to improve the time a bit by improve the makefile, using pragra once and avoiding <cite>&lt;iostream&gt;</cite> headers. With these techniques, I reduced the compile-time from 87.5 to 84.1, which is not bad, but not as good as I would have expected.</p>
 <p>In the previous, I had not tried to use Precompiled Headers (PCH) to improve the compile time, so I thought it would be a good time to do it.</p>
-<div class="section" id="precompiled-headers">
-<h2>Precompiled Headers</h2>
+<section id="precompiled-headers"><h2>Precompiled Headers</h2>
 <p>Precompiled Headers are an option of the compiler, where one header gets compiled. Normally, you only compile source files into object files, but you can also compile headers, although it is not the same thing. When a compiler compiles a header, it can do a lot of preprocessing (macros, includes, AST, symbols) and then store all the results into a precompiled header file. Once you compile the source files, the compiler will try to use the precompiled header file instead of the real header file. Of course, this can breaks the C++ standard since with that a header can not have different behaviour based on macros for instance. For these reasons (and probably implementation reasons as well), precompiled headers are really limited.</p>
 <p>If we take the case of G++, G++ will consider the precompiled header file instead of the standard header only if (for a complete list, take a look at the GCC docs):</p>
 <ul class="simple">
-<li>The same compilation flags are the same between the two compilations</li>
-<li>The same compiler binary is used for the compilations</li>
-<li>Only one precompiled header can be used in each compilation</li>
-<li>The same macros must be defined</li>
-<li>The include of the header must be before every possible C/C++ token</li>
+<li><p>The same compilation flags are the same between the two compilations</p></li>
+<li><p>The same compiler binary is used for the compilations</p></li>
+<li><p>Only one precompiled header can be used in each compilation</p></li>
+<li><p>The same macros must be defined</p></li>
+<li><p>The include of the header must be before every possible C/C++ token</p></li>
 </ul>
 <p>If all these conditions are met and you try to <cite>#include "header.hpp</cite> and there is a header.hpp.gch (the precompiled file) available in the search path, then the precompiled header will be taken instead of the standard one.</p>
 <p>With clang, it is a bit different because the precompiled header cannot be included automatically, but has to be included explicitely in the source code, meaning you have to modify your code for this technique to work. This is a bad thing in my opinion, you never should have to modify your code to profit from a compiler feature. This is why I haven't used and don't plan to use precompiled headers with clang.</p>
-</div>
-<div class="section" id="how-to">
-<h2>How-to</h2>
+</section><section id="how-to"><h2>How-to</h2>
 <p>Once you know all the conditions for a precompiled header to be automatically included, it is quite straightforward to use them.</p>
 <p>To generate a PCH file is easy:</p>
-<pre class="literal-block">
-g++ options header.hpp
-</pre>
+<pre class="literal-block">g++ options header.hpp</pre>
 <p>This will generate header.hpp.gch. When you compile your source file using header.hpp, you don't have anything to do, you just have to compile it as usually and if all the conditions are met, the PCH file will be used instead of the other header.</p>
-</div>
-<div class="section" id="results-and-conclusion">
-<h2>Results and conclusion</h2>
+</section><section id="results-and-conclusion"><h2>Results and conclusion</h2>
 <p>I added precompiled header support into my <a class="reference external" href="https://github.com/wichtounet/make-utils">make-utils</a> collection of Makefile utilities and tested it on ETL. I have precompiled a header that itself included Catch and ETL. Almost all test files are including this header. With this change, I went from 84 seconds to 78seconds. Headers are taking 1.5seconds to be precompiled. This is a nice result I think. If your application is not as template-heavy as mine or if you have more source files, you should expect better improvements.</p>
 <p>To conclude, even if precompiled headers are a sound way to reduce compile-time, they are really limited to some cases. I'm not a fan of the feature overally. It is not portable between compilers and not standard. Anyway, if you are really in need of saving some time, you should not hesitate too much ;)</p>
+</section>
 </div>
-</div>
-    </div>
     <aside class="postpromonav"><nav><ul itemprop="keywords" class="tags">
 <li><a class="tag p-category" href="../../../categories/c%2B%2B.html" rel="tag">C++</a></li>
             <li><a class="tag p-category" href="../../../categories/compilers.html" rel="tag">Compilers</a></li>
@@ -190,7 +184,7 @@ g++ options header.hpp
             </li>
         </ul></nav></aside><section class="comments hidden-print"><h2>Comments</h2>
         
-        
+    
         <div id="disqus_thread"></div>
         <script>
         var disqus_shortname ="blogwichtounet",
@@ -222,7 +216,7 @@ g++ options header.hpp
 <!-- Footer -->
 
 <footer>
-    Contents © 2018         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         - License: 
+    Contents © 2023         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         - License: 
 <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="padding-left:5px;border-width:0" src="../../../assets/img/cc.png"></a>
         <ul class="footer_inline_ul">
 <li>

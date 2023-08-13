@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html prefix="og: http://ogp.me/ns# article: http://ogp.me/ns/article# " lang="en">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,7 +7,7 @@
 <link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
 <meta name="theme-color" content="#5670d4">
 <meta name="generator" content="Nikola (getnikola.com)">
-<link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
+<link rel="alternate" type="application/rss+xml" title="RSS" hreflang="en" href="../../../rss.xml">
 <link rel="canonical" href="https://baptiste-wicht.com/posts/2010/05/tip-add-resources-dynamically-to-a-classloader.html">
 <!--[if lt IE 9]><script src="../../../assets/js/html5.js"></script><![endif]--><meta name="author" content="Baptiste Wicht">
 <link rel="prev" href="modular-application-loading-modules.html" title="Develop a modular application - The loading" type="text/html">
@@ -122,12 +122,15 @@ In fact, the URLClassLoader class has a addUrl">
 <article class="post-text h-entry hentry postpage" itemscope="itemscope" itemtype="http://schema.org/Article"><header><h1 class="p-name entry-title" itemprop="headline name"><a href="#" class="u-url">Tip : Add resources dynamically to a ClassLoader</a></h1>
 
         <div class="metadata">
-            <p class="byline author vcard"><span class="byline-name fn" itemprop="author">
+            <p class="byline author vcard p-author h-card"><span class="byline-name fn p-name" itemprop="author">
                     Baptiste Wicht
             </span></p>
-            <p class="dateline"><a href="#" rel="bookmark"><time class="published dt-published" datetime="2010-05-15T06:40:03+02:00" itemprop="datePublished" title="2010-05-15 06:40">2010-05-15 06:40</time></a></p>
+            <p class="dateline">
+            <a href="#" rel="bookmark">
+            <time class="published dt-published" datetime="2010-05-15T06:40:03+02:00" itemprop="datePublished" title="2010-05-15 06:40">2010-05-15 06:40</time></a>
+            </p>
                 <p class="commentline">
-        
+    
     <a href="tip-add-resources-dynamically-to-a-classloader.html#disqus_thread" data-disqus-identifier="cache/posts/2010/05/tip-add-resources-dynamically-to-a-classloader.html">Comments</a>
 
 
@@ -139,27 +142,24 @@ In fact, the URLClassLoader class has a addUrl">
         
 
     </header><div class="e-content entry-content" itemprop="articleBody text">
-    <div>
-<p>Theoretically, it's not possible to ad resources to a <strong>ClassLoader</strong> in Java after creation. I say theoretically, because, we can do that using <strong>Reflection</strong>. </p>
+    <p>Theoretically, it's not possible to ad resources to a <strong>ClassLoader</strong> in Java after creation. I say theoretically, because, we can do that using <strong>Reflection</strong>. </p>
 <p>In fact, the <strong>URLClassLoader</strong> class has a <em>addUrl(URL url)</em> method to add a new URL, so we can invoke that method to add an URL where the ClassLoader can search to load a class. But this method is protected. So here is an example taking advantage of Reflection to add URL to the <strong>system ClassLoader</strong> : </p>
-<pre class="code literal-block"><span></span><span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">addURLToSystemClassLoader</span><span class="o">(</span><span class="n">URL</span> <span class="n">url</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IntrospectionException</span> <span class="o">{</span> 
-  <span class="n">URLClassLoader</span> <span class="n">systemClassLoader</span> <span class="o">=</span> <span class="o">(</span><span class="n">URLClassLoader</span><span class="o">)</span> <span class="n">ClassLoader</span><span class="o">.</span><span class="na">getSystemClassLoader</span><span class="o">();</span> 
-  <span class="n">Class</span><span class="o">&lt;</span><span class="n">urlclassloader</span><span class="o">&gt;</span> <span class="n">classLoaderClass</span> <span class="o">=</span> <span class="n">URLClassLoader</span><span class="o">.</span><span class="na">class</span><span class="o">;</span> 
+<div class="code"><pre class="code literal-block"><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">addURLToSystemClassLoader</span><span class="p">(</span><span class="n">URL</span><span class="w"> </span><span class="n">url</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">IntrospectionException</span><span class="w"> </span><span class="p">{</span><span class="w"> </span>
+<span class="w">  </span><span class="n">URLClassLoader</span><span class="w"> </span><span class="n">systemClassLoader</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">URLClassLoader</span><span class="p">)</span><span class="w"> </span><span class="n">ClassLoader</span><span class="p">.</span><span class="na">getSystemClassLoader</span><span class="p">();</span><span class="w"> </span>
+<span class="w">  </span><span class="n">Class</span><span class="o">&lt;</span><span class="n">urlclassloader</span><span class="o">&gt;</span><span class="w"> </span><span class="n">classLoaderClass</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">URLClassLoader</span><span class="p">.</span><span class="na">class</span><span class="p">;</span><span class="w"> </span>
 
-  <span class="k">try</span> <span class="o">{</span> 
-    <span class="n">Method</span> <span class="n">method</span> <span class="o">=</span> <span class="n">classLoaderClass</span><span class="o">.</span><span class="na">getDeclaredMethod</span><span class="o">(</span><span class="s">"addURL"</span><span class="o">,</span> <span class="k">new</span> <span class="n">Class</span><span class="o">[]{</span><span class="n">URL</span><span class="o">.</span><span class="na">class</span><span class="o">});</span> 
-    <span class="n">method</span><span class="o">.</span><span class="na">setAccessible</span><span class="o">(</span><span class="kc">true</span><span class="o">);</span> 
-    <span class="n">method</span><span class="o">.</span><span class="na">invoke</span><span class="o">(</span><span class="n">systemClassLoader</span><span class="o">,</span> <span class="k">new</span> <span class="n">Object</span><span class="o">[]{</span><span class="n">url</span><span class="o">});</span> 
-  <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">Throwable</span> <span class="n">t</span><span class="o">)</span> <span class="o">{</span> 
-    <span class="n">t</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span> 
-    <span class="k">throw</span> <span class="k">new</span> <span class="n">IntrospectionException</span><span class="o">(</span><span class="s">"Error when adding url to system ClassLoader "</span><span class="o">);</span> 
-  <span class="o">}</span> 
-<span class="o">}</span>
-</pre>
-
+<span class="w">  </span><span class="k">try</span><span class="w"> </span><span class="p">{</span><span class="w"> </span>
+<span class="w">    </span><span class="n">Method</span><span class="w"> </span><span class="n">method</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">classLoaderClass</span><span class="p">.</span><span class="na">getDeclaredMethod</span><span class="p">(</span><span class="s">"addURL"</span><span class="p">,</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Class</span><span class="o">[]</span><span class="p">{</span><span class="n">URL</span><span class="p">.</span><span class="na">class</span><span class="p">});</span><span class="w"> </span>
+<span class="w">    </span><span class="n">method</span><span class="p">.</span><span class="na">setAccessible</span><span class="p">(</span><span class="kc">true</span><span class="p">);</span><span class="w"> </span>
+<span class="w">    </span><span class="n">method</span><span class="p">.</span><span class="na">invoke</span><span class="p">(</span><span class="n">systemClassLoader</span><span class="p">,</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Object</span><span class="o">[]</span><span class="p">{</span><span class="n">url</span><span class="p">});</span><span class="w"> </span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">Throwable</span><span class="w"> </span><span class="n">t</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span>
+<span class="w">    </span><span class="n">t</span><span class="p">.</span><span class="na">printStackTrace</span><span class="p">();</span><span class="w"> </span>
+<span class="w">    </span><span class="k">throw</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">IntrospectionException</span><span class="p">(</span><span class="s">"Error when adding url to system ClassLoader "</span><span class="p">);</span><span class="w"> </span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span>
+<span class="p">}</span>
+</pre></div>
 
 <p>This is easy and that can be done for any URLClassLoader. But of course, this is an ugly hack and that must not be always used but can be useful sometimes. An other way to do that is to create a new Class extending URLClassLoader and make the <em>addUrl(URL url)</em> public, but that can be done with the system ClassLoader.</p>
-</div>
     </div>
     <aside class="postpromonav"><nav><ul itemprop="keywords" class="tags">
 <li><a class="tag p-category" href="../../../categories/java.html" rel="tag">Java</a></li>
@@ -174,7 +174,7 @@ In fact, the URLClassLoader class has a addUrl">
             </li>
         </ul></nav></aside><section class="comments hidden-print"><h2>Comments</h2>
         
-        
+    
         <div id="disqus_thread"></div>
         <script>
         var disqus_shortname ="blogwichtounet",
@@ -206,7 +206,7 @@ In fact, the URLClassLoader class has a addUrl">
 <!-- Footer -->
 
 <footer>
-    Contents © 2018         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         - License: 
+    Contents © 2023         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         - License: 
 <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="padding-left:5px;border-width:0" src="../../../assets/img/cc.png"></a>
         <ul class="footer_inline_ul">
 <li>

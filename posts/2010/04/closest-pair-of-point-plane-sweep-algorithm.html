@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html prefix="og: http://ogp.me/ns# article: http://ogp.me/ns/article# " lang="en">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,7 +7,7 @@
 <link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
 <meta name="theme-color" content="#5670d4">
 <meta name="generator" content="Nikola (getnikola.com)">
-<link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.xml">
+<link rel="alternate" type="application/rss+xml" title="RSS" hreflang="en" href="../../../rss.xml">
 <link rel="canonical" href="https://baptiste-wicht.com/posts/2010/04/closest-pair-of-point-plane-sweep-algorithm.html">
 <!--[if lt IE 9]><script src="../../../assets/js/html5.js"></script><![endif]--><meta name="author" content="Baptiste Wicht">
 <link rel="prev" href="write-corrects-benchmarks.html" title="How to write correct benchmarks" type="text/html">
@@ -124,12 +124,15 @@
 <article class="post-text h-entry hentry postpage" itemscope="itemscope" itemtype="http://schema.org/Article"><header><h1 class="p-name entry-title" itemprop="headline name"><a href="#" class="u-url">Find closest pair of point with Plane Sweep Algorithm in O(n ln n)</a></h1>
 
         <div class="metadata">
-            <p class="byline author vcard"><span class="byline-name fn" itemprop="author">
+            <p class="byline author vcard p-author h-card"><span class="byline-name fn p-name" itemprop="author">
                     Baptiste Wicht
             </span></p>
-            <p class="dateline"><a href="#" rel="bookmark"><time class="published dt-published" datetime="2010-04-27T16:08:10+02:00" itemprop="datePublished" title="2010-04-27 16:08">2010-04-27 16:08</time></a></p>
+            <p class="dateline">
+            <a href="#" rel="bookmark">
+            <time class="published dt-published" datetime="2010-04-27T16:08:10+02:00" itemprop="datePublished" title="2010-04-27 16:08">2010-04-27 16:08</time></a>
+            </p>
                 <p class="commentline">
-        
+    
     <a href="closest-pair-of-point-plane-sweep-algorithm.html#disqus_thread" data-disqus-identifier="cache/posts/2010/04/closest-pair-of-point-plane-sweep-algorithm.html">Comments</a>
 
 
@@ -141,36 +144,34 @@
         
 
     </header><div class="e-content entry-content" itemprop="articleBody text">
-    <div>
-<p>Finding the closest pair of Point in a given collection of points is a standard problem in computational geometry. In this article I'll explain an efficient algorithm using plane sweep, compare it to the naive implementation and discuss its complexity.</p>
+    <p>Finding the closest pair of Point in a given collection of points is a standard problem in computational geometry. In this article I'll explain an efficient algorithm using plane sweep, compare it to the naive implementation and discuss its complexity.</p>
 <!-- TEASER_END -->
 
 <p>This problem is standard, but not really easy to solve in an efficient way. The first implementation we think of is the naive one, comparing each point to each other point.</p>
 <p>In my examples, I'll use the java.awt.Point class to represent a point. This naive implementation is really easy to implement :</p>
-<pre class="code literal-block"><span></span><span class="kd">public</span> <span class="kd">static</span> <span class="n">Point</span><span class="o">[]</span> <span class="nf">naiveClosestPair</span><span class="o">(</span><span class="n">Point</span><span class="o">[]</span> <span class="n">points</span><span class="o">)</span> <span class="o">{</span>
-    <span class="kt">double</span> <span class="n">min</span> <span class="o">=</span> <span class="n">Double</span><span class="o">.</span><span class="na">MAX_VALUE</span><span class="o">;</span>
+<div class="code"><pre class="code literal-block"><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="n">Point</span><span class="o">[]</span><span class="w"> </span><span class="nf">naiveClosestPair</span><span class="p">(</span><span class="n">Point</span><span class="o">[]</span><span class="w"> </span><span class="n">points</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kt">double</span><span class="w"> </span><span class="n">min</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Double</span><span class="p">.</span><span class="na">MAX_VALUE</span><span class="p">;</span>
 
-    <span class="n">Point</span><span class="o">[]</span> <span class="n">closestPair</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Point</span><span class="o">[</span><span class="mi">2</span><span class="o">];</span>
+<span class="w">    </span><span class="n">Point</span><span class="o">[]</span><span class="w"> </span><span class="n">closestPair</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Point</span><span class="o">[</span><span class="mi">2</span><span class="o">]</span><span class="p">;</span>
 
-    <span class="k">for</span> <span class="o">(</span><span class="n">Point</span> <span class="n">p1</span> <span class="o">:</span> <span class="n">points</span><span class="o">)</span> <span class="o">{</span>
-        <span class="k">for</span> <span class="o">(</span><span class="n">Point</span> <span class="n">p2</span> <span class="o">:</span> <span class="n">points</span><span class="o">)</span> <span class="o">{</span>
-            <span class="k">if</span> <span class="o">(</span><span class="n">p1</span> <span class="o">!=</span> <span class="n">p2</span><span class="o">)</span> <span class="o">{</span>
-                <span class="kt">double</span> <span class="n">dist</span> <span class="o">=</span> <span class="n">p1</span><span class="o">.</span><span class="na">distance</span><span class="o">(</span><span class="n">p2</span><span class="o">);</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="n">Point</span><span class="w"> </span><span class="n">p1</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">points</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="n">Point</span><span class="w"> </span><span class="n">p2</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">points</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">p1</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">p2</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="kt">double</span><span class="w"> </span><span class="n">dist</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">p1</span><span class="p">.</span><span class="na">distance</span><span class="p">(</span><span class="n">p2</span><span class="p">);</span>
 
-                <span class="k">if</span> <span class="o">(</span><span class="n">dist</span> <span class="o">&lt;</span> <span class="n">min</span><span class="o">)</span> <span class="o">{</span>
-                    <span class="n">min</span> <span class="o">=</span> <span class="n">dist</span><span class="o">;</span>
+<span class="w">                </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">dist</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">min</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                    </span><span class="n">min</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dist</span><span class="p">;</span>
 
-                    <span class="n">closestPair</span><span class="o">[</span><span class="mi">0</span><span class="o">]</span> <span class="o">=</span> <span class="n">p1</span><span class="o">;</span>
-                    <span class="n">closestPair</span><span class="o">[</span><span class="mi">1</span><span class="o">]</span> <span class="o">=</span> <span class="n">p2</span><span class="o">;</span>
-                <span class="o">}</span>
-            <span class="o">}</span>
-        <span class="o">}</span>
-    <span class="o">}</span>
+<span class="w">                    </span><span class="n">closestPair</span><span class="o">[</span><span class="mi">0</span><span class="o">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">p1</span><span class="p">;</span>
+<span class="w">                    </span><span class="n">closestPair</span><span class="o">[</span><span class="mi">1</span><span class="o">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">p2</span><span class="p">;</span>
+<span class="w">                </span><span class="p">}</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
 
-    <span class="k">return</span> <span class="n">closestPair</span><span class="o">;</span>
-<span class="o">}</span>
-</pre>
-
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">closestPair</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
 
 <p>As you can directly see, this naive implementation has a complexity of O(n^2). But we can do a lot better using a plane sweep algorithm.</p>
 <p>With that algorithm, we'll sweep the plane from left to right (right to left is also a possibility) and when we reach a point we'll compute all the interesting candidates (the candidates that can be in the closest pair).</p>
@@ -205,96 +206,94 @@
 <p>So the total complexity is O(n ln(n) + n * ( 1 + ln(n) + 1 + ln(n) ) ) = O(n ln n).</p>
 <p>So it's really better than O(n^2) for the naive implementation.</p>
 <p>So now, we can go to the implementation in Java.</p>
-<pre class="code literal-block"><span></span><span class="kd">public</span> <span class="kd">static</span> <span class="n">Point</span><span class="o">[]</span> <span class="nf">closestPair</span><span class="o">(</span><span class="n">Point</span><span class="o">[]</span> <span class="n">points</span><span class="o">)</span> <span class="o">{</span>
-    <span class="n">Point</span><span class="o">[]</span> <span class="n">closestPair</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Point</span><span class="o">[</span><span class="mi">2</span><span class="o">];</span>
+<div class="code"><pre class="code literal-block"><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="n">Point</span><span class="o">[]</span><span class="w"> </span><span class="nf">closestPair</span><span class="p">(</span><span class="n">Point</span><span class="o">[]</span><span class="w"> </span><span class="n">points</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">Point</span><span class="o">[]</span><span class="w"> </span><span class="n">closestPair</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Point</span><span class="o">[</span><span class="mi">2</span><span class="o">]</span><span class="p">;</span>
 
-    <span class="c1">//When we start the min distance is the infinity</span>
-    <span class="kt">double</span> <span class="n">crtMinDist</span> <span class="o">=</span> <span class="n">Double</span><span class="o">.</span><span class="na">POSITIVE_INFINITY</span><span class="o">;</span>
+<span class="w">    </span><span class="c1">//When we start the min distance is the infinity</span>
+<span class="w">    </span><span class="kt">double</span><span class="w"> </span><span class="n">crtMinDist</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Double</span><span class="p">.</span><span class="na">POSITIVE_INFINITY</span><span class="p">;</span>
 
-    <span class="c1">//Get the points and sort them</span>
-    <span class="n">Point</span><span class="o">[]</span> <span class="n">sorted</span> <span class="o">=</span> <span class="n">Arrays</span><span class="o">.</span><span class="na">copyOf</span><span class="o">(</span><span class="n">points</span><span class="o">,</span> <span class="n">points</span><span class="o">.</span><span class="na">length</span><span class="o">);</span>
-    <span class="n">Arrays</span><span class="o">.</span><span class="na">sort</span><span class="o">(</span><span class="n">sorted</span><span class="o">,</span> <span class="n">HORIZONTAL_COMPARATOR</span><span class="o">);</span>
+<span class="w">    </span><span class="c1">//Get the points and sort them</span>
+<span class="w">    </span><span class="n">Point</span><span class="o">[]</span><span class="w"> </span><span class="n">sorted</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Arrays</span><span class="p">.</span><span class="na">copyOf</span><span class="p">(</span><span class="n">points</span><span class="p">,</span><span class="w"> </span><span class="n">points</span><span class="p">.</span><span class="na">length</span><span class="p">);</span>
+<span class="w">    </span><span class="n">Arrays</span><span class="p">.</span><span class="na">sort</span><span class="p">(</span><span class="n">sorted</span><span class="p">,</span><span class="w"> </span><span class="n">HORIZONTAL_COMPARATOR</span><span class="p">);</span>
 
-    <span class="c1">//When we start the left most candidate is the first one</span>
-    <span class="kt">int</span> <span class="n">leftMostCandidateIndex</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+<span class="w">    </span><span class="c1">//When we start the left most candidate is the first one</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">leftMostCandidateIndex</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
 
-    <span class="c1">//Vertically sorted set of candidates</span>
-    <span class="n">SortedSet</span><span class="o">&lt;</span><span class="n">Point</span><span class="o">&gt;</span> <span class="n">candidates</span> <span class="o">=</span> <span class="k">new</span> <span class="n">TreeSet</span><span class="o">&lt;</span><span class="n">Point</span><span class="o">&gt;(</span><span class="n">VERTICAL_COMPARATOR</span><span class="o">);</span>
+<span class="w">    </span><span class="c1">//Vertically sorted set of candidates</span>
+<span class="w">    </span><span class="n">SortedSet</span><span class="o">&lt;</span><span class="n">Point</span><span class="o">&gt;</span><span class="w"> </span><span class="n">candidates</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">TreeSet</span><span class="o">&lt;</span><span class="n">Point</span><span class="o">&gt;</span><span class="p">(</span><span class="n">VERTICAL_COMPARATOR</span><span class="p">);</span>
 
-    <span class="c1">//For each point from left to right</span>
-    <span class="k">for</span> <span class="o">(</span><span class="n">Point</span> <span class="n">current</span> <span class="o">:</span> <span class="n">sorted</span><span class="o">)</span> <span class="o">{</span>
-        <span class="c1">//Shrink the candidates</span>
-        <span class="k">while</span> <span class="o">(</span><span class="n">current</span><span class="o">.</span><span class="na">x</span> <span class="o">-</span> <span class="n">sorted</span><span class="o">[</span><span class="n">leftMostCandidateIndex</span><span class="o">].</span><span class="na">x</span> <span class="o">&amp;</span><span class="n">amp</span><span class="o">;</span><span class="n">gt</span><span class="o">;</span> <span class="n">crtMinDist</span><span class="o">)</span> <span class="o">{</span>
-            <span class="n">candidates</span><span class="o">.</span><span class="na">remove</span><span class="o">(</span><span class="n">sorted</span><span class="o">[</span><span class="n">leftMostCandidateIndex</span><span class="o">]);</span>
-            <span class="n">leftMostCandidateIndex</span><span class="o">++;</span>
-        <span class="o">}</span>
+<span class="w">    </span><span class="c1">//For each point from left to right</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="n">Point</span><span class="w"> </span><span class="n">current</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">sorted</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">//Shrink the candidates</span>
+<span class="w">        </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">current</span><span class="p">.</span><span class="na">x</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">sorted</span><span class="o">[</span><span class="n">leftMostCandidateIndex</span><span class="o">]</span><span class="p">.</span><span class="na">x</span><span class="w"> </span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">gt</span><span class="p">;</span><span class="w"> </span><span class="n">crtMinDist</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">candidates</span><span class="p">.</span><span class="na">remove</span><span class="p">(</span><span class="n">sorted</span><span class="o">[</span><span class="n">leftMostCandidateIndex</span><span class="o">]</span><span class="p">);</span>
+<span class="w">            </span><span class="n">leftMostCandidateIndex</span><span class="o">++</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
 
-        <span class="c1">//Compute the y head and the y tail of the candidates set</span>
-        <span class="n">Point</span> <span class="n">head</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Point</span><span class="o">(</span><span class="n">current</span><span class="o">.</span><span class="na">x</span><span class="o">,</span> <span class="o">(</span><span class="kt">int</span><span class="o">)</span> <span class="o">(</span><span class="n">current</span><span class="o">.</span><span class="na">y</span> <span class="o">-</span> <span class="n">crtMinDist</span><span class="o">));</span>
-        <span class="n">Point</span> <span class="n">tail</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Point</span><span class="o">(</span><span class="n">current</span><span class="o">.</span><span class="na">x</span><span class="o">,</span> <span class="o">(</span><span class="kt">int</span><span class="o">)</span> <span class="o">(</span><span class="n">current</span><span class="o">.</span><span class="na">y</span> <span class="o">+</span> <span class="n">crtMinDist</span><span class="o">));</span>
+<span class="w">        </span><span class="c1">//Compute the y head and the y tail of the candidates set</span>
+<span class="w">        </span><span class="n">Point</span><span class="w"> </span><span class="n">head</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Point</span><span class="p">(</span><span class="n">current</span><span class="p">.</span><span class="na">x</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="n">current</span><span class="p">.</span><span class="na">y</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">crtMinDist</span><span class="p">));</span>
+<span class="w">        </span><span class="n">Point</span><span class="w"> </span><span class="n">tail</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Point</span><span class="p">(</span><span class="n">current</span><span class="p">.</span><span class="na">x</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="n">current</span><span class="p">.</span><span class="na">y</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">crtMinDist</span><span class="p">));</span>
 
-        <span class="c1">//We take only the interesting candidates in the y axis</span>
-        <span class="k">for</span> <span class="o">(</span><span class="n">Point</span> <span class="n">point</span> <span class="o">:</span> <span class="n">candidates</span><span class="o">.</span><span class="na">subSet</span><span class="o">(</span><span class="n">head</span><span class="o">,</span> <span class="n">tail</span><span class="o">))</span> <span class="o">{</span>
-            <span class="kt">double</span> <span class="n">distance</span> <span class="o">=</span> <span class="n">current</span><span class="o">.</span><span class="na">distance</span><span class="o">(</span><span class="n">point</span><span class="o">);</span>
+<span class="w">        </span><span class="c1">//We take only the interesting candidates in the y axis</span>
+<span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="n">Point</span><span class="w"> </span><span class="n">point</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">candidates</span><span class="p">.</span><span class="na">subSet</span><span class="p">(</span><span class="n">head</span><span class="p">,</span><span class="w"> </span><span class="n">tail</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="kt">double</span><span class="w"> </span><span class="n">distance</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">current</span><span class="p">.</span><span class="na">distance</span><span class="p">(</span><span class="n">point</span><span class="p">);</span>
 
-            <span class="c1">//Simple min computation</span>
-            <span class="k">if</span> <span class="o">(</span><span class="n">distance</span> <span class="o">&lt;</span> <span class="n">crtMinDist</span><span class="o">)</span> <span class="o">{</span>
-                <span class="n">crtMinDist</span> <span class="o">=</span> <span class="n">distance</span><span class="o">;</span>
+<span class="w">            </span><span class="c1">//Simple min computation</span>
+<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">distance</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">crtMinDist</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="n">crtMinDist</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">distance</span><span class="p">;</span>
 
-                <span class="n">closestPair</span><span class="o">[</span><span class="mi">0</span><span class="o">]</span> <span class="o">=</span> <span class="n">current</span><span class="o">;</span>
-                <span class="n">closestPair</span><span class="o">[</span><span class="mi">1</span><span class="o">]</span> <span class="o">=</span> <span class="n">point</span><span class="o">;</span>
-            <span class="o">}</span>
-        <span class="o">}</span>
+<span class="w">                </span><span class="n">closestPair</span><span class="o">[</span><span class="mi">0</span><span class="o">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">current</span><span class="p">;</span>
+<span class="w">                </span><span class="n">closestPair</span><span class="o">[</span><span class="mi">1</span><span class="o">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">point</span><span class="p">;</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">        </span><span class="p">}</span>
 
-        <span class="c1">//The current point is now a candidate</span>
-        <span class="n">candidates</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">current</span><span class="o">);</span>
-    <span class="o">}</span>
+<span class="w">        </span><span class="c1">//The current point is now a candidate</span>
+<span class="w">        </span><span class="n">candidates</span><span class="p">.</span><span class="na">add</span><span class="p">(</span><span class="n">current</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
 
-    <span class="k">return</span> <span class="n">closestPair</span><span class="o">;</span>
-<span class="o">}</span>
-</pre>
-
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">closestPair</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
 
 <p>The code isn't overcomplicated. We see all the steps explained in the article and that works well. The Horizontal and Vertical comparators are really simple : </p>
-<pre class="code literal-block"><span></span><span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">Comparator</span><span class="o">&lt;</span><span class="n">Point</span><span class="o">&gt;</span> <span class="n">VERTICAL_COMPARATOR</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Comparator</span><span class="o">&lt;</span><span class="n">Point</span><span class="o">&gt;()</span> <span class="o">{</span>
-    <span class="nd">@Override</span>
-    <span class="kd">public</span> <span class="kt">int</span> <span class="nf">compare</span><span class="o">(</span><span class="n">Point</span> <span class="n">a</span><span class="o">,</span> <span class="n">Point</span> <span class="n">b</span><span class="o">)</span> <span class="o">{</span>
-        <span class="k">if</span> <span class="o">(</span><span class="n">a</span><span class="o">.</span><span class="na">y</span> <span class="o">&lt;</span> <span class="n">b</span><span class="o">.</span><span class="na">y</span><span class="o">)</span> <span class="o">{</span>
-            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="o">;</span>
-        <span class="o">}</span>
-        <span class="k">if</span> <span class="o">(</span><span class="n">a</span><span class="o">.</span><span class="na">y</span> <span class="o">&gt;</span> <span class="n">b</span><span class="o">.</span><span class="na">y</span><span class="o">)</span> <span class="o">{</span>
-            <span class="k">return</span> <span class="mi">1</span><span class="o">;</span>
-        <span class="o">}</span>
-        <span class="k">if</span> <span class="o">(</span><span class="n">a</span><span class="o">.</span><span class="na">x</span> <span class="o">&lt;</span> <span class="n">b</span><span class="o">.</span><span class="na">x</span><span class="o">)</span> <span class="o">{</span>
-            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="o">;</span>
-        <span class="o">}</span>
-        <span class="k">if</span> <span class="o">(</span><span class="n">a</span><span class="o">.</span><span class="na">x</span> <span class="o">&gt;</span> <span class="n">b</span><span class="o">.</span><span class="na">x</span><span class="o">)</span> <span class="o">{</span>
-            <span class="k">return</span> <span class="mi">1</span><span class="o">;</span>
-        <span class="o">}</span>
-        <span class="k">return</span> <span class="mi">0</span><span class="o">;</span>
-    <span class="o">}</span>
-<span class="o">};</span>
+<div class="code"><pre class="code literal-block"><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">Comparator</span><span class="o">&lt;</span><span class="n">Point</span><span class="o">&gt;</span><span class="w"> </span><span class="n">VERTICAL_COMPARATOR</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Comparator</span><span class="o">&lt;</span><span class="n">Point</span><span class="o">&gt;</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="nf">compare</span><span class="p">(</span><span class="n">Point</span><span class="w"> </span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">Point</span><span class="w"> </span><span class="n">b</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">a</span><span class="p">.</span><span class="na">y</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">b</span><span class="p">.</span><span class="na">y</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">a</span><span class="p">.</span><span class="na">y</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">b</span><span class="p">.</span><span class="na">y</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">a</span><span class="p">.</span><span class="na">x</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">b</span><span class="p">.</span><span class="na">x</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">a</span><span class="p">.</span><span class="na">x</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">b</span><span class="p">.</span><span class="na">x</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">};</span>
 
-<span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">Comparator</span><span class="o">&lt;</span><span class="n">Point</span><span class="o">&gt;</span> <span class="n">HORIZONTAL_COMPARATOR</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Comparator</span><span class="o">&lt;</span><span class="n">Point</span><span class="o">&gt;()</span> <span class="o">{</span>
-    <span class="nd">@Override</span>
-    <span class="kd">public</span> <span class="kt">int</span> <span class="nf">compare</span><span class="o">(</span><span class="n">Point</span> <span class="n">a</span><span class="o">,</span> <span class="n">Point</span> <span class="n">b</span><span class="o">)</span> <span class="o">{</span>
-        <span class="k">if</span> <span class="o">(</span><span class="n">a</span><span class="o">.</span><span class="na">x</span> <span class="o">&lt;</span> <span class="n">b</span><span class="o">.</span><span class="na">x</span><span class="o">)</span> <span class="o">{</span>
-            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="o">;</span>
-        <span class="o">}</span>
-        <span class="k">if</span> <span class="o">(</span><span class="n">a</span><span class="o">.</span><span class="na">x</span> <span class="o">&gt;</span> <span class="n">b</span><span class="o">.</span><span class="na">x</span><span class="o">)</span> <span class="o">{</span>
-            <span class="k">return</span> <span class="mi">1</span><span class="o">;</span>
-        <span class="o">}</span>
-        <span class="k">if</span> <span class="o">(</span><span class="n">a</span><span class="o">.</span><span class="na">y</span> <span class="o">&lt;</span> <span class="n">b</span><span class="o">.</span><span class="na">y</span><span class="o">)</span> <span class="o">{</span>
-            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="o">;</span>
-        <span class="o">}</span>
-        <span class="k">if</span> <span class="o">(</span><span class="n">a</span><span class="o">.</span><span class="na">y</span> <span class="o">&gt;</span> <span class="n">b</span><span class="o">.</span><span class="na">y</span><span class="o">)</span> <span class="o">{</span>
-            <span class="k">return</span> <span class="mi">1</span><span class="o">;</span>
-        <span class="o">}</span>
-        <span class="k">return</span> <span class="mi">0</span><span class="o">;</span>
-    <span class="o">}</span>
-<span class="o">}</span>
-</pre>
-
+<span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">Comparator</span><span class="o">&lt;</span><span class="n">Point</span><span class="o">&gt;</span><span class="w"> </span><span class="n">HORIZONTAL_COMPARATOR</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Comparator</span><span class="o">&lt;</span><span class="n">Point</span><span class="o">&gt;</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="nf">compare</span><span class="p">(</span><span class="n">Point</span><span class="w"> </span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">Point</span><span class="w"> </span><span class="n">b</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">a</span><span class="p">.</span><span class="na">x</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">b</span><span class="p">.</span><span class="na">x</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">a</span><span class="p">.</span><span class="na">x</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">b</span><span class="p">.</span><span class="na">x</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">a</span><span class="p">.</span><span class="na">y</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">b</span><span class="p">.</span><span class="na">y</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">a</span><span class="p">.</span><span class="na">y</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">b</span><span class="p">.</span><span class="na">y</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
 
 <p>Here is a performance comparison for some sizes with <a href="http://www.baptiste-wicht.com/2010/04/write-corrects-benchmarks/" target="_blank">a Benchmark Framework I described here</a> for some sizes of collection points.</p>
 <table border="1" cellspacing="0" cellpadding="0"><tbody>
@@ -340,19 +339,17 @@
 <p>Now our good sweeping algorithm is slower than the naive !</p>
 <p>When we think about that, we realize that it's logical. In fact we made a lot of computations before starting the algorithm like sorting the points, creating a list of candidantes, ... All that stuff is heavier than make n^2 comparisons in little number. So what can we do to have good performances with small number of points ?</p>
 <p>It's really easy to solve. We just have to found the number before which the naive algorithm is quicker than the sweeping and when the size of the points collection is smaller than this pivot number we use the naive implementation. On my computer I found that before 75 elements, the naive implementation was faster than the sweeping algorithm, so we can refactor our method :</p>
-<pre class="code literal-block"><span></span><span class="kd">public</span> <span class="kd">static</span> <span class="n">Point</span><span class="o">[]</span> <span class="nf">closestPair</span><span class="o">(</span><span class="n">Point</span><span class="o">[]</span> <span class="n">points</span><span class="o">)</span> <span class="o">{</span>
-    <span class="k">if</span><span class="o">(</span><span class="n">points</span><span class="o">.</span><span class="na">length</span> <span class="o">&lt;</span> <span class="mi">75</span><span class="o">){</span>
-        <span class="k">return</span> <span class="n">naiveClosestPair</span><span class="o">(</span><span class="n">points</span><span class="o">);</span>
-    <span class="o">}</span>
+<div class="code"><pre class="code literal-block"><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="n">Point</span><span class="o">[]</span><span class="w"> </span><span class="nf">closestPair</span><span class="p">(</span><span class="n">Point</span><span class="o">[]</span><span class="w"> </span><span class="n">points</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="n">points</span><span class="p">.</span><span class="na">length</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">75</span><span class="p">){</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">naiveClosestPair</span><span class="p">(</span><span class="n">points</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
 
-    <span class="c1">//No changes</span>
-<span class="o">}</span>
-</pre>
-
+<span class="w">    </span><span class="c1">//No changes</span>
+<span class="p">}</span>
+</pre></div>
 
 <p>And we've good performances for little set of points :)</p>
 <p>So our method is now complete. I hope you found that post interesting and that will be useful to someone.</p>
-</div>
     </div>
     <aside class="postpromonav"><nav><ul itemprop="keywords" class="tags">
 <li><a class="tag p-category" href="../../../categories/algorithm.html" rel="tag">Algorithm</a></li>
@@ -370,7 +367,7 @@
             </li>
         </ul></nav></aside><section class="comments hidden-print"><h2>Comments</h2>
         
-        
+    
         <div id="disqus_thread"></div>
         <script>
         var disqus_shortname ="blogwichtounet",
@@ -402,7 +399,7 @@
 <!-- Footer -->
 
 <footer>
-    Contents © 2018         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         - License: 
+    Contents © 2023         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         - License: 
 <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="padding-left:5px;border-width:0" src="../../../assets/img/cc.png"></a>
         <ul class="footer_inline_ul">
 <li>
