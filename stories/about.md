@@ -1,7 +1,8 @@
-I'm Baptiste Wicht, from Switzerland, now 29 years old. I just finished my Ph.D
-in Computer Science from the University of Fribourg and the University of
+I'm Baptiste Wicht, from Switzerland, now 35 years old. I did my Ph.D
+in Computer Science at the University of Fribourg and the University of
 applied sciences in Fribourg (Switzerland), principally in Machine Learning.
-Currently, I'm mainly developing high performance applications in C++.
+Currently, I'm mainly developing high performance applications in C++, as  Senior Software Engineer, 
+at Verisign.
 
 I've started programming in 2004, when doing my computer science apprentice
 ship. For a few years, I programmed a lot in Java and become involved in the
@@ -38,8 +39,6 @@ website, there are several ways to contact me:
 For professional information, [my LinkedIn profile](http://www.linkedin.com/in/baptistewicht) is available.
 
 If you want to see my Github projects, take a look at this my profile: [wichtounet](https://github.com/wichtounet)
-
-You can also take a look at my Google Profile: [Baptiste Wicht](https://plus.google.com/103113673902796202116)
 
 I hope you will find this website useful and will like my articles and blogs.
 
