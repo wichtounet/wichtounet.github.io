@@ -7,6 +7,8 @@
 #include <unordered_set>
 #include <algorithm>
 #include <memory>
+#include <cmath>
+#include <numeric>
 
 namespace {
 
