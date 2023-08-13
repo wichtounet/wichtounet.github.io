@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="description" content="Few things I've found out durign migration of ETL to C++17.">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>C++17 Migration of Expression Templates Library (ETL) | Blog blog("Baptiste Wicht");</title>
+<link href="../../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
+<meta name="theme-color" content="#5670d4">
+<meta name="generator" content="Nikola (getnikola.com)">
+<link rel="alternate" type="application/rss+xml" title="RSS" hreflang="en" href="../../../../rss.xml">
+<link rel="canonical" href="https://baptiste-wicht.com/posts/2018/02/c%2B%2B17-migration-of-expression-templates-library-etl/">
+<!--[if lt IE 9]><script src="../../../../assets/js/html5.js"></script><![endif]--><meta name="author" content="Baptiste Wicht">
+<link rel="prev" href="../../01/budgetwarrior-10-web-interface-and-asset-tracking/" title="budgetwarrior 1.0: Web interface and asset tracking!" type="text/html">
+<link rel="next" href="../decrease-dll-neural-network-compilation-time-with-c%2B%2B17/" title="Decrease DLL neural network compilation time with C++17" type="text/html">
+<meta property="og:site_name" content='Blog blog("Baptiste Wicht");'>
+<meta property="og:title" content="C++17 Migration of Expression Templates Library (ETL)">
+<meta property="og:url" content="https://baptiste-wicht.com/posts/2018/02/c%2B%2B17-migration-of-expression-templates-library-etl/">
+<meta property="og:description" content="Few things I've found out durign migration of ETL to C++17.">
+<meta property="og:type" content="article">
+<meta property="article:published_time" content="2018-02-02T14:03:26+01:00">
+<meta property="article:tag" content="C++">
+<meta property="article:tag" content="C++14">
+<meta property="article:tag" content="C++17">
+<meta property="article:tag" content="etl">
+<meta property="article:tag" content="projects">
+<link href="../../../../favicon.ico" rel="icon" type="image/x-icon">
+<link rel="publisher" href="https://plus.google.com/+BaptisteWicht">
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-2175227-7', 'auto');
+  var metas = document.getElementsByTagName('meta'), tagsList = [];
+  for (var i=0; i<metas.length; i++) {
+    if (metas[i].getAttribute('property') == 'article:tag') {
+      tagsList.push( metas[i].getAttribute('content'));
+    }
+  }
+  ga('set', 'dimension1', tagsList.join('|'));
+  ga('send', 'pageview');
+</script>
+</head>
+<body>
+
+<!-- Menubar -->
+
+<a href="#content" class="sr-only sr-only-focusable">Skip to main content</a>
+
+<div class="container-fluid">
+<!-- This keeps the margins nice -->
+    <div class="row">
+        <div class="col-sm-3 col-lg-2">
+            <nav class="navbar navbar-inverse navbar-fixed-side"><div class="navbar-header">
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" href="https://baptiste-wicht.com/">
+                        <span id="blog-title">Blog blog("Baptiste Wicht");</span>
+                    </a>
+                </div>
+<!-- /.navbar-header -->
+
+                <div class="collapse navbar-collapse navbar-ex1-collapse">
+                    <ul class="nav navbar-nav">
+<li>
+<a href="../../../../stories/about.html">About</a>
+                </li>
+<li>
+<a href="../../../../stories/publications.html">Publications</a>
+                </li>
+<li>
+<a href="../../../../stories/projects.html">Projects</a>
+                </li>
+<li>
+<a href="../../../../categories/index.html">Tags</a>
+                </li>
+<li>
+<a href="../../../../archive.html">Archives</a>
+                </li>
+<li>
+<a href="http://feeds.feedburner.com/BaptisteWicht">RSS</a>
+
+
+
+                            </li>
+<li class="navbar-content">
+                                <h3>Related posts</h3>
+                            </li>
+                            
+
+                            <li><a href="../../../2017/09/how-i-made-deep-learning-library-38-faster-to-compile-optimization-and-cpp17-if-constexpr.html">How I made my Deep Learning Library 38% faster to compile (Optimization and C++17 if constexpr)</a></li>
+<li><a href="../../../2016/12/pvs-studio-on-cpp-library-review.html">PVS-Studio on C++ Library Review</a></li>
+<li><a href="../decrease-dll-neural-network-compilation-time-with-c++17.html">Decrease DLL neural network compilation time with C++17</a></li>
+<li><a href="../../../2015/03/named-optional-template-parameters-compile-time.html">Named Optional Template parameters to configure a class at compile-time</a></li>
+<li><a href="../../../2015/05/cpp17-fold-expressions.html">C++17 Fold Expressions</a></li>
+<li><a href="../../../2017/08/expression-templates-library-etl-11.html">Expression Templates Library (ETL) 1.1</a></li>
+
+
+                            <li class="navbar-block">
+
+                        <li class="wicht-navbar-right">
+                            <a target="_blank" title="Follow @wichtounet on Twitter" href="https://twitter.com/wichtounet">
+                                <img src="../../../../assets/img/twitter.png" alt="Follow @wichtounet on Twitter"></a>
+                        </li>
+
+                        <li class="wicht-navbar-right">
+                            <a target="_blank" title="Follow +BaptisteWicht on Google+" href="https://plus.google.com/+BaptisteWicht">
+                                <img src="../../../../assets/img/google_plus.png" alt="Follow +BaptisteWicht on Google+"></a>
+                        </li>
+
+
+                    </ul>
+</div>
+<!-- /.navbar-collapse -->
+            </nav>
+</div> <!-- col -->
+        <div class="col-sm-9 col-lg-10">
+            <div id="content"></div>
+            
+<article class="post-text h-entry hentry postpage" itemscope="itemscope" itemtype="http://schema.org/Article"><header><h1 class="p-name entry-title" itemprop="headline name"><a href="../c%2B%2B17-migration-of-expression-templates-library-etl/" class="u-url">C++17 Migration of Expression Templates Library (ETL)</a></h1>
+
+        <div class="metadata">
+            <p class="byline author vcard p-author h-card"><span class="byline-name fn p-name" itemprop="author">
+                    Baptiste Wicht
+            </span></p>
+            <p class="dateline">
+            <a href="../c%2B%2B17-migration-of-expression-templates-library-etl/" rel="bookmark">
+            <time class="published dt-published" datetime="2018-02-02T14:03:26+01:00" itemprop="datePublished" title="2018-02-02 14:03">2018-02-02 14:03</time></a>
+            </p>
+                <p class="commentline">
+    
+    <a href="../c%2B%2B17-migration-of-expression-templates-library-etl/#disqus_thread" data-disqus-identifier="cache/posts/2018/02/c++17-migration-of-expression-templates-library-etl.html">Comments</a>
+
+
+            
+        </p>
+<p class="sourceline"><a href="../c%2B%2B17-migration-of-expression-templates-library-etl/index.rst" class="sourcelink">Source</a></p>
+
+        </div>
+        
+
+    </header><div class="e-content entry-content" itemprop="articleBody text">
+    <p>I've finally decided to migrate my Expression Templates Library (ETL) project to
+C++17. I've talking about doing that for a long time and I've released several
+releases without doing the change, but the next version will be a C++17 library.
+The reason why I didn't want to rush the change was that this means the library
+needs a very recent compiler that may not be available to everybody. Indeed,
+after this change, the ETL library now needs at least GCC 7.1 or Clang 4.0.</p>
+<p>I've already made some previous experiments in the past. For instance,
+<a class="reference external" href="https://baptiste-wicht.com/posts/2017/09/how-i-made-deep-learning-library-38-faster-to-compile-optimization-and-cpp17-if-constexpr.html">by using if constexpr, I've managed to speed up compilation by 38%</a> and I've also written an article about <a class="reference external" href="https://baptiste-wicht.com/posts/2015/05/cpp17-fold-expressions.html">the fold expressions introduced in C++17</a>. But I haven't migrated a full library yet. This is now done with ETL. In this article, I'll try to give some example of improvements by using C++17.</p>
+<p>This will only cover the C++17 features I'm using in the updated ETL library,
+I won't cover all of the new C++17 features.</p>
+<section id="if-constexpr"><h2>if constexpr</h2>
+<p>The most exciting new thing in C++17 for me is the <code>if constexpr</code>
+statement. This is a really really great thing. In essence, it's a normal
+<code>if</code> statement, but with one very important difference. The statement that
+is not taken (the <code>else</code> if the condition is true, or the <code>if
+constexpr</code> if the condition is false) is <em>discarded</em>. And what is interesting
+is what happens to <em>discarded</em> statements:</p>
+<ol class="arabic simple">
+<li><p>The body of a <em>discarded</em> statement does not participate in return type
+deduction.</p></li>
+<li><p>The discarded statement is not instantiated</p></li>
+<li><p>The discarded statement can <em>odr-use</em> a variable that is not defined</p></li>
+</ol>
+<p>Personally, I'm especially interested by points 1 and 2. Let's start with an
+example where point 1 is useful. In ETL, I have a make_temporary function. This
+function either forwards an ETL container or creates a temporary container from
+an ETL expression. This is based on a compile-time traits. The return type of
+the function is the not the same in both cases. What you did in those case
+before C++17, is use SFINAE and make two functions:</p>
+<div class="code"><pre class="code cpp"><a id="rest_code_27d23e2e053c4b498773a526ffd469c1-1" name="rest_code_27d23e2e053c4b498773a526ffd469c1-1" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_27d23e2e053c4b498773a526ffd469c1-1"></a><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">E</span><span class="p">,</span><span class="w"> </span><span class="n">cpp_enable_iff</span><span class="p">(</span><span class="n">is_dma</span><span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;</span><span class="p">)</span><span class="o">&gt;</span>
+<a id="rest_code_27d23e2e053c4b498773a526ffd469c1-2" name="rest_code_27d23e2e053c4b498773a526ffd469c1-2" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_27d23e2e053c4b498773a526ffd469c1-2"></a><span class="k">decltype</span><span class="p">(</span><span class="k">auto</span><span class="p">)</span><span class="w"> </span><span class="n">make_temporary</span><span class="p">(</span><span class="n">E</span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">expr</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="rest_code_27d23e2e053c4b498773a526ffd469c1-3" name="rest_code_27d23e2e053c4b498773a526ffd469c1-3" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_27d23e2e053c4b498773a526ffd469c1-3"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">forward</span><span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;</span><span class="p">(</span><span class="n">expr</span><span class="p">);</span>
+<a id="rest_code_27d23e2e053c4b498773a526ffd469c1-4" name="rest_code_27d23e2e053c4b498773a526ffd469c1-4" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_27d23e2e053c4b498773a526ffd469c1-4"></a><span class="p">}</span>
+<a id="rest_code_27d23e2e053c4b498773a526ffd469c1-5" name="rest_code_27d23e2e053c4b498773a526ffd469c1-5" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_27d23e2e053c4b498773a526ffd469c1-5"></a>
+<a id="rest_code_27d23e2e053c4b498773a526ffd469c1-6" name="rest_code_27d23e2e053c4b498773a526ffd469c1-6" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_27d23e2e053c4b498773a526ffd469c1-6"></a><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">E</span><span class="p">,</span><span class="w"> </span><span class="n">cpp_enable_iff</span><span class="p">(</span><span class="o">!</span><span class="n">is_dma</span><span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;</span><span class="p">)</span><span class="o">&gt;</span>
+<a id="rest_code_27d23e2e053c4b498773a526ffd469c1-7" name="rest_code_27d23e2e053c4b498773a526ffd469c1-7" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_27d23e2e053c4b498773a526ffd469c1-7"></a><span class="k">decltype</span><span class="p">(</span><span class="k">auto</span><span class="p">)</span><span class="w"> </span><span class="n">make_temporary</span><span class="p">(</span><span class="n">E</span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">expr</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="rest_code_27d23e2e053c4b498773a526ffd469c1-8" name="rest_code_27d23e2e053c4b498773a526ffd469c1-8" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_27d23e2e053c4b498773a526ffd469c1-8"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">force_temporary</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">forward</span><span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;</span><span class="p">(</span><span class="n">expr</span><span class="p">));</span>
+<a id="rest_code_27d23e2e053c4b498773a526ffd469c1-9" name="rest_code_27d23e2e053c4b498773a526ffd469c1-9" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_27d23e2e053c4b498773a526ffd469c1-9"></a><span class="p">}</span>
+</pre></div>
+<p>One version of the function will forward and the other version will force
+a temporary and the return type can be different since these are two different
+functions. This is not bad, but still requires two functions where you only want
+to write one. However, in C++17, we can do much better using <code>if constexpr</code>:</p>
+<div class="code"><pre class="code cpp"><a id="rest_code_bba03820b3884bcb816284f20029f285-1" name="rest_code_bba03820b3884bcb816284f20029f285-1" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_bba03820b3884bcb816284f20029f285-1"></a><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">E</span><span class="o">&gt;</span>
+<a id="rest_code_bba03820b3884bcb816284f20029f285-2" name="rest_code_bba03820b3884bcb816284f20029f285-2" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_bba03820b3884bcb816284f20029f285-2"></a><span class="k">decltype</span><span class="p">(</span><span class="k">auto</span><span class="p">)</span><span class="w"> </span><span class="n">make_temporary</span><span class="p">(</span><span class="n">E</span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">expr</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="rest_code_bba03820b3884bcb816284f20029f285-3" name="rest_code_bba03820b3884bcb816284f20029f285-3" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_bba03820b3884bcb816284f20029f285-3"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="k">constexpr</span><span class="w"> </span><span class="p">(</span><span class="n">is_dma</span><span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="rest_code_bba03820b3884bcb816284f20029f285-4" name="rest_code_bba03820b3884bcb816284f20029f285-4" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_bba03820b3884bcb816284f20029f285-4"></a><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">forward</span><span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;</span><span class="p">(</span><span class="n">expr</span><span class="p">);</span>
+<a id="rest_code_bba03820b3884bcb816284f20029f285-5" name="rest_code_bba03820b3884bcb816284f20029f285-5" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_bba03820b3884bcb816284f20029f285-5"></a><span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<a id="rest_code_bba03820b3884bcb816284f20029f285-6" name="rest_code_bba03820b3884bcb816284f20029f285-6" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_bba03820b3884bcb816284f20029f285-6"></a><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">force_temporary</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">forward</span><span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;</span><span class="p">(</span><span class="n">expr</span><span class="p">));</span>
+<a id="rest_code_bba03820b3884bcb816284f20029f285-7" name="rest_code_bba03820b3884bcb816284f20029f285-7" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_bba03820b3884bcb816284f20029f285-7"></a><span class="w">    </span><span class="p">}</span>
+<a id="rest_code_bba03820b3884bcb816284f20029f285-8" name="rest_code_bba03820b3884bcb816284f20029f285-8" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_bba03820b3884bcb816284f20029f285-8"></a><span class="p">}</span>
+</pre></div>
+<p>I think this version is really superior to the previous one. We only have one
+function and the logic is much clearer!</p>
+<p>Let's now see an advantage of the point 2. In ETL, there are two kinds of
+matrices, matrices with compile-time dimensions (fast matrices) and matrices
+with runtime dimensions (dynamic matrices). When they are used, for instance for
+a matrix-multiplication, I use static assertions for fast matrices and runtime
+assertions for dynamic matrices. Here is an example for the validation of the
+matrix-matrix multiplication:</p>
+<div class="code"><pre class="code cpp"><a id="rest_code_92304d300002485b8da98e8d4ee30fa0-1" name="rest_code_92304d300002485b8da98e8d4ee30fa0-1" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_92304d300002485b8da98e8d4ee30fa0-1"></a><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">C</span><span class="p">,</span><span class="w"> </span><span class="n">cpp_disable_iff</span><span class="p">(</span><span class="n">all_fast</span><span class="o">&lt;</span><span class="n">A</span><span class="p">,</span><span class="w"> </span><span class="n">B</span><span class="p">,</span><span class="w"> </span><span class="n">C</span><span class="o">&gt;</span><span class="p">)</span><span class="o">&gt;</span>
+<a id="rest_code_92304d300002485b8da98e8d4ee30fa0-2" name="rest_code_92304d300002485b8da98e8d4ee30fa0-2" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_92304d300002485b8da98e8d4ee30fa0-2"></a><span class="k">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">check</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">A</span><span class="o">&amp;</span><span class="w"> </span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">B</span><span class="o">&amp;</span><span class="w"> </span><span class="n">b</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">C</span><span class="o">&amp;</span><span class="w"> </span><span class="n">c</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="rest_code_92304d300002485b8da98e8d4ee30fa0-3" name="rest_code_92304d300002485b8da98e8d4ee30fa0-3" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_92304d300002485b8da98e8d4ee30fa0-3"></a><span class="w">    </span><span class="k">static_assert</span><span class="p">(</span><span class="n">all_2d</span><span class="o">&lt;</span><span class="n">A</span><span class="p">,</span><span class="n">B</span><span class="p">,</span><span class="n">C</span><span class="o">&gt;</span><span class="p">,</span><span class="w"> </span><span class="s">"Matrix multiplication needs matrices"</span><span class="p">);</span>
+<a id="rest_code_92304d300002485b8da98e8d4ee30fa0-4" name="rest_code_92304d300002485b8da98e8d4ee30fa0-4" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_92304d300002485b8da98e8d4ee30fa0-4"></a><span class="w">    </span><span class="n">cpp_assert</span><span class="p">(</span>
+<a id="rest_code_92304d300002485b8da98e8d4ee30fa0-5" name="rest_code_92304d300002485b8da98e8d4ee30fa0-5" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_92304d300002485b8da98e8d4ee30fa0-5"></a><span class="w">        </span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="w">         </span><span class="c1">//interior dimensions</span>
+<a id="rest_code_92304d300002485b8da98e8d4ee30fa0-6" name="rest_code_92304d300002485b8da98e8d4ee30fa0-6" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_92304d300002485b8da98e8d4ee30fa0-6"></a><span class="w">            </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="w">  </span><span class="c1">//exterior dimension 1</span>
+<a id="rest_code_92304d300002485b8da98e8d4ee30fa0-7" name="rest_code_92304d300002485b8da98e8d4ee30fa0-7" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_92304d300002485b8da98e8d4ee30fa0-7"></a><span class="w">            </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;</span><span class="p">(</span><span class="n">c</span><span class="p">),</span><span class="w"> </span><span class="c1">//exterior dimension 2</span>
+<a id="rest_code_92304d300002485b8da98e8d4ee30fa0-8" name="rest_code_92304d300002485b8da98e8d4ee30fa0-8" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_92304d300002485b8da98e8d4ee30fa0-8"></a><span class="w">        </span><span class="s">"Invalid sizes for multiplication"</span><span class="p">);</span>
+<a id="rest_code_92304d300002485b8da98e8d4ee30fa0-9" name="rest_code_92304d300002485b8da98e8d4ee30fa0-9" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_92304d300002485b8da98e8d4ee30fa0-9"></a><span class="w">    </span><span class="n">cpp_unused</span><span class="p">(</span><span class="n">a</span><span class="p">);</span>
+<a id="rest_code_92304d300002485b8da98e8d4ee30fa0-10" name="rest_code_92304d300002485b8da98e8d4ee30fa0-10" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_92304d300002485b8da98e8d4ee30fa0-10"></a><span class="w">    </span><span class="n">cpp_unused</span><span class="p">(</span><span class="n">b</span><span class="p">);</span>
+<a id="rest_code_92304d300002485b8da98e8d4ee30fa0-11" name="rest_code_92304d300002485b8da98e8d4ee30fa0-11" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_92304d300002485b8da98e8d4ee30fa0-11"></a><span class="w">    </span><span class="n">cpp_unused</span><span class="p">(</span><span class="n">c</span><span class="p">);</span>
+<a id="rest_code_92304d300002485b8da98e8d4ee30fa0-12" name="rest_code_92304d300002485b8da98e8d4ee30fa0-12" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_92304d300002485b8da98e8d4ee30fa0-12"></a><span class="p">}</span>
+<a id="rest_code_92304d300002485b8da98e8d4ee30fa0-13" name="rest_code_92304d300002485b8da98e8d4ee30fa0-13" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_92304d300002485b8da98e8d4ee30fa0-13"></a>
+<a id="rest_code_92304d300002485b8da98e8d4ee30fa0-14" name="rest_code_92304d300002485b8da98e8d4ee30fa0-14" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_92304d300002485b8da98e8d4ee30fa0-14"></a><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">C</span><span class="p">,</span><span class="w"> </span><span class="n">cpp_enable_iff</span><span class="p">(</span><span class="n">all_fast</span><span class="o">&lt;</span><span class="n">A</span><span class="p">,</span><span class="w"> </span><span class="n">B</span><span class="p">,</span><span class="w"> </span><span class="n">C</span><span class="o">&gt;</span><span class="p">)</span><span class="o">&gt;</span>
+<a id="rest_code_92304d300002485b8da98e8d4ee30fa0-15" name="rest_code_92304d300002485b8da98e8d4ee30fa0-15" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_92304d300002485b8da98e8d4ee30fa0-15"></a><span class="k">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">check</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">A</span><span class="o">&amp;</span><span class="w"> </span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">B</span><span class="o">&amp;</span><span class="w"> </span><span class="n">b</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">C</span><span class="o">&amp;</span><span class="w"> </span><span class="n">c</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="rest_code_92304d300002485b8da98e8d4ee30fa0-16" name="rest_code_92304d300002485b8da98e8d4ee30fa0-16" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_92304d300002485b8da98e8d4ee30fa0-16"></a><span class="w">    </span><span class="k">static_assert</span><span class="p">(</span><span class="n">all_2d</span><span class="o">&lt;</span><span class="n">A</span><span class="p">,</span><span class="n">B</span><span class="p">,</span><span class="n">C</span><span class="o">&gt;</span><span class="p">,</span><span class="w"> </span><span class="s">"Matrix multiplication needs matrices"</span><span class="p">);</span>
+<a id="rest_code_92304d300002485b8da98e8d4ee30fa0-17" name="rest_code_92304d300002485b8da98e8d4ee30fa0-17" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_92304d300002485b8da98e8d4ee30fa0-17"></a><span class="w">    </span><span class="k">static_assert</span><span class="p">(</span>
+<a id="rest_code_92304d300002485b8da98e8d4ee30fa0-18" name="rest_code_92304d300002485b8da98e8d4ee30fa0-18" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_92304d300002485b8da98e8d4ee30fa0-18"></a><span class="w">        </span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">A</span><span class="o">&gt;</span><span class="p">()</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">B</span><span class="o">&gt;</span><span class="p">()</span><span class="w">         </span><span class="c1">//interior dimensions</span>
+<a id="rest_code_92304d300002485b8da98e8d4ee30fa0-19" name="rest_code_92304d300002485b8da98e8d4ee30fa0-19" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_92304d300002485b8da98e8d4ee30fa0-19"></a><span class="w">            </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">A</span><span class="o">&gt;</span><span class="p">()</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">C</span><span class="o">&gt;</span><span class="p">()</span><span class="w">  </span><span class="c1">//exterior dimension 1</span>
+<a id="rest_code_92304d300002485b8da98e8d4ee30fa0-20" name="rest_code_92304d300002485b8da98e8d4ee30fa0-20" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_92304d300002485b8da98e8d4ee30fa0-20"></a><span class="w">            </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">B</span><span class="o">&gt;</span><span class="p">()</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">C</span><span class="o">&gt;</span><span class="p">(),</span><span class="w"> </span><span class="c1">//exterior dimension 2</span>
+<a id="rest_code_92304d300002485b8da98e8d4ee30fa0-21" name="rest_code_92304d300002485b8da98e8d4ee30fa0-21" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_92304d300002485b8da98e8d4ee30fa0-21"></a><span class="w">        </span><span class="s">"Invalid sizes for multiplication"</span><span class="p">);</span>
+<a id="rest_code_92304d300002485b8da98e8d4ee30fa0-22" name="rest_code_92304d300002485b8da98e8d4ee30fa0-22" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_92304d300002485b8da98e8d4ee30fa0-22"></a><span class="w">    </span><span class="n">cpp_unused</span><span class="p">(</span><span class="n">a</span><span class="p">);</span>
+<a id="rest_code_92304d300002485b8da98e8d4ee30fa0-23" name="rest_code_92304d300002485b8da98e8d4ee30fa0-23" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_92304d300002485b8da98e8d4ee30fa0-23"></a><span class="w">    </span><span class="n">cpp_unused</span><span class="p">(</span><span class="n">b</span><span class="p">);</span>
+<a id="rest_code_92304d300002485b8da98e8d4ee30fa0-24" name="rest_code_92304d300002485b8da98e8d4ee30fa0-24" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_92304d300002485b8da98e8d4ee30fa0-24"></a><span class="w">    </span><span class="n">cpp_unused</span><span class="p">(</span><span class="n">c</span><span class="p">);</span>
+<a id="rest_code_92304d300002485b8da98e8d4ee30fa0-25" name="rest_code_92304d300002485b8da98e8d4ee30fa0-25" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_92304d300002485b8da98e8d4ee30fa0-25"></a><span class="p">}</span>
+</pre></div>
+<p>Again, we use SFINAE to distinguish the two different cases. In that case, we
+cannot use a normal <code>if</code> since the value of the dimensions cannot be taken
+at compile-time for dynamic matrices, more precisely, some templates cannot be
+instantiated for dynamic matrices. As for the cpp_unused, we have to use for the
+static version because we don't use them and for the dynamic version because
+they won't be used if the assertions are not enabled. Let's use <code>if constexpr</code> to avoid having two functions:</p>
+<div class="code"><pre class="code cpp"><a id="rest_code_f835e4babc09425c994b1cec14bc0dca-1" name="rest_code_f835e4babc09425c994b1cec14bc0dca-1" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_f835e4babc09425c994b1cec14bc0dca-1"></a><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">C</span><span class="o">&gt;</span>
+<a id="rest_code_f835e4babc09425c994b1cec14bc0dca-2" name="rest_code_f835e4babc09425c994b1cec14bc0dca-2" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_f835e4babc09425c994b1cec14bc0dca-2"></a><span class="k">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">check</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">A</span><span class="o">&amp;</span><span class="w"> </span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">B</span><span class="o">&amp;</span><span class="w"> </span><span class="n">b</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">C</span><span class="o">&amp;</span><span class="w"> </span><span class="n">c</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="rest_code_f835e4babc09425c994b1cec14bc0dca-3" name="rest_code_f835e4babc09425c994b1cec14bc0dca-3" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_f835e4babc09425c994b1cec14bc0dca-3"></a><span class="w">    </span><span class="k">static_assert</span><span class="p">(</span><span class="n">all_2d</span><span class="o">&lt;</span><span class="n">A</span><span class="p">,</span><span class="n">B</span><span class="p">,</span><span class="n">C</span><span class="o">&gt;</span><span class="p">,</span><span class="w"> </span><span class="s">"Matrix multiplication needs matrices"</span><span class="p">);</span>
+<a id="rest_code_f835e4babc09425c994b1cec14bc0dca-4" name="rest_code_f835e4babc09425c994b1cec14bc0dca-4" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_f835e4babc09425c994b1cec14bc0dca-4"></a>
+<a id="rest_code_f835e4babc09425c994b1cec14bc0dca-5" name="rest_code_f835e4babc09425c994b1cec14bc0dca-5" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_f835e4babc09425c994b1cec14bc0dca-5"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="k">constexpr</span><span class="w"> </span><span class="p">(</span><span class="n">all_fast</span><span class="o">&lt;</span><span class="n">A</span><span class="p">,</span><span class="w"> </span><span class="n">B</span><span class="p">,</span><span class="w"> </span><span class="n">C</span><span class="o">&gt;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="rest_code_f835e4babc09425c994b1cec14bc0dca-6" name="rest_code_f835e4babc09425c994b1cec14bc0dca-6" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_f835e4babc09425c994b1cec14bc0dca-6"></a><span class="w">        </span><span class="k">static_assert</span><span class="p">(</span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">A</span><span class="o">&gt;</span><span class="p">()</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">B</span><span class="o">&gt;</span><span class="p">()</span><span class="w">         </span><span class="c1">//interior dimensions</span>
+<a id="rest_code_f835e4babc09425c994b1cec14bc0dca-7" name="rest_code_f835e4babc09425c994b1cec14bc0dca-7" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_f835e4babc09425c994b1cec14bc0dca-7"></a><span class="w">                          </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">A</span><span class="o">&gt;</span><span class="p">()</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">C</span><span class="o">&gt;</span><span class="p">()</span><span class="w">  </span><span class="c1">//exterior dimension 1</span>
+<a id="rest_code_f835e4babc09425c994b1cec14bc0dca-8" name="rest_code_f835e4babc09425c994b1cec14bc0dca-8" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_f835e4babc09425c994b1cec14bc0dca-8"></a><span class="w">                          </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">B</span><span class="o">&gt;</span><span class="p">()</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">C</span><span class="o">&gt;</span><span class="p">(),</span><span class="w"> </span><span class="c1">//exterior dimension 2</span>
+<a id="rest_code_f835e4babc09425c994b1cec14bc0dca-9" name="rest_code_f835e4babc09425c994b1cec14bc0dca-9" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_f835e4babc09425c994b1cec14bc0dca-9"></a><span class="w">                      </span><span class="s">"Invalid sizes for multiplication"</span><span class="p">);</span>
+<a id="rest_code_f835e4babc09425c994b1cec14bc0dca-10" name="rest_code_f835e4babc09425c994b1cec14bc0dca-10" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_f835e4babc09425c994b1cec14bc0dca-10"></a><span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<a id="rest_code_f835e4babc09425c994b1cec14bc0dca-11" name="rest_code_f835e4babc09425c994b1cec14bc0dca-11" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_f835e4babc09425c994b1cec14bc0dca-11"></a><span class="w">        </span><span class="n">cpp_assert</span><span class="p">(</span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="w">         </span><span class="c1">//interior dimensions</span>
+<a id="rest_code_f835e4babc09425c994b1cec14bc0dca-12" name="rest_code_f835e4babc09425c994b1cec14bc0dca-12" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_f835e4babc09425c994b1cec14bc0dca-12"></a><span class="w">                       </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="w">  </span><span class="c1">//exterior dimension 1</span>
+<a id="rest_code_f835e4babc09425c994b1cec14bc0dca-13" name="rest_code_f835e4babc09425c994b1cec14bc0dca-13" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_f835e4babc09425c994b1cec14bc0dca-13"></a><span class="w">                       </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;</span><span class="p">(</span><span class="n">c</span><span class="p">),</span><span class="w"> </span><span class="c1">//exterior dimension 2</span>
+<a id="rest_code_f835e4babc09425c994b1cec14bc0dca-14" name="rest_code_f835e4babc09425c994b1cec14bc0dca-14" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_f835e4babc09425c994b1cec14bc0dca-14"></a><span class="w">                   </span><span class="s">"Invalid sizes for multiplication"</span><span class="p">);</span>
+<a id="rest_code_f835e4babc09425c994b1cec14bc0dca-15" name="rest_code_f835e4babc09425c994b1cec14bc0dca-15" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_f835e4babc09425c994b1cec14bc0dca-15"></a><span class="w">    </span><span class="p">}</span>
+<a id="rest_code_f835e4babc09425c994b1cec14bc0dca-16" name="rest_code_f835e4babc09425c994b1cec14bc0dca-16" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_f835e4babc09425c994b1cec14bc0dca-16"></a>
+<a id="rest_code_f835e4babc09425c994b1cec14bc0dca-17" name="rest_code_f835e4babc09425c994b1cec14bc0dca-17" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_f835e4babc09425c994b1cec14bc0dca-17"></a><span class="w">    </span><span class="n">cpp_unused</span><span class="p">(</span><span class="n">a</span><span class="p">);</span>
+<a id="rest_code_f835e4babc09425c994b1cec14bc0dca-18" name="rest_code_f835e4babc09425c994b1cec14bc0dca-18" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_f835e4babc09425c994b1cec14bc0dca-18"></a><span class="w">    </span><span class="n">cpp_unused</span><span class="p">(</span><span class="n">b</span><span class="p">);</span>
+<a id="rest_code_f835e4babc09425c994b1cec14bc0dca-19" name="rest_code_f835e4babc09425c994b1cec14bc0dca-19" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_f835e4babc09425c994b1cec14bc0dca-19"></a><span class="w">    </span><span class="n">cpp_unused</span><span class="p">(</span><span class="n">c</span><span class="p">);</span>
+<a id="rest_code_f835e4babc09425c994b1cec14bc0dca-20" name="rest_code_f835e4babc09425c994b1cec14bc0dca-20" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_f835e4babc09425c994b1cec14bc0dca-20"></a><span class="p">}</span>
+</pre></div>
+<p>Since the <em>discarded</em> won't be instantiated, we can now use a single function!
+We also avoid some duplications of the first static assertion of the unused
+statements. Pretty great, right ? But we can do better with C++17. Indeed, it
+added a nice new attribute <code>[[maybe_unused]]</code>. Let's see what this gives
+us:</p>
+<div class="code"><pre class="code cpp"><a id="rest_code_6f6600bd7eb54dc5bdb208da4b948370-1" name="rest_code_6f6600bd7eb54dc5bdb208da4b948370-1" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_6f6600bd7eb54dc5bdb208da4b948370-1"></a><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">C</span><span class="o">&gt;</span>
+<a id="rest_code_6f6600bd7eb54dc5bdb208da4b948370-2" name="rest_code_6f6600bd7eb54dc5bdb208da4b948370-2" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_6f6600bd7eb54dc5bdb208da4b948370-2"></a><span class="k">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">check</span><span class="p">([[</span><span class="n">maybe_unused</span><span class="p">]]</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">A</span><span class="o">&amp;</span><span class="w"> </span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="p">[[</span><span class="n">maybe_unused</span><span class="p">]]</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">B</span><span class="o">&amp;</span><span class="w"> </span><span class="n">b</span><span class="p">,</span><span class="w"> </span><span class="p">[[</span><span class="n">maybe_unused</span><span class="p">]]</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">C</span><span class="o">&amp;</span><span class="w"> </span><span class="n">c</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="rest_code_6f6600bd7eb54dc5bdb208da4b948370-3" name="rest_code_6f6600bd7eb54dc5bdb208da4b948370-3" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_6f6600bd7eb54dc5bdb208da4b948370-3"></a><span class="w">    </span><span class="k">static_assert</span><span class="p">(</span><span class="n">all_2d</span><span class="o">&lt;</span><span class="n">A</span><span class="p">,</span><span class="n">B</span><span class="p">,</span><span class="n">C</span><span class="o">&gt;</span><span class="p">,</span><span class="w"> </span><span class="s">"Matrix multiplication needs matrices"</span><span class="p">);</span>
+<a id="rest_code_6f6600bd7eb54dc5bdb208da4b948370-4" name="rest_code_6f6600bd7eb54dc5bdb208da4b948370-4" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_6f6600bd7eb54dc5bdb208da4b948370-4"></a>
+<a id="rest_code_6f6600bd7eb54dc5bdb208da4b948370-5" name="rest_code_6f6600bd7eb54dc5bdb208da4b948370-5" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_6f6600bd7eb54dc5bdb208da4b948370-5"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="k">constexpr</span><span class="w"> </span><span class="p">(</span><span class="n">all_fast</span><span class="o">&lt;</span><span class="n">A</span><span class="p">,</span><span class="w"> </span><span class="n">B</span><span class="p">,</span><span class="w"> </span><span class="n">C</span><span class="o">&gt;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="rest_code_6f6600bd7eb54dc5bdb208da4b948370-6" name="rest_code_6f6600bd7eb54dc5bdb208da4b948370-6" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_6f6600bd7eb54dc5bdb208da4b948370-6"></a><span class="w">        </span><span class="k">static_assert</span><span class="p">(</span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">A</span><span class="o">&gt;</span><span class="p">()</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">B</span><span class="o">&gt;</span><span class="p">()</span><span class="w">         </span><span class="c1">//interior dimensions</span>
+<a id="rest_code_6f6600bd7eb54dc5bdb208da4b948370-7" name="rest_code_6f6600bd7eb54dc5bdb208da4b948370-7" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_6f6600bd7eb54dc5bdb208da4b948370-7"></a><span class="w">                          </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">A</span><span class="o">&gt;</span><span class="p">()</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">C</span><span class="o">&gt;</span><span class="p">()</span><span class="w">  </span><span class="c1">//exterior dimension 1</span>
+<a id="rest_code_6f6600bd7eb54dc5bdb208da4b948370-8" name="rest_code_6f6600bd7eb54dc5bdb208da4b948370-8" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_6f6600bd7eb54dc5bdb208da4b948370-8"></a><span class="w">                          </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">B</span><span class="o">&gt;</span><span class="p">()</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">C</span><span class="o">&gt;</span><span class="p">(),</span><span class="w"> </span><span class="c1">//exterior dimension 2</span>
+<a id="rest_code_6f6600bd7eb54dc5bdb208da4b948370-9" name="rest_code_6f6600bd7eb54dc5bdb208da4b948370-9" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_6f6600bd7eb54dc5bdb208da4b948370-9"></a><span class="w">                      </span><span class="s">"Invalid sizes for multiplication"</span><span class="p">);</span>
+<a id="rest_code_6f6600bd7eb54dc5bdb208da4b948370-10" name="rest_code_6f6600bd7eb54dc5bdb208da4b948370-10" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_6f6600bd7eb54dc5bdb208da4b948370-10"></a><span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<a id="rest_code_6f6600bd7eb54dc5bdb208da4b948370-11" name="rest_code_6f6600bd7eb54dc5bdb208da4b948370-11" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_6f6600bd7eb54dc5bdb208da4b948370-11"></a><span class="w">        </span><span class="n">cpp_assert</span><span class="p">(</span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="w">         </span><span class="c1">//interior dimensions</span>
+<a id="rest_code_6f6600bd7eb54dc5bdb208da4b948370-12" name="rest_code_6f6600bd7eb54dc5bdb208da4b948370-12" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_6f6600bd7eb54dc5bdb208da4b948370-12"></a><span class="w">                       </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="w">  </span><span class="c1">//exterior dimension 1</span>
+<a id="rest_code_6f6600bd7eb54dc5bdb208da4b948370-13" name="rest_code_6f6600bd7eb54dc5bdb208da4b948370-13" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_6f6600bd7eb54dc5bdb208da4b948370-13"></a><span class="w">                       </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">dim</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;</span><span class="p">(</span><span class="n">c</span><span class="p">),</span><span class="w"> </span><span class="c1">//exterior dimension 2</span>
+<a id="rest_code_6f6600bd7eb54dc5bdb208da4b948370-14" name="rest_code_6f6600bd7eb54dc5bdb208da4b948370-14" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_6f6600bd7eb54dc5bdb208da4b948370-14"></a><span class="w">                   </span><span class="s">"Invalid sizes for multiplication"</span><span class="p">);</span>
+<a id="rest_code_6f6600bd7eb54dc5bdb208da4b948370-15" name="rest_code_6f6600bd7eb54dc5bdb208da4b948370-15" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_6f6600bd7eb54dc5bdb208da4b948370-15"></a><span class="w">    </span><span class="p">}</span>
+<a id="rest_code_6f6600bd7eb54dc5bdb208da4b948370-16" name="rest_code_6f6600bd7eb54dc5bdb208da4b948370-16" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_6f6600bd7eb54dc5bdb208da4b948370-16"></a><span class="p">}</span>
+</pre></div>
+<p>No more need for <code>cpp_unused</code> trick :) This attribute tells the compiler
+that a variable or parameter can be sometimes unused and therefore does not lead
+to a warning for it. Only one thing that is not great with this attribute is
+that it's too long, 16 characters. It almost double the width of my check
+function signature. Imagine if you have more parameters, you'll soon have to use
+several lines. I wish there was a way to set an attribute for all parameters
+together or a shortcut. I'm considering whether to use a short macro to use in
+place of it, but haven't yet decided.</p>
+<p>Just a note, if you have <code>else if</code> statements, you need to set them as
+<code>constexpr</code> as well! This was a bit weird for me, but you can figure it as
+if the condition is <code>constexpr</code>, then the <code>if</code> (or <code>else if</code>)
+is <code>constexpr</code> as well.</p>
+<p>Overall, I'm really satisfied with the new <cite>if constexpr</cite>! This really makes the
+code much nicer in many cases, especially if you abuse metaprogramming like
+I do.</p>
+<p>You may remember that I've <a class="reference external" href="https://baptiste-wicht.com/posts/2015/07/simulate-static_if-with-c11c14.html">coded a version of static if in the past with C++14</a> in the past. This was able to solve point 2, but not point 1 and was much uglier. Now we have a good solution to it. I've replaced two of these in the current code with the new <code>if constexpr</code>.</p>
+</section><section id="fold-expressions"><h2>Fold expressions</h2>
+<p>For me, fold expressions is the second major feature of C++17. I wont' go into
+too much details here, since
+<a class="reference external" href="https://baptiste-wicht.com/posts/2015/05/cpp17-fold-expressions.html">I've already talked about fold expression in the past</a>
+. But I'll show two examples of refactorings I've been able to do with this.</p>
+<p>Here was the size() function of a static matrix in ETL before:</p>
+<div class="code"><pre class="code cpp"><a id="rest_code_65cab5485da648c0987251d40d98ccab-1" name="rest_code_65cab5485da648c0987251d40d98ccab-1" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_65cab5485da648c0987251d40d98ccab-1"></a><span class="k">static</span><span class="w"> </span><span class="k">constexpr</span><span class="w"> </span><span class="kt">size_t</span><span class="w"> </span><span class="nf">size</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<a id="rest_code_65cab5485da648c0987251d40d98ccab-2" name="rest_code_65cab5485da648c0987251d40d98ccab-2" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_65cab5485da648c0987251d40d98ccab-2"></a><span class="w">   </span><span class="k">return</span><span class="w"> </span><span class="n">mul_all</span><span class="o">&lt;</span><span class="n">Dims</span><span class="p">...</span><span class="o">&gt;</span><span class="p">;</span>
+<a id="rest_code_65cab5485da648c0987251d40d98ccab-3" name="rest_code_65cab5485da648c0987251d40d98ccab-3" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_65cab5485da648c0987251d40d98ccab-3"></a><span class="p">}</span>
+</pre></div>
+<p>The Dims parameter pack from the declaration of fast_matrix:</p>
+<div class="code"><pre class="code cpp"><a id="rest_code_9cc767c6f8cd4ce88d16f6a2b038b505-1" name="rest_code_9cc767c6f8cd4ce88d16f6a2b038b505-1" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_9cc767c6f8cd4ce88d16f6a2b038b505-1"></a><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">T</span><span class="p">,</span><span class="w"> </span><span class="k">typename</span><span class="w"> </span><span class="nc">ST</span><span class="p">,</span><span class="w"> </span><span class="n">order</span><span class="w"> </span><span class="n">SO</span><span class="p">,</span><span class="w"> </span><span class="kt">size_t</span><span class="p">...</span><span class="w"> </span><span class="n">Dims</span><span class="o">&gt;</span>
+<a id="rest_code_9cc767c6f8cd4ce88d16f6a2b038b505-2" name="rest_code_9cc767c6f8cd4ce88d16f6a2b038b505-2" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_9cc767c6f8cd4ce88d16f6a2b038b505-2"></a><span class="k">struct</span><span class="w"> </span><span class="nc">fast_matrix_impl</span><span class="p">;</span>
+</pre></div>
+<p>And the mul_all is a simple helper that multiplies each value of the variadic
+parameter pack:</p>
+<div class="code"><pre class="code cpp"><a id="rest_code_2b281ba2b22649c28edfae8b9c47038c-1" name="rest_code_2b281ba2b22649c28edfae8b9c47038c-1" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_2b281ba2b22649c28edfae8b9c47038c-1"></a><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="kt">size_t</span><span class="w"> </span><span class="n">F</span><span class="p">,</span><span class="w"> </span><span class="kt">size_t</span><span class="p">...</span><span class="w"> </span><span class="n">Dims</span><span class="o">&gt;</span>
+<a id="rest_code_2b281ba2b22649c28edfae8b9c47038c-2" name="rest_code_2b281ba2b22649c28edfae8b9c47038c-2" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_2b281ba2b22649c28edfae8b9c47038c-2"></a><span class="k">struct</span><span class="w"> </span><span class="nc">mul_all_impl</span><span class="w"> </span><span class="k">final</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">integral_constant</span><span class="o">&lt;</span><span class="kt">size_t</span><span class="p">,</span><span class="w"> </span><span class="n">F</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">mul_all_impl</span><span class="o">&lt;</span><span class="n">Dims</span><span class="p">...</span><span class="o">&gt;::</span><span class="n">value</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{};</span>
+<a id="rest_code_2b281ba2b22649c28edfae8b9c47038c-3" name="rest_code_2b281ba2b22649c28edfae8b9c47038c-3" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_2b281ba2b22649c28edfae8b9c47038c-3"></a>
+<a id="rest_code_2b281ba2b22649c28edfae8b9c47038c-4" name="rest_code_2b281ba2b22649c28edfae8b9c47038c-4" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_2b281ba2b22649c28edfae8b9c47038c-4"></a><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="kt">size_t</span><span class="w"> </span><span class="n">F</span><span class="o">&gt;</span>
+<a id="rest_code_2b281ba2b22649c28edfae8b9c47038c-5" name="rest_code_2b281ba2b22649c28edfae8b9c47038c-5" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_2b281ba2b22649c28edfae8b9c47038c-5"></a><span class="k">struct</span><span class="w"> </span><span class="nc">mul_all_impl</span><span class="o">&lt;</span><span class="n">F</span><span class="o">&gt;</span><span class="w"> </span><span class="k">final</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">integral_constant</span><span class="o">&lt;</span><span class="kt">size_t</span><span class="p">,</span><span class="w"> </span><span class="n">F</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{};</span>
+<a id="rest_code_2b281ba2b22649c28edfae8b9c47038c-6" name="rest_code_2b281ba2b22649c28edfae8b9c47038c-6" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_2b281ba2b22649c28edfae8b9c47038c-6"></a>
+<a id="rest_code_2b281ba2b22649c28edfae8b9c47038c-7" name="rest_code_2b281ba2b22649c28edfae8b9c47038c-7" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_2b281ba2b22649c28edfae8b9c47038c-7"></a><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="kt">size_t</span><span class="w"> </span><span class="n">F</span><span class="p">,</span><span class="w"> </span><span class="kt">size_t</span><span class="p">...</span><span class="w"> </span><span class="n">Dims</span><span class="o">&gt;</span>
+<a id="rest_code_2b281ba2b22649c28edfae8b9c47038c-8" name="rest_code_2b281ba2b22649c28edfae8b9c47038c-8" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_2b281ba2b22649c28edfae8b9c47038c-8"></a><span class="k">constexpr</span><span class="w"> </span><span class="kt">size_t</span><span class="w"> </span><span class="n">mul_all</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mul_all_impl</span><span class="o">&lt;</span><span class="n">F</span><span class="p">,</span><span class="w"> </span><span class="n">Dims</span><span class="p">...</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">;</span>
+</pre></div>
+<p>Before C++17, the only way to compute this result at compilation time was to use
+template recursion, either with types or with constexpr functions. I think this
+is pretty heavy only for doing a multiplication sum. Now, with fold expressions,
+we can manipulate the parameter pack directly and rewrite our size function:</p>
+<div class="code"><pre class="code cpp"><a id="rest_code_849d2dea89ee49878d30b8c4f07e8054-1" name="rest_code_849d2dea89ee49878d30b8c4f07e8054-1" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_849d2dea89ee49878d30b8c4f07e8054-1"></a><span class="k">static</span><span class="w"> </span><span class="k">constexpr</span><span class="w"> </span><span class="kt">size_t</span><span class="w"> </span><span class="nf">size</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<a id="rest_code_849d2dea89ee49878d30b8c4f07e8054-2" name="rest_code_849d2dea89ee49878d30b8c4f07e8054-2" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_849d2dea89ee49878d30b8c4f07e8054-2"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">(</span><span class="n">Dims</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">...);</span>
+<a id="rest_code_849d2dea89ee49878d30b8c4f07e8054-3" name="rest_code_849d2dea89ee49878d30b8c4f07e8054-3" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_849d2dea89ee49878d30b8c4f07e8054-3"></a><span class="p">}</span>
+</pre></div>
+<p>This is much better! This clearly states that each value of the parameter should
+be multiplied together. For instance <code>1,2,3</code> will become <code>(1*2)*3</code>.</p>
+<p>Another place where I was using this was to code a traits that tests if a set of
+boolean are all true at compilation-time:</p>
+<div class="code"><pre class="code cpp"><a id="rest_code_4db75bbdcce3408aac6d49c5f07d7d9e-1" name="rest_code_4db75bbdcce3408aac6d49c5f07d7d9e-1" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_4db75bbdcce3408aac6d49c5f07d7d9e-1"></a><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="kt">bool</span><span class="p">...</span><span class="w"> </span><span class="n">B</span><span class="o">&gt;</span>
+<a id="rest_code_4db75bbdcce3408aac6d49c5f07d7d9e-2" name="rest_code_4db75bbdcce3408aac6d49c5f07d7d9e-2" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_4db75bbdcce3408aac6d49c5f07d7d9e-2"></a><span class="k">constexpr</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="n">and_v</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span>
+<a id="rest_code_4db75bbdcce3408aac6d49c5f07d7d9e-3" name="rest_code_4db75bbdcce3408aac6d49c5f07d7d9e-3" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_4db75bbdcce3408aac6d49c5f07d7d9e-3"></a><span class="w">    </span><span class="n">cpp</span><span class="o">::</span><span class="n">tmp_detail</span><span class="o">::</span><span class="n">bool_list</span><span class="o">&lt;</span><span class="nb">true</span><span class="p">,</span><span class="w"> </span><span class="n">B</span><span class="p">...</span><span class="o">&gt;</span><span class="p">,</span>
+<a id="rest_code_4db75bbdcce3408aac6d49c5f07d7d9e-4" name="rest_code_4db75bbdcce3408aac6d49c5f07d7d9e-4" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_4db75bbdcce3408aac6d49c5f07d7d9e-4"></a><span class="w">    </span><span class="n">cpp</span><span class="o">::</span><span class="n">tmp_detail</span><span class="o">::</span><span class="n">bool_list</span><span class="o">&lt;</span><span class="n">B</span><span class="p">...,</span><span class="w"> </span><span class="nb">true</span><span class="o">&gt;&gt;::</span><span class="n">value</span><span class="p">;</span>
+</pre></div>
+<p>I was using a nice trick here to test if all booleans are true. I don't remember
+where I picked it up, but it's quite nice and very fast to compile.</p>
+<p>This was used for instance to test that a set of expressions are all
+single-precision floating points:</p>
+<div class="code"><pre class="code cpp"><a id="rest_code_d8bb4cce868c4b7b9e2fb556397f961c-1" name="rest_code_d8bb4cce868c4b7b9e2fb556397f961c-1" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_d8bb4cce868c4b7b9e2fb556397f961c-1"></a><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="k">typename</span><span class="p">...</span><span class="w"> </span><span class="n">E</span><span class="o">&gt;</span>
+<a id="rest_code_d8bb4cce868c4b7b9e2fb556397f961c-2" name="rest_code_d8bb4cce868c4b7b9e2fb556397f961c-2" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_d8bb4cce868c4b7b9e2fb556397f961c-2"></a><span class="k">constexpr</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="n">all_single_precision</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">and_v</span><span class="o">&lt;</span><span class="p">(</span><span class="n">is_single_precision</span><span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;</span><span class="p">)...</span><span class="o">&gt;</span><span class="p">;</span>
+</pre></div>
+<p>Now, we can get rid of the and_v traits and use directly the parameter pack
+directly:</p>
+<div class="code"><pre class="code cpp"><a id="rest_code_9b4d33e212714625b670d26b807a44ed-1" name="rest_code_9b4d33e212714625b670d26b807a44ed-1" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_9b4d33e212714625b670d26b807a44ed-1"></a><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="k">typename</span><span class="p">...</span><span class="w"> </span><span class="n">E</span><span class="o">&gt;</span>
+<a id="rest_code_9b4d33e212714625b670d26b807a44ed-2" name="rest_code_9b4d33e212714625b670d26b807a44ed-2" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_9b4d33e212714625b670d26b807a44ed-2"></a><span class="k">constexpr</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="n">all_single_precision</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">is_single_precision</span><span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="p">...);</span>
+</pre></div>
+<p>I think using fold expressions results in much clearer syntax and better code
+and it's a pretty nice feature overall :)</p>
+<p>As a note here, I'd like to mention, that you can also use this syntax to call
+a function on each argument that you have, which makes for much nicer syntax as
+well and I'll be using that in DLL once I migrate it to C++17.</p>
+</section><section id="miscellaneous"><h2>Miscellaneous</h2>
+<p>There are also a few more C++17 features that I've used to improve ETL, but that
+have a bit less impact.</p>
+<p>A very nice feature of C++17 is the support for structured bindings. Often you
+end up with a function that returns several parts of information in the form of
+a pair or a tuple or even a fixed-size array. You can use an object for this,
+but if you don't, you end up with code that is not terribly nice:</p>
+<div class="code"><pre class="code cpp"><a id="rest_code_727cbdd2c7cb48b8b20ce805aaedb269-1" name="rest_code_727cbdd2c7cb48b8b20ce805aaedb269-1" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_727cbdd2c7cb48b8b20ce805aaedb269-1"></a><span class="kt">size_t</span><span class="w"> </span><span class="n">index</span><span class="p">;</span>
+<a id="rest_code_727cbdd2c7cb48b8b20ce805aaedb269-2" name="rest_code_727cbdd2c7cb48b8b20ce805aaedb269-2" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_727cbdd2c7cb48b8b20ce805aaedb269-2"></a><span class="kt">bool</span><span class="w"> </span><span class="n">result</span><span class="p">;</span>
+<a id="rest_code_727cbdd2c7cb48b8b20ce805aaedb269-3" name="rest_code_727cbdd2c7cb48b8b20ce805aaedb269-3" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_727cbdd2c7cb48b8b20ce805aaedb269-3"></a><span class="kt">float</span><span class="w"> </span><span class="n">alpha</span><span class="p">;</span>
+<a id="rest_code_727cbdd2c7cb48b8b20ce805aaedb269-4" name="rest_code_727cbdd2c7cb48b8b20ce805aaedb269-4" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_727cbdd2c7cb48b8b20ce805aaedb269-4"></a><span class="n">std</span><span class="o">::</span><span class="n">tie</span><span class="p">(</span><span class="n">index</span><span class="p">,</span><span class="w"> </span><span class="n">result</span><span class="p">,</span><span class="w"> </span><span class="n">alpha</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">my_function</span><span class="p">();</span>
+</pre></div>
+<p>It's not terribly bad, but in these cases, you should be be hoping for something
+better. With c++17, you can do better:</p>
+<div class="code"><pre class="code cpp"><a id="rest_code_06e25d44e04643d89811ab6be554adea-1" name="rest_code_06e25d44e04643d89811ab6be554adea-1" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_06e25d44e04643d89811ab6be554adea-1"></a><span class="k">auto</span><span class="w"> </span><span class="p">[</span><span class="n">index</span><span class="p">,</span><span class="w"> </span><span class="n">result</span><span class="p">,</span><span class="w"> </span><span class="n">alpha</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">my_function</span><span class="p">();</span>
+</pre></div>
+<p>Now you can directly use auto to deduce the types of the three variables at once
+and you can get all the results in the variables at once as well :) I think this
+is really nice and can really profit some projects. In ETL, I've almost no use
+for this, but I'm going to be using that a bit more in DLL.</p>
+<p>Something really nice to clean up the code in C++17 is the ability to declared
+nested namespaces in one line. Before, you have a nested namespace
+etl::impl::standard for instance, you would do:</p>
+<div class="code"><pre class="code cpp"><a id="rest_code_40f9b90286cc4d3b9215377f53835e7f-1" name="rest_code_40f9b90286cc4d3b9215377f53835e7f-1" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_40f9b90286cc4d3b9215377f53835e7f-1"></a><span class="k">namespace</span><span class="w"> </span><span class="nn">etl</span><span class="w"> </span><span class="p">{</span>
+<a id="rest_code_40f9b90286cc4d3b9215377f53835e7f-2" name="rest_code_40f9b90286cc4d3b9215377f53835e7f-2" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_40f9b90286cc4d3b9215377f53835e7f-2"></a><span class="k">namespace</span><span class="w"> </span><span class="nn">impl</span><span class="w"> </span><span class="p">{</span>
+<a id="rest_code_40f9b90286cc4d3b9215377f53835e7f-3" name="rest_code_40f9b90286cc4d3b9215377f53835e7f-3" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_40f9b90286cc4d3b9215377f53835e7f-3"></a><span class="k">namespace</span><span class="w"> </span><span class="nn">standard</span><span class="w"> </span><span class="p">{</span>
+<a id="rest_code_40f9b90286cc4d3b9215377f53835e7f-4" name="rest_code_40f9b90286cc4d3b9215377f53835e7f-4" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_40f9b90286cc4d3b9215377f53835e7f-4"></a>
+<a id="rest_code_40f9b90286cc4d3b9215377f53835e7f-5" name="rest_code_40f9b90286cc4d3b9215377f53835e7f-5" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_40f9b90286cc4d3b9215377f53835e7f-5"></a><span class="c1">// Someting inside etl::impl::standard</span>
+<a id="rest_code_40f9b90286cc4d3b9215377f53835e7f-6" name="rest_code_40f9b90286cc4d3b9215377f53835e7f-6" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_40f9b90286cc4d3b9215377f53835e7f-6"></a>
+<a id="rest_code_40f9b90286cc4d3b9215377f53835e7f-7" name="rest_code_40f9b90286cc4d3b9215377f53835e7f-7" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_40f9b90286cc4d3b9215377f53835e7f-7"></a><span class="p">}</span><span class="w"> </span><span class="c1">// end of namespace standard</span>
+<a id="rest_code_40f9b90286cc4d3b9215377f53835e7f-8" name="rest_code_40f9b90286cc4d3b9215377f53835e7f-8" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_40f9b90286cc4d3b9215377f53835e7f-8"></a><span class="p">}</span><span class="w"> </span><span class="c1">// end of namespace impl</span>
+<a id="rest_code_40f9b90286cc4d3b9215377f53835e7f-9" name="rest_code_40f9b90286cc4d3b9215377f53835e7f-9" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_40f9b90286cc4d3b9215377f53835e7f-9"></a><span class="p">}</span><span class="w"> </span><span class="c1">// end of namespace etl</span>
+</pre></div>
+<p>In C++17, you can do:</p>
+<div class="code"><pre class="code cpp"><a id="rest_code_a54f5b2c3b2c466d934af51d41af0247-1" name="rest_code_a54f5b2c3b2c466d934af51d41af0247-1" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_a54f5b2c3b2c466d934af51d41af0247-1"></a><span class="k">namespace</span><span class="w"> </span><span class="nn">etl</span><span class="o">::</span><span class="nn">impl</span><span class="o">::</span><span class="nn">standard</span><span class="w"> </span><span class="p">{</span>
+<a id="rest_code_a54f5b2c3b2c466d934af51d41af0247-2" name="rest_code_a54f5b2c3b2c466d934af51d41af0247-2" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_a54f5b2c3b2c466d934af51d41af0247-2"></a>
+<a id="rest_code_a54f5b2c3b2c466d934af51d41af0247-3" name="rest_code_a54f5b2c3b2c466d934af51d41af0247-3" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_a54f5b2c3b2c466d934af51d41af0247-3"></a><span class="c1">// Someting inside etl::impl::standard</span>
+<a id="rest_code_a54f5b2c3b2c466d934af51d41af0247-4" name="rest_code_a54f5b2c3b2c466d934af51d41af0247-4" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_a54f5b2c3b2c466d934af51d41af0247-4"></a>
+<a id="rest_code_a54f5b2c3b2c466d934af51d41af0247-5" name="rest_code_a54f5b2c3b2c466d934af51d41af0247-5" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_a54f5b2c3b2c466d934af51d41af0247-5"></a><span class="p">}</span><span class="w"> </span><span class="c1">// end of namespace etl::impl::standard</span>
+</pre></div>
+<p>I think it's pretty neat :)</p>
+<p>Another very small change is the ability to use the typename keyword in place of
+the class keyword when declaring template template parameters. Before, you had
+to declare:</p>
+<div class="code"><pre class="code cpp"><a id="rest_code_f407b4ab57614ac095d3b6cca2f7e1da-1" name="rest_code_f407b4ab57614ac095d3b6cca2f7e1da-1" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_f407b4ab57614ac095d3b6cca2f7e1da-1"></a><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="k">typename</span><span class="o">&gt;</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">X</span><span class="o">&gt;</span>
+</pre></div>
+<p>now you can also use:</p>
+<div class="code"><pre class="code cpp"><a id="rest_code_7c19f229948547c9b5ed4b2b91b3663c-1" name="rest_code_7c19f229948547c9b5ed4b2b91b3663c-1" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_7c19f229948547c9b5ed4b2b91b3663c-1"></a><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="k">typename</span><span class="o">&gt;</span><span class="w"> </span><span class="k">typename</span><span class="w"> </span><span class="nc">X</span><span class="o">&gt;</span>
+</pre></div>
+<p>It's just some syntactic sugar, but I think it's quite nice.</p>
+<p>The last improvement that I want to talk about is one that probably very few
+know about but it's pretty neat. Since C++11, you can use the <code>alignas(X)</code>
+specifier for types and objects to specify on how many bytes you want to align
+these. This is pretty nice if you want to align on the stack. However, this
+won't always work for dynamic memory allocation. Imagine this struct:</p>
+<div class="code"><pre class="code cpp"><a id="rest_code_159e316ee54e47d4909c3525189d12d6-1" name="rest_code_159e316ee54e47d4909c3525189d12d6-1" href="../c%2B%2B17-migration-of-expression-templates-library-etl/#rest_code_159e316ee54e47d4909c3525189d12d6-1"></a><span class="k">struct</span><span class="w"> </span><span class="nc">alignas</span><span class="p">(</span><span class="mi">128</span><span class="p">)</span><span class="w">  </span><span class="n">test_struct</span><span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="n">data</span><span class="p">;</span><span class="w"> </span><span class="p">};</span>
+</pre></div>
+<p>If you declare an object of this type on the stack, you have the guarantee that
+it will be aligned on 128 bytes. However, if you use <code>new</code> to allocate it
+on the heap, you don't have such guarantee. Indeed, the problem is that 128 is
+greater than the maximum default alignment. This is called an over-aligned type.
+In such cases, the result will be aligned on the max alignment of your system.
+Since C++17, <code>new</code> supports aligned dynamic memory allocation of
+over-aligned types. Therefore, you can use a simple <code>alignas</code> to allocate
+dynamic over-aligned types :) I need this in ETL for matrices that need to be
+aligned for vectorized code. Before, I was using a larger array with some
+padding in order to find an aligned element inside, but that is not very nice,
+now the code is much better.</p>
+</section><section id="compilation-time"><h2>Compilation Time</h2>
+<p>I've done a few tests to see how much impact these news features have on
+compilation time. Here, I'm doing benchmark on compiling the entire test suite
+in different compilation mode, I enabled most compilation options (all GPU and
+BLAS options in order to make sure almost all of the library is compiled).</p>
+<p>Since I'm a bit short on time before going to vacation, I've only gathered the
+results with g++. Here are the results with G++ 7.2.0</p>
+<table><tbody>
+<tr>
+<td></td>
+<td><p>debug</p></td>
+<td><p>release</p></td>
+<td><p>release_debug</p></td>
+</tr>
+<tr>
+<td><p>C++14</p></td>
+<td><p>862s</p></td>
+<td><p>1961s</p></td>
+<td><p>1718s</p></td>
+</tr>
+<tr>
+<td><p>C++17</p></td>
+<td><p>892s</p></td>
+<td><p>2018s</p></td>
+<td><p>1745s</p></td>
+</tr>
+<tr>
+<td><p>Difference</p></td>
+<td><p>+3.4%</p></td>
+<td><p>+2.9%</p></td>
+<td><p>+1.5%</p></td>
+</tr>
+</tbody></table>
+<p>Overall, I'm a bit disappointed by these results, it's around 3% slower to
+compile the C++17 version than the C++14 version. I was thinking that this would
+a least be as fast to compile as before. It seems that currently with G++ 7.2,
+<code>if constexpr</code> are slower to compile than the equivalent SFINAE functions.
+I didn't do individual benchmarks of all the features I've migrated, therefore,
+it may not be coming from <code>if constexpr</code>, but since it's the greatest
+change by far, it's the more likely candidate. Once I'll have a little more
+time, after my vacations, I'll try to see if that is also the case with clang.</p>
+<p>Keep in mind that we are compiling the test suite here. The ETL test suite is
+using the manual selection mode of the library in order to be able to test all
+the possible implementations of each operation. This makes a considerable
+difference in performance. I expect better compilation time when this is used in
+automatic selection mode (the default mode). In the default mode, a lot more
+code can be disabled with <code>if constexpr</code>. I will test this next with the
+DLL library which I will also migrate to C++17.</p>
+</section><section id="conclusion"><h2>Conclusion</h2>
+<p>This concludes this report on the migration of my ETL library from C++14 to
+C++17. Overall, I'm really satisfied with the improvement of the code, it's much
+better. I'm a bit disappointed by the slight increase  (around 3%) in
+compilation time, but it's not dramatic either. I'm still hoping that once it's
+used in DLL, I will see a decrease in compilation, but we'll see that when I'll
+be done with the migration of DLL to C++17 which may take some time since I'll
+have two weeks vacation in China starting Friday.</p>
+<p>The new version is available only through the <em>master</em> branch. It will be
+released as the 1.3 version probably when I integrate some new features, but in
+itself will not be released as new version. You can take a look in the
+<a class="reference external" href="https://github.com/wichtounet/etl">Github etl repository</a> if you are interested.</p>
+</section>
+</div>
+    <aside class="postpromonav"><nav><ul itemprop="keywords" class="tags">
+<li><a class="tag p-category" href="../../../../categories/c%2B%2B/" rel="tag">C++</a></li>
+            <li><a class="tag p-category" href="../../../../categories/c%2B%2B14/" rel="tag">C++14</a></li>
+            <li><a class="tag p-category" href="../../../../categories/c%2B%2B17/" rel="tag">C++17</a></li>
+            <li><a class="tag p-category" href="../../../../categories/etl/" rel="tag">etl</a></li>
+            <li><a class="tag p-category" href="../../../../categories/projects/" rel="tag">projects</a></li>
+        </ul>
+<ul class="pager hidden-print">
+<li class="previous">
+                <a href="../../01/budgetwarrior-10-web-interface-and-asset-tracking/" rel="prev" title="budgetwarrior 1.0: Web interface and asset tracking!">Previous post</a>
+            </li>
+            <li class="next">
+                <a href="../decrease-dll-neural-network-compilation-time-with-c%2B%2B17/" rel="next" title="Decrease DLL neural network compilation time with C++17">Next post</a>
+            </li>
+        </ul></nav></aside><section class="comments hidden-print"><h2>Comments</h2>
+        
+    
+        <div id="disqus_thread"></div>
+        <script>
+        var disqus_shortname ="blogwichtounet",
+            disqus_url="https://baptiste-wicht.com/posts/2018/02/c%2B%2B17-migration-of-expression-templates-library-etl/",
+        disqus_title="C++17 Migration of Expression Templates Library (ETL)",
+        disqus_identifier="cache/posts/2018/02/c++17-migration-of-expression-templates-library-etl.html",
+        disqus_config = function () {
+            this.language = "en";
+        };
+        (function() {
+            var dsq = document.createElement('script'); dsq.async = true;
+            dsq.src = 'https://' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script><noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a>
+</noscript>
+    <a href="https://disqus.com" class="dsq-brlink" rel="nofollow">Comments powered by <span class="logo-disqus">Disqus</span></a>
+
+
+        </section></article><script>var disqus_shortname="blogwichtounet";(function(){var a=document.createElement("script");a.async=true;a.src="https://"+disqus_shortname+".disqus.com/count.js";(document.getElementsByTagName("head")[0]||document.getElementsByTagName("body")[0]).appendChild(a)}());</script>
+</div> <!-- col -->
+    </div>
+<!-- row  -->
+</div>
+<!-- container-fluid -->
+
+<!-- End of Menubar -->
+
+<!-- Footer -->
+
+<footer>
+    Contents © 2023         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         - License: 
+<a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="padding-left:5px;border-width:0" src="../../../../assets/img/cc.png"></a>
+        <ul class="footer_inline_ul">
+<li>
+    <a href="../c%2B%2B17-migration-of-expression-templates-library-etl/index.rst" id="sourcelink">Source</a>
+    </li>
+
+        </ul></footer><!-- Late loading stuff  --><script src="../../../../assets/js/all-nocdn.js"></script><!-- Google platform JS -->
+</body>
+</html>

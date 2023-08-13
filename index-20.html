@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html prefix="og: http://ogp.me/ns# article: http://ogp.me/ns/article# " lang="en">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="description" content="Tutorials and short posts about programming, C++, Java, Assembly, Operating Systems Development, Compilers, ...">
@@ -8,7 +8,7 @@
 <link href="assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
 <meta name="theme-color" content="#5670d4">
 <meta name="generator" content="Nikola (getnikola.com)">
-<link rel="alternate" type="application/rss+xml" title="RSS" href="rss.xml">
+<link rel="alternate" type="application/rss+xml" title="RSS" hreflang="en" href="rss.xml">
 <link rel="canonical" href="https://baptiste-wicht.com/index-20.html">
 <link rel="prev" href="index-21.html" type="text/html">
 <link rel="next" href="index-19.html" type="text/html">
@@ -104,14 +104,13 @@
             <div id="content"></div>
             
         <article class="postbox h-entry post-text"><h1 class="p-name">
-<a href="posts/2012/08/memory-manager-intel-assembly-64-linux.html" class="u-url">Memory Manager in 64bits Intel Assembly on Linux</a>
+<a href="posts/2012/08/memory-manager-intel-assembly-64-linux/" class="u-url">Memory Manager in 64bits Intel Assembly on Linux</a>
         <br><small>  
              Posted: <time class="published dt-published" datetime="2012-08-02T08:05:30+02:00">2012-08-02 08:05</time></small>
 </h1>
         <hr>
 <div class="p-summary">
-        <div>
-<p>For <a title="EDDI Compiler 1.1.1 – Dynamic Memory Allocation and Constructors/Destructors" href="http://www.baptiste-wicht.com/2012/07/eddi-compiler-1-1-1-dynamic-memory-allocation-constructors-destructors/">the last version of the EDDI Compiler</a>, it has been necessary to extend the dynamic memory allocator, to support free memory. In this post, we will see how to write a simple Memory Manager in Intel Assembly for Linux.</p>
+        <p>For <a title="EDDI Compiler 1.1.1 – Dynamic Memory Allocation and Constructors/Destructors" href="http://www.baptiste-wicht.com/2012/07/eddi-compiler-1-1-1-dynamic-memory-allocation-constructors-destructors/">the last version of the EDDI Compiler</a>, it has been necessary to extend the dynamic memory allocator, to support free memory. In this post, we will see how to write a simple Memory Manager in Intel Assembly for Linux.</p>
 <p>In the past, we've seen <a title="Dynamic memory allocation in Intel Assembly on Linux" href="http://www.baptiste-wicht.com/2011/11/dynamic-memory-allocation-intel-assembly-linux/">how to write a basic memory allocator</a>, this time, we will write a more complete version.</p>
 <p>The implementation is made in 64bits Intel Assembly.</p>
 <h4>Memory Manager specification</h4>
@@ -132,136 +131,129 @@
 <h4>Global State</h4>
 
 <p>This implementation needs two global variables. One for the start address of memory and the other one for the last:</p>
-<pre class="code literal-block"><span></span><span class="k">section</span> <span class="nv">.data</span>
-<span class="nf">mem_last</span> <span class="nv">dq</span> <span class="mi">0</span>
-<span class="nf">mem_start</span> <span class="nv">dq</span> <span class="mi">0</span>
-</pre>
-
+<div class="code"><pre class="code literal-block"><span class="k">section</span><span class="w"> </span><span class="nv">.data</span>
+<span class="nf">mem_last</span><span class="w"> </span><span class="nv">dq</span><span class="w"> </span><span class="mi">0</span>
+<span class="nf">mem_start</span><span class="w"> </span><span class="nv">dq</span><span class="w"> </span><span class="mi">0</span>
+</pre></div>
 
 <h4>Init memory Manager</h4>
 
 <p>The init function is very simple to implement:</p>
-<pre class="code literal-block"><span></span><span class="nl">init:</span>
-<span class="nf">push</span> <span class="nb">rbp</span>
-<span class="nf">mov</span> <span class="nb">rbp</span><span class="p">,</span> <span class="nb">rsp</span>
-<span class="nf">mov</span> <span class="nb">rax</span><span class="p">,</span> <span class="mi">12</span>
-<span class="nf">xor</span> <span class="nb">rdi</span><span class="p">,</span> <span class="nb">rdi</span>
+<div class="code"><pre class="code literal-block"><span class="nl">init:</span>
+<span class="nf">push</span><span class="w"> </span><span class="nb">rbp</span>
+<span class="nf">mov</span><span class="w"> </span><span class="nb">rbp</span><span class="p">,</span><span class="w"> </span><span class="nb">rsp</span>
+<span class="nf">mov</span><span class="w"> </span><span class="nb">rax</span><span class="p">,</span><span class="w"> </span><span class="mi">12</span>
+<span class="nf">xor</span><span class="w"> </span><span class="nb">rdi</span><span class="p">,</span><span class="w"> </span><span class="nb">rdi</span>
 <span class="nf">syscall</span>
-<span class="nf">mov</span> <span class="p">[</span><span class="nv">mem_start</span><span class="p">],</span> <span class="nb">rax</span>
-<span class="nf">mov</span> <span class="p">[</span><span class="nv">mem_last</span><span class="p">],</span> <span class="nb">rax</span>
+<span class="nf">mov</span><span class="w"> </span><span class="p">[</span><span class="nv">mem_start</span><span class="p">],</span><span class="w"> </span><span class="nb">rax</span>
+<span class="nf">mov</span><span class="w"> </span><span class="p">[</span><span class="nv">mem_last</span><span class="p">],</span><span class="w"> </span><span class="nb">rax</span>
 <span class="nf">leave</span>
 <span class="nf">ret</span>
-</pre>
-
+</pre></div>
 
 <p>We just have to call sys_brk in order to get the location of <em>program break</em>. Then, the start and the last addresses are the same.</p>
 <h4>Free memory</h4>
 
 <p>The free function is the simplest one:</p>
-<pre class="code literal-block"><span></span><span class="nl">free:</span>
-<span class="nf">push</span> <span class="nb">rbp</span>
-<span class="nf">mov</span> <span class="nb">rbp</span><span class="p">,</span> <span class="nb">rsp</span>
-<span class="nf">mov</span> <span class="kt">qword</span> <span class="p">[</span><span class="nv">r14</span> <span class="o">-</span> <span class="mi">16</span><span class="p">],</span> <span class="mi">1</span>
+<div class="code"><pre class="code literal-block"><span class="nl">free:</span>
+<span class="nf">push</span><span class="w"> </span><span class="nb">rbp</span>
+<span class="nf">mov</span><span class="w"> </span><span class="nb">rbp</span><span class="p">,</span><span class="w"> </span><span class="nb">rsp</span>
+<span class="nf">mov</span><span class="w"> </span><span class="kt">qword</span><span class="w"> </span><span class="p">[</span><span class="nb">r14</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">16</span><span class="p">],</span><span class="w"> </span><span class="mi">1</span>
 <span class="nf">leave</span>
 <span class="nf">ret</span>
-</pre>
-
+</pre></div>
 
 <p>The address to free is passed in the <strong>r14</strong> register. We have to go back 16 bytes (size of the control block) to go to the start of the block. The availability flag is set to 1 (the block is free).</p>
 <h4>The alloc function</h4>
 
 <p>The alloc function is the most complex:</p>
-<pre class="code literal-block"><span></span><span class="nl">alloc:</span>
-<span class="nf">push</span> <span class="nb">rbp</span>
-<span class="nf">mov</span> <span class="nb">rbp</span><span class="p">,</span> <span class="nb">rsp</span>
-<span class="nf">push</span> <span class="nb">rdi</span>
-<span class="nf">push</span> <span class="nv">r10</span>
-<span class="nf">push</span> <span class="nv">r11</span>
-<span class="nf">push</span> <span class="nv">r12</span>
-<span class="nf">push</span> <span class="nv">r13</span>
-<span class="nf">push</span> <span class="nv">r14</span>
-<span class="nf">add</span> <span class="nv">r14</span><span class="p">,</span> <span class="mi">16</span>
-<span class="nf">mov</span> <span class="nv">r12</span><span class="p">,</span> <span class="p">[</span><span class="nv">mem_start</span><span class="p">]</span>
-<span class="nf">mov</span> <span class="nv">r13</span><span class="p">,</span> <span class="p">[</span><span class="nv">mem_last</span><span class="p">]</span>
+<div class="code"><pre class="code literal-block"><span class="nl">alloc:</span>
+<span class="nf">push</span><span class="w"> </span><span class="nb">rbp</span>
+<span class="nf">mov</span><span class="w"> </span><span class="nb">rbp</span><span class="p">,</span><span class="w"> </span><span class="nb">rsp</span>
+<span class="nf">push</span><span class="w"> </span><span class="nb">rdi</span>
+<span class="nf">push</span><span class="w"> </span><span class="nb">r10</span>
+<span class="nf">push</span><span class="w"> </span><span class="nb">r11</span>
+<span class="nf">push</span><span class="w"> </span><span class="nb">r12</span>
+<span class="nf">push</span><span class="w"> </span><span class="nb">r13</span>
+<span class="nf">push</span><span class="w"> </span><span class="nb">r14</span>
+<span class="nf">add</span><span class="w"> </span><span class="nb">r14</span><span class="p">,</span><span class="w"> </span><span class="mi">16</span>
+<span class="nf">mov</span><span class="w"> </span><span class="nb">r12</span><span class="p">,</span><span class="w"> </span><span class="p">[</span><span class="nv">mem_start</span><span class="p">]</span>
+<span class="nf">mov</span><span class="w"> </span><span class="nb">r13</span><span class="p">,</span><span class="w"> </span><span class="p">[</span><span class="nv">mem_last</span><span class="p">]</span>
 <span class="nl">.start:</span>
-<span class="nf">cmp</span> <span class="nv">r12</span><span class="p">,</span> <span class="nv">r13</span>
-<span class="nf">je</span> <span class="nv">.alloc</span>
-<span class="nf">mov</span> <span class="nv">r10</span><span class="p">,</span> <span class="p">[</span><span class="nv">r12</span><span class="p">]</span>
-<span class="nf">mov</span> <span class="nv">r11</span><span class="p">,</span> <span class="p">[</span><span class="nv">r12</span> <span class="o">+</span> <span class="mi">8</span><span class="p">]</span>
-<span class="nf">cmp</span> <span class="nv">r10</span><span class="p">,</span> <span class="mi">1</span>
-<span class="nf">jne</span> <span class="nv">.move</span>
-<span class="nf">cmp</span> <span class="nv">r11</span><span class="p">,</span> <span class="nv">r14</span>
-<span class="nf">jl</span> <span class="nv">.move</span>
-<span class="nf">mov</span> <span class="kt">qword</span> <span class="p">[</span><span class="nv">r12</span><span class="p">],</span> <span class="mi">0</span>
-<span class="nf">lea</span> <span class="nb">rax</span><span class="p">,</span> <span class="p">[</span><span class="nv">r12</span> <span class="o">+</span> <span class="mi">16</span><span class="p">]</span>
-<span class="nf">pop</span> <span class="nv">r14</span>
-<span class="nf">pop</span> <span class="nv">r13</span>
-<span class="nf">pop</span> <span class="nv">r12</span>
-<span class="nf">pop</span> <span class="nv">r11</span>
-<span class="nf">pop</span> <span class="nv">r10</span>
-<span class="nf">pop</span> <span class="nb">rdi</span>
+<span class="nf">cmp</span><span class="w"> </span><span class="nb">r12</span><span class="p">,</span><span class="w"> </span><span class="nb">r13</span>
+<span class="nf">je</span><span class="w"> </span><span class="nv">.alloc</span>
+<span class="nf">mov</span><span class="w"> </span><span class="nb">r10</span><span class="p">,</span><span class="w"> </span><span class="p">[</span><span class="nb">r12</span><span class="p">]</span>
+<span class="nf">mov</span><span class="w"> </span><span class="nb">r11</span><span class="p">,</span><span class="w"> </span><span class="p">[</span><span class="nb">r12</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">8</span><span class="p">]</span>
+<span class="nf">cmp</span><span class="w"> </span><span class="nb">r10</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span>
+<span class="nf">jne</span><span class="w"> </span><span class="nv">.move</span>
+<span class="nf">cmp</span><span class="w"> </span><span class="nb">r11</span><span class="p">,</span><span class="w"> </span><span class="nb">r14</span>
+<span class="nf">jl</span><span class="w"> </span><span class="nv">.move</span>
+<span class="nf">mov</span><span class="w"> </span><span class="kt">qword</span><span class="w"> </span><span class="p">[</span><span class="nb">r12</span><span class="p">],</span><span class="w"> </span><span class="mi">0</span>
+<span class="nf">lea</span><span class="w"> </span><span class="nb">rax</span><span class="p">,</span><span class="w"> </span><span class="p">[</span><span class="nb">r12</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">16</span><span class="p">]</span>
+<span class="nf">pop</span><span class="w"> </span><span class="nb">r14</span>
+<span class="nf">pop</span><span class="w"> </span><span class="nb">r13</span>
+<span class="nf">pop</span><span class="w"> </span><span class="nb">r12</span>
+<span class="nf">pop</span><span class="w"> </span><span class="nb">r11</span>
+<span class="nf">pop</span><span class="w"> </span><span class="nb">r10</span>
+<span class="nf">pop</span><span class="w"> </span><span class="nb">rdi</span>
 <span class="nf">leave</span>
 <span class="nf">ret</span>
 
 <span class="nl">.move:</span>
-<span class="nf">add</span> <span class="nv">r12</span><span class="p">,</span> <span class="nv">r11</span>
-<span class="nf">jmp</span> <span class="nv">.start</span>
+<span class="nf">add</span><span class="w"> </span><span class="nb">r12</span><span class="p">,</span><span class="w"> </span><span class="nb">r11</span>
+<span class="nf">jmp</span><span class="w"> </span><span class="nv">.start</span>
 
 <span class="nl">.alloc:</span>
-<span class="nf">lea</span> <span class="nb">rdi</span><span class="p">,</span> <span class="p">[</span><span class="nv">r12</span> <span class="o">+</span> <span class="nv">r14</span><span class="p">]</span>
-<span class="nf">mov</span> <span class="nb">rax</span><span class="p">,</span> <span class="mi">12</span>
+<span class="nf">lea</span><span class="w"> </span><span class="nb">rdi</span><span class="p">,</span><span class="w"> </span><span class="p">[</span><span class="nb">r12</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nb">r14</span><span class="p">]</span>
+<span class="nf">mov</span><span class="w"> </span><span class="nb">rax</span><span class="p">,</span><span class="w"> </span><span class="mi">12</span>
 <span class="nf">syscall</span>
-<span class="nf">mov</span> <span class="p">[</span><span class="nv">mem_last</span><span class="p">],</span> <span class="nb">rdi</span>
-<span class="nf">mov</span> <span class="kt">qword</span> <span class="p">[</span><span class="nv">r12</span><span class="p">],</span> <span class="mi">0</span>
-<span class="nf">mov</span> <span class="kt">qword</span> <span class="p">[</span><span class="nv">r12</span> <span class="o">+</span> <span class="mi">8</span><span class="p">],</span> <span class="nv">r14</span>
-<span class="nf">lea</span> <span class="nb">rax</span><span class="p">,</span> <span class="p">[</span><span class="nv">r12</span> <span class="o">+</span> <span class="mi">16</span><span class="p">]</span>
-<span class="nf">pop</span> <span class="nv">r14</span>
-<span class="nf">pop</span> <span class="nv">r13</span>
-<span class="nf">pop</span> <span class="nv">r12</span>
-<span class="nf">pop</span> <span class="nv">r11</span>
-<span class="nf">pop</span> <span class="nv">r10</span>
-<span class="nf">pop</span> <span class="nb">rdi</span>
+<span class="nf">mov</span><span class="w"> </span><span class="p">[</span><span class="nv">mem_last</span><span class="p">],</span><span class="w"> </span><span class="nb">rdi</span>
+<span class="nf">mov</span><span class="w"> </span><span class="kt">qword</span><span class="w"> </span><span class="p">[</span><span class="nb">r12</span><span class="p">],</span><span class="w"> </span><span class="mi">0</span>
+<span class="nf">mov</span><span class="w"> </span><span class="kt">qword</span><span class="w"> </span><span class="p">[</span><span class="nb">r12</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">8</span><span class="p">],</span><span class="w"> </span><span class="nb">r14</span>
+<span class="nf">lea</span><span class="w"> </span><span class="nb">rax</span><span class="p">,</span><span class="w"> </span><span class="p">[</span><span class="nb">r12</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">16</span><span class="p">]</span>
+<span class="nf">pop</span><span class="w"> </span><span class="nb">r14</span>
+<span class="nf">pop</span><span class="w"> </span><span class="nb">r13</span>
+<span class="nf">pop</span><span class="w"> </span><span class="nb">r12</span>
+<span class="nf">pop</span><span class="w"> </span><span class="nb">r11</span>
+<span class="nf">pop</span><span class="w"> </span><span class="nb">r10</span>
+<span class="nf">pop</span><span class="w"> </span><span class="nb">rdi</span>
 <span class="nf">leave</span>
 <span class="nf">ret</span>
-</pre>
-
+</pre></div>
 
 <p>As the function is a bit complex, I will detail it in part:</p>
-<pre class="code literal-block"><span></span><span class="nf">add</span> <span class="nv">r14</span><span class="p">,</span> <span class="mi">16</span>
-<span class="nf">mov</span> <span class="nv">r12</span><span class="p">,</span> <span class="p">[</span><span class="nv">mem_start</span><span class="p">]</span>
-<span class="nf">mov</span> <span class="nv">r13</span><span class="p">,</span> <span class="p">[</span><span class="nv">mem_last</span><span class="p">]</span>
+<div class="code"><pre class="code literal-block"><span class="nf">add</span><span class="w"> </span><span class="nb">r14</span><span class="p">,</span><span class="w"> </span><span class="mi">16</span>
+<span class="nf">mov</span><span class="w"> </span><span class="nb">r12</span><span class="p">,</span><span class="w"> </span><span class="p">[</span><span class="nv">mem_start</span><span class="p">]</span>
+<span class="nf">mov</span><span class="w"> </span><span class="nb">r13</span><span class="p">,</span><span class="w"> </span><span class="p">[</span><span class="nv">mem_last</span><span class="p">]</span>
 <span class="nl">.start:</span>
-<span class="nf">cmp</span> <span class="nv">r12</span><span class="p">,</span> <span class="nv">r13</span>
-<span class="nf">je</span> <span class="nv">.alloc</span>
-<span class="nf">mov</span> <span class="nv">r10</span><span class="p">,</span> <span class="p">[</span><span class="nv">r12</span><span class="p">]</span>
-<span class="nf">mov</span> <span class="nv">r11</span><span class="p">,</span> <span class="p">[</span><span class="nv">r12</span> <span class="o">+</span> <span class="mi">8</span><span class="p">]</span>
-<span class="nf">cmp</span> <span class="nv">r10</span><span class="p">,</span> <span class="mi">1</span>
-<span class="nf">jne</span> <span class="nv">.move</span>
-<span class="nf">cmp</span> <span class="nv">r11</span><span class="p">,</span> <span class="nv">r14</span>
-<span class="nf">jl</span> <span class="nv">.move</span>
-<span class="nf">mov</span> <span class="kt">qword</span> <span class="p">[</span><span class="nv">r12</span><span class="p">],</span> <span class="mi">0</span>
-<span class="nf">lea</span> <span class="nb">rax</span><span class="p">,</span> <span class="p">[</span><span class="nv">r12</span> <span class="o">+</span> <span class="mi">16</span><span class="p">]</span>
-</pre>
-
+<span class="nf">cmp</span><span class="w"> </span><span class="nb">r12</span><span class="p">,</span><span class="w"> </span><span class="nb">r13</span>
+<span class="nf">je</span><span class="w"> </span><span class="nv">.alloc</span>
+<span class="nf">mov</span><span class="w"> </span><span class="nb">r10</span><span class="p">,</span><span class="w"> </span><span class="p">[</span><span class="nb">r12</span><span class="p">]</span>
+<span class="nf">mov</span><span class="w"> </span><span class="nb">r11</span><span class="p">,</span><span class="w"> </span><span class="p">[</span><span class="nb">r12</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">8</span><span class="p">]</span>
+<span class="nf">cmp</span><span class="w"> </span><span class="nb">r10</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span>
+<span class="nf">jne</span><span class="w"> </span><span class="nv">.move</span>
+<span class="nf">cmp</span><span class="w"> </span><span class="nb">r11</span><span class="p">,</span><span class="w"> </span><span class="nb">r14</span>
+<span class="nf">jl</span><span class="w"> </span><span class="nv">.move</span>
+<span class="nf">mov</span><span class="w"> </span><span class="kt">qword</span><span class="w"> </span><span class="p">[</span><span class="nb">r12</span><span class="p">],</span><span class="w"> </span><span class="mi">0</span>
+<span class="nf">lea</span><span class="w"> </span><span class="nb">rax</span><span class="p">,</span><span class="w"> </span><span class="p">[</span><span class="nb">r12</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">16</span><span class="p">]</span>
+</pre></div>
 
 <p>The necessary number of bytes is passed in the <strong>r14</strong> register. We add 16 bytes (size of the control group) to the size as we also need some place for the header. Then, we load the start and last addresses. If both addresses are equal, we need to allocate more memory (detailed later). Then, we check the size and the availability of the current block. If the size is enough to fit the needs and the block is available, we set it to unavailable. We return the address past the control block (16 bytes).</p>
-<pre class="code literal-block"><span></span><span class="nl">.move:</span>
-<span class="nf">add</span> <span class="nv">r12</span><span class="p">,</span> <span class="nv">r11</span>
-<span class="nf">jmp</span> <span class="nv">.start</span>
-</pre>
-
+<div class="code"><pre class="code literal-block"><span class="nl">.move:</span>
+<span class="nf">add</span><span class="w"> </span><span class="nb">r12</span><span class="p">,</span><span class="w"> </span><span class="nb">r11</span>
+<span class="nf">jmp</span><span class="w"> </span><span class="nv">.start</span>
+</pre></div>
 
 <p>To move to the next block, we just have to add the size of the current block to the current block address.</p>
-<pre class="code literal-block"><span></span><span class="nl">.alloc:</span>
-<span class="nf">lea</span> <span class="nb">rdi</span><span class="p">,</span> <span class="p">[</span><span class="nv">r12</span> <span class="o">+</span> <span class="nv">r14</span><span class="p">]</span>
-<span class="nf">mov</span> <span class="nb">rax</span><span class="p">,</span> <span class="mi">12</span>
+<div class="code"><pre class="code literal-block"><span class="nl">.alloc:</span>
+<span class="nf">lea</span><span class="w"> </span><span class="nb">rdi</span><span class="p">,</span><span class="w"> </span><span class="p">[</span><span class="nb">r12</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nb">r14</span><span class="p">]</span>
+<span class="nf">mov</span><span class="w"> </span><span class="nb">rax</span><span class="p">,</span><span class="w"> </span><span class="mi">12</span>
 <span class="nf">syscall</span>
-<span class="nf">mov</span> <span class="p">[</span><span class="nv">V_mem_last</span><span class="p">],</span> <span class="nb">rdi</span>
-<span class="nf">mov</span> <span class="kt">qword</span> <span class="p">[</span><span class="nv">r12</span><span class="p">],</span> <span class="mi">0</span>
-<span class="nf">mov</span> <span class="kt">qword</span> <span class="p">[</span><span class="nv">r12</span> <span class="o">+</span> <span class="mi">8</span><span class="p">],</span> <span class="nv">r14</span>
-<span class="nf">lea</span> <span class="nb">rax</span><span class="p">,</span> <span class="p">[</span><span class="nv">r12</span> <span class="o">+</span> <span class="mi">16</span><span class="p">]</span>
-</pre>
-
+<span class="nf">mov</span><span class="w"> </span><span class="p">[</span><span class="nv">V_mem_last</span><span class="p">],</span><span class="w"> </span><span class="nb">rdi</span>
+<span class="nf">mov</span><span class="w"> </span><span class="kt">qword</span><span class="w"> </span><span class="p">[</span><span class="nb">r12</span><span class="p">],</span><span class="w"> </span><span class="mi">0</span>
+<span class="nf">mov</span><span class="w"> </span><span class="kt">qword</span><span class="w"> </span><span class="p">[</span><span class="nb">r12</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">8</span><span class="p">],</span><span class="w"> </span><span class="nb">r14</span>
+<span class="nf">lea</span><span class="w"> </span><span class="nb">rax</span><span class="p">,</span><span class="w"> </span><span class="p">[</span><span class="nb">r12</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">16</span><span class="p">]</span>
+</pre></div>
 
 <p>To allocate memory, we compute the new <em>program break</em> and call <em>sys_brk</em> again to set the new <em>program break</em>. The block is then set to not available and the size is set. We return the address past the control block (16 bytes).</p>
 <p>The rest of the program is just here to save and restore the registers and compute the stack frames.</p>
@@ -290,62 +282,58 @@
     <li><a href="https://github.com/wichtounet/eddic/blob/develop/functions/x86_32_init.s">init</a></li>
 </ul>
 </div>
-        </div>
             
-        
-    <a href="posts/2012/08/memory-manager-intel-assembly-64-linux.html#disqus_thread" data-disqus-identifier="cache/posts/2012/08/memory-manager-intel-assembly-64-linux.html">Comments</a>
+    
+    <a href="posts/2012/08/memory-manager-intel-assembly-64-linux/#disqus_thread" data-disqus-identifier="cache/posts/2012/08/memory-manager-intel-assembly-64-linux.html">Comments</a>
 
 
         </article><article class="postbox h-entry post-text"><h1 class="p-name">
-<a href="posts/2012/07/eddi-compiler-1-1-1-dynamic-memory-allocation-constructors-destructors.html" class="u-url">EDDI Compiler 1.1.1 – Dynamic Memory Allocation and Constructors/Destructors</a>
+<a href="posts/2012/07/eddi-compiler-1-1-1-dynamic-memory-allocation-constructors-destructors/" class="u-url">EDDI Compiler 1.1.1 – Dynamic Memory Allocation and Constructors/Destructors</a>
         <br><small>  
              Posted: <time class="published dt-published" datetime="2012-07-30T12:18:01+02:00">2012-07-30 12:18</time></small>
 </h1>
         <hr>
 <div class="p-summary">
-        <div>
-<p>As I'm in holiday, the work is going pretty fast. The <strong>version 1.1.1</strong> of the <strong>EDDI Compiler</strong> (eddic) is available.</p>
+        <p>As I'm in holiday, the work is going pretty fast. The <strong>version 1.1.1</strong> of the <strong>EDDI Compiler</strong> (eddic) is available.</p>
 <p>This version introduces two major changes. The first is the support of dynamic memory allocation. You can allocate a struct or a standard type in help using the new operator. The memory can be released using the delete operator. Another related improved is the addition of constructors and destructors to the language. The following sample shows what can be done with the new features:</p>
-<pre class="code literal-block"><span></span><span class="k">struct</span> <span class="n">A</span> <span class="p">{</span>
-    <span class="kt">int</span> <span class="n">a</span><span class="p">;</span>
+<div class="code"><pre class="code literal-block"><span class="k">struct</span><span class="w"> </span><span class="nc">A</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">a</span><span class="p">;</span>
 
-    <span class="k">this</span><span class="p">(</span><span class="kt">int</span> <span class="n">a</span><span class="p">){</span>
-        <span class="k">this</span><span class="p">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">a</span><span class="p">;</span>
+<span class="w">    </span><span class="k">this</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">a</span><span class="p">){</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">a</span><span class="p">;</span>
 
-        <span class="n">print</span><span class="p">(</span><span class="s">"Constructed"</span><span class="p">);</span>
-    <span class="p">}</span>
+<span class="w">        </span><span class="n">print</span><span class="p">(</span><span class="s">"Constructed"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
 
-    <span class="o">~</span><span class="k">this</span><span class="p">(){</span>
-        <span class="n">println</span><span class="p">(</span><span class="s">"Destructed"</span><span class="p">);</span>
-    <span class="p">}</span>
+<span class="w">    </span><span class="o">~</span><span class="k">this</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">println</span><span class="p">(</span><span class="s">"Destructed"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
 <span class="p">}</span>
 
-<span class="kt">void</span> <span class="n">main</span><span class="p">(){</span>
-    <span class="n">A</span><span class="o">*</span> <span class="n">b</span> <span class="o">=</span> <span class="k">new</span> <span class="n">A</span><span class="p">(</span><span class="mi">55</span><span class="p">);</span>
-    <span class="k">delete</span> <span class="n">b</span><span class="p">;</span>
+<span class="kt">void</span><span class="w"> </span><span class="n">main</span><span class="p">(){</span>
+<span class="w">    </span><span class="n">A</span><span class="o">*</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">A</span><span class="p">(</span><span class="mi">55</span><span class="p">);</span>
+<span class="w">    </span><span class="k">delete</span><span class="w"> </span><span class="n">b</span><span class="p">;</span>
 <span class="p">}</span>
-</pre>
-
+</pre></div>
 
 <p>The constructor is called once the memory is allocated. The delete operator calls the destructor and then free the memory. </p>
 <p>When a structure is allocated on the stack, the constructor is called at the declaration point and the destructor is called when the variable gets out of scope. </p>
 <p>The memory manager is quite simple for now. Memory is allocated in blocks. Each block has a header indicating the size of the block and its availability. The size of the header is 8 bytes in 32 bits and 16 bytes in 64 bits. The free operation can be done in constant time by just setting the availability flag to false. The disadvantage of this technique is that all the blocks needs to be tested to find a free block. This can be slow in some situations. I will try to make a better version in the future. </p>
 <p>For that, the memory model has been improved. All the offsets are now increasing and the stack addresses are set at the end of the block. </p>
 <p>Another interesting improvement of the language is the support of switch. For now, only switch on int is supported. Here is an example of a switch in EDDI:</p>
-<pre class="code literal-block"><span></span><span class="k">switch</span><span class="p">(</span><span class="n">a</span><span class="p">){</span>
-    <span class="k">case</span> <span class="mi">3</span><span class="o">:</span>
-        <span class="n">print</span><span class="p">(</span><span class="s">"3"</span><span class="p">);</span>
-    <span class="k">case</span> <span class="mi">4</span><span class="o">:</span>
-        <span class="n">print</span><span class="p">(</span><span class="s">"4"</span><span class="p">);</span>
-    <span class="k">case</span> <span class="mi">5</span><span class="o">:</span>
-        <span class="n">print</span><span class="p">(</span><span class="s">"5"</span><span class="p">);</span>
-    <span class="k">case</span> <span class="mi">6</span><span class="o">:</span>
-        <span class="n">print</span><span class="p">(</span><span class="s">"6"</span><span class="p">);</span>
-    <span class="k">default</span><span class="o">:</span>
-        <span class="n">print</span><span class="p">(</span><span class="s">"default"</span><span class="p">);</span>
+<div class="code"><pre class="code literal-block"><span class="k">switch</span><span class="p">(</span><span class="n">a</span><span class="p">){</span>
+<span class="w">    </span><span class="k">case</span><span class="w"> </span><span class="mi">3</span><span class="p">:</span>
+<span class="w">        </span><span class="n">print</span><span class="p">(</span><span class="s">"3"</span><span class="p">);</span>
+<span class="w">    </span><span class="k">case</span><span class="w"> </span><span class="mi">4</span><span class="p">:</span>
+<span class="w">        </span><span class="n">print</span><span class="p">(</span><span class="s">"4"</span><span class="p">);</span>
+<span class="w">    </span><span class="k">case</span><span class="w"> </span><span class="mi">5</span><span class="p">:</span>
+<span class="w">        </span><span class="n">print</span><span class="p">(</span><span class="s">"5"</span><span class="p">);</span>
+<span class="w">    </span><span class="k">case</span><span class="w"> </span><span class="mi">6</span><span class="p">:</span>
+<span class="w">        </span><span class="n">print</span><span class="p">(</span><span class="s">"6"</span><span class="p">);</span>
+<span class="w">    </span><span class="k">default</span><span class="o">:</span>
+<span class="w">        </span><span class="n">print</span><span class="p">(</span><span class="s">"default"</span><span class="p">);</span>
 <span class="p">}</span>
-</pre>
-
+</pre></div>
 
 <p>The performances of the optimizer have been improved, by doing live-variable analysis less often. Pointers can now be passed in registers. Some of the variables used as temporary copies are removed </p>
 <p>The peephole optimizer has been improved to use conditional move when possible. Moreover, the peephole optimizer is now able to perform some local copy propagation. </p>
@@ -357,22 +345,20 @@
 
 <p>You can find the EDDI Compiler sources on the Github repository: https://github.com/wichtounet/eddic</p>
 <p>The exact version I refer to is the v1.1.1 available in the GitHub tags or directly as the release branch.</p>
-</div>
         </div>
             
-        
-    <a href="posts/2012/07/eddi-compiler-1-1-1-dynamic-memory-allocation-constructors-destructors.html#disqus_thread" data-disqus-identifier="cache/posts/2012/07/eddi-compiler-1-1-1-dynamic-memory-allocation-constructors-destructors.html">Comments</a>
+    
+    <a href="posts/2012/07/eddi-compiler-1-1-1-dynamic-memory-allocation-constructors-destructors/#disqus_thread" data-disqus-identifier="cache/posts/2012/07/eddi-compiler-1-1-1-dynamic-memory-allocation-constructors-destructors.html">Comments</a>
 
 
         </article><article class="postbox h-entry post-text"><h1 class="p-name">
-<a href="posts/2012/07/c11-synchronization-benchmark.html" class="u-url">C++11 Synchronization Benchmark</a>
+<a href="posts/2012/07/c11-synchronization-benchmark/" class="u-url">C++11 Synchronization Benchmark</a>
         <br><small>  
              Posted: <time class="published dt-published" datetime="2012-07-26T08:47:59+02:00">2012-07-26 08:47</time></small>
 </h1>
         <hr>
 <div class="p-summary">
-        <div>
-<p>In the previous parts of this serie, we saw some C++11 Synchronization techniques: locks, lock guards and atomic references.</p>
+        <p>In the previous parts of this serie, we saw some C++11 Synchronization techniques: locks, lock guards and atomic references.</p>
 <p>In this small post, I will present the results of a little benchmark I did run to compare the different techniques. In this benchmark, the critical section is a single increment to an integer. The critical section is protected using three techniques:</p>
 <ul>
 <li>A single std::mutex with calls to lock() and unlock()</li>
@@ -386,62 +372,58 @@
 <p>I'm also surprised that the lock guard version has a non-negligible overhead when there are few threads.</p>
 <p>In conclusion, do not locks when all you need is modifying integral types. For that, std::atomic is much faster. Good Lock-Free algorithms are almost always faster than the algorithms with lock.</p>
 <p>The sources of the benchmark are available on Github: <a href="https://github.com/wichtounet/articles/tree/master/src/threads/benchmark">https://github.com/wichtounet/articles/tree/master/src/threads/benchmark</a></p>
-</div>
         </div>
             
-        
-    <a href="posts/2012/07/c11-synchronization-benchmark.html#disqus_thread" data-disqus-identifier="cache/posts/2012/07/c11-synchronization-benchmark.html">Comments</a>
+    
+    <a href="posts/2012/07/c11-synchronization-benchmark/#disqus_thread" data-disqus-identifier="cache/posts/2012/07/c11-synchronization-benchmark.html">Comments</a>
 
 
         </article><article class="postbox h-entry post-text"><h1 class="p-name">
-<a href="posts/2012/07/eddi-compiler-1-1-0-member-functions.html" class="u-url">EDDI Compiler 1.1.0 - Member functions</a>
+<a href="posts/2012/07/eddi-compiler-1-1-0-member-functions/" class="u-url">EDDI Compiler 1.1.0 - Member functions</a>
         <br><small>  
              Posted: <time class="published dt-published" datetime="2012-07-22T06:18:57+02:00">2012-07-22 06:18</time></small>
 </h1>
         <hr>
 <div class="p-summary">
-        <div>
-<p>The <strong>version 1.1.0</strong> of the <strong>EDDI Compiler</strong> (eddic) is available. It took much less time to implement that version than I thought. </p>
+        <p>The <strong>version 1.1.0</strong> of the <strong>EDDI Compiler</strong> (eddic) is available. It took much less time to implement that version than I thought. </p>
 <p>The main change to the language is the <strong>support of member functions</strong>. Each structure can now declare some functions. Functions can be called in each structure object. Here is an example of what can be done with that feature in EDDI:</p>
-<pre class="code literal-block"><span></span><span class="k">struct</span> <span class="n">Counter</span> <span class="p">{</span>
-    <span class="kt">int</span> <span class="n">value</span><span class="p">;</span>
+<div class="code"><pre class="code literal-block"><span class="k">struct</span><span class="w"> </span><span class="nc">Counter</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">value</span><span class="p">;</span>
 
-    <span class="kt">void</span> <span class="nf">increment</span><span class="p">(){</span>
-        <span class="k">this</span><span class="p">.</span><span class="n">value</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="n">value</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
-    <span class="p">}</span>
+<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="nf">increment</span><span class="p">(){</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="n">value</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
 
-    <span class="kt">void</span> <span class="nf">add</span><span class="p">(</span><span class="kt">int</span> <span class="n">number</span><span class="p">){</span>
-        <span class="k">this</span><span class="p">.</span><span class="n">value</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="n">value</span> <span class="o">+</span> <span class="n">number</span><span class="p">;</span>
-    <span class="p">}</span>
+<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">number</span><span class="p">){</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="n">value</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">number</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
 
-    <span class="kt">void</span> <span class="nf">add</span><span class="p">(</span><span class="kt">int</span> <span class="n">n1</span><span class="p">,</span> <span class="kt">int</span> <span class="n">n2</span><span class="p">){</span>
-        <span class="k">this</span><span class="p">.</span><span class="n">value</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="n">value</span> <span class="o">+</span> <span class="n">n1</span><span class="p">;</span>
-        <span class="k">this</span><span class="p">.</span><span class="n">value</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="n">value</span> <span class="o">+</span> <span class="n">n2</span><span class="p">;</span>
-    <span class="p">}</span>
+<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">n1</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">n2</span><span class="p">){</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="n">value</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">n1</span><span class="p">;</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="n">value</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">n2</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
 <span class="p">}</span>
 
-<span class="kt">void</span> <span class="n">main</span><span class="p">(){</span>
-    <span class="n">Counter</span> <span class="n">counter</span><span class="p">;</span>
-    <span class="n">counter</span><span class="p">.</span><span class="n">increment</span><span class="p">();</span>
-    <span class="n">println</span><span class="p">(</span><span class="n">counter</span><span class="p">.</span><span class="n">value</span><span class="p">);</span>
+<span class="kt">void</span><span class="w"> </span><span class="n">main</span><span class="p">(){</span>
+<span class="w">    </span><span class="n">Counter</span><span class="w"> </span><span class="n">counter</span><span class="p">;</span>
+<span class="w">    </span><span class="n">counter</span><span class="p">.</span><span class="n">increment</span><span class="p">();</span>
+<span class="w">    </span><span class="n">println</span><span class="p">(</span><span class="n">counter</span><span class="p">.</span><span class="n">value</span><span class="p">);</span>
 
-    <span class="n">counter</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="mi">99</span><span class="p">);</span>
-    <span class="n">println</span><span class="p">(</span><span class="n">counter</span><span class="p">.</span><span class="n">value</span><span class="p">);</span>
+<span class="w">    </span><span class="n">counter</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="mi">99</span><span class="p">);</span>
+<span class="w">    </span><span class="n">println</span><span class="p">(</span><span class="n">counter</span><span class="p">.</span><span class="n">value</span><span class="p">);</span>
 
-    <span class="n">counter</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mi">69</span><span class="p">);</span>
-    <span class="n">println</span><span class="p">(</span><span class="n">counter</span><span class="p">.</span><span class="n">value</span><span class="p">);</span>
+<span class="w">    </span><span class="n">counter</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="mi">11</span><span class="p">,</span><span class="w"> </span><span class="mi">69</span><span class="p">);</span>
+<span class="w">    </span><span class="n">println</span><span class="p">(</span><span class="n">counter</span><span class="p">.</span><span class="n">value</span><span class="p">);</span>
 <span class="p">}</span>
-</pre>
-
+</pre></div>
 
 <p>The <em>this</em> pointer is available in each member function. The pointer is passed on the stack just like any other parameter. </p>
 <p>Another improvement is the support of the <strong>ternary operator</strong>:</p>
-<pre class="code literal-block"><span></span><span class="kt">void</span> <span class="nf">main</span><span class="p">(){</span>
-    <span class="kt">int</span> <span class="n">a</span> <span class="o">=</span> <span class="mi">5</span> <span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="mi">2</span> <span class="o">?</span> <span class="mi">44</span> <span class="o">:</span> <span class="mi">66</span><span class="p">;</span>
-    <span class="n">println</span><span class="p">(</span><span class="n">a</span><span class="p">);</span>
+<div class="code"><pre class="code literal-block"><span class="kt">void</span><span class="w"> </span><span class="nf">main</span><span class="p">(){</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">5</span><span class="w"> </span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="w"> </span><span class="mi">2</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="mi">44</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="mi">66</span><span class="p">;</span>
+<span class="w">    </span><span class="n">println</span><span class="p">(</span><span class="n">a</span><span class="p">);</span>
 <span class="p">}</span>
-</pre>
-
+</pre></div>
 
 <p>The inliner has been improved to support inlining member functions and functions with pointer parameters. The parameter allocation in register is only done starting at O1. </p>
 <p>The peephole optimizer has also been improved. Some stacks operations optimization are performed and some unnecessary copies of parameter register are removed.  </p>
@@ -453,197 +435,179 @@
 
 <p>You can find the compiler sources on the Github repository: <a title="eddic on GitHub" href="https://github.com/wichtounet/eddic">https://github.com/wichtounet/eddic</a></p>
 <p>The exact version I refer to is the v1.1 available in the GitHub tags or directly as the release branch.</p>
-</div>
         </div>
             
-        
-    <a href="posts/2012/07/eddi-compiler-1-1-0-member-functions.html#disqus_thread" data-disqus-identifier="cache/posts/2012/07/eddi-compiler-1-1-0-member-functions.html">Comments</a>
+    
+    <a href="posts/2012/07/eddi-compiler-1-1-0-member-functions/#disqus_thread" data-disqus-identifier="cache/posts/2012/07/eddi-compiler-1-1-0-member-functions.html">Comments</a>
 
 
         </article><article class="postbox h-entry post-text"><h1 class="p-name">
-<a href="posts/2012/07/manage-command-line-boost-program-options.html" class="u-url">Manage command-line options with Boost Program Options</a>
+<a href="posts/2012/07/manage-command-line-boost-program-options/" class="u-url">Manage command-line options with Boost Program Options</a>
         <br><small>  
              Posted: <time class="published dt-published" datetime="2012-07-19T08:19:37+02:00">2012-07-19 08:19</time></small>
 </h1>
         <hr>
 <div class="p-summary">
-        <div>
-<p>In command-line program, we often faces problems with the management of command-line options. When you have a few options, it's not a problem. But when writing complex programs with tens of options (or hundreds), it starts to be too complicated to manage by hand. That's where <strong>Boost Program Options</strong> enters the game!</p>
+        <p>In command-line program, we often faces problems with the management of command-line options. When you have a few options, it's not a problem. But when writing complex programs with tens of options (or hundreds), it starts to be too complicated to manage by hand. That's where <strong>Boost Program Options</strong> enters the game!</p>
 <p>Boost Program Options is one of the Boost C++ Libraries. It is a very powerful library to handle command-line options. You define all the options of the program and then Boost Program Options takes care of all. It parses the command line, handles errors, gets values and even displays help. It is not a perfect library. But it is very complete that will answer most of the common needs. </p>
 <p>This library is not header-only. You will need to build the library and link your program with the library. </p>
 <h4>Getting started</h4>
 
 <p>In this article, I will use <em>po</em> as an abbreviation of boost::program_options and all source will contains this namespace alias:</p>
-<pre class="code literal-block"><span></span><span class="k">namespace</span> <span class="n">po</span> <span class="o">=</span> <span class="n">boost</span><span class="o">::</span><span class="n">program_options</span><span class="p">;</span>
-</pre>
-
+<div class="code"><pre class="code literal-block"><span class="k">namespace</span><span class="w"> </span><span class="nn">po</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nn">boost</span><span class="o">::</span><span class="nn">program_options</span><span class="p">;</span>
+</pre></div>
 
 <p>First of all, it is necessary to create an instance of po::option_description:</p>
-<pre class="code literal-block"><span></span><span class="n">po</span><span class="o">::</span><span class="n">options_description</span> <span class="n">description</span><span class="p">(</span><span class="s">"MyTool Usage"</span><span class="p">);</span>
+<div class="code"><pre class="code literal-block"><span class="n">po</span><span class="o">::</span><span class="n">options_description</span><span class="w"> </span><span class="n">description</span><span class="p">(</span><span class="s">"MyTool Usage"</span><span class="p">);</span>
 
 <span class="n">description</span><span class="p">.</span><span class="n">add_options</span><span class="p">()</span>
-    <span class="p">(</span><span class="s">"help"</span><span class="p">,</span> <span class="s">"Display this help message"</span><span class="p">)</span>
-    <span class="p">(</span><span class="s">"version"</span><span class="p">,</span> <span class="s">"Display the version number"</span><span class="p">);</span>
-</pre>
-
+<span class="w">    </span><span class="p">(</span><span class="s">"help"</span><span class="p">,</span><span class="w"> </span><span class="s">"Display this help message"</span><span class="p">)</span>
+<span class="w">    </span><span class="p">(</span><span class="s">"version"</span><span class="p">,</span><span class="w"> </span><span class="s">"Display the version number"</span><span class="p">);</span>
+</pre></div>
 
 <p>The parameter to the constructor is the title of the options. To add options, you use the add_options() function and append all your options, each one surrounded with parenthesis. Here, we declared two options (help and version). They can be set with <em>--help</em> and <em>--version</em>. </p>
 <p>Then, you can parse the command line by declaring a po::variables_map to store the variables and parse the command line into that storage: </p>
-<pre class="code literal-block"><span></span><span class="n">po</span><span class="o">::</span><span class="n">variables_map</span> <span class="n">vm</span><span class="p">;</span>
-<span class="n">po</span><span class="o">::</span><span class="n">store</span><span class="p">(</span><span class="n">po</span><span class="o">::</span><span class="n">command_line_parser</span><span class="p">(</span><span class="n">argc</span><span class="p">,</span> <span class="n">argv</span><span class="p">).</span><span class="n">options</span><span class="p">(</span><span class="n">description</span><span class="p">).</span><span class="n">run</span><span class="p">(),</span> <span class="n">vm</span><span class="p">);</span>
+<div class="code"><pre class="code literal-block"><span class="n">po</span><span class="o">::</span><span class="n">variables_map</span><span class="w"> </span><span class="n">vm</span><span class="p">;</span>
+<span class="n">po</span><span class="o">::</span><span class="n">store</span><span class="p">(</span><span class="n">po</span><span class="o">::</span><span class="n">command_line_parser</span><span class="p">(</span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="n">argv</span><span class="p">).</span><span class="n">options</span><span class="p">(</span><span class="n">description</span><span class="p">).</span><span class="n">run</span><span class="p">(),</span><span class="w"> </span><span class="n">vm</span><span class="p">);</span>
 <span class="n">po</span><span class="o">::</span><span class="n">notify</span><span class="p">(</span><span class="n">vm</span><span class="p">);</span>
-</pre>
-
+</pre></div>
 
 <p>Then, you can easily verify if an option has been set by using the <em>count(const std::string&amp; name)</em> function on the <em>vm</em> object: </p>
-<pre class="code literal-block"><span></span><span class="k">if</span><span class="p">(</span><span class="n">vm</span><span class="p">.</span><span class="n">count</span><span class="p">(</span><span class="s">"help"</span><span class="p">)){</span>
-    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">description</span><span class="p">;</span>
+<div class="code"><pre class="code literal-block"><span class="k">if</span><span class="p">(</span><span class="n">vm</span><span class="p">.</span><span class="n">count</span><span class="p">(</span><span class="s">"help"</span><span class="p">)){</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">description</span><span class="p">;</span>
 <span class="p">}</span>
-</pre>
-
+</pre></div>
 
 <p>You can use <em>operator on the description to output all the options of program. </em></p>
 <h4>Short options</h4>
 
 <p>By default, all the options are accessed by using -- in front of them. You can also specify a short version for each option: </p>
-<pre class="code literal-block"><span></span><span class="n">description</span><span class="p">.</span><span class="n">add_options</span><span class="p">()</span>
-    <span class="p">(</span><span class="s">"help,h"</span><span class="p">,</span> <span class="s">"Display this help message"</span><span class="p">)</span>
-    <span class="p">(</span><span class="s">"version,v"</span><span class="p">,</span> <span class="s">"Display the version number"</span><span class="p">);</span>
-</pre>
-
+<div class="code"><pre class="code literal-block"><span class="n">description</span><span class="p">.</span><span class="n">add_options</span><span class="p">()</span>
+<span class="w">    </span><span class="p">(</span><span class="s">"help,h"</span><span class="p">,</span><span class="w"> </span><span class="s">"Display this help message"</span><span class="p">)</span>
+<span class="w">    </span><span class="p">(</span><span class="s">"version,v"</span><span class="p">,</span><span class="w"> </span><span class="s">"Display the version number"</span><span class="p">);</span>
+</pre></div>
 
 <p>With that, you can display with either --help or -h. Even if you select help with -h, you can still verify if help has been set with count("help"). </p>
 <h4>Option with value</h4>
 
 <p>Boost Program Options can also handle option that need a specific value. Lets add a <i>compression</i> option:</p>
-<pre class="code literal-block"><span></span><span class="n">description</span><span class="p">.</span><span class="n">add_options</span><span class="p">()</span>
-    <span class="p">(</span><span class="s">"help,h"</span><span class="p">,</span> <span class="s">"Display this help message"</span><span class="p">)</span>
-    <span class="p">(</span><span class="s">"compression,c"</span><span class="p">,</span> <span class="n">po</span><span class="o">::</span><span class="n">value</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">(),</span> <span class="s">"Compression level"</span><span class="p">)</span>
-    <span class="p">(</span><span class="s">"version,v"</span><span class="p">,</span> <span class="s">"Display the version number"</span><span class="p">);</span>
-</pre>
-
+<div class="code"><pre class="code literal-block"><span class="n">description</span><span class="p">.</span><span class="n">add_options</span><span class="p">()</span>
+<span class="w">    </span><span class="p">(</span><span class="s">"help,h"</span><span class="p">,</span><span class="w"> </span><span class="s">"Display this help message"</span><span class="p">)</span>
+<span class="w">    </span><span class="p">(</span><span class="s">"compression,c"</span><span class="p">,</span><span class="w"> </span><span class="n">po</span><span class="o">::</span><span class="n">value</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">(),</span><span class="w"> </span><span class="s">"Compression level"</span><span class="p">)</span>
+<span class="w">    </span><span class="p">(</span><span class="s">"version,v"</span><span class="p">,</span><span class="w"> </span><span class="s">"Display the version number"</span><span class="p">);</span>
+</pre></div>
 
 <p>You can then get the value of option easily: </p>
-<pre class="code literal-block"><span></span><span class="k">if</span><span class="p">(</span><span class="n">vm</span><span class="p">.</span><span class="n">count</span><span class="p">(</span><span class="s">"compression"</span><span class="p">)){</span>
-    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"Compression level "</span> <span class="o">&lt;&lt;</span> <span class="n">vm</span><span class="p">[</span><span class="s">"compression"</span><span class="p">].</span><span class="n">as</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<div class="code"><pre class="code literal-block"><span class="k">if</span><span class="p">(</span><span class="n">vm</span><span class="p">.</span><span class="n">count</span><span class="p">(</span><span class="s">"compression"</span><span class="p">)){</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">"Compression level "</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">vm</span><span class="p">[</span><span class="s">"compression"</span><span class="p">].</span><span class="n">as</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
 <span class="p">}</span>
-</pre>
-
+</pre></div>
 
 <p>For the story, the option value are stored as boost::any. You can get the value of the option by using operator[] on the po::variables_map. You can get the value type with the as function with the type you need. </p>
 <p>On the command line, the value can be set with --compression 10, -c 10 or -c10. </p>
 <p>You can also configure a default value for an option:</p>
-<pre class="code literal-block"><span></span><span class="n">description</span><span class="p">.</span><span class="n">add_options</span><span class="p">()</span>
-    <span class="p">(</span><span class="s">"help,h"</span><span class="p">,</span> <span class="s">"Display this help message"</span><span class="p">)</span>
-    <span class="p">(</span><span class="s">"compression,c"</span><span class="p">,</span> <span class="n">po</span><span class="o">::</span><span class="n">value</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">default_value</span><span class="p">(</span><span class="mi">5</span><span class="p">),</span> <span class="s">"Compression level"</span><span class="p">)</span>
-    <span class="p">(</span><span class="s">"version,v"</span><span class="p">,</span> <span class="s">"Display the version number"</span><span class="p">);</span>
-</pre>
-
+<div class="code"><pre class="code literal-block"><span class="n">description</span><span class="p">.</span><span class="n">add_options</span><span class="p">()</span>
+<span class="w">    </span><span class="p">(</span><span class="s">"help,h"</span><span class="p">,</span><span class="w"> </span><span class="s">"Display this help message"</span><span class="p">)</span>
+<span class="w">    </span><span class="p">(</span><span class="s">"compression,c"</span><span class="p">,</span><span class="w"> </span><span class="n">po</span><span class="o">::</span><span class="n">value</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">default_value</span><span class="p">(</span><span class="mi">5</span><span class="p">),</span><span class="w"> </span><span class="s">"Compression level"</span><span class="p">)</span>
+<span class="w">    </span><span class="p">(</span><span class="s">"version,v"</span><span class="p">,</span><span class="w"> </span><span class="s">"Display the version number"</span><span class="p">);</span>
+</pre></div>
 
 <p>With that, if the option is not set on the command line, the option has the specified value. With that, the option is always defined. </p>
 <p>Finally, you can also set an implicit value. This is the value of the option is the option is set to the command line without a value (--compression or -c): </p>
-<pre class="code literal-block"><span></span><span class="n">description</span><span class="p">.</span><span class="n">add_options</span><span class="p">()</span>
-    <span class="p">(</span><span class="s">"help,h"</span><span class="p">,</span> <span class="s">"Display this help message"</span><span class="p">)</span>
-    <span class="p">(</span><span class="s">"compression,c"</span><span class="p">,</span> <span class="n">po</span><span class="o">::</span><span class="n">value</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">default_value</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">implicit_value</span><span class="p">(</span><span class="mi">10</span><span class="p">),</span> <span class="s">"Compression level"</span><span class="p">)</span>
-    <span class="p">(</span><span class="s">"version,v"</span><span class="p">,</span> <span class="s">"Display the version number"</span><span class="p">);</span>
-</pre>
-
+<div class="code"><pre class="code literal-block"><span class="n">description</span><span class="p">.</span><span class="n">add_options</span><span class="p">()</span>
+<span class="w">    </span><span class="p">(</span><span class="s">"help,h"</span><span class="p">,</span><span class="w"> </span><span class="s">"Display this help message"</span><span class="p">)</span>
+<span class="w">    </span><span class="p">(</span><span class="s">"compression,c"</span><span class="p">,</span><span class="w"> </span><span class="n">po</span><span class="o">::</span><span class="n">value</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">default_value</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">implicit_value</span><span class="p">(</span><span class="mi">10</span><span class="p">),</span><span class="w"> </span><span class="s">"Compression level"</span><span class="p">)</span>
+<span class="w">    </span><span class="p">(</span><span class="s">"version,v"</span><span class="p">,</span><span class="w"> </span><span class="s">"Display the version number"</span><span class="p">);</span>
+</pre></div>
 
 <h4>Positional options</h4>
 
 <p>It is often convenient to have a list of files on the command line. These options does not have a name. In Boost Program Options, these options are called positional options. You have to declare them in the describe as any other action. For example, for a list of files: </p>
-<pre class="code literal-block"><span></span><span class="n">description</span><span class="p">.</span><span class="n">add_options</span><span class="p">()</span>
-    <span class="p">(</span><span class="s">"help,h"</span><span class="p">,</span> <span class="s">"Display this help message"</span><span class="p">)</span>
-    <span class="p">(</span><span class="s">"compression,c"</span><span class="p">,</span> <span class="n">po</span><span class="o">::</span><span class="n">value</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">default_value</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">implicit_value</span><span class="p">(</span><span class="mi">10</span><span class="p">),</span><span class="s">"Compression level"</span><span class="p">)</span>
-    <span class="p">(</span><span class="s">"input-files"</span><span class="p">,</span> <span class="n">po</span><span class="o">::</span><span class="n">value</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;&gt;</span><span class="p">(),</span> <span class="s">"Input files"</span><span class="p">)</span>
-    <span class="p">(</span><span class="s">"version,v"</span><span class="p">,</span> <span class="s">"Display the version number"</span><span class="p">);</span>
-</pre>
-
+<div class="code"><pre class="code literal-block"><span class="n">description</span><span class="p">.</span><span class="n">add_options</span><span class="p">()</span>
+<span class="w">    </span><span class="p">(</span><span class="s">"help,h"</span><span class="p">,</span><span class="w"> </span><span class="s">"Display this help message"</span><span class="p">)</span>
+<span class="w">    </span><span class="p">(</span><span class="s">"compression,c"</span><span class="p">,</span><span class="w"> </span><span class="n">po</span><span class="o">::</span><span class="n">value</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">default_value</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">implicit_value</span><span class="p">(</span><span class="mi">10</span><span class="p">),</span><span class="s">"Compression level"</span><span class="p">)</span>
+<span class="w">    </span><span class="p">(</span><span class="s">"input-files"</span><span class="p">,</span><span class="w"> </span><span class="n">po</span><span class="o">::</span><span class="n">value</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;&gt;</span><span class="p">(),</span><span class="w"> </span><span class="s">"Input files"</span><span class="p">)</span>
+<span class="w">    </span><span class="p">(</span><span class="s">"version,v"</span><span class="p">,</span><span class="w"> </span><span class="s">"Display the version number"</span><span class="p">);</span>
+</pre></div>
 
 <p>Then, you have to declare it as positional and then finally specify it when parsing the command-line: </p>
-<pre class="code literal-block"><span></span><span class="n">po</span><span class="o">::</span><span class="n">positional_options_description</span> <span class="n">p</span><span class="p">;</span>
-<span class="n">p</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="s">"input-files"</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">);</span>
-<span class="n">po</span><span class="o">::</span><span class="n">variables_map</span> <span class="n">vm</span><span class="p">;</span>
-<span class="n">po</span><span class="o">::</span><span class="n">store</span><span class="p">(</span><span class="n">po</span><span class="o">::</span><span class="n">command_line_parser</span><span class="p">(</span><span class="n">argc</span><span class="p">,</span> <span class="n">argv</span><span class="p">).</span><span class="n">options</span><span class="p">(</span><span class="n">description</span><span class="p">).</span><span class="n">positional</span><span class="p">(</span><span class="n">p</span><span class="p">).</span><span class="n">run</span><span class="p">(),</span> <span class="n">vm</span><span class="p">);</span>
+<div class="code"><pre class="code literal-block"><span class="n">po</span><span class="o">::</span><span class="n">positional_options_description</span><span class="w"> </span><span class="n">p</span><span class="p">;</span>
+<span class="n">p</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="s">"input-files"</span><span class="p">,</span><span class="w"> </span><span class="mi">-1</span><span class="p">);</span>
+<span class="n">po</span><span class="o">::</span><span class="n">variables_map</span><span class="w"> </span><span class="n">vm</span><span class="p">;</span>
+<span class="n">po</span><span class="o">::</span><span class="n">store</span><span class="p">(</span><span class="n">po</span><span class="o">::</span><span class="n">command_line_parser</span><span class="p">(</span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="n">argv</span><span class="p">).</span><span class="n">options</span><span class="p">(</span><span class="n">description</span><span class="p">).</span><span class="n">positional</span><span class="p">(</span><span class="n">p</span><span class="p">).</span><span class="n">run</span><span class="p">(),</span><span class="w"> </span><span class="n">vm</span><span class="p">);</span>
 <span class="n">po</span><span class="o">::</span><span class="n">notify</span><span class="p">(</span><span class="n">vm</span><span class="p">);</span>
-</pre>
-
+</pre></div>
 
 <p>The positional options values are retrieved the exact same way as other options: </p>
-<pre class="code literal-block"><span></span><span class="k">if</span><span class="p">(</span><span class="n">vm</span><span class="p">.</span><span class="n">count</span><span class="p">(</span><span class="s">"input-files"</span><span class="p">)){</span>
-    <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span> <span class="n">files</span> <span class="o">=</span> <span class="n">vm</span><span class="p">[</span><span class="s">"input-files"</span><span class="p">].</span><span class="n">as</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;&gt;</span><span class="p">();</span>
-    <span class="k">for</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="nl">file</span> <span class="p">:</span> <span class="n">files</span><span class="p">){</span>
-        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"Input file "</span> <span class="o">&lt;&lt;</span> <span class="n">file</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
-    <span class="p">}</span>
+<div class="code"><pre class="code literal-block"><span class="k">if</span><span class="p">(</span><span class="n">vm</span><span class="p">.</span><span class="n">count</span><span class="p">(</span><span class="s">"input-files"</span><span class="p">)){</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="w"> </span><span class="n">files</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">vm</span><span class="p">[</span><span class="s">"input-files"</span><span class="p">].</span><span class="n">as</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;&gt;</span><span class="p">();</span>
+<span class="w">    </span><span class="k">for</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">file</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">files</span><span class="p">){</span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">"Input file "</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">file</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
 <span class="p">}</span>
-</pre>
-
+</pre></div>
 
 <h4>Wrap-Up</h4>
 
 <p>In this article, we saw the most important aspects of Boost Program Options. With these notions, you can start using this great library. If you need more information about the library, you can read <a href="http://www.boost.org/doc/libs/1_50_0/doc/html/program_options.html" title="Boost Program Options documentation">the official documentation</a> that is very well made. </p>
 <p>You can download the final sources of this article on Github: <a href="https://github.com/wichtounet/articles/blob/master/src/boost_po/v1.cpp" title="Source file for this article">v1.cpp</a></p>
-</div>
         </div>
             
-        
-    <a href="posts/2012/07/manage-command-line-boost-program-options.html#disqus_thread" data-disqus-identifier="cache/posts/2012/07/manage-command-line-boost-program-options.html">Comments</a>
+    
+    <a href="posts/2012/07/manage-command-line-boost-program-options/#disqus_thread" data-disqus-identifier="cache/posts/2012/07/manage-command-line-boost-program-options.html">Comments</a>
 
 
         </article><article class="postbox h-entry post-text"><h1 class="p-name">
-<a href="posts/2012/07/c11-concurrency-tutorial-part-4-atomic-type.html" class="u-url">C++11 Concurrency Tutorial - Part 4: Atomic Types</a>
+<a href="posts/2012/07/c11-concurrency-tutorial-part-4-atomic-type/" class="u-url">C++11 Concurrency Tutorial - Part 4: Atomic Types</a>
         <br><small>  
              Posted: <time class="published dt-published" datetime="2012-07-16T09:22:04+02:00">2012-07-16 09:22</time></small>
 </h1>
         <hr>
 <div class="p-summary">
-        <div>
-<p>In the previous article, we saw advanced techniques about mutexes. In this post, we will continue to work on mutexes with more advanced techniques. We will also study another concurrency technique of the C++11 Concurrency Library: Atomic Types</p>
+        <p>In the previous article, we saw advanced techniques about mutexes. In this post, we will continue to work on mutexes with more advanced techniques. We will also study another concurrency technique of the C++11 Concurrency Library: Atomic Types</p>
 <h4>Atomic Types</h4>
 
 <p>We will take, the example of a Counter:</p>
-<pre class="code literal-block"><span></span><span class="k">struct</span> <span class="n">Counter</span> <span class="p">{</span>
-    <span class="kt">int</span> <span class="n">value</span><span class="p">;</span>
-    
-    <span class="kt">void</span> <span class="nf">increment</span><span class="p">(){</span>
-        <span class="o">++</span><span class="n">value</span><span class="p">;</span>
-    <span class="p">}</span>
-    
-    <span class="kt">void</span> <span class="nf">decrement</span><span class="p">(){</span>
-        <span class="o">--</span><span class="n">value</span><span class="p">;</span>
-    <span class="p">}</span>
-    
-    <span class="kt">int</span> <span class="nf">get</span><span class="p">(){</span>
-        <span class="k">return</span> <span class="n">value</span>
-    <span class="p">}</span>
+<div class="code"><pre class="code literal-block"><span class="k">struct</span><span class="w"> </span><span class="nc">Counter</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">value</span><span class="p">;</span>
+<span class="w">    </span>
+<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="nf">increment</span><span class="p">(){</span>
+<span class="w">        </span><span class="o">++</span><span class="n">value</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span>
+<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="nf">decrement</span><span class="p">(){</span>
+<span class="w">        </span><span class="o">--</span><span class="n">value</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="nf">get</span><span class="p">(){</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">value</span>
+<span class="w">    </span><span class="p">}</span>
 <span class="p">};</span>
-</pre>
-
+</pre></div>
 
 <p>We already saw that this class was not safe at all to use in multithreaded environment. We also saw how to make if safe using mutexes. This time, we will see how to make it safe using atomic types. The main advantage of this technique is its performance. Indeed, in most cases, the std::atomic operations are implemented with lock-free operations that are much faster than locks. </p>
 <p>The C++11 Concurrency Library introduces Atomic Types as a template class: std::atomic<type>. You can use any Type you want with that template and the operations on that variable will be atomic and so thread-safe. It has to be taken into account that it is up to the library implementation to choose which syncronization mechanism is used to make the operations on that type atomic. On standard platforms for integral types like int, long, float, ... it will be some lock-free technique. If you want to make a big type (let's saw 2MB storage), you can use std::atomic as well, but mutexes will be used. In this case, there will be no performance advantage. </type></p>
 <p>The main functions that std::atomic provide are the store and load functions that atomically set and get the contents of the std::atomic. Another interesting function is exchange, that sets the atomic to a new value and returns the value held previously. Finally, there are also two functions compare_exchange_weak and compare_exchance_strong that performs atomic exchange only if the value is equal to the provided expected value. These two last functions can be used to implement lock-free algorithms. </p>
 <p>std::atomic is specialized for all integral types to provide member functions specific to integral (like operators ++, --, fetch_add, fetch_sub, ...). </p>
 <p>It is fairly easy to make  the counter safe with std::atomic: </p>
-<pre class="code literal-block"><span></span><span class="cp">#include</span> <span class="cpf">&lt;atomic&gt;</span><span class="cp"></span>
+<div class="code"><pre class="code literal-block"><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;atomic&gt;</span>
 
-<span class="k">struct</span> <span class="n">AtomicCounter</span> <span class="p">{</span>
-    <span class="n">std</span><span class="o">::</span><span class="n">atomic</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">value</span><span class="p">;</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">AtomicCounter</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">atomic</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="w"> </span><span class="n">value</span><span class="p">;</span>
 
-    <span class="kt">void</span> <span class="nf">increment</span><span class="p">(){</span>
-        <span class="o">++</span><span class="n">value</span><span class="p">;</span>
-    <span class="p">}</span>
+<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="nf">increment</span><span class="p">(){</span>
+<span class="w">        </span><span class="o">++</span><span class="n">value</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
 
-    <span class="kt">void</span> <span class="nf">decrement</span><span class="p">(){</span>
-        <span class="o">--</span><span class="n">value</span><span class="p">;</span>
-    <span class="p">}</span>
+<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="nf">decrement</span><span class="p">(){</span>
+<span class="w">        </span><span class="o">--</span><span class="n">value</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
 
-    <span class="kt">int</span> <span class="nf">get</span><span class="p">(){</span>
-        <span class="k">return</span> <span class="n">value</span><span class="p">.</span><span class="n">load</span><span class="p">();</span>
-    <span class="p">}</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="nf">get</span><span class="p">(){</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">value</span><span class="p">.</span><span class="n">load</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
 <span class="p">};</span>
-</pre>
-
+</pre></div>
 
 <p>If you test this counter, you will see that the value is always the expected one. </p>
 <h4>Wrap-Up</h4>
@@ -653,22 +617,20 @@
 <h4>Next</h4>
 
 <p>In the next post of this series, we will see how to use the Futures facility to perform asynchronous task.</p>
-</div>
         </div>
             
-        
-    <a href="posts/2012/07/c11-concurrency-tutorial-part-4-atomic-type.html#disqus_thread" data-disqus-identifier="cache/posts/2012/07/c11-concurrency-tutorial-part-4-atomic-type.html">Comments</a>
+    
+    <a href="posts/2012/07/c11-concurrency-tutorial-part-4-atomic-type/#disqus_thread" data-disqus-identifier="cache/posts/2012/07/c11-concurrency-tutorial-part-4-atomic-type.html">Comments</a>
 
 
         </article><article class="postbox h-entry post-text"><h1 class="p-name">
-<a href="posts/2012/07/eddi-compiler-1-0-3-inlining-register-allocation.html" class="u-url">EDDI Compiler 1.0.3 - Inlining and register allocation</a>
+<a href="posts/2012/07/eddi-compiler-1-0-3-inlining-register-allocation/" class="u-url">EDDI Compiler 1.0.3 - Inlining and register allocation</a>
         <br><small>  
              Posted: <time class="published dt-published" datetime="2012-07-14T08:46:15+02:00">2012-07-14 08:46</time></small>
 </h1>
         <hr>
 <div class="p-summary">
-        <div>
-<p>The <strong>version 1.0.3</strong> of the <strong>EDDI Compiler</strong> (eddic) is available.</p>
+        <p>The <strong>version 1.0.3</strong> of the <strong>EDDI Compiler</strong> (eddic) is available.</p>
 <p>The only improvement to the language is that the size of a global array can now be defined using a constant global variable.</p>
 <p>The main improvement of this version is the addition of <strong>inlining</strong> in the optimization engine. This optimization replace a call to a function by the body of the function. For now, the inlining optimizer is quite basic. For now, it doesn't inline only a specific call site but all the call sites of a given function. Moreover, the heuristics used for inlining are quite simple (only the size of the function is taken into account). Only functions that takes int and float parameters can be inlined. This optimization will be improved in the future.</p>
 <p>The second main change is the arrival of a <strong>basic register allocation</strong>. In each function, one or more variables can be assigned to registers. Only the most used variables are allocated into registers. Another optimization is that variables that are not used after all optimization techniques have been applied are removed from the function storage. The unused functions are also removed from the program after the optimization passes.</p>
@@ -684,22 +646,20 @@
 
 <p>You can find the compiler sources on the Github repository: <a title="eddic on GitHub" href="https://github.com/wichtounet/eddic">https://github.com/wichtounet/eddic</a></p>
 <p>The exact version I refer to is the v1.0.3 available in the GitHub tags or directly as the release branch.</p>
-</div>
         </div>
             
-        
-    <a href="posts/2012/07/eddi-compiler-1-0-3-inlining-register-allocation.html#disqus_thread" data-disqus-identifier="cache/posts/2012/07/eddi-compiler-1-0-3-inlining-register-allocation.html">Comments</a>
+    
+    <a href="posts/2012/07/eddi-compiler-1-0-3-inlining-register-allocation/#disqus_thread" data-disqus-identifier="cache/posts/2012/07/eddi-compiler-1-0-3-inlining-register-allocation.html">Comments</a>
 
 
         </article><article class="postbox h-entry post-text"><h1 class="p-name">
-<a href="posts/2012/07/taskwarrior-php-frontend-0-1.html" class="u-url">taskwarrior-php 0.1 : A simple PHP Frontend for Taskwarrior</a>
+<a href="posts/2012/07/taskwarrior-php-frontend-0-1/" class="u-url">taskwarrior-php 0.1 : A simple PHP Frontend for Taskwarrior</a>
         <br><small>  
              Posted: <time class="published dt-published" datetime="2012-07-09T09:21:14+02:00">2012-07-09 09:21</time></small>
 </h1>
         <hr>
 <div class="p-summary">
-        <div>
-<p>I released the version 0.1 of <strong>taskwarrior-php</strong>.</p>
+        <p>I released the version 0.1 of <strong>taskwarrior-php</strong>.</p>
 <p>This project is a simple PHP Frontend for Taskwarrior. For now, the frontend is quite basic. All the tasks are displayed and sorted by projects. The completion of each project is also computed.</p>
 <p><a href="http://www.baptiste-wicht.com/?attachment_id=2035" rel="attachment wp-att-2035"><img class="size-medium wp-image-2035" title="taskwarrior-php Screenshot" src="wp-content/uploads/2012/07/taskwarrior-php-1-300x271.png" alt="taskwarrior-php Screenshot" width="300" height="271"></a></p>
 <p>You can also insert a new task. For now, only the project and the description of the task can be modified.</p>
@@ -709,22 +669,20 @@
 <p>The installation is simple, you just have to put all the files in a folder of a PHP server. Then, you have to edit the config.php to set the location of your Taskwarrior files.</p>
 <p>It is necessary that the Taskwarrior files are on the PHP server as well. For that, you can use the FTP pull and push commands of Taskwarrior.</p>
 <p>Don't hesitate to contact me if you have some ideas for this project or if you find some bugs.</p>
-</div>
         </div>
             
-        
-    <a href="posts/2012/07/taskwarrior-php-frontend-0-1.html#disqus_thread" data-disqus-identifier="cache/posts/2012/07/taskwarrior-php-frontend-0-1.html">Comments</a>
+    
+    <a href="posts/2012/07/taskwarrior-php-frontend-0-1/#disqus_thread" data-disqus-identifier="cache/posts/2012/07/taskwarrior-php-frontend-0-1.html">Comments</a>
 
 
         </article><article class="postbox h-entry post-text"><h1 class="p-name">
-<a href="posts/2012/07/eddi-compiler-1-0-2-better-pointer-support-new-optimizations.html" class="u-url">EDDI Compiler 1.0.2 – Better pointer support and Dead-Code Elimination</a>
+<a href="posts/2012/07/eddi-compiler-1-0-2-better-pointer-support-new-optimizations/" class="u-url">EDDI Compiler 1.0.2 – Better pointer support and Dead-Code Elimination</a>
         <br><small>  
              Posted: <time class="published dt-published" datetime="2012-07-04T08:56:22+02:00">2012-07-04 08:56</time></small>
 </h1>
         <hr>
 <div class="p-summary">
-        <div>
-<p>The <strong>version 1.0.2</strong> of the <strong>EDDI Compiler</strong> (eddic) is available.</p>
+        <p>The <strong>version 1.0.2</strong> of the <strong>EDDI Compiler</strong> (eddic) is available.</p>
 <p>The language itself does not features something new, but the support of pointers has been greatly improved. You can now declare arrays of pointers and return pointers from functions. Structures can hold pointers as well. Moreover, arrays of structures are now supported. These new features have increased the number of operators of the MTAC Level.</p>
 <p>The more important part of this new version resides in the Optimization Engine. A new optimization technique has been implemented: Dead-Code Elimination. This technique removes all code that calculates values for variables that are not used anymore after this statement. Another change is that empty functions are removed after optimization (as well as every call to the removed functions). The liveness analyzer has been replaced by a global Live-Variable Analysis routine. This information is used in the optimization engine and in the LTAC Compiler. Finally, the Peephole Optimizer has been improved to support some local optimization techniques like constant propagation and basic dead-code elimination.</p>
 <p>The code generators have also been improved by outputting only native functions that are called. It means that if the program does not print a float, the _F5printF function will not be generated. Moreover, the native functions have been moved in external assembly files.</p>
@@ -739,60 +697,57 @@
 
 <p>You can find the compiler sources on the Github repository: <a title="eddic on GitHub" href="https://github.com/wichtounet/eddic">https://github.com/wichtounet/eddic</a></p>
 <p>The exact version I refer to is the v1.0.2 available in the GitHub tags or directly as the release branch.</p>
-</div>
         </div>
             
-        
-    <a href="posts/2012/07/eddi-compiler-1-0-2-better-pointer-support-new-optimizations.html#disqus_thread" data-disqus-identifier="cache/posts/2012/07/eddi-compiler-1-0-2-better-pointer-support-new-optimizations.html">Comments</a>
+    
+    <a href="posts/2012/07/eddi-compiler-1-0-2-better-pointer-support-new-optimizations/#disqus_thread" data-disqus-identifier="cache/posts/2012/07/eddi-compiler-1-0-2-better-pointer-support-new-optimizations.html">Comments</a>
 
 
         </article><article class="postbox h-entry post-text"><h1 class="p-name">
-<a href="posts/2012/06/eddi-compiler-1-0-1-pointers-better-struct-support.html" class="u-url">EDDI Compiler 1.0.1 - Pointers and better struct support</a>
+<a href="posts/2012/06/eddi-compiler-1-0-1-pointers-better-struct-support/" class="u-url">EDDI Compiler 1.0.1 - Pointers and better struct support</a>
         <br><small>  
              Posted: <time class="published dt-published" datetime="2012-06-25T08:57:17+02:00">2012-06-25 08:57</time></small>
 </h1>
         <hr>
 <div class="p-summary">
-        <div>
-<p>The <strong>version 1.0.1</strong> of the <strong>EDDI Compiler</strong> (eddic) is now available. </p>
+        <p>The <strong>version 1.0.1</strong> of the <strong>EDDI Compiler</strong> (eddic) is now available. </p>
 <p>The language itself has been updated to support <strong>pointers</strong>. For now, this support is quite basic, but it allows to pass any type of the language by pointer to a function. No arithmetic is permitted on pointers, only dereferencing is allowed. The following sample shows how pointers are used in the language: </p>
-<pre class="code literal-block"><span></span><span class="k">struct</span> <span class="n">A</span> <span class="p">{</span>
-    <span class="kt">int</span> <span class="n">a</span><span class="p">;</span>
-    <span class="n">string</span> <span class="n">b</span><span class="p">;</span>
-    <span class="kt">float</span> <span class="n">c</span><span class="p">;</span>
+<div class="code"><pre class="code literal-block"><span class="k">struct</span><span class="w"> </span><span class="nc">A</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">a</span><span class="p">;</span>
+<span class="w">    </span><span class="n">string</span><span class="w"> </span><span class="n">b</span><span class="p">;</span>
+<span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">c</span><span class="p">;</span>
 <span class="p">}</span>
 
-<span class="kt">void</span> <span class="n">main</span><span class="p">(){</span>
-    <span class="n">A</span> <span class="n">a</span><span class="p">;</span>
+<span class="kt">void</span><span class="w"> </span><span class="n">main</span><span class="p">(){</span>
+<span class="w">    </span><span class="n">A</span><span class="w"> </span><span class="n">a</span><span class="p">;</span>
 
-    <span class="n">a</span><span class="p">.</span><span class="n">a</span> <span class="o">=</span> <span class="mi">44</span><span class="p">;</span>
-    <span class="n">a</span><span class="p">.</span><span class="n">b</span> <span class="o">=</span> <span class="s">"44"</span><span class="p">;</span>
-    <span class="n">a</span><span class="p">.</span><span class="n">c</span> <span class="o">=</span> <span class="mf">44f</span><span class="p">;</span>
+<span class="w">    </span><span class="n">a</span><span class="p">.</span><span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">44</span><span class="p">;</span>
+<span class="w">    </span><span class="n">a</span><span class="p">.</span><span class="n">b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"44"</span><span class="p">;</span>
+<span class="w">    </span><span class="n">a</span><span class="p">.</span><span class="n">c</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">44f</span><span class="p">;</span>
 
-    <span class="n">test</span><span class="p">(</span><span class="n">a</span><span class="p">);</span> 
-    <span class="n">print</span><span class="p">(</span><span class="n">a</span><span class="p">.</span><span class="n">a</span><span class="p">);</span>
-    <span class="n">print</span><span class="p">(</span><span class="s">"|"</span><span class="p">);</span>
+<span class="w">    </span><span class="n">test</span><span class="p">(</span><span class="n">a</span><span class="p">);</span><span class="w"> </span>
+<span class="w">    </span><span class="n">print</span><span class="p">(</span><span class="n">a</span><span class="p">.</span><span class="n">a</span><span class="p">);</span>
+<span class="w">    </span><span class="n">print</span><span class="p">(</span><span class="s">"|"</span><span class="p">);</span>
 <span class="p">}</span>
 
-<span class="kt">void</span> <span class="n">test</span><span class="p">(</span><span class="n">A</span><span class="o">*</span> <span class="n">a</span><span class="p">){</span>
-    <span class="n">A</span><span class="o">*</span> <span class="n">b</span> <span class="o">=</span> <span class="n">a</span><span class="p">;</span>
+<span class="kt">void</span><span class="w"> </span><span class="n">test</span><span class="p">(</span><span class="n">A</span><span class="o">*</span><span class="w"> </span><span class="n">a</span><span class="p">){</span>
+<span class="w">    </span><span class="n">A</span><span class="o">*</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">a</span><span class="p">;</span>
 
-    <span class="n">a</span><span class="p">.</span><span class="n">a</span> <span class="o">=</span> <span class="mi">55</span><span class="p">;</span>
+<span class="w">    </span><span class="n">a</span><span class="p">.</span><span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">55</span><span class="p">;</span>
 
-    <span class="n">print</span><span class="p">(</span><span class="n">a</span><span class="p">.</span><span class="n">a</span><span class="p">);</span>
-    <span class="n">print</span><span class="p">(</span><span class="s">"|"</span><span class="p">);</span>
+<span class="w">    </span><span class="n">print</span><span class="p">(</span><span class="n">a</span><span class="p">.</span><span class="n">a</span><span class="p">);</span>
+<span class="w">    </span><span class="n">print</span><span class="p">(</span><span class="s">"|"</span><span class="p">);</span>
 
-    <span class="n">b</span><span class="p">.</span><span class="n">a</span> <span class="o">=</span> <span class="mi">66</span><span class="p">;</span>
-    <span class="n">b</span><span class="p">.</span><span class="n">b</span> <span class="o">=</span> <span class="s">"66"</span><span class="p">;</span>
-    <span class="n">b</span><span class="p">.</span><span class="n">c</span> <span class="o">=</span> <span class="mf">66f</span><span class="p">;</span>
+<span class="w">    </span><span class="n">b</span><span class="p">.</span><span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">66</span><span class="p">;</span>
+<span class="w">    </span><span class="n">b</span><span class="p">.</span><span class="n">b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"66"</span><span class="p">;</span>
+<span class="w">    </span><span class="n">b</span><span class="p">.</span><span class="n">c</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">66f</span><span class="p">;</span>
 
-    <span class="n">print</span><span class="p">(</span><span class="n">a</span><span class="p">.</span><span class="n">a</span><span class="p">);</span>
-    <span class="n">print</span><span class="p">(</span><span class="s">"|"</span><span class="p">);</span>
-    <span class="n">print</span><span class="p">(</span><span class="n">b</span><span class="p">.</span><span class="n">a</span><span class="p">);</span>
-    <span class="n">print</span><span class="p">(</span><span class="s">"|"</span><span class="p">);</span>
+<span class="w">    </span><span class="n">print</span><span class="p">(</span><span class="n">a</span><span class="p">.</span><span class="n">a</span><span class="p">);</span>
+<span class="w">    </span><span class="n">print</span><span class="p">(</span><span class="s">"|"</span><span class="p">);</span>
+<span class="w">    </span><span class="n">print</span><span class="p">(</span><span class="n">b</span><span class="p">.</span><span class="n">a</span><span class="p">);</span>
+<span class="w">    </span><span class="n">print</span><span class="p">(</span><span class="s">"|"</span><span class="p">);</span>
 <span class="p">}</span>
-</pre>
-
+</pre></div>
 
 <p>This sample is not very useful, but it shows the usage of pointers well enough. </p>
 <p>Another improvement to the language is that it supports now nested struct. It means that a member of a struct can be a struct itself. </p>
@@ -809,11 +764,10 @@
 
 <p>You can find the compiler sources on the Github repository: <a title="eddic on GitHub" href="https://github.com/wichtounet/eddic">https://github.com/wichtounet/eddic</a></p>
 <p>The exact version I refer to is the v1.0.1 available in the GitHub tags or directly as the release branch.</p>
-</div>
         </div>
             
-        
-    <a href="posts/2012/06/eddi-compiler-1-0-1-pointers-better-struct-support.html#disqus_thread" data-disqus-identifier="cache/posts/2012/06/eddi-compiler-1-0-1-pointers-better-struct-support.html">Comments</a>
+    
+    <a href="posts/2012/06/eddi-compiler-1-0-1-pointers-better-struct-support/#disqus_thread" data-disqus-identifier="cache/posts/2012/06/eddi-compiler-1-0-1-pointers-better-struct-support.html">Comments</a>
 
 
         </article><nav class="postindexpager"><ul class="pager">
@@ -835,7 +789,7 @@
 <!-- Footer -->
 
 <footer>
-    Contents © 2018         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         - License: 
+    Contents © 2023         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         - License: 
 <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="padding-left:5px;border-width:0" src="assets/img/cc.png"></a>
         <ul class="footer_inline_ul"></ul></footer><!-- Late loading stuff  --><script src="assets/js/all-nocdn.js"></script><script type="text/javascript">
       $(document).ready(function() {
