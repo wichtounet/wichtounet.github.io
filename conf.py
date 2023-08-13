@@ -53,7 +53,6 @@ NAVIGATION_LINKS = {
         ('/stories/projects.html', 'Projects'),
         ('/categories/index.html', 'Tags'),
         ('/archive.html', 'Archives'),
-        ('http://feeds.feedburner.com/BaptisteWicht', 'RSS'),
     ),
 }
 
