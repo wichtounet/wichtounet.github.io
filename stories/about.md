@@ -31,10 +31,7 @@ started testing a few devices in my apartment.
 A (short) list of my publication is available on the [Publications page](/publications/).
 
 For all suggestions or comments on my tutorials, projects, blogs or this
-website, there are several ways to contact me:
-
-1. By email: [baptiste.wicht@gmail.com](mailto:baptiste.wicht@gmail.com)
-2. On Twitter: [@wichtounet](https://twitter.com/wichtounet)
+website, the best way to contact me is by email: [baptiste.wicht@gmail.com](mailto:baptiste.wicht@gmail.com)
 
 For professional information, [my LinkedIn profile](http://www.linkedin.com/in/baptistewicht) is available.
 
