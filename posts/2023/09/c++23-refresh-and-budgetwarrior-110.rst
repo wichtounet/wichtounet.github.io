@@ -2,6 +2,7 @@ I am happy to announce the release of budgetwarrior 1.1.0.
 
 The last release of budgetwarrior was more than 5 years ago. So, once I finished my C++20/C++23 refresh of the code,
 I decided it was a good time to generate a new release. There has been many improvements in this new version:
+
 * Many new graphs on the web interface
 * Add support for tracking stock values
 * Significant speed improvements if you have a lot of data in the tool
@@ -56,6 +57,7 @@ or here is another example of using ranges:
    }
 
 This is likely the biggest change, but I have made other improvements based on recent versions of C++:
+
 * Use of std::format
 * Use of the spaceship operator
 * Use of template lambdas
