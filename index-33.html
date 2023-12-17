@@ -71,7 +71,111 @@
 
     
 <div class="postindex">
-    <article class="h-entry post-text" itemscope="itemscope" itemtype="http://schema.org/Article"><header><h1 class="p-name entry-title"><a href="posts/2017/11/advanced-gpu-patterns-optimization-in-etl.html" class="u-url">Advanced GPU Patterns Optimization in ETL</a></h1>
+    <article class="h-entry post-text" itemscope="itemscope" itemtype="http://schema.org/Article"><header><h1 class="p-name entry-title"><a href="posts/2018/01/expression-templates-library-121-faster-gpu-and-new-features.html" class="u-url">Expression Templates Library 1.2.1: Faster GPU and new features</a></h1>
+        <div class="metadata">
+            <p class="byline author vcard"><span class="byline-name fn" itemprop="author">
+                Baptiste Wicht
+            </span></p>
+            <p class="dateline">
+            <a href="posts/2018/01/expression-templates-library-121-faster-gpu-and-new-features.html" rel="bookmark">
+            <time class="published dt-published" datetime="2018-01-09T11:06:15+01:00" itemprop="datePublished" title="2018-01-09 11:06">2018-01-09 11:06</time></a>
+            </p>
+                <p class="commentline">
+    
+    <a href="posts/2018/01/expression-templates-library-121-faster-gpu-and-new-features.html#disqus_thread" data-disqus-identifier="cache/posts/2018/01/expression-templates-library-121-faster-gpu-and-new-features.html">Comments</a>
+
+
+        </p>
+</div>
+    </header><div class="p-summary entry-summary">
+    <p>Happy new year to all my dear readers!</p>
+<p>It has been a while since I've posted on this blog. I've had to serve three
+weeks in the army and then I had two weeks vacation. I've been actively working
+on budgetwarrior with a brand new web interface! More on that later ;)</p>
+<p>Today, I'm happy to release the version 1.2.1 of my Expression Templates Library
+(ETL) project. This is a minor version but with significantly better GPU support
+and a few new features and bug fixes so I decided to release it now.</p>
+<section id="faster-gpu-support"><h2>Faster GPU support</h2>
+<p>Last year, I <a class="reference external" href="https://baptiste-wicht.com/posts/2017/11/advanced-gpu-patterns-optimization-in-etl.html">implemented the support for the detection of advanced GPU patterns in ETL</a>.</p>
+<p>This will significantly reduce the number of CUDA kernel calls that are being
+launched. For instance, each of the following expressions will be evaluated
+using a single GPU kernel:</p>
+<div class="code"><pre class="code C++"><a id="rest_code_1d0330be020b4c9f832c01e44e972546-1" name="rest_code_1d0330be020b4c9f832c01e44e972546-1" href="posts/2018/01/expression-templates-library-121-faster-gpu-and-new-features.html#rest_code_1d0330be020b4c9f832c01e44e972546-1"></a><span class="n">yy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.1</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">y</span>
+<a id="rest_code_1d0330be020b4c9f832c01e44e972546-2" name="rest_code_1d0330be020b4c9f832c01e44e972546-2" href="posts/2018/01/expression-templates-library-121-faster-gpu-and-new-features.html#rest_code_1d0330be020b4c9f832c01e44e972546-2"></a><span class="n">yy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">1.1</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">y</span>
+<a id="rest_code_1d0330be020b4c9f832c01e44e972546-3" name="rest_code_1d0330be020b4c9f832c01e44e972546-3" href="posts/2018/01/expression-templates-library-121-faster-gpu-and-new-features.html#rest_code_1d0330be020b4c9f832c01e44e972546-3"></a><span class="n">yy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.1</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">y</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">1.2</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">y</span>
+<a id="rest_code_1d0330be020b4c9f832c01e44e972546-4" name="rest_code_1d0330be020b4c9f832c01e44e972546-4" href="posts/2018/01/expression-templates-library-121-faster-gpu-and-new-features.html#rest_code_1d0330be020b4c9f832c01e44e972546-4"></a><span class="n">yy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.1</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">y</span>
+<a id="rest_code_1d0330be020b4c9f832c01e44e972546-5" name="rest_code_1d0330be020b4c9f832c01e44e972546-5" href="posts/2018/01/expression-templates-library-121-faster-gpu-and-new-features.html#rest_code_1d0330be020b4c9f832c01e44e972546-5"></a><span class="n">yy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="mf">1.1</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">y</span><span class="p">)</span>
+</pre></div>
+<p>This makes some operation significantly faster.</p>
+<p>Moreover, I've reduced a lot the numbers of device synchronization in the
+library. Especially, I've removed almost all synchronization from the
+etl-gpu-blas sub library. This means that synchronization is mostly only done
+when data needs to go back to the CPU. For machine learning, this means at the
+end of the epoch to compute the final error. This makes a HUGE difference in
+time, I didn't realize before that I was doing way too much synchronization.</p>
+<p>With these two changes, I've been able to attain <em>state of the art training performance on GPU</em> with my Deep Learning Library (DLL) project!</p>
+<p>Moreover, I've now added for random number generations on the GPU and for
+shuffle operations as well.</p>
+</section><section id="new-features"><h2>New Features</h2>
+<p>I've also added a few new features recently. They were especially added to
+support new features in DLL.</p>
+<p>Matrices and vectors can now be normalized in order to have zero-mean and
+unit-variance distribution. You can also merge matrices together. For now, there
+is no GPU support, so this will use CPU anyway. I plan to fix that later.</p>
+<p>In addition to bias_batch_mean that I added before, I also added bias_batch_var
+now with the variance in place of the mean. This is mainly used for Batch
+Normalization in machine learning, but it may have some other usages. The GPU
+support has been added as well directly.</p>
+<p>And the last feature is the support for embedding and the gradients of
+embedding. Again this is totally related to machine learning, but can be very
+useful as well. I haven't add the time to develop the GPU version so far, but
+this will come as well.</p>
+</section><section id="performance"><h2>Performance</h2>
+<p>Nothing fancy on the CPU performance side, I only added vectorization for
+hyperbolic versions. This makes <em>tanh much faster on CPU</em>.</p>
+</section><section id="bug-fixes"><h2>Bug Fixes</h2>
+<p>I fixed quite a few bugs in this version, which is one of the main reason
+I released it:</p>
+<p>1. When using large fast_matrix and aliasing was detected, there was a big chance of stack overflow occurring. This is now fixed by using a dynamic temporary.
+1. Some assignables such sub_view did not perform any detection for aliasing. This is now fixed and aliasing is detected everywhere.
+1. fast_dyn_matrix can now be correctly used with <em>bool</em>
+1. The use of iterators was not always ensuring correct CPU/GPU consistency. This is now correctly handled.
+1. The 4D convolution in GPU were not using the correct flipping
+1. Fix small compilation bug with sub_matrix and GPU</p>
+</section><section id="what-s-next"><h2>What's next ?</h2>
+<p>I don't really know what will be in the next release. This should be the release
+1.3. One possible idea would be to improve and review the support for sparse
+matrix which is more than  poor as of now. But I'm not really motivated to
+work on that :P Moreover, I'm now <em>actively</em> working on the next release of
+budgetwarrior which will probably still come this month.</p>
+<p>I'm also still hesitating in switching to C++17 for the library to make it
+faster to compile. And also to clean some parts of the code. I would be able to
+remove quite some SFINAE with the new <em>if constexpr</em>, but I'm afraid this will
+make the library to difficult to use since it would need at least GCC 7 or clang
+3.9.</p>
+<section id="download-etl"><h3>Download ETL</h3>
+<p>You can download ETL <a class="reference external" href="https://github.com/wichtounet/etl">on Github</a>. If you
+only interested in the 1.2.1 version, you can look at the
+<a class="reference external" href="https://github.com/wichtounet/etl/releases">Releases pages</a> or clone the tag
+1.2.1. There are several branches:</p>
+<ul class="simple">
+<li><p><em>master</em> Is the eternal development branch, may not always be stable</p></li>
+<li><p><em>stable</em> Is a branch always pointing to the last tag, no development here</p></li>
+</ul>
+<p>For the future release, there always will tags pointing to the corresponding
+commits. You can also have access to previous releases on Github or via the
+release tags.</p>
+<p>The documentation is still a bit sparse. There are a few examples and the Wiki,
+but there still is work to be done. If you have questions on how to use or
+configure the library, please don't hesitate.</p>
+<p>Don't hesitate to comment this post if you have any comment on this library or
+any question. You can also open an Issue on Github if you have a problem using
+this library or propose a Pull Request if you have any contribution you'd like
+to make to the library.</p>
+<p>Hope this may be useful to some of you :)</p>
+</section></section>
+</div>
+    </article><article class="h-entry post-text" itemscope="itemscope" itemtype="http://schema.org/Article"><header><h1 class="p-name entry-title"><a href="posts/2017/11/advanced-gpu-patterns-optimization-in-etl.html" class="u-url">Advanced GPU Patterns Optimization in ETL</a></h1>
         <div class="metadata">
             <p class="byline author vcard"><span class="byline-name fn" itemprop="author">
                 Baptiste Wicht

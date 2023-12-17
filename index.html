@@ -11,7 +11,7 @@
 <link rel="alternate" type="application/rss+xml" title="RSS" hreflang="en" href="rss.xml">
 <link rel="canonical" href="https://baptiste-wicht.com/">
 <link rel="next" href="index-33.html" type="text/html">
-<!--[if lt IE 9]><script src="assets/js/html5.js"></script><![endif]--><link rel="prefetch" href="posts/2023/09/switching-from-vim-to-neovim.html" type="text/html">
+<!--[if lt IE 9]><script src="assets/js/html5.js"></script><![endif]--><link rel="prefetch" href="posts/2023/12/c%2B%2B-refresh-and-new-technos-fp16-and-avx512.html" type="text/html">
 </head>
 <body>
 <a href="#content" class="sr-only sr-only-focusable">Skip to main content</a>
@@ -70,7 +70,80 @@
 
     
 <div class="postindex">
-    <article class="h-entry post-text" itemscope="itemscope" itemtype="http://schema.org/Article"><header><h1 class="p-name entry-title"><a href="posts/2023/09/switching-from-vim-to-neovim.html" class="u-url">Switching from vim to neovim</a></h1>
+    <article class="h-entry post-text" itemscope="itemscope" itemtype="http://schema.org/Article"><header><h1 class="p-name entry-title"><a href="posts/2023/12/c%2B%2B-refresh-and-new-technos-fp16-and-avx512.html" class="u-url">C++ Refresh and new technos: FP16 and AVX512</a></h1>
+        <div class="metadata">
+            <p class="byline author vcard"><span class="byline-name fn" itemprop="author">
+                Baptiste Wicht
+            </span></p>
+            <p class="dateline">
+            <a href="posts/2023/12/c%2B%2B-refresh-and-new-technos-fp16-and-avx512.html" rel="bookmark">
+            <time class="published dt-published" datetime="2023-12-17T09:20:55+01:00" itemprop="datePublished" title="2023-12-17 09:20">2023-12-17 09:20</time></a>
+            </p>
+                <p class="commentline">
+    
+    <a href="posts/2023/12/c%2B%2B-refresh-and-new-technos-fp16-and-avx512.html#disqus_thread" data-disqus-identifier="cache/posts/2023/12/c++-refresh-and-new-technos-fp16-and-avx512.html">Comments</a>
+
+
+        </p>
+</div>
+    </header><div class="p-summary entry-summary">
+    <p>In the last few months, I have been working on refreshing my Expression Templates Library (ETL) project with modern
+C++. I am happy to report that I have now finished the refresh. It took me longer than I expected and I also had less
+time than I expected. But I am very happy about the result.</p>
+<p>The main change in etl is the use of concepts. Expression Templates are making heavy use of SFINAE. And I was able to
+replace every single usage of SFINAE with concepts. I was also able to replace many assertions with concepts instead.</p>
+<p>In most cases, I am using concepts instead of the <cite>typename</cite> declaration. For instance</p>
+<div class="code"><pre class="code cpp"><a id="rest_code_04f0222c864e4ed98208a9b77576e9cf-1" name="rest_code_04f0222c864e4ed98208a9b77576e9cf-1" href="posts/2023/12/c%2B%2B-refresh-and-new-technos-fp16-and-avx512.html#rest_code_04f0222c864e4ed98208a9b77576e9cf-1"></a><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">A</span><span class="p">,</span><span class="w"> </span><span class="k">typename</span><span class="w"> </span><span class="nc">M</span><span class="p">,</span><span class="w"> </span><span class="n">cpp_enable_iff</span><span class="p">(</span><span class="n">is_4d</span><span class="o">&lt;</span><span class="n">A</span><span class="o">&gt;</span><span class="p">)</span><span class="o">&gt;</span>
+<a id="rest_code_04f0222c864e4ed98208a9b77576e9cf-2" name="rest_code_04f0222c864e4ed98208a9b77576e9cf-2" href="posts/2023/12/c%2B%2B-refresh-and-new-technos-fp16-and-avx512.html#rest_code_04f0222c864e4ed98208a9b77576e9cf-2"></a><span class="k">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">apply</span><span class="p">(</span><span class="n">A</span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">in</span><span class="p">,</span><span class="w"> </span><span class="n">M</span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="kt">size_t</span><span class="w"> </span><span class="n">c1</span><span class="p">,</span><span class="w"> </span><span class="kt">size_t</span><span class="w"> </span><span class="n">c2</span><span class="p">,</span><span class="w"> </span><span class="kt">size_t</span><span class="w"> </span><span class="n">c3</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</pre></div>
+<p>becomes</p>
+<div class="code"><pre class="code cpp"><a id="rest_code_e87603232a6e4ed3a331cd7ed8895bf9-1" name="rest_code_e87603232a6e4ed3a331cd7ed8895bf9-1" href="posts/2023/12/c%2B%2B-refresh-and-new-technos-fp16-and-avx512.html#rest_code_e87603232a6e4ed3a331cd7ed8895bf9-1"></a><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="n">etl_4d</span><span class="w"> </span><span class="n">A</span><span class="p">,</span><span class="w"> </span><span class="k">typename</span><span class="w"> </span><span class="nc">M</span><span class="o">&gt;</span>
+<a id="rest_code_e87603232a6e4ed3a331cd7ed8895bf9-2" name="rest_code_e87603232a6e4ed3a331cd7ed8895bf9-2" href="posts/2023/12/c%2B%2B-refresh-and-new-technos-fp16-and-avx512.html#rest_code_e87603232a6e4ed3a331cd7ed8895bf9-2"></a><span class="k">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">apply</span><span class="p">(</span><span class="n">A</span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">in</span><span class="p">,</span><span class="w"> </span><span class="n">M</span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="kt">size_t</span><span class="w"> </span><span class="n">c1</span><span class="p">,</span><span class="w"> </span><span class="kt">size_t</span><span class="w"> </span><span class="n">c2</span><span class="p">,</span><span class="w"> </span><span class="kt">size_t</span><span class="w"> </span><span class="n">c3</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</pre></div>
+<p>This makes the declaration much simpler to read. In some cases, I had to use <cite>requires</cite>. For instance, here is the old definition of sub_view:</p>
+<div class="code"><pre class="code cpp"><a id="rest_code_0642f43cc0044d628370323fa7ac20bd-1" name="rest_code_0642f43cc0044d628370323fa7ac20bd-1" href="posts/2023/12/c%2B%2B-refresh-and-new-technos-fp16-and-avx512.html#rest_code_0642f43cc0044d628370323fa7ac20bd-1"></a><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">T</span><span class="p">,</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="n">Aligned</span><span class="o">&gt;</span>
+<a id="rest_code_0642f43cc0044d628370323fa7ac20bd-2" name="rest_code_0642f43cc0044d628370323fa7ac20bd-2" href="posts/2023/12/c%2B%2B-refresh-and-new-technos-fp16-and-avx512.html#rest_code_0642f43cc0044d628370323fa7ac20bd-2"></a><span class="k">struct</span><span class="w"> </span><span class="nc">sub_view</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span><span class="w"> </span><span class="n">Aligned</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">enable_if_t</span><span class="o">&lt;!</span><span class="n">fast_sub_view_able</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;&gt;&gt;</span><span class="w"> </span><span class="k">final</span><span class="w"> </span><span class="p">{</span>
+</pre></div>
+<p>and here is the new one:</p>
+<div class="code"><pre class="code cpp"><a id="rest_code_f9b5f8ff31f14ef5a4d1716075702ce2-1" name="rest_code_f9b5f8ff31f14ef5a4d1716075702ce2-1" href="posts/2023/12/c%2B%2B-refresh-and-new-technos-fp16-and-avx512.html#rest_code_f9b5f8ff31f14ef5a4d1716075702ce2-1"></a><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">T</span><span class="p">,</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="n">Aligned</span><span class="o">&gt;</span>
+<a id="rest_code_f9b5f8ff31f14ef5a4d1716075702ce2-2" name="rest_code_f9b5f8ff31f14ef5a4d1716075702ce2-2" href="posts/2023/12/c%2B%2B-refresh-and-new-technos-fp16-and-avx512.html#rest_code_f9b5f8ff31f14ef5a4d1716075702ce2-2"></a><span class="k">requires</span><span class="p">(</span><span class="o">!</span><span class="n">fast_sub_view_able</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">)</span>
+<a id="rest_code_f9b5f8ff31f14ef5a4d1716075702ce2-3" name="rest_code_f9b5f8ff31f14ef5a4d1716075702ce2-3" href="posts/2023/12/c%2B%2B-refresh-and-new-technos-fp16-and-avx512.html#rest_code_f9b5f8ff31f14ef5a4d1716075702ce2-3"></a><span class="k">struct</span><span class="w"> </span><span class="nc">sub_view</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span><span class="w"> </span><span class="n">Aligned</span><span class="o">&gt;</span><span class="w"> </span><span class="k">final</span><span class="w"> </span><span class="p">{</span>
+</pre></div>
+<p>This also explains the requirements much better than using SFINAE. In most cases, concepts should be faster to compile
+than the old enable-if stuff. However, I have not yet had time to measure that.</p>
+<p>I also made many small cleanups to the code, but they are probably not worth discussing.</p>
+<section id="avx-512"><h2>AVX-512</h2>
+<p>What is worth discussing is that I finally added support for AVX-512 into etl. Before, I was waiting until Intel would
+give AVX-512F support to desktop CPU, but this is still not the case unfortunately. So I rented a VPS with AVX-512F
+support.</p>
+<p>AVX512-F is able to process 512b vector operations at once, twice more than AVX-2. This makes it twice faster in theory.
+I have completed the support in etl and did some extra testing as well. I wish I had a machine where to test that on
+a regular basis (the VPS is pretty expensive to keep running). If I start working a lot on this project again, I will
+consider having a Xeon CPU at hone.</p>
+</section><section id="fp16-and-bf16"><h2>FP16 and BF16</h2>
+<p>Another thing I had been wanting to work on for many years is FP16 operations on GPU. FP16 is a floating point type with
+only 16b instead of the standard 32b for <cite>float</cite>. With my new computer and new versions of CUDA, I now got a working
+system to do FP16.</p>
+<p>So, I implemented support for many FP16 operations on my <cite>etl-gpu-blas</cite> project that is used by <cite>etl</cite> to provide GPU
+operations. Thanks to operator overloading in CUDA, there is really nothing complicated about doing that.</p>
+<p>Doing so, I also added support for BF16. This is another half-precision floating point type, but the mantissa and
+exponent part are different, apparently better tuned for machine learning. The support is more or less the same in CUDA,
+only a different type.</p>
+<p>Currently, it is only used in etl-gpu-blas, not yet in DLL. Indeed, the problem with FP16 and BF16 is that there is no
+CPU support, so it is not as easy to use. I plan to improve that support in the future so that I can use it on DLL
+without even going to the CPU.</p>
+</section><section id="next-steps"><h2>Next steps</h2>
+<p>Another thing I want to explore in the future is FP8, which is a quarter-precision floating point. However, FP8 can only
+be used for some tensor operations, through the use of tensor cores. So, I will likely only use it through CUDNN
+for convolution operations.</p>
+<p>Finally, I also want to explore INT8 for neural networks. INT8 is easy to do on both CPU and GPU, but you cannot replace
+all types in a neural network with INT8, a certain level of quantization is necessary and storage should still be done
+in INT16 and INT32. But, that's not for tomorrow.</p>
+<p>The next immediate projec is to refresh the code of dll, with C++23. Then, I want to run some more benchmarks and see
+what are my next steps to make dll faster on CPU and GPU.</p>
+</section>
+</div>
+    </article><article class="h-entry post-text" itemscope="itemscope" itemtype="http://schema.org/Article"><header><h1 class="p-name entry-title"><a href="posts/2023/09/switching-from-vim-to-neovim.html" class="u-url">Switching from vim to neovim</a></h1>
         <div class="metadata">
             <p class="byline author vcard"><span class="byline-name fn" itemprop="author">
                 Baptiste Wicht
@@ -273,7 +346,7 @@ how many years you will need to reach your goals Financial Independence (FI). It
 will also gives you your FI ratio and a few more information about your savings
 rate, income, expenses and so on. It's nothing very fancy but it can be very
 useful.</p>
-</section><section id="new-features-2"><h2>New features</h2>
+</section><section id="new-features"><h2>New features</h2>
 <p>I've also added a few graphs based on the budget information. The first is the
 visualization of the expenses over time:</p>
 <img alt="Expenses over time graph" src="images/budgetwarrior_101_expenses_over_time.png"><p>This can be pretty useful to see how are your expenses going. Even if your
@@ -1244,110 +1317,6 @@ don't hesitate to let me a comment ;)</p>
 budgetwarrior, but I don't have any expected release date. It will depend on
 much time I'm able to put to the project.</p>
     </div>
-    </article><article class="h-entry post-text" itemscope="itemscope" itemtype="http://schema.org/Article"><header><h1 class="p-name entry-title"><a href="posts/2018/01/expression-templates-library-121-faster-gpu-and-new-features.html" class="u-url">Expression Templates Library 1.2.1: Faster GPU and new features</a></h1>
-        <div class="metadata">
-            <p class="byline author vcard"><span class="byline-name fn" itemprop="author">
-                Baptiste Wicht
-            </span></p>
-            <p class="dateline">
-            <a href="posts/2018/01/expression-templates-library-121-faster-gpu-and-new-features.html" rel="bookmark">
-            <time class="published dt-published" datetime="2018-01-09T11:06:15+01:00" itemprop="datePublished" title="2018-01-09 11:06">2018-01-09 11:06</time></a>
-            </p>
-                <p class="commentline">
-    
-    <a href="posts/2018/01/expression-templates-library-121-faster-gpu-and-new-features.html#disqus_thread" data-disqus-identifier="cache/posts/2018/01/expression-templates-library-121-faster-gpu-and-new-features.html">Comments</a>
-
-
-        </p>
-</div>
-    </header><div class="p-summary entry-summary">
-    <p>Happy new year to all my dear readers!</p>
-<p>It has been a while since I've posted on this blog. I've had to serve three
-weeks in the army and then I had two weeks vacation. I've been actively working
-on budgetwarrior with a brand new web interface! More on that later ;)</p>
-<p>Today, I'm happy to release the version 1.2.1 of my Expression Templates Library
-(ETL) project. This is a minor version but with significantly better GPU support
-and a few new features and bug fixes so I decided to release it now.</p>
-<section id="faster-gpu-support"><h2>Faster GPU support</h2>
-<p>Last year, I <a class="reference external" href="https://baptiste-wicht.com/posts/2017/11/advanced-gpu-patterns-optimization-in-etl.html">implemented the support for the detection of advanced GPU patterns in ETL</a>.</p>
-<p>This will significantly reduce the number of CUDA kernel calls that are being
-launched. For instance, each of the following expressions will be evaluated
-using a single GPU kernel:</p>
-<div class="code"><pre class="code C++"><a id="rest_code_1d0330be020b4c9f832c01e44e972546-1" name="rest_code_1d0330be020b4c9f832c01e44e972546-1" href="posts/2018/01/expression-templates-library-121-faster-gpu-and-new-features.html#rest_code_1d0330be020b4c9f832c01e44e972546-1"></a><span class="n">yy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.1</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">y</span>
-<a id="rest_code_1d0330be020b4c9f832c01e44e972546-2" name="rest_code_1d0330be020b4c9f832c01e44e972546-2" href="posts/2018/01/expression-templates-library-121-faster-gpu-and-new-features.html#rest_code_1d0330be020b4c9f832c01e44e972546-2"></a><span class="n">yy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">1.1</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">y</span>
-<a id="rest_code_1d0330be020b4c9f832c01e44e972546-3" name="rest_code_1d0330be020b4c9f832c01e44e972546-3" href="posts/2018/01/expression-templates-library-121-faster-gpu-and-new-features.html#rest_code_1d0330be020b4c9f832c01e44e972546-3"></a><span class="n">yy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.1</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">y</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">1.2</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">y</span>
-<a id="rest_code_1d0330be020b4c9f832c01e44e972546-4" name="rest_code_1d0330be020b4c9f832c01e44e972546-4" href="posts/2018/01/expression-templates-library-121-faster-gpu-and-new-features.html#rest_code_1d0330be020b4c9f832c01e44e972546-4"></a><span class="n">yy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.1</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">y</span>
-<a id="rest_code_1d0330be020b4c9f832c01e44e972546-5" name="rest_code_1d0330be020b4c9f832c01e44e972546-5" href="posts/2018/01/expression-templates-library-121-faster-gpu-and-new-features.html#rest_code_1d0330be020b4c9f832c01e44e972546-5"></a><span class="n">yy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="mf">1.1</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">y</span><span class="p">)</span>
-</pre></div>
-<p>This makes some operation significantly faster.</p>
-<p>Moreover, I've reduced a lot the numbers of device synchronization in the
-library. Especially, I've removed almost all synchronization from the
-etl-gpu-blas sub library. This means that synchronization is mostly only done
-when data needs to go back to the CPU. For machine learning, this means at the
-end of the epoch to compute the final error. This makes a HUGE difference in
-time, I didn't realize before that I was doing way too much synchronization.</p>
-<p>With these two changes, I've been able to attain <em>state of the art training performance on GPU</em> with my Deep Learning Library (DLL) project!</p>
-<p>Moreover, I've now added for random number generations on the GPU and for
-shuffle operations as well.</p>
-</section><section id="new-features"><h2>New Features</h2>
-<p>I've also added a few new features recently. They were especially added to
-support new features in DLL.</p>
-<p>Matrices and vectors can now be normalized in order to have zero-mean and
-unit-variance distribution. You can also merge matrices together. For now, there
-is no GPU support, so this will use CPU anyway. I plan to fix that later.</p>
-<p>In addition to bias_batch_mean that I added before, I also added bias_batch_var
-now with the variance in place of the mean. This is mainly used for Batch
-Normalization in machine learning, but it may have some other usages. The GPU
-support has been added as well directly.</p>
-<p>And the last feature is the support for embedding and the gradients of
-embedding. Again this is totally related to machine learning, but can be very
-useful as well. I haven't add the time to develop the GPU version so far, but
-this will come as well.</p>
-</section><section id="performance"><h2>Performance</h2>
-<p>Nothing fancy on the CPU performance side, I only added vectorization for
-hyperbolic versions. This makes <em>tanh much faster on CPU</em>.</p>
-</section><section id="bug-fixes"><h2>Bug Fixes</h2>
-<p>I fixed quite a few bugs in this version, which is one of the main reason
-I released it:</p>
-<p>1. When using large fast_matrix and aliasing was detected, there was a big chance of stack overflow occurring. This is now fixed by using a dynamic temporary.
-1. Some assignables such sub_view did not perform any detection for aliasing. This is now fixed and aliasing is detected everywhere.
-1. fast_dyn_matrix can now be correctly used with <em>bool</em>
-1. The use of iterators was not always ensuring correct CPU/GPU consistency. This is now correctly handled.
-1. The 4D convolution in GPU were not using the correct flipping
-1. Fix small compilation bug with sub_matrix and GPU</p>
-</section><section id="what-s-next"><h2>What's next ?</h2>
-<p>I don't really know what will be in the next release. This should be the release
-1.3. One possible idea would be to improve and review the support for sparse
-matrix which is more than  poor as of now. But I'm not really motivated to
-work on that :P Moreover, I'm now <em>actively</em> working on the next release of
-budgetwarrior which will probably still come this month.</p>
-<p>I'm also still hesitating in switching to C++17 for the library to make it
-faster to compile. And also to clean some parts of the code. I would be able to
-remove quite some SFINAE with the new <em>if constexpr</em>, but I'm afraid this will
-make the library to difficult to use since it would need at least GCC 7 or clang
-3.9.</p>
-<section id="download-etl"><h3>Download ETL</h3>
-<p>You can download ETL <a class="reference external" href="https://github.com/wichtounet/etl">on Github</a>. If you
-only interested in the 1.2.1 version, you can look at the
-<a class="reference external" href="https://github.com/wichtounet/etl/releases">Releases pages</a> or clone the tag
-1.2.1. There are several branches:</p>
-<ul class="simple">
-<li><p><em>master</em> Is the eternal development branch, may not always be stable</p></li>
-<li><p><em>stable</em> Is a branch always pointing to the last tag, no development here</p></li>
-</ul>
-<p>For the future release, there always will tags pointing to the corresponding
-commits. You can also have access to previous releases on Github or via the
-release tags.</p>
-<p>The documentation is still a bit sparse. There are a few examples and the Wiki,
-but there still is work to be done. If you have questions on how to use or
-configure the library, please don't hesitate.</p>
-<p>Don't hesitate to comment this post if you have any comment on this library or
-any question. You can also open an Issue on Github if you have a problem using
-this library or propose a Pull Request if you have any contribution you'd like
-to make to the library.</p>
-<p>Hope this may be useful to some of you :)</p>
-</section></section>
-</div>
     </article>
 </div>
 
