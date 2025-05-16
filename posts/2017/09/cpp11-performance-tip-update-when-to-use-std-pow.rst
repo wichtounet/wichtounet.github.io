@@ -1,7 +1,7 @@
 A few days ago, I published a post comparing the
-`performance of std::pow against direct multiplications <https://baptiste-wicht.com/posts/2017/09/cpp11-performance-tip-when-to-use-std-pow.html>`_. When not compiling with -ffast-math, direct multiplication was significantly faster than :code:`std::pow`, around two orders of magnitude faster when comparing :code:`x * x * x` and :code:`code:std::pow(x, 3)`.
-One comment that I've got was to test for which :code:`n` is
-:code:`code:std::pow(x, n)` becoming faster than multiplying in a loop. Since
+`performance of std::pow against direct multiplications <https://baptiste-wicht.com/posts/2017/09/cpp11-performance-tip-when-to-use-std-pow.html>`_. When not compiling with -ffast-math, direct multiplication was significantly faster than `std::pow`, around two orders of magnitude faster when comparing `x * x * x` and `code:std::pow(x, 3)`.
+One comment that I've got was to test for which `n` is
+`code:std::pow(x, n)` becoming faster than multiplying in a loop. Since
 std::pow is using a special algorithm to perform the computation rather than be
 simply loop-based multiplications, there may be a point after which it's more interesting to use the
 algorithm rather than a loop. So I decided to do the tests. You can also find
@@ -30,23 +30,23 @@ calls to each functions:
 
     <div id="graph_std_pow_my_pow_1" style="width: 700px; height: 400px;"></div>
 
-We can see that between :code:`n=100` and :code:`n=110`, :code:`std::pow(x, n)`
-starts to be faster than :code:`my_pow(x, n)`. At this point, you should only
-use :code:`std::pow(x, n)`.  Interestingly too, the time for :code:`std::pow(x,
+We can see that between `n=100` and `n=110`, `std::pow(x, n)`
+starts to be faster than `my_pow(x, n)`. At this point, you should only
+use `std::pow(x, n)`.  Interestingly too, the time for `std::pow(x,
 n)` is decreasing. Let's see how is the performance with higher range of
-:code:`n`:
+`n`:
 
 .. raw:: html
 
     <div id="graph_std_pow_my_pow_2" style="width: 700px; height: 400px;"></div>
 
 We can see that the pow function time still remains stable while our loop-based
-pow function still increases linearly. At :code:`n=1000`, :code:`std::pow` is
-one order of magnitude faster than :code:`my_pow`.
+pow function still increases linearly. At `n=1000`, `std::pow` is
+one order of magnitude faster than `my_pow`.
 
 Overall, if you do not care much about extreme accuracy, you may consider using
-you own pow function for small-ish (integer) :code:`n` values. After
-:code:`n=100`, it becomes more interesting to use :code:`std::pow`.
+you own pow function for small-ish (integer) `n` values. After
+`n=100`, it becomes more interesting to use `std::pow`.
 
 If you want more results on the subject, you take a look at the
 `original article <https://baptiste-wicht.com/posts/2017/09/cpp11-performance-tip-when-to-use-std-pow.html>`_.

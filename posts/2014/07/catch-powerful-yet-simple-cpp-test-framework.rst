@@ -26,19 +26,19 @@ The usage is really simple. Here is a basic example:
 
 The define is made to ensure that Catch will generate a main for you. This
 should only defined in one of your tests files if you have several. You define a
-new test case using the :code:`TEST_CASE` macro. There are two parameters, the
+new test case using the `TEST_CASE` macro. There are two parameters, the
 first one is the name of the test case, you can use any name, you don't have to
 use a valid C++ name. The second parameter is a longer description of the test
 case.
 
-You then use :code:`REQUIRE` to verify a condition. You can also use
-:code:`CHECK` to verify a condition, the difference being that it does not stop
-if the condition is not true. :code:`CHECK` is a good tool to put together some
-conditions that are related. There also exists :code:`REQUIRE_FALSE` and
-:code:`CHECK_FALSE` versions.
+You then use `REQUIRE` to verify a condition. You can also use
+`CHECK` to verify a condition, the difference being that it does not stop
+if the condition is not true. `CHECK` is a good tool to put together some
+conditions that are related. There also exists `REQUIRE_FALSE` and
+`CHECK_FALSE` versions.
 
-As you can see, there are no :code:`REQUIRE_EQUALS` or things like that, you can
-use any comparison operator you want in the :code:`REQUIRE`. 
+As you can see, there are no `REQUIRE_EQUALS` or things like that, you can
+use any comparison operator you want in the `REQUIRE`. 
 
 This produces an executable that will, by default, run every test contained in
 the executable. You can also configure the output report to be XML or JUnit if
@@ -73,12 +73,12 @@ expansion" information that shows LHS and RHS of the comparison operator.
 
 You can also check for exceptions with several macros:
 
-* :code:`REQUIRE_THROWS(expression)` and :code:`CHECK_THROWS(expression)`
+* `REQUIRE_THROWS(expression)` and `CHECK_THROWS(expression)`
   verify that an exception is thrown when the given expresssion is evaluated. 
-* :code:`REQUIRE_THROWS_AS(expression, exception_type)` and
-  :code:`CHECK_THROWS_AS(expression, exception_type)` verify the the given
+* `REQUIRE_THROWS_AS(expression, exception_type)` and
+  `CHECK_THROWS_AS(expression, exception_type)` verify the the given
   exception is thrown. 
-* :code:`REQUIRE_NOTHROW(expression)` and :code:`CHECK_NOTHROW(expression)`
+* `REQUIRE_NOTHROW(expression)` and `CHECK_NOTHROW(expression)`
   verify that no exception is thrown. 
 
 Conclusion

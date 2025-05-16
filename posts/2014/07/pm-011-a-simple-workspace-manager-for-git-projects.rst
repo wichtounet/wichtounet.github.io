@@ -10,7 +10,7 @@ Features
 --------
 
 The main feature of this application is to show the status of every projects in
-a directory. The status of your projects can be queried by using :code:`pm
+a directory. The status of your projects can be queried by using `pm
 status`. On my computer this gives something like that:
 
 .. image:: /images/pm_status.png
@@ -38,9 +38,9 @@ As you can see it supports recursive submodules. For each submodule it will
 indicate if there are new commits available or not. 
 
 pm is not only able to show status of the projects, it can also fetch the status 
-of branches from remote by using :code:`pm fetch`. All the remote branches are
+of branches from remote by using `pm fetch`. All the remote branches are
 fetched from remote. It can also automatically update the projects that are
-behind remote (equivalent of git pull) with :code:`pm update`. Only projects
+behind remote (equivalent of git pull) with `pm update`. Only projects
 that can be fast-forwarded are updated. 
 
 Installation

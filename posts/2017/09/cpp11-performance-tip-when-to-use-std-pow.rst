@@ -1,12 +1,12 @@
-Update: I've added a new section for larger values of :code:`n`.
+Update: I've added a new section for larger values of `n`.
 
-Recently, I've been wondering about the performance of :code:`std::pow(x, n)`.
-I'm talking here about the case when :code:`n` is an integer. In the case when
-:code:`n` is not an integer, I believe, you should always use :code:`std::pow`
+Recently, I've been wondering about the performance of `std::pow(x, n)`.
+I'm talking here about the case when `n` is an integer. In the case when
+`n` is not an integer, I believe, you should always use `std::pow`
 or use another specialized library.
 
 In case when n is an integer, you can actually replace it with the direct
-equivalent (for instance :code:`std::pow(x, 3) = x * x x`). If n is very large,
+equivalent (for instance `std::pow(x, 3) = x * x x`). If n is very large,
 you'd rather write a loop of course ;) In practice, we generally use powers of
 two and three much more often than power of 29, although that could happen. Of
 course, it especially make sense to wonder about this if the pow is used inside
@@ -14,16 +14,16 @@ a loop. If you only use it once outside a loop, that won't be any difference on
 the overall performance.
 
 Since I'm mostly interested in single precision performance (neural networks are
-only about single precision), the first benchmarks will be using :code:`float`.
+only about single precision), the first benchmarks will be using `float`.
 
 .. TEASER_END
 
 std::pow performances
 #####################
 
-So let's see what are the differences between :code:`std::pow(x, 2)` and
-:code:`x * x`. All the code will be compiled in C++11. For the sake of it,
-I'll also check the performance of the C :code:`pow` function.
+So let's see what are the differences between `std::pow(x, 2)` and
+`x * x`. All the code will be compiled in C++11. For the sake of it,
+I'll also check the performance of the C `pow` function.
 Let's start with GCC-6.4 and -O2:
 
 .. raw:: html
@@ -33,9 +33,9 @@ Let's start with GCC-6.4 and -O2:
 
 First, there is no difference between C pow function and std::pow, which is
 expected. On the other hand, it's interesting to see that there is a definite
-difference in performance between :code:`x * x` and :code:`std::pow(x, 2)`. This
+difference in performance between `x * x` and `std::pow(x, 2)`. This
 is not a huge difference, but still around 2.5 times slower for
-:code:`std::pow`.
+`std::pow`.
 
 Let's see if the difference is the same for bigger exponent.
 
@@ -44,8 +44,8 @@ Let's see if the difference is the same for bigger exponent.
     <div id="graph_std_pow_3" style="width: 700px; height: 400px;"></div>
     <input id="graph_button_std_pow_3" type="button" value="Logarithmic scale">
 
-This time the difference is very significant. :code:`x * x * x` is two orders
-of magnitude faster than :code:`std::pow(x, n)`. It seems that the algorithm
+This time the difference is very significant. `x * x * x` is two orders
+of magnitude faster than `std::pow(x, n)`. It seems that the algorithm
 used for bigger power is much less efficient. In any case, we can see that this
 is not optimized for integer values of exponent values.
 
@@ -82,9 +82,9 @@ For second power, it does not change anything. Let's see about the third power:
     <div id="graph_std_pow_fast_3" style="width: 700px; height: 400px;"></div>
     <input id="graph_button_std_pow_fast_3" type="button" value="Logarithmic scale">
 
-For the third power, for :code:`std::pow(x, 3)`, it is now much faster than
-before. Even though it's still faster to use :code:`x * x * x` than
-:code:`std::pow(x, 3)`, the difference is *only* around 2.5 times slower.
+For the third power, for `std::pow(x, 3)`, it is now much faster than
+before. Even though it's still faster to use `x * x * x` than
+`std::pow(x, 3)`, the difference is *only* around 2.5 times slower.
 
 Clang
 #####
@@ -116,8 +116,8 @@ two, but it seems they are using a similar implementations, if not the same.
 double precision
 ################
 
-As said earlier, all the tests were run in single precision (:code:`float`).
-Let's see now if it's any different with double precision (:code:`double`).
+As said earlier, all the tests were run in single precision (`float`).
+Let's see now if it's any different with double precision (`double`).
 Again, I'll use G++ 5.4.0 to start with.
 
 Here are the results first without -ffast-math:
@@ -127,8 +127,8 @@ Here are the results first without -ffast-math:
     <div id="graph_std_pow_double_2" style="width: 700px; height: 400px;"></div>
     <input id="graph_button_std_pow_double_2" type="button" value="Logarithmic scale">
 
-This is very interesting! Here there is no overhead of using :code:`std::pow`
-compared to direct multiplication (:code:`x * x`). It seems that most of the
+This is very interesting! Here there is no overhead of using `std::pow`
+compared to direct multiplication (`x * x`). It seems that most of the
 overhead of this function for single precision was in fact in conversion to
 double since it seems that the algorithm itself is only implemented for double
 precision. Let's see about third power now:
@@ -140,7 +140,7 @@ precision. Let's see about third power now:
 
 As seen before, with third power, the overhead is actually huge. Although this
 is slightly faster than when using single precision, it is still 2 orders of
-magnitude slower than direct multiplication :code:`x * x * x`. Let's see what
+magnitude slower than direct multiplication `x * x * x`. Let's see what
 happens with -ffast-math:
 
 .. raw:: html
@@ -148,14 +148,14 @@ happens with -ffast-math:
     <div id="graph_std_pow_double_4" style="width: 700px; height: 400px;"></div>
     <input id="graph_button_std_pow_double_4" type="button" value="Logarithmic scale">
 
-With -ffast-math, there is absolutely no overhead anymore for :code:`std::pow(x, n)`
+With -ffast-math, there is absolutely no overhead anymore for `std::pow(x, n)`
 even for third power. The results are the same for clang. I've checked for
 higher values of the exponent and the result is also the same.
 
 Bigger exponents
 ################
 
-Now, let's try to test for which :code:`n` is :code:`code:std::pow(x, n)`
+Now, let's try to test for which `n` is `code:std::pow(x, n)`
 becoming faster than multiplying in a loop. Since std::pow is using a special
 algorithm to perform the computation rather than be simply loop-based
 multiplications, there may be a point after which it's more interesting to use
@@ -184,43 +184,43 @@ calls to each functions:
 
     <div id="graph_std_pow_my_pow_1" style="width: 700px; height: 400px;"></div>
 
-We can see that between :code:`n=100` and :code:`n=110`, :code:`std::pow(x, n)`
-starts to be faster than :code:`my_pow(x, n)`. At this point, you should only
-use :code:`std::pow(x, n)`.  Interestingly too, the time for :code:`std::pow(x,
+We can see that between `n=100` and `n=110`, `std::pow(x, n)`
+starts to be faster than `my_pow(x, n)`. At this point, you should only
+use `std::pow(x, n)`.  Interestingly too, the time for `std::pow(x,
 n)` is decreasing. Let's see how is the performance with higher range of
-:code:`n`:
+`n`:
 
 .. raw:: html
 
     <div id="graph_std_pow_my_pow_2" style="width: 700px; height: 400px;"></div>
 
 We can see that the pow function time still remains stable while our loop-based
-pow function still increases linearly. At :code:`n=1000`, :code:`std::pow` is
-one order of magnitude faster than :code:`my_pow`.
+pow function still increases linearly. At `n=1000`, `std::pow` is
+one order of magnitude faster than `my_pow`.
 
 Overall, if you do not care much about extreme accuracy, you may consider using
-you own pow function for small-ish (integer) :code:`n` values. After
-:code:`n=100`, it becomes more interesting to use :code:`std::pow`.
+you own pow function for small-ish (integer) `n` values. After
+`n=100`, it becomes more interesting to use `std::pow`.
 
 Conclusion
 ##########
 
-If you are using double precision (:code:`double`), :code:`std::pow(x, n)` will
+If you are using double precision (`double`), `std::pow(x, n)` will
 be slower than the handcrafted equivalent unless you use -ffast-math, in which
 case, there is absolutely no overhead. The overhead without using the compiler
 option is quite large, around 2 orders of magnitude, starting from the third
 power. With or without -ffast-math, std::pow(x, 2) has no overhead compared to
-:code:`x * x`.
+`x * x`.
 
 For single precision, it's another story! For the two compilers that have been
 tested and for small integer values of n (but I think it's stays the same for
 large integer values of n), it's always faster to use direct multiplication
-rather than exponentiation via :code:`std::pow(x, n)`. Indeed, it seems that
+rather than exponentiation via `std::pow(x, n)`. Indeed, it seems that
 there is no optimization for the case when n is an integer. When -ffast-math is
 used, the difference it not very big, around 2.5 times slower for GCC and around
 3.5 times slower for clang. I'm a bit disappointed by the lack of
-single-precision performance for :code:`std::pow`. Basically, you should not use
-:code:`std::pow` if you want single-precision powers.
+single-precision performance for `std::pow`. Basically, you should not use
+`std::pow` if you want single-precision powers.
 
 I hope you found this benchmark interesting :)
 

@@ -28,7 +28,7 @@ initial copies to the GPU and then everything should be done on the GPU. I've
 also considered using Unified Memory in place of this system, but this is
 a problem for fast matrix and I'd rather not have two different systems.
 
-If you have an expression such as :code:`c = a + b * 2`, it can be entirely computed
+If you have an expression such as `c = a + b * 2`, it can be entirely computed
 on GPU, however, it will be computed in two GPU operations such as:
 
 .. code:: cpp
@@ -43,7 +43,7 @@ more operations than in CPU where this can easily be done in one go.
 
 There are a few expressions that are not computable on the GPU, such as random
 generations. A few transformations are also not fully compatible with GPU.
-Moreover, if you access an element with operators :code:`[]` or :code:`()`, this
+Moreover, if you access an element with operators `[]` or `()`, this
 will invalidate the GPU memory and force an update to the CPU memory.
 
 GPU operations are not implemented directly in ETL, there are coming from
@@ -97,14 +97,14 @@ compilation much faster by default. Since it's not necessary in most cases, this
 will help regular use cases of the library by compiling much faster.
 
 Overall, the support for complex numbers has been improved in ETL. There are
-more routines that are supported and :code:`etl::complex` is better supported
+more routines that are supported and `etl::complex` is better supported
 throughout the code. I'll still work on this in the future to make it totally
 complete.
 
 The internal code also has a few new changes. First, all traits have been
 rewritten to use variable templates instead of struct traits. This makes the
 code much nicer in my opinion. Moreover, I've started experimenting with C++17
-:code:`if constexpr`. Most of the if conditions that can be transformed to if
+`if constexpr`. Most of the if conditions that can be transformed to if
 constexpr have been annotated with comments that I can quickly enable or disable
 so that I can test the impact of C++17, especially on compilation time.
 

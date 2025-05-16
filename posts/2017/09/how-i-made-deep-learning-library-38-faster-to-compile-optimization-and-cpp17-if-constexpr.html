@@ -126,7 +126,7 @@ the total compilation of the DLL unit tests by up to 38%.</p>
 algorithm can be chosen in the code directly.</p>
 <p>For example, for a matrix multiplication, to force the vectorized
 implementation:</p>
-<div class="code"><pre class="code c++"><a id="rest_code_5f24acea0158484d8c030a88bdd492c3-1" name="rest_code_5f24acea0158484d8c030a88bdd492c3-1" href="how-i-made-deep-learning-library-38-faster-to-compile-optimization-and-cpp17-if-constexpr.html#rest_code_5f24acea0158484d8c030a88bdd492c3-1"></a><span class="n">C</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">selected_helper</span><span class="p">(</span><span class="n">etl</span><span class="o">::</span><span class="n">gemm_impl</span><span class="o">::</span><span class="n">VEC</span><span class="p">,</span><span class="w"> </span><span class="n">A</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">B</span><span class="p">);</span>
+<div class="code"><pre class="code c++"><a id="rest_code_aaa93eb1273a4e9da9e2123faf947fef-1" name="rest_code_aaa93eb1273a4e9da9e2123faf947fef-1" href="how-i-made-deep-learning-library-38-faster-to-compile-optimization-and-cpp17-if-constexpr.html#rest_code_aaa93eb1273a4e9da9e2123faf947fef-1"></a><span class="n">C</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">selected_helper</span><span class="p">(</span><span class="n">etl</span><span class="o">::</span><span class="n">gemm_impl</span><span class="o">::</span><span class="n">VEC</span><span class="p">,</span><span class="w"> </span><span class="n">A</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">B</span><span class="p">);</span>
 </pre></div>
 <p>This works great and simplifies a lot the testing and benchmarking of the
 application. Nevertheless, this complicates a lot the selection of the algorithm
@@ -134,7 +134,7 @@ and incurs quite some overhead on compilation time. I've come to realize that
 for most usage of the library this is not necessary. This is something that
 should only be used by the tests and benchmark. Therefore, I disabled this
 behaviour by default and added a macro to enable this behaviour
-(<code>ETL_MANUAL_SELECT</code>). This simplifies a lot the code in the case the
+(<cite>ETL_MANUAL_SELECT</cite>). This simplifies a lot the code in the case the
 macro is not defined. In fact, it also greatly reduces the compilation time of
 ETL usages where manual selection is not enabled, basically all ETL usages. In
 one of my ETL examples, the compilation time has gone down from about 30 seconds
@@ -180,22 +180,22 @@ results with DLL's unit tests:</p>
 compilation time of DLL has been nicely reduced.</p>
 </section><section id="use-if-constexpr-for-algorithm-selection"><h2>Use if constexpr for algorithm selection</h2>
 <p>Since C++17 has been supported in compilers, I've been wanting to play around
-with <code>if constexpr</code>. Before, when necessary, I've been emulated if
+with <cite>if constexpr</cite>. Before, when necessary, I've been emulated if
 constexpr with SFINAE and a lambda, but it's really not nice code. However, it
 already helped me in the past, for instance
 <a class="reference external" href="https://baptiste-wicht.com/posts/2016/01/improve-dll-and-etl-compile-time-further.html">a single static_if reduced the compilation time of DLL by about 30%</a>.
 I'm trying not to abuse it in the code, I've reserved it for a very instances in
-DLL's code. However, <code>if constexpr</code> is much nicer than an emulated
+DLL's code. However, <cite>if constexpr</cite> is much nicer than an emulated
 version. The only problem with it is that you need a really recent compiler for
 it. Especially with GCC, you need GCC 7.1 that has been available since May this
 year only. I'd rather not force too strong constraints on DLL requirements.</p>
-<p>Nevertheless, I've been annotating a lot of my <code>if</code> with constexpr
-annotations in the form of comments (<code>if /*constexpr*/</code>) so that I can
-switch back and forth to see the impact of C++17 <code>if constexpr</code> on my
+<p>Nevertheless, I've been annotating a lot of my <cite>if</cite> with constexpr
+annotations in the form of comments (<cite>if /*constexpr*/</cite>) so that I can
+switch back and forth to see the impact of C++17 <cite>if constexpr</cite> on my
 compilation time. Interestingly, only enabling C++17 as a compiler option made
 compilation slower by about 2%. Moreover, I've also found a few places in my
 code where C++17 was breaking. For instance, C++17 Ranges is adding a function
-<code>std::size(range)</code> that is ambiguous with <code>etl::size(matrix)</code> in
+<cite>std::size(range)</cite> that is ambiguous with <cite>etl::size(matrix)</cite> in
 some cases where ADL is concerned.</p>
 <p>Now that selection is much simpler in ETL, the complete selection can now be
 made constexpr and resolved at compile time.And therefore, all the branches can
@@ -241,12 +241,12 @@ implementation to be instantiated.</p>
 </tr>
 </tbody>
 </table>
-<p>By enabling C++17 and transforming some <code>if</code> into <code>if constexpr</code>,
+<p>By enabling C++17 and transforming some <cite>if</cite> into <cite>if constexpr</cite>,
 compilation time was reducing by up to 11.5%. It's pretty good, but I would have
 expected a bit more. Nevertheless, it's still an upgrade :) We can see that the
 impact is more important for release compilation. It makes sense since it should
 remove quite a lot of code hard to optimize.</p>
-<p>I've also started experimenting with <code>if constexpr</code> in DLL itself.
+<p>I've also started experimenting with <cite>if constexpr</cite> in DLL itself.
 Unfortunately, this didn't have as much effect as I wanted. Here are some
 preliminary results:</p>
 <table>
@@ -298,10 +298,10 @@ preliminary results:</p>
 <p>As you can see, the improvements are pretty small, almost not significant in
 some cases. Nevertheless, I believe there is some improvements that is possible.
 I've got a few other cases that I plan to refactor to allow for more
-<code>if constexpr</code> action. I'll see about that in the coming months.</p>
+<cite>if constexpr</cite> action. I'll see about that in the coming months.</p>
 </section><section id="conclusion"><h2>Conclusion</h2>
 <p>By disabling manual selection by default in my Expression Templates Library
-(ETL) and by making use of C++17 <code>if constexpr</code> feature, I've been able to
+(ETL) and by making use of C++17 <cite>if constexpr</cite> feature, I've been able to
 reduce the compilation time of DLL's unit test suite by up to 38% in the best
 case.</p>
 <p>So far, only the improvements to ETL are online, the C++17 improvements are only
@@ -373,7 +373,7 @@ post a comment on this blog or on Github :)</p>
         <!--End of body content-->
 
         <footer id="footer">
-            Contents © 2023         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         - License: 
+            Contents © 2025         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         - License: 
 <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="padding-left:5px;border-width:0" src="../../../assets/img/cc.png"></a>
             
         </footer>

@@ -73,7 +73,7 @@ This will train and test a simple three-layer fully-connected neural network on
 the MNIST dataset.
 
 First, for the includes, you need to include the layers you are using, here only
-the dense layer. Then, you need to include :code:`network.hpp` which is the
+the dense layer. Then, you need to include `network.hpp` which is the
 basic include for every network. And the last header is the one for the datasets
 support.
 
@@ -84,7 +84,7 @@ a unit variance.
 
 After this, comes the important part, the declaration of the
 network. In DLL, a network is a type. There are two parts to this type, the
-layers (inside a :code:`dll::network_layers`) and the options (a variadic list
+layers (inside a `dll::network_layers`) and the options (a variadic list
 of options), just after the layers. In this case, we are declaring three layers,
 the first with 500 hidden units, the second with 250 hidden units and the last
 one with 10. Each layer can also take a variadic list of options. The third
@@ -93,7 +93,7 @@ function. The network itself has three options. We are using the Nesterov Adam
 (NAdam) updater, a batch size of 100 (must be the same as the dataset batch
 size) and the dataset is shuffled before each epoch.
 
-After this, we simply create the network using :code:`std::make_unique`, then
+After this, we simply create the network using `std::make_unique`, then
 train it for 50 epochs on the training set and finally test it on the test set.
 
 If you compile and run this program, you should see something like this::
@@ -185,7 +185,7 @@ network that is able to classify MNIST digits with an error rate of 2.04%, which
 is not bad, but can still be improved.
 
 A few information on how to compile. You can install directly the dll library on
-your computer with :code:`sudo make install_headers` in a checked-out dll
+your computer with `sudo make install_headers` in a checked-out dll
 folder. Then, you can simply compile your file with::
 
     clang++ -std=c++14 file.cpp
@@ -198,18 +198,18 @@ folders:
 There are a few compilation options that you can ease in order to improve the
 performances:
 
-* :code:`-DETL_PARALLEL` will allow parallel computation
-* :code:`-DETL_VECTORIZE_FULL` will enable full vectorization of the algorithms
-* :code:`-DETL_BLAS_MODE` will let the library know about a BLAS library (MKL for
+* `-DETL_PARALLEL` will allow parallel computation
+* `-DETL_VECTORIZE_FULL` will enable full vectorization of the algorithms
+* `-DETL_BLAS_MODE` will let the library know about a BLAS library (MKL for
   instance). You must then add include options and linking options for the BLAS
   ligrary of your choice
-* :code:`-DETL_CUBLAS_MODE` will let the library know that NVIDIA cublas is available on
+* `-DETL_CUBLAS_MODE` will let the library know that NVIDIA cublas is available on
   this machine. You must then add the appropriate options (include directory and
   link library)
-* :code:`-DETL_CUDNN_MODE` will let the library know that NVIDIA cudnn is available on
+* `-DETL_CUDNN_MODE` will let the library know that NVIDIA cudnn is available on
   this machine. You must then add the appropriate options (include directory and
   link library)
-* :code:`-DETL_EGBLAS_MODE` will let the library know that you installed
+* `-DETL_EGBLAS_MODE` will let the library know that you installed
   etl-gpu-blas on this machine. You must then add the appropriate options
   (include directory and link library)
 

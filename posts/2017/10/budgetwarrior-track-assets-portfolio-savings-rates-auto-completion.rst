@@ -20,19 +20,19 @@ of your assets and will compute the difference that you should make in order to
 comply to your desired distribution.
 
 First, you need to define all your asset classes (your accounts, funds, and
-stocks, ...) and their distribution with :code:`budget asset add`. It also
+stocks, ...) and their distribution with `budget asset add`. It also
 supports to set a currency. The default currency is now CHF, but you can set it
-in the configuration file, for instance :code:`default_currency=USD`. You can
-see your assets using :code:`budget asset`:
+in the configuration file, for instance `default_currency=USD`. You can
+see your assets using `budget asset`:
 
 .. image:: /images/budgetwarrior_assets.png
    :alt: View of your assets
 
-You can then set the value of your assets using :code:`budget asset value add`.
+You can then set the value of your assets using `budget asset value add`.
 The system will save all the values of your assets. For now, only the last value
 is used in the application to display. In the future, I plan to add new reports
 for evolution of the portfolio over time. You can see your current net worth
-with the :code:`budget asset value`:
+with the `budget asset value`:
 
 .. image:: /images/budgetwarrior_asset_values.png
    :alt: View of your portfolio
@@ -47,13 +47,13 @@ The savings rate is simply the portion of your income that you are able to save
 each month. The savings rate for a year is simple the average of the savings
 rate of each month.
 
-The savings rate of the month can be seen with :code:`budget overview month`:
+The savings rate of the month can be seen with `budget overview month`:
 
 .. image:: /images/budgetwarrior_savings_rate.png
    :alt: Savings rate of the month
 
 The saving rates of each month can also be seen in the overview of the year with
-:code:`budget overview year`:
+`budget overview year`:
 
 .. image:: /images/budgetwarrior_savings_rate_year.png
    :alt: Savings rate of the year
@@ -74,7 +74,7 @@ in the console can now be completed. It's not really auto-completion per se, but
 you can cycle through the list of possible values using the UP and DOWN.
 
 This makes it much easier to set some values such as asset names (in
-:code:`budget asset value add` for instance), account names and objective types
+`budget asset value add` for instance), account names and objective types
 and sources. I'm trying to make the input of values easier.
 
 Conclusion

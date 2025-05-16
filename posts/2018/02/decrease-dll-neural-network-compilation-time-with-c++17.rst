@@ -4,7 +4,7 @@ resulted in a *much nicer code overall*, but no real improvement in compilation
 time.
 
 The objective of the migration of DLL was two-fold. First, I also wanted to
-simplify some code, especially with :code:`if constexpr`. But I also especially
+simplify some code, especially with `if constexpr`. But I also especially
 wanted to try to reduce the compilation time. In the past,
 `I've already tried a few changes with C++17 <https://baptiste-wicht.com/posts/2017/09/how-i-made-deep-learning-library-38-faster-to-compile-optimization-and-cpp17-if-constexpr.html>`_, with good results on the compilation of the entire test suite.
 While this is very good, this is not very representative of users of the library.
@@ -114,9 +114,9 @@ Overall, the migration of DLL to C++17 was quite similar to that of ETL. You can
 take a look at my `previous article <https://baptiste-wicht.com/posts/2018/02/c%2B%2B17-migration-of-expression-templates-library-etl.html>`_
 if you want more details on C++17 features I've used.
 
-I've *replaced a lot of SFINAE functions* with :code:`if constexpr`. I've also
-replaced a lot of :code:`statif_if` with :code:`if constexpr`. There was a large
-number of these in DLL's code. I also enabled all the :code:`constexpr` that
+I've *replaced a lot of SFINAE functions* with `if constexpr`. I've also
+replaced a lot of `statif_if` with `if constexpr`. There was a large
+number of these in DLL's code. I also enabled all the `constexpr` that
 were commented for this exact time :)
 
 I was also thinking that I could replace a lot of meta-programming stuff with
@@ -130,7 +130,7 @@ fine.
 I made some use of structured bindings as well, but again not as much as I was
 thinking. In fact, a lot of time, I'm assigning the elements of a pair or tuple
 to existing variables not declaring new variables and unfortunately, you can
-only use structured bindings with :code:`auto` declaration.
+only use structured bindings with `auto` declaration.
 
 Overall, the *code is significantly better now*, but there was less impact than
 there was on ETL. It's also a smaller code base, so maybe this is normal and my
@@ -149,7 +149,7 @@ will take some time. I'll especially have to polish the RNN support and add
 a sequence to sequence loss before I will release the 1.1 version of DLL.
 
 I'm quite satisfied with C++17 even if I would have liked a bit more features to
-play with! I'm already a big fan of :code:`if constexpr`, this can make the code
+play with! I'm already a big fan of `if constexpr`, this can make the code
 much nicer and fold expressions are much more intuitive than their previous
 recursive template counterpart.
 

@@ -75,8 +75,8 @@ There is also a third version that is a hybrid of the first version:
     network->pretrain(dataset.training_images, 10);
     network->fine_tune(dataset.training_images, dataset.training_labels, 10);
 
-Only one line was changed compared to the first version, :code:`dbn_desc`
-becomes :code:`dyn_dbn_desc`. What this changes is that all the layers are
+Only one line was changed compared to the first version, `dbn_desc`
+becomes `dyn_dbn_desc`. What this changes is that all the layers are
 automatically transformed into their dynamic versions and all the parameters are
 propagated at runtime. This is a form a type erasing since the sizes will not be
 propagated at compilation time. But this is simple since the types are simply
@@ -132,7 +132,7 @@ future, most on the work should be on the matrix library (ETL) that is used.
 Since for test cases, a 20% increase in runtime is not really a problem, tests
 being fast already, I decided to add an option to DLL so that everything can be
 compiled by default in hybrid model. By using a compilation flag, all the
-:code:`dbn_desc` are becoming :code:`dyn_dbn_desc` and therefore each used
+`dbn_desc` are becoming `dyn_dbn_desc` and therefore each used
 network is becoming a hybrid network. Without a single change in the code, the
 compilation time of the entire library can be significantly improved, as seen in
 the next section.  This can also be used in user code to improve compilation

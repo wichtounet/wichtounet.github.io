@@ -1,10 +1,7 @@
-.. role:: cpp(code)
-   :language: cpp
-
 No, it's not the same post as two days! I've been able to reduce the compilation
 time of my test cases by another 16%!
 
-Two days ago, I posted an article about how `I reduced the compilation time of my tests by 13% <http://baptiste-wicht.com/posts/2016/05/speedup-compilation-by-13-by-simplifying-unit-test-with-catch.html>`_, by bypassing the expression deduction from Catch. I came up with the macro :cpp:`REQUIRE_EQUALS`:
+Two days ago, I posted an article about how `I reduced the compilation time of my tests by 13% <http://baptiste-wicht.com/posts/2016/05/speedup-compilation-by-13-by-simplifying-unit-test-with-catch.html>`_, by bypassing the expression deduction from Catch. I came up with the macro `REQUIRE_EQUALS`:
 
 .. code:: cpp
 
@@ -28,8 +25,8 @@ I was quite happy with that optimization, but it turned out, I was not
 aggressive enough in my optimizations.
 
 Even though it seems simple, the macro is still bloated. There are two
-constructors calls: :cpp:`ResultBuilder` and :cpp:`SourceLineInfo` (hidden behind
-:cpp:`CATCH_INTERNAL_LINEINFO`). That means that if you test case has 100
+constructors calls: `ResultBuilder` and `SourceLineInfo` (hidden behind
+`CATCH_INTERNAL_LINEINFO`). That means that if you test case has 100
 assertions, 200 constructor calls will need to be processed by the compiler.
 Considering that I have some test files with around 400 assertions, this is
 a lot of overhead for nothing. Moreover, two parameters have always the same
@@ -54,8 +51,8 @@ Simplifying the macro to the minimum led me to this:
         evaluate_result(__FILE__, __LINE__, #lhs " == " #rhs, lhs, rhs);
 
 The macro is now a simple function call. Even though the function is a template
-function, it will only be compiled for a few types (:cpp:`double` and
-:cpp:`float` in my case), whereas the code of the macro would be unconditionally
+function, it will only be compiled for a few types (`double` and
+`float` in my case), whereas the code of the macro would be unconditionally
 compiled for each invocation.
 
 With this new macro and function, the compilation time went down from 664

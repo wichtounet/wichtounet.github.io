@@ -33,7 +33,7 @@ and incurs quite some overhead on compilation time. I've come to realize that
 for most usage of the library this is not necessary. This is something that
 should only be used by the tests and benchmark. Therefore, I disabled this
 behaviour by default and added a macro to enable this behaviour
-(:code:`ETL_MANUAL_SELECT`). This simplifies a lot the code in the case the
+(`ETL_MANUAL_SELECT`). This simplifies a lot the code in the case the
 macro is not defined. In fact, it also greatly reduces the compilation time of
 ETL usages where manual selection is not enabled, basically all ETL usages. In
 one of my ETL examples, the compilation time has gone down from about 30 seconds
@@ -62,23 +62,23 @@ Use if constexpr for algorithm selection
 ########################################
 
 Since C++17 has been supported in compilers, I've been wanting to play around
-with :code:`if constexpr`. Before, when necessary, I've been emulated if
+with `if constexpr`. Before, when necessary, I've been emulated if
 constexpr with SFINAE and a lambda, but it's really not nice code. However, it
 already helped me in the past, for instance
 `a single static_if reduced the compilation time of DLL by about 30% <https://baptiste-wicht.com/posts/2016/01/improve-dll-and-etl-compile-time-further.html>`_.
 I'm trying not to abuse it in the code, I've reserved it for a very instances in
-DLL's code. However, :code:`if constexpr` is much nicer than an emulated
+DLL's code. However, `if constexpr` is much nicer than an emulated
 version. The only problem with it is that you need a really recent compiler for
 it. Especially with GCC, you need GCC 7.1 that has been available since May this
 year only. I'd rather not force too strong constraints on DLL requirements.
 
-Nevertheless, I've been annotating a lot of my :code:`if` with constexpr
-annotations in the form of comments (:code:`if /*constexpr*/`) so that I can
-switch back and forth to see the impact of C++17 :code:`if constexpr` on my
+Nevertheless, I've been annotating a lot of my `if` with constexpr
+annotations in the form of comments (`if /*constexpr*/`) so that I can
+switch back and forth to see the impact of C++17 `if constexpr` on my
 compilation time. Interestingly, only enabling C++17 as a compiler option made
 compilation slower by about 2%. Moreover, I've also found a few places in my
 code where C++17 was breaking. For instance, C++17 Ranges is adding a function
-:code:`std::size(range)` that is ambiguous with :code:`etl::size(matrix)` in
+`std::size(range)` that is ambiguous with `etl::size(matrix)` in
 some cases where ADL is concerned.
 
 Now that selection is much simpler in ETL, the complete selection can now be
@@ -100,13 +100,13 @@ Here are the results I've obtained:
 | Improvement              | 10%       | 11.5%       | 6%          | 10%           |
 +--------------------------+-----------+-------------+-------------+---------------+
 
-By enabling C++17 and transforming some :code:`if` into :code:`if constexpr`,
+By enabling C++17 and transforming some `if` into `if constexpr`,
 compilation time was reducing by up to 11.5%. It's pretty good, but I would have
 expected a bit more. Nevertheless, it's still an upgrade :) We can see that the
 impact is more important for release compilation. It makes sense since it should
 remove quite a lot of code hard to optimize.
 
-I've also started experimenting with :code:`if constexpr` in DLL itself.
+I've also started experimenting with `if constexpr` in DLL itself.
 Unfortunately, this didn't have as much effect as I wanted. Here are some
 preliminary results:
 
@@ -127,13 +127,13 @@ preliminary results:
 As you can see, the improvements are pretty small, almost not significant in
 some cases. Nevertheless, I believe there is some improvements that is possible.
 I've got a few other cases that I plan to refactor to allow for more
-:code:`if constexpr` action. I'll see about that in the coming months.
+`if constexpr` action. I'll see about that in the coming months.
 
 Conclusion
 ##########
 
 By disabling manual selection by default in my Expression Templates Library
-(ETL) and by making use of C++17 :code:`if constexpr` feature, I've been able to
+(ETL) and by making use of C++17 `if constexpr` feature, I've been able to
 reduce the compilation time of DLL's unit test suite by up to 38% in the best
 case.
 

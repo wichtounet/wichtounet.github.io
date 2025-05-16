@@ -14,10 +14,10 @@ I won't cover all of the new C++17 features.
 if constexpr
 ############
 
-The most exciting new thing in C++17 for me is the :code:`if constexpr`
+The most exciting new thing in C++17 for me is the `if constexpr`
 statement. This is a really really great thing. In essence, it's a normal
-:code:`if` statement, but with one very important difference. The statement that
-is not taken (the :code:`else` if the condition is true, or the :code:`if
+`if` statement, but with one very important difference. The statement that
+is not taken (the `else` if the condition is true, or the `if
 constexpr` if the condition is false) is *discarded*. And what is interesting
 is what happens to *discarded* statements:
 
@@ -48,7 +48,7 @@ before C++17, is use SFINAE and make two functions:
 One version of the function will forward and the other version will force
 a temporary and the return type can be different since these are two different
 functions. This is not bad, but still requires two functions where you only want
-to write one. However, in C++17, we can do much better using :code:`if constexpr`:
+to write one. However, in C++17, we can do much better using `if constexpr`:
 
 .. code:: cpp
 
@@ -100,11 +100,11 @@ matrix-matrix multiplication:
     }
 
 Again, we use SFINAE to distinguish the two different cases. In that case, we
-cannot use a normal :code:`if` since the value of the dimensions cannot be taken
+cannot use a normal `if` since the value of the dimensions cannot be taken
 at compile-time for dynamic matrices, more precisely, some templates cannot be
 instantiated for dynamic matrices. As for the cpp_unused, we have to use for the
 static version because we don't use them and for the dynamic version because
-they won't be used if the assertions are not enabled. Let's use :code:`if constexpr` to avoid having two functions:
+they won't be used if the assertions are not enabled. Let's use `if constexpr` to avoid having two functions:
 
 .. code:: cpp
 
@@ -132,7 +132,7 @@ they won't be used if the assertions are not enabled. Let's use :code:`if conste
 Since the *discarded* won't be instantiated, we can now use a single function!
 We also avoid some duplications of the first static assertion of the unused
 statements. Pretty great, right ? But we can do better with C++17. Indeed, it
-added a nice new attribute :code:`[[maybe_unused]]`. Let's see what this gives
+added a nice new attribute `[[maybe_unused]]`. Let's see what this gives
 us:
 
 .. code:: cpp
@@ -154,7 +154,7 @@ us:
         }
     }
 
-No more need for :code:`cpp_unused` trick :) This attribute tells the compiler
+No more need for `cpp_unused` trick :) This attribute tells the compiler
 that a variable or parameter can be sometimes unused and therefore does not lead
 to a warning for it. Only one thing that is not great with this attribute is
 that it's too long, 16 characters. It almost double the width of my check
@@ -163,16 +163,16 @@ several lines. I wish there was a way to set an attribute for all parameters
 together or a shortcut. I'm considering whether to use a short macro to use in
 place of it, but haven't yet decided.
 
-Just a note, if you have :code:`else if` statements, you need to set them as
-:code:`constexpr` as well! This was a bit weird for me, but you can figure it as
-if the condition is :code:`constexpr`, then the :code:`if` (or :code:`else if`)
-is :code:`constexpr` as well.
+Just a note, if you have `else if` statements, you need to set them as
+`constexpr` as well! This was a bit weird for me, but you can figure it as
+if the condition is `constexpr`, then the `if` (or `else if`)
+is `constexpr` as well.
 
 Overall, I'm really satisfied with the new `if constexpr`! This really makes the
 code much nicer in many cases, especially if you abuse metaprogramming like
 I do.
 
-You may remember that I've `coded a version of static if in the past with C++14 <https://baptiste-wicht.com/posts/2015/07/simulate-static_if-with-c11c14.html>`_ in the past. This was able to solve point 2, but not point 1 and was much uglier. Now we have a good solution to it. I've replaced two of these in the current code with the new :code:`if constexpr`.
+You may remember that I've `coded a version of static if in the past with C++14 <https://baptiste-wicht.com/posts/2015/07/simulate-static_if-with-c11c14.html>`_ in the past. This was able to solve point 2, but not point 1 and was much uglier. Now we have a good solution to it. I've replaced two of these in the current code with the new `if constexpr`.
 
 Fold expressions
 ################
@@ -223,7 +223,7 @@ we can manipulate the parameter pack directly and rewrite our size function:
     }
 
 This is much better! This clearly states that each value of the parameter should
-be multiplied together. For instance :code:`1,2,3` will become :code:`(1*2)*3`.
+be multiplied together. For instance `1,2,3` will become `(1*2)*3`.
 
 Another place where I was using this was to code a traits that tests if a set of
 boolean are all true at compilation-time:
@@ -336,7 +336,7 @@ now you can also use:
 It's just some syntactic sugar, but I think it's quite nice.
 
 The last improvement that I want to talk about is one that probably very few
-know about but it's pretty neat. Since C++11, you can use the :code:`alignas(X)`
+know about but it's pretty neat. Since C++11, you can use the `alignas(X)`
 specifier for types and objects to specify on how many bytes you want to align
 these. This is pretty nice if you want to align on the stack. However, this
 won't always work for dynamic memory allocation. Imagine this struct:
@@ -346,12 +346,12 @@ won't always work for dynamic memory allocation. Imagine this struct:
     struct alignas(128)  test_struct  { char data; };
 
 If you declare an object of this type on the stack, you have the guarantee that
-it will be aligned on 128 bytes. However, if you use :code:`new` to allocate it
+it will be aligned on 128 bytes. However, if you use `new` to allocate it
 on the heap, you don't have such guarantee. Indeed, the problem is that 128 is
 greater than the maximum default alignment. This is called an over-aligned type.
 In such cases, the result will be aligned on the max alignment of your system.
-Since C++17, :code:`new` supports aligned dynamic memory allocation of
-over-aligned types. Therefore, you can use a simple :code:`alignas` to allocate
+Since C++17, `new` supports aligned dynamic memory allocation of
+over-aligned types. Therefore, you can use a simple `alignas` to allocate
 dynamic over-aligned types :) I need this in ETL for matrices that need to be
 aligned for vectorized code. Before, I was using a larger array with some
 padding in order to find an aligned element inside, but that is not very nice,
@@ -381,9 +381,9 @@ results with g++. Here are the results with G++ 7.2.0
 Overall, I'm a bit disappointed by these results, it's around 3% slower to
 compile the C++17 version than the C++14 version. I was thinking that this would
 a least be as fast to compile as before. It seems that currently with G++ 7.2,
-:code:`if constexpr` are slower to compile than the equivalent SFINAE functions.
+`if constexpr` are slower to compile than the equivalent SFINAE functions.
 I didn't do individual benchmarks of all the features I've migrated, therefore,
-it may not be coming from :code:`if constexpr`, but since it's the greatest
+it may not be coming from `if constexpr`, but since it's the greatest
 change by far, it's the more likely candidate. Once I'll have a little more
 time, after my vacations, I'll try to see if that is also the case with clang.
 
@@ -392,7 +392,7 @@ using the manual selection mode of the library in order to be able to test all
 the possible implementations of each operation. This makes a considerable
 difference in performance. I expect better compilation time when this is used in
 automatic selection mode (the default mode). In the default mode, a lot more
-code can be disabled with :code:`if constexpr`. I will test this next with the
+code can be disabled with `if constexpr`. I will test this next with the
 DLL library which I will also migrate to C++17.
 
 Conclusion

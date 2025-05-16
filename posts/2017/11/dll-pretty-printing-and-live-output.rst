@@ -3,10 +3,10 @@ is generally not the most important point in a machine learning framework, but
 the first impression being important. Therefore, I decided it was time to get
 a nicer output in the console for training networks.
 
-A network or a dataset can be displayed using the :code:`display()` function.
-I've added a :code:`display_pretty()` function to them to display it more
-nicely. I've also added the :code:`dll::dump_timers_nice()` function to do the
-same for :code:`dll::dump_timers()`.
+A network or a dataset can be displayed using the `display()` function.
+I've added a `display_pretty()` function to them to display it more
+nicely. I've also added the `dll::dump_timers_nice()` function to do the
+same for `dll::dump_timers()`.
 
 I've also improved the display for the results of the batches during training.
 Now, the display is updated every 100ms and it also displays the current

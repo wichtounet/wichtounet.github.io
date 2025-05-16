@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trying out Rust and C++26 | Blog blog("Baptiste Wicht");</title>
+<link href="../../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
+<meta name="theme-color" content="#5670d4">
+<meta name="generator" content="Nikola (getnikola.com)">
+<link rel="alternate" type="application/rss+xml" title="RSS" hreflang="en" href="../../../rss.xml">
+<link rel="canonical" href="https://baptiste-wicht.com/posts/2025/05/trying-out-rust-and-c%2B%2B26.html">
+<!--[if lt IE 9]><script src="../../../assets/js/html5.js"></script><![endif]--><meta name="author" content="Baptiste Wicht">
+<link rel="prev" href="../../2023/12/c%2B%2B-refresh-and-new-technos-fp16-and-avx512.html" title="C++ Refresh and new technos: FP16 and AVX512" type="text/html">
+<meta property="og:site_name" content='Blog blog("Baptiste Wicht");'>
+<meta property="og:title" content="Trying out Rust and C++26">
+<meta property="og:url" content="https://baptiste-wicht.com/posts/2025/05/trying-out-rust-and-c%2B%2B26.html">
+<meta property="og:description" content="It has been too long again since I wrote here. But with family, my other blog and work, I did not get a chance to write here for a while.
+Today is going to be a short update. I recently updated my mai">
+<meta property="og:type" content="article">
+<meta property="article:published_time" content="2025-05-16T07:20:43+02:00">
+<meta property="article:tag" content="C++26">
+<meta property="article:tag" content="projects">
+<meta property="article:tag" content="Rust">
+</head>
+<body>
+<a href="#content" class="sr-only sr-only-focusable">Skip to main content</a>
+
+<!-- Menubar -->
+
+<nav class="navbar navbar-inverse navbar-static-top"><div class="container">
+<!-- This keeps the margins nice -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-navbar" aria-controls="bs-navbar" aria-expanded="false">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="https://baptiste-wicht.com/">
+
+                <span id="blog-title">Blog blog("Baptiste Wicht");</span>
+            </a>
+        </div>
+<!-- /.navbar-header -->
+        <div class="collapse navbar-collapse" id="bs-navbar" aria-expanded="false">
+            <ul class="nav navbar-nav">
+<li>
+<a href="../../../stories/about.html">About</a>
+                </li>
+<li>
+<a href="../../../stories/publications.html">Publications</a>
+                </li>
+<li>
+<a href="../../../stories/projects.html">Projects</a>
+                </li>
+<li>
+<a href="../../../categories/index.html">Tags</a>
+                </li>
+<li>
+<a href="../../../archive.html">Archives</a>
+
+                
+            </li>
+</ul>
+<ul class="nav navbar-nav navbar-right">
+<li>
+    <a href="trying-out-rust-and-c%2B%2B26.rst" id="sourcelink">Source</a>
+    </li>
+
+                
+            </ul>
+</div>
+<!-- /.navbar-collapse -->
+    </div>
+<!-- /.container -->
+</nav><!-- End of Menubar --><div class="container" id="content" role="main">
+    <div class="body-content">
+        <!--Body content-->
+        <div class="row">
+            
+            
+<article class="post-text h-entry hentry postpage" itemscope="itemscope" itemtype="http://schema.org/Article"><header><h1 class="p-name entry-title" itemprop="headline name"><a href="trying-out-rust-and-c%2B%2B26.html" class="u-url">Trying out Rust and C++26</a></h1>
+
+        <div class="metadata">
+            <p class="byline author vcard p-author h-card"><span class="byline-name fn p-name" itemprop="author">
+                    Baptiste Wicht
+            </span></p>
+            <p class="dateline">
+            <a href="trying-out-rust-and-c%2B%2B26.html" rel="bookmark">
+            <time class="published dt-published" datetime="2025-05-16T07:20:43+02:00" itemprop="datePublished" title="2025-05-16 07:20">2025-05-16 07:20</time></a>
+            </p>
+                <p class="commentline">
+    
+    <a href="trying-out-rust-and-c%2B%2B26.html#disqus_thread" data-disqus-identifier="cache/posts/2025/05/trying-out-rust-and-c++26.html">Comments</a>
+
+
+            
+        </p>
+<p class="sourceline"><a href="trying-out-rust-and-c%2B%2B26.rst" class="sourcelink">Source</a></p>
+
+        </div>
+        
+
+    </header><div class="e-content entry-content" itemprop="articleBody text">
+    <p>It has been too long again since I wrote here. But with family, my other blog and work, I did not get a chance to write here for a while.</p>
+<p>Today is going to be a short update. I recently updated my main projects to use C++26. There is not much I can use at this point, but I have upgraded my compilers to GCC-15 and Clang-20 so that I can access most things. I will probably do some minor updates of the code in the coming weeks/months to see what I can add. What I am really waiting for is the concepts and the meta-programming, which are not yet in the base compilers. These two features are really going to make a huge difference on how we write C++ code.</p>
+<p>In the last two months, I have started learning some Rust. Since I believe the best way to learn a language is by writing code, I quickly got into coding. I have ported a (small) part of my ETL and DLL libraries to Rust. I came to the point where I can train a simple Dense Neural Network on MNIST and it works. Of course, I also tried to make it as fast as possible. Currently, it is relatively close to at about 30% slower than ETL on a CPU and without MKL.</p>
+<p>Overall, Rust is an interesting language. Its borrow checker and strong compiler contracts are definitely making the code safer. On the other hand, it also makes the code very strict. And some things that are very easy to write in C++ become very difficult to write in Rust.</p>
+<p>Here are some of the issues I found with Rust:</p>
+<ol class="arabic simple">
+<li><p>The generics are very limited. Compared to the level of meta-programming we can do in C++ with templates, the comparison does not even start. Everything must be tied to Traits (a bit like concepts in this case) and we can't specialize code based on the type.</p></li>
+<li><p>The SIMD library is also quite limited. I am currently using the <cite>portable-simd</cite> library from nightly Rust and it gets the job done. But we are again limited to the common interface between integers and floating points since we cannot specialize and unfortunately, some of the things are not defined for both. For instance, I could not get FMA in my code and I cannot easily tune the size of the vectors to the types.</p></li>
+<li><p>Because of the borrow-checker, we are also not allowed to do some expressions where we mix mutable and immutable references, like <cite>x = b * x + d</cite> (x is once mutable and once immutable), so we either need to do two operations (slow) or do some inplace wrappers instead of relying on expressions (ugly</p></li>
+<li><p>Currently, there is a lot of overhead to the parallelism I used (through <cite>rayon</cite>). Compared to simply using a simple thread pool, this is quickly much more complicated and apparently much more overhead. I am using much higher thresholds for parallelizing operations in my Rust library than I am in C++.</p></li>
+</ol>
+<p>I should still mention that this was probably not the best project to start in Rust since C++ excels at templates while Rust does not. But it was fun. And it was not that difficult for me to quickly get into Rust. But it will take a longer time to become an expert.</p>
+<p>While I enjoy writing Rust, I do enjoy writing C++ much more, so I really hope I can keep on writing C++ for a long time.</p>
+<p>What about you? Anybody tried Rust?</p>
+    <h3>Related articles</h3>
+    
+
+    <li><a href="../../2023/08/a-short-update.html">A short update</a></li>
+<li><a href="../../2023/12/c++-refresh-and-new-technos-fp16-and-avx512.html">C++ Refresh and new technos: FP16 and AVX512</a></li>
+<li><a href="../../2017/08/expression-templates-library-etl-11.html">Expression Templates Library (ETL) 1.1</a></li>
+<li><a href="../../2017/10/expression-templates-library-etl-1-2-complete-gpu-support.html">Expression Templates Library (ETL) 1.2 - Complete GPU support</a></li>
+<li><a href="../../2023/09/c++23-refresh-and-budgetwarrior-110.html">C++23 Refresh and budgetwarrior 1.1.0</a></li>
+<li><a href="../../2017/05/update-on-expression-templates-library-etl.html">Update on Expression Templates Library (ETL)</a></li>
+
+
+    </div>
+    <aside class="postpromonav"><nav><ul itemprop="keywords" class="tags">
+<li><a class="tag p-category" href="../../../categories/c%2B%2B26.html" rel="tag">C++26</a></li>
+            <li><a class="tag p-category" href="../../../categories/projects.html" rel="tag">projects</a></li>
+            <li><a class="tag p-category" href="../../../categories/rust.html" rel="tag">Rust</a></li>
+        </ul>
+<ul class="pager hidden-print">
+<li class="previous">
+                <a href="../../2023/12/c%2B%2B-refresh-and-new-technos-fp16-and-avx512.html" rel="prev" title="C++ Refresh and new technos: FP16 and AVX512">Previous post</a>
+            </li>
+        </ul></nav></aside><section class="comments hidden-print"><h2>Comments</h2>
+        
+    
+        <div id="disqus_thread"></div>
+        <script>
+        var disqus_shortname ="blogwichtounet",
+            disqus_url="https://baptiste-wicht.com/posts/2025/05/trying-out-rust-and-c%2B%2B26.html",
+        disqus_title="Trying out Rust and C++26",
+        disqus_identifier="cache/posts/2025/05/trying-out-rust-and-c++26.html",
+        disqus_config = function () {
+            this.language = "en";
+        };
+        (function() {
+            var dsq = document.createElement('script'); dsq.async = true;
+            dsq.src = 'https://' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script><noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a>
+</noscript>
+    <a href="https://disqus.com" class="dsq-brlink" rel="nofollow">Comments powered by <span class="logo-disqus">Disqus</span></a>
+
+
+        </section></article><script>var disqus_shortname="blogwichtounet";(function(){var a=document.createElement("script");a.async=true;a.src="https://"+disqus_shortname+".disqus.com/count.js";(document.getElementsByTagName("head")[0]||document.getElementsByTagName("body")[0]).appendChild(a)}());</script>
+</div>
+        <!--End of body content-->
+
+        <footer id="footer">
+            Contents © 2025         <a href="mailto:baptistewicht@gmail.com">Baptiste Wicht</a> - Powered by         <a href="http://getnikola.com" rel="nofollow">Nikola</a>         - License: 
+<a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="padding-left:5px;border-width:0" src="../../../assets/img/cc.png"></a>
+            
+        </footer>
+</div>
+</div>
+
+
+            <script src="../../../assets/js/all-nocdn.js"></script><!-- fancy dates --><script>
+    moment.locale("en");
+    fancydates(0, "YYYY-MM-DD HH:mm");
+    </script><!-- end fancy dates --><script>
+    baguetteBox.run('div#content', {
+        ignoreClass: 'islink',
+        captions: function(element) {
+            return element.getElementsByTagName('img')[0].alt;
+    }});
+    </script>
+</body>
+</html>

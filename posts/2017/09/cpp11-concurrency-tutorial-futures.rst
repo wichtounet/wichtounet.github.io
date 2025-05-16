@@ -11,13 +11,13 @@ Here are the links to the current posts of the C++11 Concurrency Tutorial:
 * `Part 4: Atomic Types <https://baptiste-wicht.com/posts/2012/07/c11-concurrency-tutorial-part-4-atomic-type.html>`_
 
 In this post, we are going to talk about futures, more precisely
-:code:`std::future<T>`. What is a future ? It's a very nice and simple mechanism
+`std::future<T>`. What is a future ? It's a very nice and simple mechanism
 to work with asynchronous tasks. It also has the advantage of decoupling you
 from the threads themselves, you can do multithreading without using
-:code:`std::thread`. The future itself is a structure pointing to a result that
+`std::thread`. The future itself is a structure pointing to a result that
 will be computed in the future. How to create a future ? The simplest way is to
-use :code:`std::async` that will create an asynchronous task and return
-a :code:`std::future`.
+use `std::async` that will create an asynchronous task and return
+a `std::future`.
 
 Let's start with the simplest of the examples:
 
@@ -37,16 +37,16 @@ Let's start with the simplest of the examples:
         return 0;
     }
 
-Nothing really special here. :code:`std::async` will execute the task that we
-give it (here a lambda) and return a :code:`std::future`. Once you use the
-:code:`get()` function on a future, it will wait until the result is available
-and return this result to you once it is. The :code:`get()` function is then
+Nothing really special here. `std::async` will execute the task that we
+give it (here a lambda) and return a `std::future`. Once you use the
+`get()` function on a future, it will wait until the result is available
+and return this result to you once it is. The `get()` function is then
 blocking. Since the lambda, is a void lambda, the returned future is of type
-:code:`std::future<void>` and :code:`get()` returns :code:`void` as well. It is
-very important to know that you cannot call :code:`get` several times on the
+`std::future<void>` and `get()` returns `void` as well. It is
+very important to know that you cannot call `get` several times on the
 same future. Once the result is consumed, you cannot consume it again! If you
 want to use the result several times, you need to store it yourself after you
-called :code:`get()`.
+called `get()`.
 
 Let's see with something that returns a value and actually takes some time
 before returning it:
@@ -71,24 +71,24 @@ before returning it:
         return 0;
     }
 
-This time, the future will be of the time :code:`std::future<int>` and thus
-:code:`get()` will also return an :code:`int`. :code:`std::async` will again
-launch a task in an asynchronous way and :code:`future.get()` will wait for the
+This time, the future will be of the time `std::future<int>` and thus
+`get()` will also return an `int`. `std::async` will again
+launch a task in an asynchronous way and `future.get()` will wait for the
 answer. What is interesting, is that you can do something else before the call
 to future.
 
-But :code:`get()` is not the only interesting function in :code:`std::future`.
-You also have :code:`wait()` which is almost the same as :code:`get()` but does
+But `get()` is not the only interesting function in `std::future`.
+You also have `wait()` which is almost the same as `get()` but does
 not consume the result. For instance, you can wait for several futures and then
 consume their result together. But, more interesting are the
-:code:`wait_for(duration)` and :code:`wait_until(timepoint)` functions. The
+`wait_for(duration)` and `wait_until(timepoint)` functions. The
 first one wait for the result at most the given time and then returns and the
 second one wait for the result at most until the given time point. I think that
-:code:`wait_for` is more useful in practices, so let's discuss it further.
-Finally, an interesting function is :code:`bool valid()`. When you use
-:code:`get()` on the future, it will consume the result, making :code:`valid()
-returns :code:`false`. So, if you intend to check multiple times for a future,
-you should use :code:`valid()` first.
+`wait_for` is more useful in practices, so let's discuss it further.
+Finally, an interesting function is `bool valid()`. When you use
+`get()` on the future, it will consume the result, making `valid()
+returns `false`. So, if you intend to check multiple times for a future,
+you should use `valid()` first.
 
 One possible scenario would be if you have several asynchronous tasks, which is
 a common scenario. You can imagine that you want to process the results as fast
@@ -144,15 +144,15 @@ implementation:
         return 0;
     }
 
-The three tasks are started asynchronously with :code:`std::async` and the
-resulting :code:`std::future` are stored. Then, as long as one of the tasks is
+The three tasks are started asynchronously with `std::async` and the
+resulting `std::future` are stored. Then, as long as one of the tasks is
 not complete, we query each three task and try to process its result. If no
 result is available, we simply do something else. This example is important to
 understand, it covers pretty much every concept of the futures.
 
 One interesting thing that remains is that you can pass parameters to your task
-via :code:`std::async`. Indeed, all the extra parameters that you pass to
-:code:`std::async` will be passed to the task itself. Here is an example of
+via `std::async`. Indeed, all the extra parameters that you pass to
+`std::async` will be passed to the task itself. Here is an example of
 spawning tasks in a loop with different parameters:
 
 .. code:: c++
@@ -182,10 +182,10 @@ spawning tasks in a loop with different parameters:
         return 0;
     }
 
-Pretty practical :) All The created :code:`std::future<size_t>` are stored in
-a :code:`std::vector` and then are all queried for their result.
+Pretty practical :) All The created `std::future<size_t>` are stored in
+a `std::vector` and then are all queried for their result.
 
-Overall, I think :code:`std::future` and :code:`std::async` are great tool that
+Overall, I think `std::future` and `std::async` are great tool that
 can simplify your asynchronous code a lot. They allow you to make pretty
 advanced stuff while keeping the complexity of the code to a minimum.
 

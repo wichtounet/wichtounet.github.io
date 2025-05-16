@@ -22,7 +22,7 @@ Configuration
 *************
 
 The configuration of notmuch is fairly simple. You can write your
-:code:`.notmuch-config` directly or run :code:`notmuch setup` that will
+`.notmuch-config` directly or run `notmuch setup` that will
 interactively help you to fill the configuration.
 
 Here is my configuration:
@@ -66,7 +66,7 @@ option to search mail is simply to use `notmuch search <query>` from the command
 line. This will directly displays the results. Search is instant on my mails.
 
 If you use mutt-kz like me, notmuch support is directly integrated. You can type
-X, and then type your query like :code:`notmuch://?query=X` and the results will
+X, and then type your query like `notmuch://?query=X` and the results will
 be displayed as a normal Mutt folder. You can open mails directly from here and
 you can also edit the mails as if you were in their source folders. This is
 really practical.
@@ -78,7 +78,7 @@ feature.
 
 Another feature of notmuch is its ability to tag mails. It automatically tags
 new mails and deleted mails. But you can also explicitely tag messages by using
-:code:`notmuch tag`. For instance, to tag all messages from the notmuch mailing
+`notmuch tag`. For instance, to tag all messages from the notmuch mailing
 list:
 
 .. code::

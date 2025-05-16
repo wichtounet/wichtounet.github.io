@@ -16,14 +16,14 @@ Data structures
 
 Several structures are available: 
 
-* :code:`fast_vector<T, Rows>`: A vector of size Rows with elements of type T. This must
+* `fast_vector<T, Rows>`: A vector of size Rows with elements of type T. This must
   be used when you know the size of the vector at compile-time.
-* :code:`dyn_vector<T>`: A vector with element of type T. The size of the vector can be
+* `dyn_vector<T>`: A vector with element of type T. The size of the vector can be
   set at runtime.
-* :code:`fast_matrix<T, Rows,Columns>`: A matrix of size Rows x Columns with elements of
+* `fast_matrix<T, Rows,Columns>`: A matrix of size Rows x Columns with elements of
   type T. This must be used when you know the size of the matrix at
   compile-time.
-* :code:`dyn_matrix<T>`: A matrix with element of type T. The size of the matrix can be
+* `dyn_matrix<T>`: A matrix with element of type T. The size of the matrix can be
   set at runtime.
 
 All the structures are size-invariant, once set they cannot be grown or
@@ -64,27 +64,27 @@ element of the vector or the matrix.
 
 Available operators:
 
-* :code:`log`
-* :code:`abs`
-* :code:`sign`
-* :code:`max/min`
-* :code:`sigmoid`
-* :code:`noise`: Add standard normal noise to each element
-* :code:`logistic_noise`: Add normal noise of mean zero and variance sigmoid(x) to each
+* `log`
+* `abs`
+* `sign`
+* `max/min`
+* `sigmoid`
+* `noise`: Add standard normal noise to each element
+* `logistic_noise`: Add normal noise of mean zero and variance sigmoid(x) to each
   element
-* :code:`exp`
-* :code:`softplus`
-* :code:`bernoulli`
+* `exp`
+* `softplus`
+* `bernoulli`
 
 Several transformations are also available:
 
-* :code:`hflip`: Flip the vector or the matrix horizontally
-* :code:`vflip`: Flip the vector or the matrix vertically
-* :code:`fflip`: Flip the vector or the matrix horizontally and vertically. It is the
-  equivalent of :code:`hflip(vflip(x))`
-* :code:`dim/row/col`: Return a vector representing a sub part of a matrix (a row or a
+* `hflip`: Flip the vector or the matrix horizontally
+* `vflip`: Flip the vector or the matrix vertically
+* `fflip`: Flip the vector or the matrix horizontally and vertically. It is the
+  equivalent of `hflip(vflip(x))`
+* `dim/row/col`: Return a vector representing a sub part of a matrix (a row or a
   col)
-* :code:`reshape`: Interpret a vector as a matrix
+* `reshape`: Interpret a vector as a matrix
 
 Again, all these operations are performed lazily, they are only executed when the
 expression is assigned to something. 
@@ -95,7 +95,7 @@ Lazy evaluation
 All binary and unary operations are applied lazily, only when they are assigned
 to a concrete vector or matrix class. 
 
-The expression can be evaluated using the :code:`s(x)` function that returns a
+The expression can be evaluated using the `s(x)` function that returns a
 concrete class (fast_vector,fast_matrix,dyn_vector,dyn_matrix) based on the
 expression. 
 
@@ -116,7 +116,7 @@ The header *convolution.hpp* provides several convolution operations both in 1D
 same versions. 
 
 The header *mutiplication.hpp* provides the matrix multiplication operation
-(:code:`mmult`). For now on, only the naive algorithm is available. I'll
+(`mmult`). For now on, only the naive algorithm is available. I'll
 probably add support for Strassen algorithm in the near future. 
 
 It is possible to pass an expression rather than an data structure to functions.

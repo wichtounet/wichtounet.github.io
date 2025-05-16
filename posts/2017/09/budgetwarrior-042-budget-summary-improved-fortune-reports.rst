@@ -6,7 +6,7 @@ all the data for the purpose of this post (new feature, by the way :P).
 New summary view
 ----------------
 
-I've added a new report with :code:`budget summary`:
+I've added a new report with `budget summary`:
 
 .. image:: /images/budgetwarrior_042_summary.png
 
@@ -19,7 +19,7 @@ your terminal is large enough, the three parts will be shown side by side.
 Improved fortune report
 -----------------------
 
-I've made a few improvements to the :code:`budget fortune` view:
+I've made a few improvements to the `budget fortune` view:
 
 .. image:: /images/budgetwarrior_042_fortune.png
 
@@ -31,7 +31,7 @@ Various changes
 ---------------
 
 The balance does not propagate over the years anymore. This should mainly change
-the behaviour of :code:`budget overview`. I don't think it was very
+the behaviour of `budget overview`. I don't think it was very
 smart to propagate it all the time. The balance now starts at zero for each
 year. If you want the old system, you can use the multi_year_balance=true option
 in the .budgetrc configuration file.
@@ -41,11 +41,11 @@ change anything for the behaviour, but means that if you sync between different
 machines, it will avoid a lot of possible conflicts :)
 
 Fixed a few bugs with inconsistency between the different views and reports.
-Another bug that was fixed is that :code:`budget report` was not always displaying the
+Another bug that was fixed is that `budget report` was not always displaying the
 first month of the year correctly, this is now fixed.
 
-The graphs display in :code:`budget report` are now automatically adapted to width of
-your terminal. Finally, the :code:`budget overview` command also displays more
+The graphs display in `budget report` are now automatically adapted to width of
+your terminal. Finally, the `budget overview` command also displays more
 information about the comparison with the previous month.
 
 Installation

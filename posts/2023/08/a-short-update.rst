@@ -6,7 +6,7 @@ I am now a Senior Software Engineer, still at Verisign. After I started working 
 time on my personal projects anymore. Before, my personal projects were part of my Ph.D., so it made sense to posts some
 updates on this blog and I had time to also post other articles.
 
-But probably another bigger factor is that I started another blog in 2017, `The Poor Swiss <https://thepoorswiss.com>`.
+But probably another bigger factor is that I started another blog in 2017, `The Poor Swiss <https://thepoorswiss.com>`_.
 This is not a technical blog but a blog on personal finance, related to Switzerland. I have written more than 400
 articles on this blog and I am still writing about one article a week these days. This takes a lot of time and made me
 scale down even more on my personal projects. The only project that continued getting some improvements was budgetwarrior 

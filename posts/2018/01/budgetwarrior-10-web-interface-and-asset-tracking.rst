@@ -22,8 +22,8 @@ the application, you need to use the command **server** to use it::
     budget server
 
 and the server will be launched (by default at localhost:8080). You can
-configure the port with :code:`server_port=X` in the configuration file and the
-listen address with :code:`server_listen=X`. You can access your server at
+configure the port with `server_port=X` in the configuration file and the
+listen address with `server_listen=X`. You can access your server at
 http://localhost:8080.
 
 Here is what this will display:
@@ -63,7 +63,7 @@ line tool for managing the budget.
 
 The default user and password is admin:1234, but you of course change it using
 web_password and web_user in the configuration. You can also disable the
-security if you are sure of yourself by setting :code:`server_secure=true` in
+security if you are sure of yourself by setting `server_secure=true` in
 the configuration. The server currently does not support
 
 Currently, it does not protect against concurrent modifications of the same
@@ -88,7 +88,7 @@ protected by authentication.
 Currently, the server does not support HTTPS. However, you can run it behind
 a proxy such as nginx which is running in HTTPS. This is what I'm doing. The
 server mode supports SSL from the client to the server, you just have to set
-:code:`server_sll=true` in the configuration.
+`server_sll=true` in the configuration.
 
 This is the mode I'm currently using and will continue using. With this, I can
 quickly do some modifications using the command line and if I want to see
@@ -103,7 +103,7 @@ by different users. This should be perfectly fine for a small household.
 Assets Tracking
 +++++++++++++++
 
-Already a few months ago, I've added `the feature to track assets <https://baptiste-wicht.com/posts/2017/10/budgetwarrior-track-assets-portfolio-savings-rates-auto-completion.html> `_ into budgetwarrior. You can define the list of the assets you possess. The tool will then help you track the value of your assets. You can set your desired distribution of bonds, cash and stocks and the tool will help you see if you need to rebalance your assets. This will let you compute your net worth, with :code:`budget asset value`:
+Already a few months ago, I've added `the feature to track assets <https://baptiste-wicht.com/posts/2017/10/budgetwarrior-track-assets-portfolio-savings-rates-auto-completion.html> `_ into budgetwarrior. You can define the list of the assets you possess. The tool will then help you track the value of your assets. You can set your desired distribution of bonds, cash and stocks and the tool will help you see if you need to rebalance your assets. This will let you compute your net worth, with `budget asset value`:
 
 .. image:: /images/budgetwarrior_asset_values.png
    :alt: View of your assets
@@ -112,7 +112,7 @@ Moreover, you can also set a few of your assets as your portfolio assets. These
 assets have a desired distribution and are handled different. These are the
 assets you directly manage yourself, your investment portfolio. You can then
 track their value and see if they need rebalancing. For instance, here is
-a randomized rebalancing of your portfolio, with :code:`budget asset rebalance`:
+a randomized rebalancing of your portfolio, with `budget asset rebalance`:
 
 .. image:: /images/budgetwarrior_rebalance.png
    :alt: View of the needed rebalance

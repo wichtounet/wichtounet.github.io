@@ -48,7 +48,7 @@ You have to name your benchmark. This will automatically creates a main and will
 Define benchmarks
 -----------------
 
-Benchmarks can be defined either in a CPM_BENCH functor or in the global scope with :code:`CPM_DIRECT_BENCH`.
+Benchmarks can be defined either in a CPM_BENCH functor or in the global scope with `CPM_DIRECT_BENCH`.
 
 1. simple
 
@@ -118,7 +118,7 @@ This must be done before the inclusion of the header.
 Define sections
 ---------------
 
-Sections are simply a group of benchmarks, so instead of putting several benchmarks inside a :code:`CPM_BENCH`, you can put them inside a :code:`CPM_SECTION`. For instance: 
+Sections are simply a group of benchmarks, so instead of putting several benchmarks inside a `CPM_BENCH`, you can put them inside a `CPM_SECTION`. For instance: 
 
 .. code:: cpp
 
@@ -138,7 +138,7 @@ Sections are simply a group of benchmarks, so instead of putting several benchma
             );
     }
 
-You can also set different warmup and repeat values for each section by using :code:`CPM_SECTION_O`:
+You can also set different warmup and repeat values for each section by using `CPM_SECTION_O`:
 
 .. code:: cpp
 
