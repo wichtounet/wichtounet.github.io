@@ -4,14 +4,14 @@ Today is going to be a short update. I recently updated my main projects to use 
 
 In the last two months, I have started learning some Rust. Since I believe the best way to learn a language is by writing code, I quickly got into coding. I have ported a (small) part of my ETL and DLL libraries to Rust. I came to the point where I can train a simple Dense Neural Network on MNIST and it works. Of course, I also tried to make it as fast as possible. Currently, it is relatively close to at about 30% slower than ETL on a CPU and without MKL.
 
-Overall, Rust is an interesting language. Its borrow checker and strong compiler contracts are definitely making the code safer. On the other hand, it also makes the code very strict. And some things that are very easy to write in C++ become very difficult to write in Rust. 
+Overall, Rust is an interesting language. Its borrow checker and strong compiler contracts are definitely making the code safer. On the other hand, it also makes the code very strict. And some things that are very easy to write in C++ become very difficult to write in Rust.
 
 Here are some of the issues I found with Rust:
 
 1. The generics are very limited. Compared to the level of meta-programming we can do in C++ with templates, the comparison does not even start. Everything must be tied to Traits (a bit like concepts in this case) and we can't specialize code based on the type.
-2. The SIMD library is also quite limited. I am currently using the `portable-simd` library from nightly Rust and it gets the job done. But we are again limited to the common interface between integers and floating points since we cannot specialize and unfortunately, some of the things are not defined for both. For instance, I could not get FMA in my code and I cannot easily tune the size of the vectors to the types.
-3. Because of the borrow-checker, we are also not allowed to do some expressions where we mix mutable and immutable references, like `x = b * x + d` (x is once mutable and once immutable), so we either need to do two operations (slow) or do some inplace wrappers instead of relying on expressions (ugly
-4. Currently, there is a lot of overhead to the parallelism I used (through `rayon`). Compared to simply using a simple thread pool, this is quickly much more complicated and apparently much more overhead. I am using much higher thresholds for parallelizing operations in my Rust library than I am in C++.
+2. The SIMD library is also quite limited. I am currently using the portable-simd library from nightly Rust and it gets the job done. But we are again limited to the common interface between integers and floating points since we cannot specialize and unfortunately, some of the things are not defined for both. For instance, I could not get FMA in my code and I cannot easily tune the size of the vectors to the types.
+3. Because of the borrow-checker, we are also not allowed to do some expressions where we mix mutable and immutable references, like x = b * x + d (x is once mutable and once immutable), so we either need to do two operations (slow) or do some inplace wrappers instead of relying on expressions (ugly
+4. Currently, there is a lot of overhead to the parallelism I used (through rayon). Compared to simply using a simple thread pool, this is quickly much more complicated and apparently much more overhead. I am using much higher thresholds for parallelizing operations in my Rust library than I am in C++.
 
 I should still mention that this was probably not the best project to start in Rust since C++ excels at templates while Rust does not. But it was fun. And it was not that difficult for me to quickly get into Rust. But it will take a longer time to become an expert.
 

@@ -100,7 +100,7 @@ Let's go over some warnings I got:
     void assertion_failed_msg(const CharT* expr, const char* msg, const char* function, const char* file, long line) {
                                                                                                           ^
 
-I got this one several times. It is indeed more portable to use `int64` rather than `long`.
+I got this one several times. It is indeed more portable to use :code:`int64` rather than :code:`long`.
 
 .. code::
 
@@ -109,7 +109,7 @@ I got this one several times. It is indeed more portable to use `int64` rather t
             ^
 
 This one is part of the modernize checks, indicating that one should use
-`using` rather than a `typedef` and I completely agree.
+:code:`using` rather than a :code:`typedef` and I completely agree.
 
 .. code:: cpp
 
